@@ -152,7 +152,7 @@ input,select{font-family:inherit;font-size:14px}
 .sortable.desc .arr{border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid var(--accent);opacity:1}
 
 /* vista previa */
-.prev-wrap{border:1px solid var(--border);border-radius:11px;overflow:auto;max-height:52vh}
+.prev-wrap{border:1px solid var(--border);border-radius:11px;overflow:auto;max-height:60vh}
 .prev-wrap table{width:100%;border-collapse:collapse;font-size:12.5px}
 .prev-wrap thead th{position:sticky;top:0;background:var(--surface-3);color:var(--text);font-weight:600;font-size:11px;letter-spacing:.3px;padding:10px 13px;border-bottom:1px solid var(--border);white-space:nowrap;text-transform:none}
 .prev-wrap tbody td{padding:9px 13px;border-bottom:1px solid var(--border-soft);color:var(--muted);white-space:nowrap}
@@ -1077,7 +1077,7 @@ tbody tr:hover{background:var(--surface-2)}
 
 <!-- ===== MODAL: PREVIEW ===== -->
 <div class="overlay" id="prevOverlay">
-  <div class="modal" style="max-width:720px">
+  <div class="modal" style="max-width:min(1150px,95vw)">
     <div class="modal-head">
       <div>
         <h3 id="prevTitle">Vista previa</h3>
@@ -1089,7 +1089,7 @@ tbody tr:hover{background:var(--surface-2)}
       <div class="prev-tools">
         <div class="search">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.5-3.5"/></svg>
-          <input type="text" id="prevSearch" placeholder="Buscar en cualquier columna…" oninput="renderPrevTable()">
+          <input type="text" id="prevSearch" placeholder="Buscar frase exacta (ej: iphone 15)…" oninput="renderPrevTable()">
           <button class="clr" id="prevClr" onclick="document.getElementById('prevSearch').value='';renderPrevTable();"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
         </div>
         <span class="fcount" id="prevFcount"></span>
@@ -1872,7 +1872,7 @@ function renderPrevTable(){
   if(!currentPreview){wrap.innerHTML='<div class="prev-empty">No hay contenido para previsualizar.</div>';document.getElementById('prevFcount').textContent='';return;}
   const q=(document.getElementById('prevSearch').value||'').trim();
   document.getElementById('prevClr').classList.toggle('show',!!q);
-  const terms=norm(q).split(/\s+/).filter(Boolean);
+  const phrase=norm(q).replace(/\s+/g,' ').trim();
   const {head,body}=currentPreview;
   // filtros por columna activos (Categoría, Subcategoría, …) — se combinan (Y)
   const active=[...document.querySelectorAll('#prevFilters select')]
@@ -1880,9 +1880,9 @@ function renderPrevTable(){
     .filter(x=>x.v!=='__all__');
   const rows=body.filter(r=>{
     for(const a of active){ if(String(r[a.i]==null?'':r[a.i]).trim()!==a.v) return false; }
-    if(!terms.length)return true;
-    const joined=norm(r.join(' '));
-    return terms.every(t=>joined.includes(t));
+    if(!phrase)return true;
+    const joined=norm(r.join(' | ')).replace(/\s+/g,' ');
+    return joined.includes(phrase);
   });
   const filtering=!!q || active.length>0;
   document.getElementById('prevFcount').innerHTML=`<b>${rows.length}</b> de ${body.length} filas`;
@@ -1893,7 +1893,7 @@ function renderPrevTable(){
   const shown=rows.slice(0,CAP);
   const extra=rows.length-shown.length;
   wrap.innerHTML='<table><thead><tr>'+head.map(h=>`<th>${esc(h)}</th>`).join('')+'</tr></thead><tbody>'+
-    shown.map(r=>'<tr>'+head.map((_,i)=>`<td>${hl(r[i],terms)}</td>`).join('')+'</tr>').join('')+
+    shown.map(r=>'<tr>'+head.map((_,i)=>`<td>${hl(r[i],[phrase])}</td>`).join('')+'</tr>').join('')+
     '</tbody></table>'+
     (extra>0?`<div class="prev-empty" style="padding:12px">Mostrando las primeras ${CAP} filas. Hay ${extra} más que coinciden — afiná la búsqueda para verlas.</div>`:'');
 }
