@@ -1,0 +1,2872 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agentes IA · Panel de Control</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --bg:#0b0c10;
+  --surface:#13151c;
+  --surface-2:#191c25;
+  --surface-3:#20242f;
+  --border:#262b38;
+  --border-soft:#1d2230;
+  --text:#e9ebf1;
+  --muted:#8a91a6;
+  --faint:#5b6275;
+  --accent:#c9f24d;
+  --accent-ink:#0b0c10;
+  --blue:#6b9bff;
+  --green:#46d39a;
+  --amber:#f4c152;
+  --red:#f77272;
+  --r:14px;
+  --r-sm:9px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:'IBM Plex Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  font-size:14px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(900px 500px at 12% -8%, rgba(201,242,77,.07), transparent 60%),
+    radial-gradient(800px 600px at 100% 0%, rgba(107,155,255,.06), transparent 55%);
+  background-attachment:fixed;
+}
+.mono{font-family:'IBM Plex Mono',monospace}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit;font-size:14px}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:20px;border:2px solid var(--bg)}
+
+.app{display:grid;grid-template-columns:272px 1fr;min-height:100vh}
+
+/* ===== Sidebar ===== */
+.side{
+  background:var(--surface);
+  border-right:1px solid var(--border-soft);
+  padding:22px 16px;
+  display:flex;flex-direction:column;gap:6px;
+  position:sticky;top:0;height:100vh;
+}
+.brand{display:flex;align-items:center;gap:11px;padding:4px 6px 18px}
+.logo{
+  width:38px;height:38px;border-radius:11px;flex:none;
+  background:linear-gradient(135deg,var(--accent),#9fd400);
+  display:grid;place-items:center;color:var(--accent-ink);
+  box-shadow:0 6px 18px rgba(201,242,77,.22);
+}
+.logo svg{width:22px;height:22px}
+.brand h1{font-family:'Bricolage Grotesque';font-size:16px;font-weight:800;letter-spacing:-.3px;line-height:1.1}
+.brand span{font-size:11px;color:var(--faint);letter-spacing:.5px;text-transform:uppercase}
+
+.nav-label{font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--faint);padding:14px 8px 6px;font-weight:600}
+
+.tree-parent{
+  display:flex;align-items:center;gap:9px;width:100%;text-align:left;
+  padding:10px 10px;border-radius:var(--r-sm);color:var(--text);font-weight:600;font-size:13.5px;
+  transition:background .15s;
+}
+.tree-parent:hover{background:var(--surface-2)}
+.tree-parent .chev{margin-left:auto;transition:transform .2s;color:var(--muted)}
+.tree-parent.open .chev{transform:rotate(90deg)}
+.tree-parent .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
+
+.tree-children{display:flex;flex-direction:column;gap:3px;margin:4px 0 4px 18px;padding-left:10px;border-left:1px solid var(--border)}
+.tree-sub{
+  display:flex;align-items:center;gap:8px;width:100%;text-align:left;
+  padding:8px 9px;border-radius:var(--r-sm);color:var(--muted);font-size:13px;font-weight:500;
+  transition:.15s;
+}
+.tree-sub:hover{background:var(--surface-2);color:var(--text)}
+.tree-leaf{
+  display:flex;align-items:center;gap:9px;width:100%;text-align:left;
+  padding:8px 9px;border-radius:var(--r-sm);color:var(--muted);font-size:12.5px;
+  transition:.15s;
+}
+.tree-leaf:hover{background:var(--surface-2);color:var(--text)}
+.tree-leaf.active{background:var(--surface-3);color:var(--text);font-weight:600}
+.tree-leaf.active .ic{color:var(--accent)}
+.tree-leaf .ic,.tree-sub .ic{width:16px;height:16px;flex:none}
+.leaf-children{display:flex;flex-direction:column;gap:2px;margin:2px 0 2px 16px;padding-left:9px;border-left:1px solid var(--border)}
+
+.side-foot{margin-top:auto;padding-top:14px;border-top:1px solid var(--border-soft)}
+.bot-card{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);padding:13px}
+.bot-card .row{display:flex;align-items:center;gap:9px}
+.bot-ic{width:30px;height:30px;border-radius:9px;background:var(--surface-3);display:grid;place-items:center;flex:none}
+.bot-card h4{font-size:12.5px;font-weight:600}
+.bot-card p{font-size:11px;color:var(--faint)}
+.bot-card .link-btn{margin-top:11px;width:100%;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:12px;padding:8px;border-radius:8px;transition:.15s}
+.bot-card .link-btn:hover{filter:brightness(1.06)}
+
+/* ===== Main ===== */
+.main{padding:26px 34px 60px;max-width:1280px}
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:26px;flex-wrap:wrap}
+.crumb{font-size:12px;color:var(--faint);margin-bottom:7px;display:flex;align-items:center;gap:7px}
+.crumb b{color:var(--muted);font-weight:500}
+.title{font-family:'Bricolage Grotesque';font-size:30px;font-weight:800;letter-spacing:-.8px;line-height:1.05}
+.subtitle{color:var(--muted);font-size:13.5px;margin-top:7px;max-width:560px}
+
+.badge{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:30px;font-size:12px;font-weight:600;border:1px solid var(--border)}
+.badge .pulse{width:8px;height:8px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 0 rgba(244,193,82,.5);animation:pulse 2s infinite}
+.badge.linked .pulse{background:var(--green);animation:pulseG 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(244,193,82,.45)}70%{box-shadow:0 0 0 7px rgba(244,193,82,0)}100%{box-shadow:0 0 0 0 rgba(244,193,82,0)}}
+@keyframes pulseG{0%{box-shadow:0 0 0 0 rgba(70,211,154,.45)}70%{box-shadow:0 0 0 7px rgba(70,211,154,0)}100%{box-shadow:0 0 0 0 rgba(70,211,154,0)}}
+
+/* stat cards */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+.stat{background:var(--surface);border:1px solid var(--border-soft);border-radius:var(--r);padding:17px 18px;position:relative;overflow:hidden}
+.stat::after{content:"";position:absolute;right:-20px;top:-20px;width:90px;height:90px;border-radius:50%;background:radial-gradient(circle,rgba(201,242,77,.10),transparent 70%)}
+.stat .k{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+.stat .v{font-family:'Bricolage Grotesque';font-size:28px;font-weight:800;margin-top:6px;letter-spacing:-.5px}
+.stat .s{font-size:11.5px;color:var(--faint);margin-top:3px}
+
+/* panel */
+.panel{background:var(--surface);border:1px solid var(--border-soft);border-radius:var(--r);overflow:hidden;margin-bottom:22px}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 20px;border-bottom:1px solid var(--border-soft);flex-wrap:wrap}
+.panel-head h3{font-family:'Bricolage Grotesque';font-size:16px;font-weight:700;letter-spacing:-.3px;display:flex;align-items:center;gap:9px}
+.panel-head p{font-size:12.5px;color:var(--muted);margin-top:2px}
+
+/* toolbar de filtros */
+.toolbar{display:flex;align-items:center;gap:10px;padding:13px 20px;border-bottom:1px solid var(--border-soft);flex-wrap:wrap;background:var(--surface-2)}
+.search{position:relative;flex:1;min-width:200px;max-width:340px}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--faint);pointer-events:none}
+.search input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:9px 32px 9px 34px;color:var(--text);font-size:13px;transition:.15s}
+.search input:focus{outline:none;border-color:var(--accent)}
+.search .clr{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:20px;height:20px;border-radius:6px;display:none;place-items:center;color:var(--faint);background:var(--surface-3)}
+.search .clr.show{display:grid}
+.search .clr:hover{color:var(--text)}
+.fdrop{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:9px 11px;color:var(--text);font-size:13px;cursor:pointer;transition:.15s}
+.fdrop:focus{outline:none;border-color:var(--accent)}
+.fcount{font-size:12px;color:var(--faint);margin-left:auto;white-space:nowrap}
+.fcount b{color:var(--muted);font-weight:600}
+.sortable{cursor:pointer;user-select:none}
+.sortable:hover{color:var(--muted)}
+.sortable .arr{display:inline-block;width:0;height:0;margin-left:5px;vertical-align:middle;opacity:.4}
+.sortable.asc .arr{border-left:4px solid transparent;border-right:4px solid transparent;border-bottom:5px solid var(--accent);opacity:1}
+.sortable.desc .arr{border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid var(--accent);opacity:1}
+
+/* vista previa */
+.prev-wrap{border:1px solid var(--border);border-radius:11px;overflow:auto;max-height:52vh}
+.prev-wrap table{width:100%;border-collapse:collapse;font-size:12.5px}
+.prev-wrap thead th{position:sticky;top:0;background:var(--surface-3);color:var(--text);font-weight:600;font-size:11px;letter-spacing:.3px;padding:10px 13px;border-bottom:1px solid var(--border);white-space:nowrap;text-transform:none}
+.prev-wrap tbody td{padding:9px 13px;border-bottom:1px solid var(--border-soft);color:var(--muted);white-space:nowrap}
+.prev-wrap tbody tr:nth-child(even){background:var(--surface-2)}
+.prev-wrap tbody tr:hover{background:var(--surface-3)}
+.prev-tools{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.prev-tools .search{flex:1}
+.prev-filter{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.prev-filter.hidden{display:none}
+.pf-label{font-size:12px;color:var(--faint);font-weight:600}
+.prev-filter .fdrop{min-width:120px}
+.pf-clear{font-size:12px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;transition:.15s}
+.pf-clear:hover{color:var(--text);background:var(--surface-3)}
+
+/* multimedia */
+.media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;padding:18px 20px}
+.mcard{background:var(--surface-2);border:1px solid var(--border);border-radius:13px;overflow:hidden;transition:.15s;display:flex;flex-direction:column}
+.mcard:hover{border-color:var(--border);background:var(--surface-3);transform:translateY(-2px)}
+.mthumb{height:118px;background:var(--surface-3);display:grid;place-items:center;position:relative;overflow:hidden;cursor:pointer}
+.mthumb img{width:100%;height:100%;object-fit:cover}
+.mthumb .ph{width:42px;height:42px;opacity:.7}
+.mtype-badge{position:absolute;top:8px;left:8px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:3px 8px;border-radius:20px;background:rgba(11,12,16,.7);backdrop-filter:blur(3px);display:flex;align-items:center;gap:5px}
+.mdur{position:absolute;bottom:8px;right:8px;font-size:10.5px;font-weight:600;background:rgba(11,12,16,.72);padding:2px 7px;border-radius:6px;font-family:'IBM Plex Mono'}
+.mbody{padding:12px 13px;display:flex;flex-direction:column;gap:7px;flex:1}
+.mbody .mn{font-size:13px;font-weight:600;line-height:1.3;word-break:break-word}
+.mbody .mrec{font-size:11.5px;color:var(--muted);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mbody .mrec.proc{color:var(--amber)}
+.mbody .mrec.err{color:var(--red)}
+.mfoot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;padding-top:4px}
+.mfoot .mdate{font-size:10.5px;color:var(--faint)}
+.mfoot .mact{display:flex;gap:5px}
+.mini-spin{width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--amber);border-radius:50%;animation:sp 1s linear infinite;display:inline-block;vertical-align:middle;margin-right:5px}
+.type-pick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tpick{display:flex;flex-direction:column;align-items:center;gap:6px;padding:11px 6px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);cursor:pointer;font-size:11.5px;font-weight:600;color:var(--muted);transition:.15s}
+.tpick svg{width:20px;height:20px}
+.tpick.on{border-color:var(--accent);color:var(--text);background:rgba(201,242,77,.07)}
+.tpick.on svg{stroke:var(--accent)}
+.qa{background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:13px 15px;margin-top:14px}
+.qa .ql{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--faint);font-weight:600;margin-bottom:6px}
+.qa .qq{font-size:13px;font-weight:600;margin-bottom:8px;display:flex;gap:8px}
+.qa .qq svg{width:15px;height:15px;color:var(--blue);flex:none;margin-top:2px}
+.qa .qa-ans{font-size:12.5px;color:var(--muted);line-height:1.5;display:flex;gap:8px}
+.qa .qa-ans svg{width:15px;height:15px;color:var(--accent);flex:none;margin-top:2px}
+.prev-wrap mark{background:rgba(201,242,77,.28);color:var(--text);border-radius:3px;padding:0 2px}
+.prev-empty{padding:34px 16px;text-align:center;color:var(--faint);font-size:13px}
+.demo-tag{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--amber);background:rgba(244,193,82,.12);border:1px solid rgba(244,193,82,.3);padding:3px 9px;border-radius:30px;vertical-align:middle}
+
+/* toasts */
+.toasts{position:fixed;right:20px;bottom:20px;z-index:90;display:flex;flex-direction:column;gap:10px;max-width:360px}
+.toast{display:flex;gap:11px;align-items:flex-start;background:var(--surface-2);border:1px solid var(--border);border-left-width:3px;border-radius:11px;padding:13px 15px;box-shadow:0 12px 30px rgba(0,0,0,.4);animation:tin .25s cubic-bezier(.2,.8,.2,1)}
+@keyframes tin{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast.out{animation:tout .25s forwards}
+@keyframes tout{to{transform:translateX(20px);opacity:0}}
+.toast .ti{width:18px;height:18px;flex:none;margin-top:1px}
+.toast .tt{font-size:13px;font-weight:600;line-height:1.35}
+.toast .tx{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4}
+.toast.success{border-left-color:var(--green)} .toast.success .ti{color:var(--green)}
+.toast.error{border-left-color:var(--red)} .toast.error .ti{color:var(--red)}
+.toast.info{border-left-color:var(--blue)} .toast.info .ti{color:var(--blue)}
+.toast .tc{margin-left:8px;color:var(--faint);cursor:pointer;flex:none}
+.toast .tc:hover{color:var(--text)}
+
+/* mensajes de error en formularios */
+.form-err{display:none;align-items:flex-start;gap:8px;background:rgba(247,114,114,.1);border:1px solid rgba(247,114,114,.32);color:#ffb4b4;border-radius:9px;padding:10px 12px;font-size:12.5px;margin-bottom:14px;line-height:1.4}
+.form-err.show{display:flex}
+.form-err svg{width:16px;height:16px;flex:none;margin-top:1px}
+.filebox.error{border-color:rgba(247,114,114,.4)}
+.filebox.error .fn svg{stroke:var(--red)}
+.filebox .fd.err{color:#ffb4b4}
+.pill.err{background:rgba(247,114,114,.13);color:var(--red)}
+.crawl-anim.error .bar i{background:var(--red)!important}
+
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:9px;font-weight:600;font-size:13px;transition:.15s;border:1px solid transparent}
+.btn-primary{background:var(--accent);color:var(--accent-ink)}
+.btn-primary:hover{filter:brightness(1.07)}
+.btn-ghost{background:var(--surface-2);border-color:var(--border);color:var(--text)}
+.btn-ghost:hover{background:var(--surface-3)}
+.btn-danger{background:var(--red);color:#2a0808}
+.btn-danger:hover{filter:brightness(1.07)}
+/* modal de confirmación */
+.confirm-modal{max-width:400px}
+.confirm-body{padding:6px 22px 4px;display:flex;gap:14px}
+.confirm-ic{width:42px;height:42px;border-radius:12px;flex:none;display:grid;place-items:center;background:rgba(247,114,114,.13);color:var(--red)}
+.confirm-ic svg{width:22px;height:22px}
+.confirm-ic.info{background:rgba(107,155,255,.13);color:var(--blue)}
+.confirm-txt h3{font-family:'Bricolage Grotesque';font-size:17px;font-weight:800;letter-spacing:-.3px;margin-bottom:5px}
+.confirm-txt p{font-size:13px;color:var(--muted);line-height:1.45}
+.btn svg{width:16px;height:16px}
+
+/* table */
+table{width:100%;border-collapse:collapse}
+thead th{
+  text-align:left;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--faint);
+  font-weight:600;padding:12px 20px;border-bottom:1px solid var(--border-soft);background:var(--surface-2);
+}
+tbody td{padding:14px 20px;border-bottom:1px solid var(--border-soft);font-size:13.5px;vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr{transition:background .12s}
+tbody tr:hover{background:var(--surface-2)}
+
+.src-name{display:flex;align-items:center;gap:11px}
+.src-ic{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;flex:none}
+.src-ic.excel{background:rgba(70,211,154,.13);color:var(--green)}
+.src-ic.sheets{background:rgba(107,155,255,.13);color:var(--blue)}
+.src-name .nm{font-weight:600}
+.src-name .meta{font-size:11.5px;color:var(--faint);margin-top:1px}
+
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:4px 9px;border-radius:30px;border:1px solid var(--border)}
+.tag.excel{color:var(--green)}
+.tag.sheets{color:var(--blue)}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:30px}
+.pill.ok{background:rgba(70,211,154,.12);color:var(--green)}
+.pill.warn{background:rgba(244,193,82,.12);color:var(--amber)}
+.pill.off{background:rgba(247,114,114,.12);color:var(--red)}
+.pill .d{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+.actions{display:flex;gap:6px;justify-content:flex-end}
+.ico-btn{width:33px;height:33px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border);display:grid;place-items:center;color:var(--muted);transition:.15s}
+.ico-btn:hover{color:var(--text);background:var(--surface-3)}
+.ico-btn.danger:hover{color:var(--red);border-color:rgba(247,114,114,.4)}
+.ico-btn svg{width:15px;height:15px}
+
+.empty{padding:54px 20px;text-align:center;color:var(--faint)}
+.empty svg{width:42px;height:42px;margin-bottom:12px;opacity:.5}
+.empty p{font-size:13.5px}
+
+.price{font-family:'IBM Plex Mono';font-weight:600;font-size:14px}
+.muted{color:var(--muted)}
+.faint{color:var(--faint);font-size:12px}
+
+/* crawler target chips */
+.targets{display:flex;gap:10px;flex-wrap:wrap;padding:16px 20px;border-bottom:1px solid var(--border-soft)}
+.tchip{background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:11px 14px;min-width:170px;transition:.15s;cursor:pointer}
+.tchip.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.tchip:hover{background:var(--surface-3)}
+.tchip h5{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+.tchip .u{font-size:11px;color:var(--faint);margin-top:3px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tchip .st{font-size:11px;color:var(--muted);margin-top:7px;display:flex;align-items:center;gap:6px}
+.tchip .dotc{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+
+.chips-line{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.minichip{font-size:10.5px;color:var(--muted);background:var(--surface-3);padding:2px 8px;border-radius:20px}
+
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(6,7,10,.66);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.overlay.show{display:flex;animation:fade .2s}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:18px;width:100%;max-width:480px;max-height:90vh;overflow:auto;animation:rise .25s cubic-bezier(.2,.8,.2,1)}
+@keyframes rise{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-head{padding:20px 22px 0;display:flex;justify-content:space-between;align-items:flex-start}
+.modal-head h3{font-family:'Bricolage Grotesque';font-size:19px;font-weight:800;letter-spacing:-.4px}
+.modal-head p{font-size:12.5px;color:var(--muted);margin-top:4px}
+.modal-body{padding:18px 22px 8px}
+.modal-foot{padding:14px 22px 20px;display:flex;gap:10px;justify-content:flex-end}
+.x-btn{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--muted);background:var(--surface-2)}
+.x-btn:hover{color:var(--text)}
+
+.tabs{display:flex;gap:6px;background:var(--surface-2);padding:5px;border-radius:11px;margin-bottom:18px}
+.tab{flex:1;padding:9px;border-radius:8px;font-size:13px;font-weight:600;color:var(--muted);transition:.15s}
+.tab.active{background:var(--surface-3);color:var(--text)}
+
+.field{margin-bottom:15px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:7px}
+.field input[type=text],.field input[type=url],.field input[type=number],.field select{
+  width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;
+  padding:11px 13px;color:var(--text);transition:.15s;
+}
+.field textarea{width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:11px 13px;color:var(--text);transition:.15s;font-family:inherit;font-size:14px;resize:vertical;line-height:1.5}
+.field textarea:focus{outline:none;border-color:var(--accent)}
+.field input:focus,.field select:focus{outline:none;border-color:var(--accent)}
+/* confianza y etiquetas */
+.conf{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.conf .cd{width:6px;height:6px;border-radius:50%;background:currentColor}
+.conf.hi{background:rgba(70,211,154,.13);color:var(--green)}
+.conf.mid{background:rgba(244,193,82,.13);color:var(--amber)}
+.conf.lo{background:rgba(247,114,114,.13);color:var(--red)}
+.conf.ver{background:rgba(70,211,154,.16);color:var(--green)}
+.mtags{display:flex;gap:5px;flex-wrap:wrap}
+.mtag{font-size:10px;color:var(--muted);background:var(--surface-3);padding:2px 7px;border-radius:20px}
+.mprev-block{margin-bottom:14px}
+.mprev-block .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--faint);font-weight:600;margin-bottom:6px}
+.mprev-block p{font-size:13px;color:var(--text);line-height:1.55}
+.mprev-block .instr{font-size:12.5px;color:var(--muted);line-height:1.5;background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:9px;padding:10px 13px}
+
+/* recursos enviables */
+.rtype{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:30px;border:1px solid var(--border)}
+.rtype svg{width:13px;height:13px}
+.rtype.pdf{color:var(--red)} .rtype.image{color:var(--blue)} .rtype.link{color:var(--accent)} .rtype.text{color:var(--green)}
+.trigs{display:flex;gap:5px;flex-wrap:wrap;max-width:340px}
+.trig{font-size:10.5px;color:var(--muted);background:var(--surface-3);padding:2px 8px;border-radius:20px}
+.switch{width:38px;height:21px;border-radius:20px;background:var(--surface-3);border:1px solid var(--border);position:relative;cursor:pointer;transition:.18s;flex:none}
+.switch.on{background:var(--accent);border-color:var(--accent)}
+.switch::after{content:"";position:absolute;top:1.5px;left:2px;width:15px;height:15px;border-radius:50%;background:var(--muted);transition:.18s}
+.switch.on::after{background:var(--accent-ink);transform:translateX(17px)}
+.bubble{display:flex;gap:10px;align-items:flex-start}
+.bubble .bot-av{width:30px;height:30px;border-radius:9px;background:var(--surface-3);display:grid;place-items:center;flex:none;color:var(--accent)}
+.bubble .bot-av svg{width:16px;height:16px}
+.bmsg{background:var(--surface-2);border:1px solid var(--border);border-radius:4px 13px 13px 13px;padding:11px 14px;font-size:13px;line-height:1.45;max-width:100%}
+.bmsg .battach{display:flex;align-items:center;gap:10px;margin-top:10px;background:var(--surface-3);border:1px solid var(--border);border-radius:10px;padding:10px 12px;text-decoration:none;color:var(--text)}
+.bmsg .battach .ai{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none}
+.bmsg .battach .an{font-size:12.5px;font-weight:600}
+.bmsg .battach .at{font-size:11px;color:var(--faint)}
+.bmsg .battach .dl{margin-left:auto;color:var(--muted)}
+.bmsg .btext{margin-top:8px;background:var(--surface-3);border-radius:9px;padding:9px 12px;font-family:'IBM Plex Mono';font-size:12px;white-space:pre-wrap;line-height:1.5}
+.nomatch{display:flex;gap:10px;align-items:flex-start;background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:13px 15px;font-size:12.5px;color:var(--muted)}
+.nomatch svg{width:17px;height:17px;flex:none;color:var(--amber);margin-top:1px}
+.additem{border:1px dashed var(--border);border-radius:11px;padding:13px;background:var(--surface-2)}
+.ritem{display:flex;align-items:center;gap:10px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:9px 11px;margin-bottom:8px}
+.ritem .ri-ic{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none;background:rgba(255,255,255,.04)}
+.ritem .ri-ic svg{width:15px;height:15px}
+.ritem .ri-tx{flex:1;min-width:0}
+.ritem .ri-n{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ritem .ri-t{font-size:11px;color:var(--faint)}
+.ritem .ri-x{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;color:var(--faint);background:var(--surface-3);flex:none}
+.ritem .ri-x:hover{color:var(--red)}
+.types-mini{display:flex;align-items:center;gap:3px}
+.types-mini .tm{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;background:rgba(255,255,255,.04);border:1px solid var(--border)}
+.types-mini .tm svg{width:13px;height:13px}
+.types-mini .more{font-size:11px;color:var(--faint);font-weight:600;margin-left:2px}
+
+/* comportamiento del bot (Verde) */
+.verde-grid{display:grid;grid-template-columns:1fr 0.9fr;gap:20px;align-items:start}
+.power-card{display:flex;align-items:center;gap:15px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:18px;transition:.2s}
+.power-card.off{border-color:rgba(247,114,114,.35);background:rgba(247,114,114,.05)}
+.power-ic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;flex:none;background:rgba(70,211,154,.13);color:var(--green)}
+.power-card.off .power-ic{background:rgba(247,114,114,.13);color:var(--red)}
+.power-ic svg{width:24px;height:24px}
+.power-tx{flex:1}
+.power-tx h3{font-family:'Bricolage Grotesque';font-size:17px;font-weight:800;letter-spacing:-.3px}
+.power-tx p{font-size:12.5px;color:var(--muted);margin-top:2px}
+.sim-chat{min-height:120px;max-height:340px;overflow:auto;display:flex;flex-direction:column;gap:9px;padding:4px 2px 8px}
+.sim-empty{color:var(--faint);font-size:12.5px;text-align:center;padding:24px 10px}
+.sbub{max-width:78%;padding:9px 13px;border-radius:14px;font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+.sbub.user{align-self:flex-end;background:var(--accent);color:var(--accent-ink);border-bottom-right-radius:5px}
+.sbub.bot{align-self:flex-start;background:var(--surface-3);border:1px solid var(--border);border-bottom-left-radius:5px}
+.sbub.err{align-self:flex-start;background:rgba(247,114,114,.1);border:1px solid rgba(247,114,114,.35);color:var(--text)}
+.sbub.typing{align-self:flex-start;background:var(--surface-3);border:1px solid var(--border);color:var(--faint)}
+.sim-input{display:flex;gap:9px;margin-top:6px}
+.sim-input input{flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;color:var(--text);font-size:13px}
+.sim-input input:focus{outline:none;border-color:var(--accent)}
+.verde-forms{display:flex;flex-direction:column;gap:20px}
+.sec-let{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:7px;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:800;margin-right:8px}
+.prompt-preview{font-family:'IBM Plex Mono';font-size:11.5px;line-height:1.6;color:var(--muted);white-space:pre-wrap;word-break:break-word;max-height:62vh;overflow:auto;margin:0}
+.prompt-preview b,.prompt-preview .ph-title{color:var(--accent);font-weight:600}
+.tagbox{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;min-height:42px;cursor:text}
+.tagbox:focus-within{border-color:var(--accent)}
+.tagbox input{flex:1;min-width:110px;background:none;border:none;outline:none;color:var(--text);font-size:13px;padding:3px 0}
+.chip-tag{display:inline-flex;align-items:center;gap:6px;background:var(--surface-3);border:1px solid var(--border);border-radius:20px;padding:3px 6px 3px 11px;font-size:12px}
+.chip-tag button{width:17px;height:17px;border-radius:50%;display:grid;place-items:center;color:var(--faint);background:rgba(255,255,255,.05)}
+.chip-tag button:hover{color:var(--red)}
+@media(max-width:980px){.verde-grid{grid-template-columns:1fr}.verde-preview .panel{position:static!important}}
+
+/* ventajas editables */
+.vrow{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.vrow .vemoji{width:46px;text-align:center;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:10px 4px;font-size:16px}
+.vrow .vtext{flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text);font-size:13px}
+.vrow .vemoji:focus,.vrow .vtext:focus{outline:none;border-color:var(--accent)}
+.vrow .vdel{width:34px;height:38px;border-radius:8px;display:grid;place-items:center;color:var(--faint);background:var(--surface-2);border:1px solid var(--border);flex:none}
+.vrow .vdel:hover{color:var(--red)}
+/* pasos editables */
+.pcard{background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:12px;margin-bottom:10px}
+.pcard.dragging{opacity:.45}
+.pcard.off{opacity:.6}
+.pcard .phead{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.pcard .pgrip{cursor:grab;color:var(--faint);display:grid;place-items:center;width:22px;flex:none}
+.pcard .pgrip:active{cursor:grabbing}
+.pcard .pnum{width:22px;height:22px;border-radius:6px;background:var(--surface-3);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--muted);flex:none}
+.pcard .ptitle{flex:1;background:transparent;border:none;color:var(--text);font-size:13.5px;font-weight:600;padding:4px 2px;border-bottom:1px solid transparent}
+.pcard .ptitle:focus{outline:none;border-bottom-color:var(--accent)}
+.pcard .pmove{display:flex;flex-direction:column;gap:1px}
+.pcard .pmove button{width:20px;height:15px;display:grid;place-items:center;color:var(--faint);background:var(--surface-3);border-radius:4px}
+.pcard .pmove button:hover{color:var(--text)}
+.pcard textarea,.pcard .pex{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12.5px;font-family:inherit;line-height:1.5;resize:vertical;margin-top:7px}
+.pcard textarea:focus,.pcard .pex:focus{outline:none;border-color:var(--accent)}
+.pcard .pex::placeholder,.pcard textarea::placeholder{color:var(--faint)}
+.pcard .pfoot{display:flex;align-items:center;gap:8px;margin-top:9px}
+.pcard .pfoot .lbl{font-size:11.5px;color:var(--muted)}
+.pcard .pdel{margin-left:auto;width:30px;height:30px;border-radius:7px;display:grid;place-items:center;color:var(--faint);background:var(--surface-3);flex:none}
+.pcard .pdel:hover{color:var(--red)}
+/* objeciones */
+.objrow{background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:11px;margin-bottom:9px}
+.objrow .oh{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.objrow .obadge{font-size:10.5px;font-weight:700;color:var(--amber);background:rgba(244,193,82,.12);padding:2px 8px;border-radius:20px;white-space:nowrap}
+.objrow .oobj{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:13px}
+.objrow .oresp{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12.5px;font-family:inherit;line-height:1.5;resize:vertical}
+.objrow input:focus,.objrow textarea:focus{outline:none;border-color:var(--accent)}
+.objrow .odel{width:30px;height:34px;border-radius:7px;display:grid;place-items:center;color:var(--faint);background:var(--surface-3);flex:none}
+.objrow .odel:hover{color:var(--red)}
+.objrow .ra{font-size:11px;color:var(--faint);margin:0 4px}
+/* reglas */
+.regrow{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.regrow .rnum{width:22px;height:22px;border-radius:6px;background:var(--surface-3);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--muted);flex:none}
+.regrow .rtext{flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:9px 11px;color:var(--text);font-size:13px}
+.regrow .rtext:focus{outline:none;border-color:var(--accent)}
+.regrow .rmove{display:flex;flex-direction:column;gap:1px}
+.regrow .rmove button{width:20px;height:15px;display:grid;place-items:center;color:var(--faint);background:var(--surface-3);border-radius:4px}
+.regrow .rmove button:hover{color:var(--text)}
+.regrow .rdel{width:32px;height:36px;border-radius:8px;display:grid;place-items:center;color:var(--faint);background:var(--surface-2);border:1px solid var(--border);flex:none}
+.regrow .rdel:hover{color:var(--red)}
+.drop{border:1.5px dashed var(--border);border-radius:11px;padding:26px 16px;text-align:center;color:var(--muted);cursor:pointer;transition:.15s;background:var(--surface-2)}
+.drop:hover{border-color:var(--accent);color:var(--text)}
+.drop svg{width:30px;height:30px;margin-bottom:9px;opacity:.7}
+.drop b{color:var(--text)}
+.filebox{display:none;margin-top:10px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:11px 13px;font-size:12.5px}
+.filebox.show{display:block}
+.filebox .fn{font-weight:600;display:flex;align-items:center;gap:8px}
+.filebox .fd{color:var(--faint);font-size:11.5px;margin-top:4px}
+
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.check{display:flex;align-items:center;gap:9px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:10px 12px;cursor:pointer;font-size:12.5px;transition:.15s}
+.check.on{border-color:var(--accent);background:rgba(201,242,77,.07)}
+.check .box{width:17px;height:17px;border-radius:5px;border:1.5px solid var(--border);display:grid;place-items:center;flex:none}
+.check.on .box{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.check .box svg{width:12px;height:12px;opacity:0}
+.check.on .box svg{opacity:1}
+
+.crawl-anim{display:none;text-align:center;padding:10px 0 6px}
+.crawl-anim.show{display:block}
+.bar{height:6px;background:var(--surface-3);border-radius:20px;overflow:hidden;margin-top:12px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),#9fd400);border-radius:20px;transition:width .3s}
+
+.note{display:flex;gap:10px;background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:13px 15px;font-size:12.5px;color:var(--muted);margin-top:6px}
+.note svg{width:17px;height:17px;flex:none;color:var(--accent);margin-top:1px}
+
+.view{display:none}
+.view.show{display:block;animation:fade .25s}
+.loading{display:grid;place-items:center;height:100vh;color:var(--muted);grid-column:1/-1}
+.spin{width:30px;height:30px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp 1s linear infinite;margin-bottom:14px}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+@media(max-width:880px){
+  .app{grid-template-columns:1fr}
+  .side{position:relative;height:auto;flex-direction:column}
+  .stats{grid-template-columns:1fr 1fr}
+  .main{padding:20px}
+}
+</style>
+
+<div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
+
+<div class="app" id="app" style="display:none">
+  <!-- SIDEBAR -->
+  <aside class="side">
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 8V4M9 4h6M8 13h.01M16 13h.01M9.5 16.5a3 3 0 0 0 5 0"/></svg>
+      </div>
+      <div>
+        <h1>Nexus IA</h1>
+        <span>Panel de control</span>
+      </div>
+    </div>
+
+    <div class="nav-label">Categorías</div>
+
+    <button class="tree-parent open" id="parentBtn" onclick="toggleParent()">
+      <span class="dot"></span> Agentes IA
+      <svg class="chev" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+
+    <div class="tree-children" id="parentChildren">
+      <button class="tree-sub" onclick="go('fuentes')">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7v10c0 1.1 3.6 2 8 2s8-.9 8-2V7"/><path d="M4 7c0 1.1 3.6 2 8 2s8-.9 8-2-3.6-2-8-2-8 .9-8 2z"/></svg>
+        Base de Conocimientos
+      </button>
+      <div class="leaf-children">
+        <button class="tree-leaf active" id="leaf-fuentes" onclick="go('fuentes')">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+          Fuentes de datos
+        </button>
+        <button class="tree-leaf" id="leaf-rastreador" onclick="go('rastreador')">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M11 7v4l2 2M21 21l-3.5-3.5"/></svg>
+          Rastreador Web
+        </button>
+        <button class="tree-leaf" id="leaf-multimedia" onclick="go('multimedia')">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          Multimedia
+        </button>
+        <button class="tree-leaf" id="leaf-recursos" onclick="go('recursos')">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13l-4 4-4-4M12 17V9"/></svg>
+          Recursos enviables
+        </button>
+        <button class="tree-leaf" id="leaf-verde" onclick="go('verde')">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 17v4M8 21h8"/></svg>
+          Comportamiento del bot
+        </button>
+      </div>
+    </div>
+
+    <div class="side-foot">
+      <div class="bot-card">
+        <div class="row">
+          <div class="bot-ic">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="var(--amber)" stroke-width="2"><rect x="3" y="8" width="18" height="11" rx="2"/><path d="M12 8V5M8 13h.01M16 13h.01"/></svg>
+          </div>
+          <div>
+            <h4>Conexión</h4>
+            <p id="botStatusText">Verificando…</p>
+          </div>
+        </div>
+        <button class="link-btn" onclick="openConn()">Ver estado de conexión</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="crumb"><b>Agentes IA</b> › <b>Base de Conocimientos</b> › <span id="crumbLeaf">Fuentes de datos</span></div>
+        <div class="title" id="viewTitle">Fuentes de datos</div>
+        <div class="subtitle" id="viewSub">Carga archivos Excel o conecta Google Sheets. Esta información alimentará al chatbot una vez vinculado.</div>
+      </div>
+      <div class="badge" id="botBadge"><span class="pulse"></span> Chatbot · No vinculado</div>
+    </div>
+
+    <!-- ===== VIEW: FUENTES ===== -->
+    <div class="view show" id="view-fuentes">
+      <div class="stats">
+        <div class="stat"><div class="k">Fuentes activas</div><div class="v" id="stSources">0</div><div class="s">Excel + Google Sheets</div></div>
+        <div class="stat"><div class="k">Registros totales</div><div class="v" id="stRows">0</div><div class="s">Filas cargadas</div></div>
+        <div class="stat"><div class="k">Última carga</div><div class="v" id="stLast" style="font-size:18px">—</div><div class="s" id="stLastSub">Sin datos aún</div></div>
+        <div class="stat"><div class="k">Estado para el bot</div><div class="v" style="font-size:18px;color:var(--amber)">Pendiente</div><div class="s">Falta vincular</div></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M4 7v10c0 1.1 3.6 2 8 2s8-.9 8-2V7"/><path d="M4 7c0 1.1 3.6 2 8 2s8-.9 8-2-3.6-2-8-2-8 .9-8 2z"/></svg> Fuentes cargadas</h3>
+            <p>Documentos que componen la base de conocimientos.</p>
+          </div>
+          <button class="btn btn-primary" onclick="openSource()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg> Agregar fuente</button>
+        </div>
+        <div class="toolbar">
+          <div class="search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.5-3.5"/></svg>
+            <input type="text" id="srcSearch" placeholder="Buscar por nombre…" oninput="renderSources()">
+            <button class="clr" id="srcClr" onclick="document.getElementById('srcSearch').value='';renderSources();"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+          </div>
+          <select class="fdrop" id="srcType" onchange="renderSources()">
+            <option value="all">Todos los tipos</option>
+            <option value="excel">Excel</option>
+            <option value="sheets">Google Sheets</option>
+          </select>
+          <span class="fcount" id="srcFcount"></span>
+        </div>
+        <div id="sourcesWrap">
+          <table>
+            <thead><tr><th>Fuente</th><th>Tipo</th><th>Creado</th><th>Última actualización</th><th>Estado</th><th style="text-align:right">Acciones</th></tr></thead>
+            <tbody id="sourcesBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== VIEW: RASTREADOR ===== -->
+    <div class="view" id="view-rastreador">
+      <div class="stats">
+        <div class="stat"><div class="k">Sitios rastreados</div><div class="v" id="stTargets">0</div><div class="s">Objetivos configurados</div></div>
+        <div class="stat"><div class="k">Productos extraídos</div><div class="v" id="stProducts">0</div><div class="s">En la base</div></div>
+        <div class="stat"><div class="k">Precio promedio</div><div class="v" id="stAvg" style="font-size:22px">—</div><div class="s">De lo rastreado</div></div>
+        <div class="stat"><div class="k">Último rastreo</div><div class="v" id="stCrawl" style="font-size:18px">—</div><div class="s">Ejecución más reciente</div></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M11 7v4l2 2M21 21l-3.5-3.5"/></svg> Objetivos de rastreo <span class="demo-tag" title="El rastreo genera datos de ejemplo. La extracción real requiere un backend.">Modo demo</span></h3>
+            <p>Sitios desde los que se extraen productos, precios y más. El rastreo real se hará desde el servidor al conectarlo.</p>
+          </div>
+          <button class="btn btn-primary" onclick="openCrawl()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg> Nuevo rastreo</button>
+        </div>
+        <div class="targets" id="targetsWrap"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3>Productos extraídos <span class="faint" id="prodCount" style="font-weight:500"></span></h3>
+            <p id="prodFor">Resultados de todos los objetivos.</p>
+          </div>
+          <button class="btn btn-ghost" onclick="rerun()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6"/></svg> Re-ejecutar</button>
+        </div>
+        <div class="toolbar">
+          <div class="search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.5-3.5"/></svg>
+            <input type="text" id="prodSearch" placeholder="Buscar producto o SKU…" oninput="renderProducts()">
+            <button class="clr" id="prodClr" onclick="document.getElementById('prodSearch').value='';renderProducts();"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+          </div>
+          <select class="fdrop" id="prodStock" onchange="renderProducts()">
+            <option value="all">Toda disponibilidad</option>
+            <option value="Disponible">Disponible</option>
+            <option value="Pocas unidades">Pocas unidades</option>
+            <option value="Sin stock">Sin stock</option>
+          </select>
+          <select class="fdrop" id="prodSort" onchange="renderProducts()">
+            <option value="recent">Más recientes</option>
+            <option value="price-asc">Precio: menor a mayor</option>
+            <option value="price-desc">Precio: mayor a menor</option>
+            <option value="name">Nombre (A-Z)</option>
+          </select>
+          <span class="fcount" id="prodFcount"></span>
+        </div>
+        <div id="productsWrap">
+          <table>
+            <thead><tr><th>Producto</th><th>SKU</th><th>Precio</th><th>Disponibilidad</th><th>Origen</th><th>Actualizado</th></tr></thead>
+            <tbody id="productsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== VIEW: MULTIMEDIA ===== -->
+    <div class="view" id="view-multimedia">
+      <div class="stats">
+        <div class="stat"><div class="k">Archivos totales</div><div class="v" id="stMedia">0</div><div class="s">Imágenes, PDF, audio, video</div></div>
+        <div class="stat"><div class="k">Listos</div><div class="v" id="stMediaReady">0</div><div class="s">Reconocidos por el bot</div></div>
+        <div class="stat"><div class="k">En proceso</div><div class="v" id="stMediaProc">0</div><div class="s">Analizándose</div></div>
+        <div class="stat"><div class="k">Último agregado</div><div class="v" id="stMediaLast" style="font-size:18px">—</div><div class="s" id="stMediaLastSub">Sin archivos aún</div></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg> Archivos multimedia <span class="demo-tag" title="El reconocimiento es simulado. El análisis real lo hará el modelo del chatbot.">Modo demo</span></h3>
+            <p>Fotos, imágenes, PDF, notas de voz, audios y videos que el chatbot puede reconocer y responder.</p>
+          </div>
+          <button class="btn btn-primary" onclick="openMedia()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg> Agregar archivo</button>
+        </div>
+        <div class="toolbar">
+          <div class="search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.5-3.5"/></svg>
+            <input type="text" id="mediaSearch" placeholder="Buscar por nombre o contenido…" oninput="renderMedia()">
+            <button class="clr" id="mediaClr" onclick="document.getElementById('mediaSearch').value='';renderMedia();"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+          </div>
+          <select class="fdrop" id="mediaType" onchange="renderMedia()">
+            <option value="all">Todos los tipos</option>
+            <option value="image">Imágenes y fotos</option>
+            <option value="pdf">PDF</option>
+            <option value="voice">Notas de voz</option>
+            <option value="audio">Audios</option>
+            <option value="video">Videos</option>
+          </select>
+          <span class="fcount" id="mediaFcount"></span>
+        </div>
+        <div id="mediaWrap"></div>
+      </div>
+    </div>
+
+    <!-- ===== VIEW: RECURSOS ===== -->
+    <div class="view" id="view-recursos">
+      <div class="stats">
+        <div class="stat"><div class="k">Recursos totales</div><div class="v" id="stRes">0</div><div class="s">Listos para enviar</div></div>
+        <div class="stat"><div class="k">Activos</div><div class="v" id="stResActive">0</div><div class="s">El bot puede enviarlos</div></div>
+        <div class="stat"><div class="k">Disparadores</div><div class="v" id="stResTrig">0</div><div class="s">Frases que los activan</div></div>
+        <div class="stat"><div class="k">Categorías</div><div class="v" id="stResCat">0</div><div class="s">Garantía, pagos, envíos…</div></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg> Probar respuesta del chatbot</h3>
+            <p>Escribí lo que preguntaría un cliente y mirá qué recurso enviaría el bot.</p>
+          </div>
+        </div>
+        <div style="padding:16px 20px">
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <div class="search" style="flex:1;max-width:none">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <input type="text" id="resTest" placeholder="Ej. ¿cuánto dura la garantía? / ¿a qué cuenta transfiero?" onkeydown="if(event.key==='Enter')runResTest()">
+            </div>
+            <button class="btn btn-primary" onclick="runResTest()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z"/></svg> Probar</button>
+          </div>
+          <div id="resTestOut" style="margin-top:14px"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3>Recursos cargados</h3>
+            <p>PDF, imágenes, enlaces o textos que el chatbot envía según el tema consultado.</p>
+          </div>
+          <button class="btn btn-primary" onclick="openRes()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg> Agregar recurso</button>
+        </div>
+        <div class="toolbar">
+          <div class="search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.5-3.5"/></svg>
+            <input type="text" id="resSearch" placeholder="Buscar por nombre o disparador…" oninput="renderRes()">
+            <button class="clr" id="resClr" onclick="document.getElementById('resSearch').value='';renderRes();"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+          </div>
+          <select class="fdrop" id="resCat" onchange="renderRes()"><option value="all">Todas las categorías</option></select>
+          <span class="fcount" id="resFcount"></span>
+        </div>
+        <div id="resWrap"></div>
+      </div>
+    </div>
+
+    <!-- ===== VIEW: VERDE (comportamiento del bot) ===== -->
+    <div class="view" id="view-verde">
+      <div class="power-card" id="v_powerCard">
+        <div class="power-ic" id="v_powerIc">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v10M18.4 6.6a9 9 0 1 1-12.8 0"/></svg>
+        </div>
+        <div class="power-tx">
+          <h3 id="v_powerTitle">Verde está encendido</h3>
+          <p id="v_powerSub">Atiende a los clientes por WhatsApp con esta configuración.</p>
+        </div>
+        <button class="btn" id="v_powerBtn" onclick="toggleVerdePower()"></button>
+      </div>
+
+      <div class="note" style="margin-bottom:20px;border-left:3px solid var(--accent)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <span>Acá editás <b>cómo habla y vende Verde</b> sin tocar código. A la derecha ves, en vivo, el "cerebro" que se le arma al bot. Cuando un programador conecte el servidor de WhatsApp, esta configuración será la que use.</span>
+      </div>
+
+      <div class="panel" style="margin-bottom:20px">
+        <div class="panel-head">
+          <div><h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" style="vertical-align:-3px"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> Probar a Verde</h3><p>Escribile como si fueras un cliente y mirá cómo responde con tu configuración actual.</p></div>
+          <button class="btn btn-ghost" type="button" onclick="simReset()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6"/></svg> Reiniciar charla</button>
+        </div>
+        <div style="padding:16px 20px">
+          <div id="v_simHint" class="note" style="margin-bottom:14px;display:none"></div>
+          <div id="v_simChat" class="sim-chat"></div>
+          <div class="sim-input">
+            <input type="text" id="v_simInput" placeholder="Escribí un mensaje de cliente…" onkeydown="if(event.key==='Enter')simSend()">
+            <button class="btn btn-primary" type="button" id="v_simSend" onclick="simSend()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg> Enviar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="verde-grid">
+        <div class="verde-forms">
+          <!-- Sección A: Identidad -->
+          <div class="panel">
+            <div class="panel-head">
+              <div><h3><span class="sec-let">A</span> Identidad del bot</h3><p>Quién es y a qué se dedica.</p></div>
+              <button class="btn btn-primary" onclick="saveVerde('identidad')">Guardar</button>
+            </div>
+            <div style="padding:16px 20px">
+              <div class="field"><label>Nombre del bot</label><input type="text" id="v_nombre" oninput="buildVerdePrompt()"></div>
+              <div class="field"><label>Rol / descripción</label><input type="text" id="v_rol" oninput="buildVerdePrompt()"></div>
+              <div class="field"><label>Empresa</label><input type="text" id="v_empresa" oninput="buildVerdePrompt()"></div>
+              <div class="field"><label>Rubro del negocio</label><input type="text" id="v_rubro" oninput="buildVerdePrompt()"></div>
+              <div class="field" style="margin-bottom:0"><label>Idioma / variante</label>
+                <select id="v_idioma" onchange="buildVerdePrompt()"><option>Español rioplatense</option><option>Español neutro</option><option>Español de España</option></select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sección B: Personalidad -->
+          <div class="panel">
+            <div class="panel-head">
+              <div><h3><span class="sec-let">B</span> Personalidad y tono</h3><p>Cómo se comporta al escribir.</p></div>
+              <button class="btn btn-primary" onclick="saveVerde('personalidad')">Guardar</button>
+            </div>
+            <div style="padding:16px 20px">
+              <div class="field">
+                <label>Rasgos de personalidad <span class="faint" style="font-weight:400">(escribí y Enter para agregar)</span></label>
+                <div class="tagbox" id="v_rasgosBox" onclick="document.getElementById('v_rasgosInput').focus()">
+                  <span id="v_rasgosChips"></span>
+                  <input type="text" id="v_rasgosInput" placeholder="agregar rasgo…" onkeydown="rasgoKey(event)">
+                </div>
+              </div>
+              <div class="field"><label>Trato al cliente</label>
+                <select id="v_trato" onchange="buildVerdePrompt()"><option value="vos">De "vos" (rioplatense)</option><option value="tú">De "tú"</option><option value="usted">De "usted" (formal)</option></select>
+              </div>
+              <div class="field"><label>Largo máximo por mensaje (líneas)</label><input type="number" id="v_lineas" min="1" max="10" oninput="buildVerdePrompt()"></div>
+              <div class="field" style="margin-bottom:0"><label>Uso de emojis</label>
+                <select id="v_emojis" onchange="buildVerdePrompt()"><option value="nada">Nada</option><option value="moderado">Moderado</option><option value="abundante">Abundante</option></select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sección C: Ventajas -->
+          <div class="panel">
+            <div class="panel-head">
+              <div><h3><span class="sec-let">C</span> Ventajas / diferenciales</h3><p>Lo que Verde destaca para convencer.</p></div>
+              <button class="btn btn-primary" onclick="saveVerde('ventajas')">Guardar</button>
+            </div>
+            <div style="padding:14px 20px">
+              <div id="v_ventajasList"></div>
+              <button class="btn btn-ghost" type="button" onclick="addVentaja()" style="margin-top:10px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg> Agregar ventaja</button>
+            </div>
+          </div>
+
+          <!-- Sección D: Pasos de venta -->
+          <div class="panel">
+            <div class="panel-head">
+              <div><h3><span class="sec-let">D</span> Pasos del proceso de venta</h3><p>El orden importa. Arrastrá para reordenar; apagá los que no quieras.</p></div>
+              <button class="btn btn-primary" onclick="saveVerde('pasos')">Guardar</button>
+            </div>
+            <div style="padding:14px 20px">
+              <div id="v_pasosList"></div>
+              <button class="btn btn-ghost" type="button" onclick="addPaso()" style="margin-top:10px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg> Agregar paso</button>
+            </div>
+          </div>
+
+          <!-- Sección E: Objeciones -->
+          <div class="panel">
+            <div class="panel-head">
+              <div><h3><span class="sec-let">E</span> Manejo de objeciones</h3><p>"Si el cliente dice… → Verde responde…"</p></div>
+              <button class="btn btn-primary" onclick="saveVerde('objeciones')">Guardar</button>
+            </div>
+            <div style="padding:14px 20px">
+              <div id="v_objList"></div>
+              <button class="btn btn-ghost" type="button" onclick="addObj()" style="margin-top:10px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg> Agregar objeción</button>
+            </div>
+          </div>
+
+          <!-- Sección F: Reglas de oro -->
+          <div class="panel">
+            <div class="panel-head">
+              <div><h3><span class="sec-let">F</span> Reglas de oro</h3><p>Lo que Verde siempre debe cumplir.</p></div>
+              <button class="btn btn-primary" onclick="saveVerde('reglas')">Guardar</button>
+            </div>
+            <div style="padding:14px 20px">
+              <div id="v_reglasList"></div>
+              <button class="btn btn-ghost" type="button" onclick="addRegla()" style="margin-top:10px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg> Agregar regla</button>
+            </div>
+          </div>
+
+          <!-- Sección G: Frases clave -->
+          <div class="panel">
+            <div class="panel-head">
+              <div><h3><span class="sec-let">G</span> Frases clave</h3><p>Mensajes fijos que Verde usa en momentos puntuales.</p></div>
+              <button class="btn btn-primary" onclick="saveVerde('frases')">Guardar</button>
+            </div>
+            <div style="padding:16px 20px">
+              <div class="field"><label>Mensaje de bienvenida</label><textarea id="v_fBien" rows="2" oninput="buildVerdePrompt()" placeholder="Primer saludo del bot…"></textarea></div>
+              <div class="field"><label>Mensaje al derivar a un humano</label><textarea id="v_fDeriv" rows="2" oninput="buildVerdePrompt()" placeholder="Cuando pasa a un asesor…"></textarea></div>
+              <div class="field" style="margin-bottom:0"><label>Mensaje de error técnico</label><textarea id="v_fError" rows="2" oninput="buildVerdePrompt()" placeholder="Si el bot falla…"></textarea></div>
+            </div>
+          </div>
+
+          <!-- Sección H: Parámetros técnicos -->
+          <div class="panel">
+            <div class="panel-head">
+              <div><h3><span class="sec-let">H</span> Parámetros técnicos</h3><p>Avanzado. Si no estás seguro, dejalo como está.</p></div>
+              <button class="btn btn-primary" onclick="saveVerde('tecnico')">Guardar</button>
+            </div>
+            <div style="padding:16px 20px">
+              <div class="note" style="margin-bottom:14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg><span>Tocá esto solo si sabés lo que hacés. El identificador del modelo conviene confirmarlo con tu programador.</span></div>
+              <div class="field"><label>Modelo de IA</label>
+                <input type="text" id="v_modelo" list="v_modelos" oninput="buildVerdePrompt()" placeholder="claude-…">
+                <datalist id="v_modelos">
+                  <option value="claude-sonnet-4-5"></option>
+                  <option value="claude-sonnet-4-6"></option>
+                  <option value="claude-opus-4-8"></option>
+                  <option value="claude-haiku-4-5"></option>
+                </datalist>
+              </div>
+              <div class="field"><label>Largo máximo de respuesta (tokens)</label><input type="number" id="v_tokens" min="100" max="8000" step="50"></div>
+              <div class="field" style="margin-bottom:0"><label>Memoria de conversación (cantidad de mensajes)</label><input type="number" id="v_memoria" min="2" max="100"></div>
+            </div>
+          </div>
+
+          <div class="note" style="border-left:3px solid var(--green)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>
+            <span><b>Editor completo.</b> Ya podés configurar todo el comportamiento de Verde. Falta sumar el <b>simulador</b> y el botón de <b>restaurar valores por defecto</b>.</span>
+          </div>
+        </div>
+
+        <!-- Vista previa del prompt -->
+        <div class="verde-preview">
+          <div class="panel" style="position:sticky;top:20px">
+            <div class="panel-head">
+              <div><h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0"/></svg> Cerebro de Verde <span class="faint" style="font-weight:500;font-size:12px">(vista previa en vivo)</span></h3><p>Esto es lo que recibe el bot. Se arma solo con lo que editás.</p></div>
+            </div>
+            <div style="padding:16px 20px">
+              <pre id="v_preview" class="prompt-preview"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<!-- ===== MODAL: CONFIRM ===== -->
+<div class="overlay" id="confirmOverlay">
+  <div class="modal confirm-modal">
+    <div class="modal-head" style="padding-bottom:0">
+      <div></div>
+      <button class="x-btn" onclick="closeConfirm()"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="confirm-body">
+      <div class="confirm-ic" id="confirmIc">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>
+      </div>
+      <div class="confirm-txt">
+        <h3 id="confirmTitle">¿Confirmás?</h3>
+        <p id="confirmMsg"></p>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn btn-danger" id="confirmOk" onclick="acceptConfirm()">Borrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: SOURCE ===== -->
+<div class="overlay" id="srcOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div><h3 id="srcModalTitle">Agregar fuente</h3><p>Suma un documento a la base de conocimientos.</p></div>
+      <button class="x-btn" onclick="close_('srcOverlay')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-err" id="srcErr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span id="srcErrMsg"></span></div>
+      <div class="tabs" id="srcTabs">
+        <button class="tab active" data-t="excel" onclick="srcTab('excel')">Archivo Excel</button>
+        <button class="tab" data-t="sheets" onclick="srcTab('sheets')">Google Sheets</button>
+      </div>
+
+      <div id="tab-excel">
+        <div class="field">
+          <label>Nombre de la fuente</label>
+          <input type="text" id="srcName" placeholder="Ej. Catálogo de productos 2025">
+        </div>
+        <div class="drop" id="dropZone" onclick="document.getElementById('fileInput').click()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4M8 8l4-4 4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+          <div><b>Haz clic para subir</b> un archivo</div>
+          <div class="faint" style="margin-top:4px">.xlsx · .xls · .csv</div>
+        </div>
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="onFile(this)">
+        <div class="filebox" id="fileBox">
+          <div class="fn"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--green)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg> <span id="fileName"></span></div>
+          <div class="fd" id="fileDetail"></div>
+        </div>
+      </div>
+
+      <div id="tab-sheets" style="display:none">
+        <div class="field">
+          <label>Nombre de la fuente</label>
+          <input type="text" id="sheetName" placeholder="Ej. Inventario en vivo">
+        </div>
+        <div class="field">
+          <label>URL de Google Sheets</label>
+          <input type="url" id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/...">
+        </div>
+        <div class="note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+          La hoja debe ser accesible mediante enlace. En la versión conectada se sincronizará automáticamente.
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="close_('srcOverlay')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveSource()">Guardar fuente</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: CRAWL ===== -->
+<div class="overlay" id="crawlOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div><h3>Nuevo rastreo web</h3><p>Configura un sitio para extraer datos de productos.</p></div>
+      <button class="x-btn" onclick="close_('crawlOverlay')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-err" id="crErr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span id="crErrMsg"></span></div>
+      <div class="field">
+        <label>Nombre del objetivo</label>
+        <input type="text" id="crName" placeholder="Ej. Tienda competidora">
+      </div>
+      <div class="field">
+        <label>URL a rastrear</label>
+        <input type="url" id="crUrl" placeholder="https://tienda.com/categoria">
+      </div>
+      <div class="field">
+        <label>Datos a extraer</label>
+        <div class="checks" id="crFields">
+          <div class="check on" data-f="Precio" onclick="toggleField(this)"><span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>Precio</div>
+          <div class="check on" data-f="Nombre" onclick="toggleField(this)"><span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>Nombre</div>
+          <div class="check on" data-f="Stock" onclick="toggleField(this)"><span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>Disponibilidad</div>
+          <div class="check" data-f="SKU" onclick="toggleField(this)"><span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>SKU / código</div>
+          <div class="check" data-f="Imagen" onclick="toggleField(this)"><span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>Imágenes</div>
+          <div class="check" data-f="Rating" onclick="toggleField(this)"><span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>Valoraciones</div>
+        </div>
+      </div>
+      <div class="crawl-anim" id="crawlAnim">
+        <div class="faint" id="crawlMsg">Conectando con el sitio…</div>
+        <div class="bar"><i id="crawlBar"></i></div>
+      </div>
+    </div>
+    <div class="modal-foot" id="crawlFoot">
+      <button class="btn btn-ghost" onclick="close_('crawlOverlay')">Cancelar</button>
+      <button class="btn btn-primary" onclick="runCrawl()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z"/></svg> Iniciar rastreo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: LINK ===== -->
+<div class="overlay" id="linkOverlay">
+  <div class="modal" style="max-width:470px">
+    <div class="modal-head">
+      <div><h3>Estado de conexión</h3><p>Qué está conectado y qué falta para que Verde funcione.</p></div>
+      <button class="x-btn" onclick="close_('linkOverlay')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div id="connRows"></div>
+      <div class="note" style="margin-top:14px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        El bot lee la misma base de datos que editás acá: no hace falta pegar ningún código. La conexión con WhatsApp y la IA se configuran en los próximos pasos del servidor.
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="checkConn()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6"/></svg> Actualizar</button>
+      <button class="btn btn-primary" onclick="close_('linkOverlay')">Entendido</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: PREVIEW ===== -->
+<div class="overlay" id="prevOverlay">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-head">
+      <div>
+        <h3 id="prevTitle">Vista previa</h3>
+        <p id="prevMeta">Muestra del contenido de la fuente.</p>
+      </div>
+      <button class="x-btn" onclick="close_('prevOverlay')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="prev-tools">
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.5-3.5"/></svg>
+          <input type="text" id="prevSearch" placeholder="Buscar en cualquier columna…" oninput="renderPrevTable()">
+          <button class="clr" id="prevClr" onclick="document.getElementById('prevSearch').value='';renderPrevTable();"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+        </div>
+        <span class="fcount" id="prevFcount"></span>
+      </div>
+      <div class="prev-filter" id="prevFilterBar">
+        <span class="pf-label">Filtrar por</span>
+        <select class="fdrop" id="prevCol" onchange="onPrevCol()"></select>
+        <select class="fdrop" id="prevVal" onchange="renderPrevTable()"></select>
+        <button class="pf-clear" id="prevFilterClr" onclick="clearPrevFilter()">Limpiar</button>
+      </div>
+      <div id="prevTableWrap" class="prev-wrap"></div>
+      <div class="note" style="margin-top:14px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+        <span id="prevNote">Se muestran las primeras filas. El chatbot usará el contenido completo de la fuente.</span>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="close_('prevOverlay')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: MEDIA UPLOAD ===== -->
+<div class="overlay" id="mediaOverlay">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head">
+      <div><h3>Agregar archivo multimedia</h3><p>El chatbot lo analizará para poder responder sobre su contenido.</p></div>
+      <button class="x-btn" onclick="close_('mediaOverlay')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-err" id="mediaErr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span id="mediaErrMsg"></span></div>
+      <div class="drop" id="mediaDrop" onclick="document.getElementById('mediaInput').click()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4M8 8l4-4 4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        <div><b>Haz clic para subir</b> un archivo</div>
+        <div class="faint" style="margin-top:4px">Imágenes · PDF · audio · notas de voz · video</div>
+      </div>
+      <input type="file" id="mediaInput" accept="image/*,application/pdf,audio/*,video/*" style="display:none" onchange="onMediaFile(this)">
+      <div class="filebox" id="mediaFileBox" style="margin-top:12px">
+        <div class="fn"><span id="mediaFileName"></span></div>
+        <div class="fd" id="mediaFileDetail"></div>
+      </div>
+      <div class="field" id="mediaTypeField" style="display:none;margin-top:14px">
+        <label>Tipo de archivo</label>
+        <div class="type-pick" id="mediaTypePick"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="close_('mediaOverlay')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveMedia()">Agregar y analizar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: MEDIA PREVIEW ===== -->
+<div class="overlay" id="mprevOverlay">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-head">
+      <div><h3 id="mprevTitle">Archivo</h3><p id="mprevMeta"></p></div>
+      <button class="x-btn" onclick="close_('mprevOverlay')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body" id="mprevBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="close_('mprevOverlay')">Cerrar</button>
+      <button class="btn btn-primary" id="mprevEdit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg> Editar contenido</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: MEDIA EDIT ===== -->
+<div class="overlay" id="medEditOverlay">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-head">
+      <div><h3>Editar contenido reconocido</h3><p id="medEditName">Ajustá lo que el chatbot entiende de este archivo.</p></div>
+      <button class="x-btn" onclick="close_('medEditOverlay')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label id="medRecLabel">Contenido reconocido</label>
+        <textarea id="medRec" rows="4" placeholder="Descripción, transcripción o texto detectado…"></textarea>
+        <div class="faint" style="margin-top:6px;font-size:11.5px">Corregir el borrador automático es lo que más mejora la coherencia de las respuestas.</div>
+      </div>
+      <div class="field">
+        <label>Resumen corto <span class="faint" style="font-weight:400">(opcional)</span></label>
+        <input type="text" id="medSummary" placeholder="Ej. Política de devoluciones: 30 días, producto sin uso">
+      </div>
+      <div class="field">
+        <label>Etiquetas <span class="faint" style="font-weight:400">(separadas por coma)</span></label>
+        <input type="text" id="medTags" placeholder="devoluciones, envíos, garantía">
+      </div>
+      <div class="field">
+        <label>Instrucciones para el chatbot <span class="faint" style="font-weight:400">(cuándo usar este archivo)</span></label>
+        <textarea id="medInstr" rows="2" placeholder="Ej. Usar para responder dudas sobre devoluciones y reintegros."></textarea>
+      </div>
+      <label class="check" id="medVerify" onclick="this.classList.toggle('on')" style="grid-column:1/-1">
+        <span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>
+        Marcar como revisado por una persona (sube la confianza para el bot)
+      </label>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="close_('medEditOverlay')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveMediaEdit()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: RESOURCE EDIT ===== -->
+<div class="overlay" id="resOverlay">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-head">
+      <div><h3 id="resModalTitle">Agregar recurso</h3><p>El chatbot lo enviará cuando el cliente pregunte por este tema.</p></div>
+      <button class="x-btn" onclick="close_('resOverlay')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-err" id="resErr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span id="resErrMsg"></span></div>
+      <div class="field">
+        <label>Nombre del recurso</label>
+        <input type="text" id="resName" placeholder="Ej. Términos y condiciones de garantía">
+      </div>
+      <div class="field">
+        <label>Categoría</label>
+        <select id="resCatSel">
+          <option>Garantía</option><option>Pagos</option><option>Envíos</option>
+          <option>Datos de contacto</option><option>Legales</option><option>Formularios</option>
+          <option>Autorizaciones</option><option>Otros</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Contenido a enviar <span class="faint" style="font-weight:400">(uno o varios elementos)</span></label>
+        <div id="resItemsList"></div>
+        <div class="additem">
+          <div class="type-pick" id="resTypePick" style="grid-template-columns:repeat(4,1fr)"></div>
+          <div id="resFileField" style="display:none">
+            <div class="drop" id="resDrop" onclick="document.getElementById('resFileInput').click()" style="padding:18px 16px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4M8 8l4-4 4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+              <div id="resFilePrompt"><b>Haz clic para subir</b> el archivo</div>
+            </div>
+            <input type="file" id="resFileInput" style="display:none" onchange="onResFile(this)">
+          </div>
+          <input type="url" id="resUrl" placeholder="https://…" style="display:none">
+          <textarea id="resText" rows="2" placeholder="Ej. Banco XX · Cuenta 0000-0000 · Titular: Mi Empresa S.A." style="display:none"></textarea>
+          <button class="btn btn-ghost" type="button" onclick="addResItem()" style="width:100%;justify-content:center;margin-top:10px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg> Agregar a la lista</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Mensaje que acompaña el envío <span class="faint" style="font-weight:400">(opcional)</span></label>
+        <input type="text" id="resMsg" placeholder="Ej. Acá tenés los términos de la garantía 👇">
+      </div>
+      <div class="field">
+        <label>Disparadores <span class="faint" style="font-weight:400">(frases o palabras del cliente, separadas por coma)</span></label>
+        <textarea id="resTriggers" rows="2" placeholder="garantía, términos y condiciones, cuánto dura la garantía"></textarea>
+      </div>
+      <label class="check on" id="resActive" onclick="this.classList.toggle('on')" style="grid-column:1/-1">
+        <span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>
+        Activo (el chatbot puede enviarlo)
+      </label>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="close_('resOverlay')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveRes()">Guardar recurso</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: RESOURCE VIEW ===== -->
+<div class="overlay" id="resViewOverlay">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head">
+      <div><h3 id="resViewTitle">Recurso</h3><p id="resViewMeta"></p></div>
+      <button class="x-btn" onclick="close_('resViewOverlay')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body" id="resViewBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="close_('resViewOverlay')">Cerrar</button>
+      <button class="btn btn-primary" id="resViewEdit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg> Editar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- estado ---------- */
+const KEY='nexus_kb_v1';
+let DB={sources:[],targets:[],products:[],media:[],resources:[],verde:null,bot:{linked:false,endpoint:''}};
+let activeTarget='all';
+let currentView='fuentes';
+
+const FMT={excel:'Excel',sheets:'Google Sheets'};
+const PROD_NAMES=['Auriculares Bluetooth Pro','Teclado mecánico RGB','Mouse inalámbrico ergonómico','Monitor 27" QHD','Webcam 1080p','SSD NVMe 1TB','Cargador USB-C 65W','Hub USB 7 en 1','Silla gamer reclinable','Lámpara LED escritorio','Soporte para portátil','Micrófono condensador','Router WiFi 6','Disco externo 2TB','Parlante portátil','Smartwatch deportivo','Tablet 10"','Cámara de seguridad','Power bank 20000mAh','Tira LED inteligente'];
+
+/* ---------- persistencia ----------
+   Intenta el servidor (backend real). Si no hay servidor (vista previa / archivo suelto),
+   usa el almacenamiento del navegador como respaldo. Así anda en los dos modos. */
+let _backendOk=null; // null=desconocido, true=hay servidor, false=no
+async function load(){
+  try{
+    const r=await fetch('/api/state',{headers:{'Accept':'application/json'},cache:'no-store'});
+    if(r.ok){const j=await r.json(); _backendOk=true; return (j&&j.state)?j.state:null;}
+  }catch(e){_backendOk=false;}
+  try{const r=await window.storage.get(KEY); if(r&&r.value) return JSON.parse(r.value);}catch(e){}
+  return null;
+}
+async function save(){
+  if(_backendOk!==false){
+    try{
+      const r=await fetch('/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({state:DB})});
+      if(r.ok){_backendOk=true; return;}
+    }catch(e){_backendOk=false;}
+  }
+  try{await window.storage.set(KEY,JSON.stringify(DB));}catch(e){console.warn('storage no disponible',e);}
+}
+
+/* ---------- utilidades ---------- */
+const now=()=>new Date().toISOString();
+const uid=()=>Math.random().toString(36).slice(2,9);
+function fmtDate(iso){
+  const d=new Date(iso);const dd=String(d.getDate()).padStart(2,'0');
+  const M=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][d.getMonth()];
+  return `${dd} ${M} ${d.getFullYear()}`;
+}
+function fmtDateTime(iso){const d=new Date(iso);return fmtDate(iso)+' · '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+function ago(iso){
+  const s=(Date.now()-new Date(iso))/1000;
+  if(s<60)return'hace instantes';if(s<3600)return`hace ${Math.floor(s/60)} min`;
+  if(s<86400)return`hace ${Math.floor(s/3600)} h`;return`hace ${Math.floor(s/86400)} d`;
+}
+const money=n=>'$'+n.toLocaleString('es-UY',{minimumFractionDigits:0});
+
+/* ---------- semilla ---------- */
+function seed(){
+  const t=Date.now();
+  DB.sources=[
+    {id:uid(),name:'Catálogo de productos 2025',type:'excel',rows:842,cols:9,size:'214 KB',created:new Date(t-86400000*12).toISOString(),updated:new Date(t-86400000*2).toISOString(),status:'ok',
+     preview:[['SKU','Nombre','Categoría','Precio','Stock','Marca'],
+       ['SKU-1042','Auriculares Bluetooth Pro','Audio','2490','38','Sonix'],
+       ['SKU-1108','Teclado mecánico RGB','Periféricos','3190','12','Keytron'],
+       ['SKU-1155','Monitor 27" QHD','Pantallas','11900','5','Visor'],
+       ['SKU-1203','SSD NVMe 1TB','Almacenamiento','4290','24','DataX'],
+       ['SKU-1260','Webcam 1080p','Video','1790','0','Optik'],
+       ['SKU-1304','Mouse inalámbrico ergonómico','Periféricos','1290','41','Keytron'],
+       ['SKU-1351','Parlante portátil','Audio','2990','17','Sonix'],
+       ['SKU-1402','Router WiFi 6','Redes','5490','9','NetPro'],
+       ['SKU-1448','Hub USB 7 en 1','Conectividad','1690','33','DataX'],
+       ['SKU-1490','Micrófono condensador','Audio','3890','6','Sonix'],
+       ['SKU-1533','Disco externo 2TB','Almacenamiento','3290','15','DataX'],
+       ['SKU-1571','Smartwatch deportivo','Wearables','4990','22','Optik']]},
+    {id:uid(),name:'Preguntas frecuentes (FAQ)',type:'excel',rows:64,cols:3,size:'31 KB',created:new Date(t-86400000*30).toISOString(),updated:new Date(t-86400000*9).toISOString(),status:'ok',
+     preview:[['Pregunta','Respuesta','Categoría'],
+       ['¿Cuánto demora el envío?','Entre 24 y 72 hs hábiles según zona.','Envíos'],
+       ['¿Puedo pagar en cuotas?','Sí, hasta 12 cuotas con tarjetas seleccionadas.','Pagos'],
+       ['¿Cómo hago una devolución?','Tenés 30 días desde la entrega para devolver.','Devoluciones'],
+       ['¿Hacen factura?','Sí, se emite automáticamente con cada compra.','Facturación']]},
+    {id:uid(),name:'Inventario en vivo',type:'sheets',url:'https://docs.google.com/spreadsheets/d/1a…',rows:1280,cols:6,created:new Date(t-86400000*5).toISOString(),updated:new Date(t-3600000*4).toISOString(),status:'sync',
+     preview:[['SKU','Producto','Depósito','Disponible','Reservado','Actualizado'],
+       ['SKU-1042','Auriculares Bluetooth Pro','Central','38','4','Hoy 09:12'],
+       ['SKU-1108','Teclado mecánico RGB','Central','12','1','Hoy 09:12'],
+       ['SKU-1260','Webcam 1080p','Sucursal Norte','0','0','Hoy 09:12'],
+       ['SKU-1311','Router WiFi 6','Central','27','3','Hoy 09:12']]}
+  ];
+  const tg={id:uid(),name:'Tienda competidora',url:'https://competencia.com/ofertas',fields:['Precio','Nombre','Stock','SKU'],created:new Date(t-86400000*3).toISOString(),lastRun:new Date(t-3600000*6).toISOString()};
+  DB.targets=[tg];
+  DB.products=genProducts(tg.id,8,tg.name);
+  DB.media=[
+    {id:uid(),name:'foto-producto-auriculares.jpg',type:'image',size:'1.2 MB',thumb:null,created:new Date(t-86400000*4).toISOString(),status:'ready',confidence:91,verified:false,
+     summary:'Foto de catálogo de los auriculares Bluetooth Pro.',tags:['producto','audio','auriculares'],instructions:'Usar para responder sobre el aspecto, color y características visibles del producto.',
+     rec:'Imagen de unos auriculares inalámbricos negros sobre fondo claro. Se distingue el logo de la marca y el estuche de carga. Texto visible: "Bluetooth 5.3".'},
+    {id:uid(),name:'politica-de-devoluciones.pdf',type:'pdf',size:'380 KB',pages:4,created:new Date(t-86400000*6).toISOString(),status:'ready',confidence:96,verified:true,
+     summary:'Política de devoluciones: 30 días, producto sin uso.',tags:['devoluciones','garantía','políticas'],instructions:'Usar para responder dudas sobre devoluciones, plazos y reintegros.',
+     rec:'Documento de 4 páginas sobre la política de devoluciones: plazo de 30 días, condiciones del producto, pasos para iniciar el trámite y reintegro del importe.'},
+    {id:uid(),name:'nota-de-voz-cliente.ogg',type:'voice',size:'140 KB',dur:'0:38',created:new Date(t-3600000*20).toISOString(),status:'ready',confidence:64,verified:false,
+     summary:'',tags:['consulta','stock'],instructions:'',
+     rec:'Transcripción: "Hola, quería saber si el teclado mecánico está disponible en color blanco y si hacen envíos al interior."'},
+    {id:uid(),name:'demo-instalacion.mp4',type:'video',size:'8.4 MB',dur:'1:12',created:new Date(t-3600000*5).toISOString(),status:'ready',confidence:82,verified:false,
+     summary:'Tutorial de instalación del router en 3 pasos.',tags:['tutorial','router','instalación'],instructions:'Usar para guiar la instalación y configuración del router.',
+     rec:'Video tutorial de instalación del router. Escenas: desempaque, conexión del cable, configuración por app. Transcripción del audio: "Conectá el router a la corriente y esperá la luz verde…"'}
+  ];
+  DB.resources=[
+    {id:uid(),name:'Términos y condiciones de garantía',category:'Garantía',
+     items:[
+       {type:'pdf',fileName:'garantia-terminos.pdf',fileDetail:'PDF · 220 KB'},
+       {type:'image',fileName:'certificado-garantia.png',fileDetail:'Imagen · 180 KB'},
+       {type:'link',url:'https://miempresa.com/garantia'}
+     ],
+     message:'Acá tenés todo sobre la garantía: el PDF con los términos, el modelo de certificado y el enlace con más detalle 👇',
+     triggers:['garantía','terminos de garantia','cuánto dura la garantía','condiciones de garantia'],active:true,created:new Date(t-86400000*8).toISOString()},
+    {id:uid(),name:'Datos para transferencias',category:'Pagos',
+     items:[{type:'text',text:'Banco República — Cuenta corriente $ N.º 001234567\nTitular: Mi Empresa S.A. — RUT 21000000123\nEnviá el comprobante por este chat.'}],
+     message:'Estos son nuestros datos para transferencia bancaria:',triggers:['número de cuenta','cuenta bancaria','transferencia','a qué cuenta','datos para pagar','formas de pago'],active:true,created:new Date(t-86400000*6).toISOString()},
+    {id:uid(),name:'Cómo llegar al local',category:'Datos de contacto',
+     items:[{type:'link',url:'https://maps.google.com/?q=Mi+Local'},{type:'text',text:'Av. Principal 1234, Montevideo. Lun a Vie 9–18 h.'}],
+     message:'Acá podés ver nuestra dirección y cómo llegar:',triggers:['dirección','dónde están','cómo llego','ubicación','local'],active:true,created:new Date(t-86400000*4).toISOString()},
+    {id:uid(),name:'Formulario de autorización de menores',category:'Autorizaciones',
+     items:[{type:'pdf',fileName:'autorizacion-menores.pdf',fileDetail:'PDF · 95 KB'}],
+     message:'Completá y firmá este formulario de autorización:',triggers:['autorización','formulario','permiso menores','autorizacion menor'],active:false,created:new Date(t-86400000*2).toISOString()}
+  ];
+}
+function genProducts(targetId,n,origin){
+  const out=[];const pool=[...PROD_NAMES].sort(()=>Math.random()-.5);
+  for(let i=0;i<n;i++){
+    const base=Math.floor(Math.random()*1900)+99;
+    const avail=Math.random();
+    out.push({
+      id:uid(),targetId,name:pool[i%pool.length],
+      sku:'SKU-'+Math.floor(1000+Math.random()*9000),
+      price:base*((Math.random()*.5)+.8)|0,
+      stock:avail>.75?'Sin stock':avail>.4?'Pocas unidades':'Disponible',
+      origin,updated:now()
+    });
+  }
+  return out;
+}
+
+/* ---------- navegación ---------- */
+function toggleParent(){
+  const b=document.getElementById('parentBtn');b.classList.toggle('open');
+  document.getElementById('parentChildren').style.display=b.classList.contains('open')?'flex':'none';
+}
+function go(view){
+  if(currentView==='verde' && view!=='verde' && verdeHasUnsaved()){
+    askConfirm({title:'Cambios sin guardar',message:'Tenés cambios en el comportamiento de Verde que todavía no guardaste. Si salís ahora, se pierden. ¿Querés salir igual?',okLabel:'Salir sin guardar',icon:'warn'},()=>_doGo(view));
+    return;
+  }
+  _doGo(view);
+}
+function _doGo(view){
+  currentView=view;
+  document.querySelectorAll('.tree-leaf').forEach(l=>l.classList.remove('active'));
+  document.getElementById('leaf-'+view).classList.add('active');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('show'));
+  document.getElementById('view-'+view).classList.add('show');
+  const meta={
+    fuentes:['Fuentes de datos','Carga archivos Excel o conecta Google Sheets. Esta información alimentará al chatbot una vez vinculado.'],
+    rastreador:['Rastreador Web','Extrae productos, precios y disponibilidad de sitios web hacia la base de conocimientos.'],
+    multimedia:['Multimedia','Fotos, imágenes, PDF, notas de voz, audios y videos que el chatbot reconoce para poder responder sobre ellos.'],
+    recursos:['Recursos enviables','PDF, imágenes, enlaces o textos que el chatbot reconoce y envía al cliente cuando pregunta por temas clave.'],
+    verde:['Comportamiento del bot','Editá la personalidad, los pasos de venta, las objeciones y las reglas de Verde sin tocar código.']
+  }[view];
+  if(view==='verde')renderVerde();
+  document.getElementById('viewTitle').textContent=meta[0];
+  document.getElementById('viewSub').textContent=meta[1];
+  document.getElementById('crumbLeaf').textContent=meta[0];
+}
+
+/* ---------- render fuentes ---------- */
+function renderSources(){
+  updateStats();
+  const wrap=document.getElementById('sourcesWrap');
+  const q=(document.getElementById('srcSearch')?.value||'').trim().toLowerCase();
+  const type=document.getElementById('srcType')?.value||'all';
+  document.getElementById('srcClr')?.classList.toggle('show',!!q);
+
+  if(!DB.sources.length){
+    document.getElementById('srcFcount').textContent='';
+    wrap.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7v10c0 1.1 3.6 2 8 2s8-.9 8-2V7"/><path d="M4 7c0 1.1 3.6 2 8 2s8-.9 8-2-3.6-2-8-2-8 .9-8 2z"/></svg><p>Aún no hay fuentes. Agrega un Excel o Google Sheets para empezar.</p></div>';
+    return;
+  }
+  const list=DB.sources.filter(s=>
+    (type==='all'||s.type===type) &&
+    (!q || s.name.toLowerCase().includes(q) || (s.url||'').toLowerCase().includes(q))
+  );
+  document.getElementById('srcFcount').innerHTML=`<b>${list.length}</b> de ${DB.sources.length}`;
+
+  if(!list.length){
+    wrap.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.5-3.5"/></svg><p>Ninguna fuente coincide con la búsqueda.</p></div>';
+    return;
+  }
+  wrap.innerHTML='<table><thead><tr><th>Fuente</th><th>Tipo</th><th>Creado</th><th>Última actualización</th><th>Estado</th><th style="text-align:right">Acciones</th></tr></thead><tbody id="sourcesBody"></tbody></table>';
+  const body=document.getElementById('sourcesBody');
+  list.forEach(s=>{
+    const isX=s.type==='excel';
+    const meta=isX?`${s.rows} filas · ${s.cols} columnas${s.size?' · '+s.size:''}`:(s.url||'Google Sheets vinculado');
+    const st=s.status==='error'?'<span class="pill err"><span class="d"></span>Error</span>'
+      :s.status==='sync'?'<span class="pill ok"><span class="d"></span>Actualizando</span>'
+      :'<span class="pill ok"><span class="d"></span>Listo</span>';
+    const errMeta=s.status==='error'&&s.errorMsg?`<div class="meta" style="color:var(--red)">${esc(s.errorMsg)}</div>`:'';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td><div class="src-name"><div class="src-ic ${s.type}">${isX
+        ?'<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13l6 6M15 13l-6 6"/></svg>'
+        :'<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>'}</div>
+        <div><div class="nm" style="cursor:pointer" onclick="openPreview('${s.id}')">${esc(s.name)}</div><div class="meta">${esc(meta)}</div>${errMeta}</div></div></td>
+      <td><span class="tag ${s.type}"><span class="d" style="width:6px;height:6px;border-radius:50%;background:currentColor"></span>${FMT[s.type]}</span></td>
+      <td class="muted">${fmtDate(s.created)}</td>
+      <td><div>${fmtDate(s.updated)}</div><div class="faint">${ago(s.updated)}</div></td>
+      <td>${st}</td>
+      <td><div class="actions">
+        <button class="ico-btn" title="Ver contenido" onclick="openPreview('${s.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        <button class="ico-btn" title="Editar" onclick="editSource('${s.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
+        <button class="ico-btn" title="${s.status==='error'?'Reintentar':'Re-sincronizar'}" onclick="resync('${s.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="${s.status==='error'?'var(--amber)':'currentColor'}" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6"/></svg></button>
+        <button class="ico-btn danger" title="Borrar" onclick="delSource('${s.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg></button>
+      </div></td>`;
+    body.appendChild(tr);
+  });
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- toasts y errores ---------- */
+function toast(title,text,type){
+  type=type||'info';
+  const icons={
+    success:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/>',
+    error:'<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/>',
+    info:'<circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/>'
+  };
+  const el=document.createElement('div');el.className='toast '+type;
+  el.innerHTML=`<svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${icons[type]}</svg>
+    <div style="flex:1"><div class="tt">${esc(title)}</div>${text?`<div class="tx">${esc(text)}</div>`:''}</div>
+    <span class="tc">✕</span>`;
+  const kill=()=>{el.classList.add('out');setTimeout(()=>el.remove(),250);};
+  el.querySelector('.tc').onclick=kill;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(kill,4600);
+}
+function showErr(id,msg){const e=document.getElementById(id);if(!e)return;e.classList.add('show');e.querySelector('span').textContent=msg;}
+function hideErr(id){document.getElementById(id)?.classList.remove('show');}
+
+/* ---------- confirmación reutilizable ---------- */
+let confirmCb=null;
+const ICONS_C={
+  danger:'<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/>',
+  warn:'<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>'
+};
+function askConfirm(opts,cb){
+  confirmCb=cb;
+  document.getElementById('confirmTitle').textContent=opts.title||'¿Confirmás?';
+  document.getElementById('confirmMsg').textContent=opts.message||'';
+  const ok=document.getElementById('confirmOk');
+  ok.textContent=opts.okLabel||'Confirmar';
+  ok.className='btn '+(opts.danger===false?'btn-primary':'btn-danger');
+  const ic=document.getElementById('confirmIc');
+  ic.className='confirm-ic'+(opts.danger===false?' info':'');
+  ic.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${ICONS_C[opts.icon||(opts.danger===false?'warn':'danger')]||ICONS_C.danger}</svg>`;
+  show('confirmOverlay');
+  setTimeout(()=>ok.focus(),60);
+}
+function closeConfirm(){confirmCb=null;close_('confirmOverlay');}
+function acceptConfirm(){const cb=confirmCb;closeConfirm();if(cb)cb();}
+
+function updateStats(){
+  document.getElementById('stSources').textContent=DB.sources.length;
+  const rows=DB.sources.reduce((a,s)=>a+(s.rows||0),0);
+  document.getElementById('stRows').textContent=rows.toLocaleString('es-UY');
+  if(DB.sources.length){
+    const last=DB.sources.reduce((a,s)=>new Date(s.updated)>new Date(a.updated)?s:a);
+    document.getElementById('stLast').textContent=fmtDate(last.updated);
+    document.getElementById('stLastSub').textContent=ago(last.updated);
+  }
+  // rastreador
+  document.getElementById('stTargets').textContent=DB.targets.length;
+  document.getElementById('stProducts').textContent=DB.products.length;
+  if(DB.products.length){
+    const avg=DB.products.reduce((a,p)=>a+p.price,0)/DB.products.length;
+    document.getElementById('stAvg').textContent=money(Math.round(avg));
+  }else document.getElementById('stAvg').textContent='—';
+  if(DB.targets.length){
+    const lr=DB.targets.reduce((a,t)=>new Date(t.lastRun||0)>new Date(a.lastRun||0)?t:a);
+    document.getElementById('stCrawl').textContent=lr.lastRun?ago(lr.lastRun):'—';
+  }
+  // recursos enviables
+  const res=DB.resources||[];
+  const elR=document.getElementById('stRes');
+  if(elR){
+    elR.textContent=res.length;
+    document.getElementById('stResActive').textContent=res.filter(r=>r.active).length;
+    document.getElementById('stResTrig').textContent=res.reduce((a,r)=>a+((r.triggers||[]).length),0);
+    document.getElementById('stResCat').textContent=new Set(res.map(r=>r.category).filter(Boolean)).size;
+  }
+  // multimedia
+  const med=DB.media||[];
+  const elM=document.getElementById('stMedia');
+  if(elM){
+    elM.textContent=med.length;
+    document.getElementById('stMediaReady').textContent=med.filter(m=>m.status==='ready').length;
+    document.getElementById('stMediaProc').textContent=med.filter(m=>m.status==='processing').length;
+    if(med.length){
+      const last=med.reduce((a,m)=>new Date(m.created)>new Date(a.created)?m:a);
+      document.getElementById('stMediaLast').textContent=fmtDate(last.created);
+      document.getElementById('stMediaLastSub').textContent=ago(last.created);
+    }else{
+      document.getElementById('stMediaLast').textContent='—';
+      document.getElementById('stMediaLastSub').textContent='Sin archivos aún';
+    }
+  }
+}
+
+/* ---------- render rastreador ---------- */
+function renderCrawler(){
+  const w=document.getElementById('targetsWrap');w.innerHTML='';
+  if(!DB.targets.length){
+    w.innerHTML='<div class="empty" style="width:100%"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.5-3.5"/></svg><p>No hay objetivos de rastreo. Crea uno con "Nuevo rastreo".</p></div>';
+  }else{
+    const all=document.createElement('div');
+    all.className='tchip'+(activeTarget==='all'?' active':'');
+    all.onclick=()=>{activeTarget='all';renderCrawler();};
+    all.innerHTML=`<h5><span class="dotc"></span>Todos los objetivos</h5><div class="st">${DB.products.length} productos en total</div>`;
+    w.appendChild(all);
+    DB.targets.forEach(t=>{
+      const c=DB.products.filter(p=>p.targetId===t.id).length;
+      const isEmpty=t.status==='empty';
+      const el=document.createElement('div');
+      el.className='tchip'+(activeTarget===t.id?' active':'');
+      el.onclick=()=>{activeTarget=t.id;renderCrawler();};
+      el.innerHTML=`<h5><span class="dotc" style="${isEmpty?'background:var(--amber)':''}"></span>${esc(t.name)}
+        <button class="ico-btn danger" style="width:24px;height:24px;margin-left:auto" title="Borrar objetivo" onclick="event.stopPropagation();delTarget('${t.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></h5>
+        <div class="u">${esc(t.url)}</div>
+        <div class="chips-line">${t.fields.map(f=>`<span class="minichip">${esc(f)}</span>`).join('')}</div>
+        <div class="st" ${isEmpty?'style="color:var(--amber)"':''}>${isEmpty?'Sin resultados · tocá Re-ejecutar':`${c} productos · ${t.lastRun?ago(t.lastRun):'sin rastrear'}`}</div>`;
+      w.appendChild(el);
+    });
+  }
+  renderProducts();
+  updateStats();
+}
+function renderProducts(){
+  let list=activeTarget==='all'?DB.products:DB.products.filter(p=>p.targetId===activeTarget);
+  const total=list.length;
+  const q=(document.getElementById('prodSearch')?.value||'').trim().toLowerCase();
+  const stock=document.getElementById('prodStock')?.value||'all';
+  const sort=document.getElementById('prodSort')?.value||'recent';
+  document.getElementById('prodClr')?.classList.toggle('show',!!q);
+
+  if(q)list=list.filter(p=>p.name.toLowerCase().includes(q)||p.sku.toLowerCase().includes(q));
+  if(stock!=='all')list=list.filter(p=>p.stock===stock);
+  list=[...list].sort((a,b)=>{
+    if(sort==='price-asc')return a.price-b.price;
+    if(sort==='price-desc')return b.price-a.price;
+    if(sort==='name')return a.name.localeCompare(b.name);
+    return new Date(b.updated)-new Date(a.updated);
+  });
+
+  document.getElementById('prodCount').textContent=total?`(${total})`:'';
+  document.getElementById('prodFor').textContent=activeTarget==='all'?'Resultados de todos los objetivos.':'Resultados de: '+(DB.targets.find(t=>t.id===activeTarget)?.name||'');
+  const fc=document.getElementById('prodFcount');
+  if(fc)fc.innerHTML=total?`<b>${list.length}</b> de ${total}`:'';
+
+  if(!total){
+    document.getElementById('productsWrap').innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg><p>Sin productos todavía. Ejecuta un rastreo.</p></div>';return;
+  }
+  if(!list.length){
+    document.getElementById('productsWrap').innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.5-3.5"/></svg><p>Ningún producto coincide con los filtros.</p></div>';return;
+  }
+  document.getElementById('productsWrap').innerHTML='<table><thead><tr><th>Producto</th><th>SKU</th><th>Precio</th><th>Disponibilidad</th><th>Origen</th><th>Actualizado</th></tr></thead><tbody id="pb"></tbody></table>';
+  const b=document.getElementById('pb');
+  list.forEach(p=>{
+    const pill=p.stock==='Sin stock'?'off':p.stock==='Pocas unidades'?'warn':'ok';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="font-weight:600">${esc(p.name)}</td>
+      <td class="mono faint">${esc(p.sku)}</td>
+      <td class="price">${money(p.price)}</td>
+      <td><span class="pill ${pill}"><span class="d"></span>${p.stock}</span></td>
+      <td class="muted">${esc(p.origin)}</td>
+      <td class="faint">${ago(p.updated)}</td>`;
+    b.appendChild(tr);
+  });
+}
+
+/* ---------- modal fuente ---------- */
+let srcMode='excel',editId=null,parsedFile=null,invalidFile=false;
+function openSource(){editId=null;parsedFile=null;invalidFile=false;srcMode='excel';
+  document.getElementById('srcModalTitle').textContent='Agregar fuente';
+  document.getElementById('srcName').value='';document.getElementById('sheetName').value='';document.getElementById('sheetUrl').value='';
+  document.getElementById('fileBox').classList.remove('show','error');
+  document.getElementById('srcTabs').style.display='flex';
+  hideErr('srcErr');
+  srcTab('excel');show('srcOverlay');
+}
+function editSource(id){const s=DB.sources.find(x=>x.id===id);if(!s)return;
+  editId=id;srcMode=s.type;parsedFile=null;invalidFile=false;hideErr('srcErr');
+  document.getElementById('srcModalTitle').textContent='Editar fuente';
+  document.getElementById('srcTabs').style.display='none';
+  srcTab(s.type);
+  if(s.type==='excel'){document.getElementById('srcName').value=s.name;document.getElementById('fileBox').classList.remove('show','error');}
+  else{document.getElementById('sheetName').value=s.name;document.getElementById('sheetUrl').value=s.url||'';}
+  show('srcOverlay');
+}
+function srcTab(t){srcMode=t;hideErr('srcErr');
+  document.querySelectorAll('#srcTabs .tab').forEach(x=>x.classList.toggle('active',x.dataset.t===t));
+  document.getElementById('tab-excel').style.display=t==='excel'?'block':'none';
+  document.getElementById('tab-sheets').style.display=t==='sheets'?'block':'none';
+}
+function onFile(input){
+  const f=input.files[0];if(!f)return;
+  const fb=document.getElementById('fileBox');fb.classList.add('show');fb.classList.remove('error');
+  const detail=document.getElementById('fileDetail');detail.classList.remove('err');
+  document.getElementById('fileName').textContent=f.name;
+  detail.textContent='Leyendo…';
+  parsedFile=null;invalidFile=false;
+
+  const ext=(f.name.split('.').pop()||'').toLowerCase();
+  if(!['xlsx','xls','csv'].includes(ext)){
+    invalidFile=true;fb.classList.add('error');detail.classList.add('err');
+    detail.textContent='Formato no admitido. Usá .xlsx, .xls o .csv';
+    toast('Archivo no admitido','El formato .'+ext+' no es válido para una fuente.','error');
+    return;
+  }
+  if(f.size>8*1048576){
+    invalidFile=true;fb.classList.add('error');detail.classList.add('err');
+    detail.textContent='El archivo supera el límite de 8 MB en esta demo.';
+    toast('Archivo demasiado grande','Probá con un archivo de menos de 8 MB.','error');
+    return;
+  }
+  if(!document.getElementById('srcName').value)document.getElementById('srcName').value=f.name.replace(/\.[^.]+$/,'');
+  const reader=new FileReader();
+  reader.onerror=()=>{
+    invalidFile=true;fb.classList.add('error');detail.classList.add('err');
+    detail.textContent='No se pudo leer el archivo. Puede estar dañado.';
+    toast('Error al leer','El archivo no se pudo abrir.','error');
+  };
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      if(!wb.SheetNames.length)throw new Error('sin hojas');
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const json=XLSX.utils.sheet_to_json(ws,{header:1}).filter(r=>r.length);
+      const rows=Math.max(0,json.length-1);
+      const cols=json.reduce((m,r)=>Math.max(m,r.length),0);
+      if(!json.length||cols===0){
+        invalidFile=true;fb.classList.add('error');detail.classList.add('err');
+        detail.textContent='El archivo está vacío o no tiene datos legibles.';
+        toast('Archivo vacío','No se detectaron filas con datos.','error');
+        return;
+      }
+      const preview=json.slice(0,51).map(r=>r.slice(0,8).map(c=>String(c==null?'':c).slice(0,60)));
+      parsedFile={rows,cols,size:fmtBytes(f.size),preview};
+      detail.textContent=`${rows} filas · ${cols} columnas · ${fmtBytes(f.size)}`;
+    }catch(err){
+      invalidFile=true;fb.classList.add('error');detail.classList.add('err');
+      detail.textContent='No se pudo procesar el archivo. ¿Es un Excel/CSV válido?';
+      toast('No se pudo procesar','El archivo no parece un Excel o CSV válido.','error');
+    }
+  };
+  reader.readAsArrayBuffer(f);
+}
+const fmtBytes=b=>b<1024?b+' B':b<1048576?(b/1024).toFixed(0)+' KB':(b/1048576).toFixed(1)+' MB';
+
+function saveSource(){
+  hideErr('srcErr');
+  if(editId){const s=DB.sources.find(x=>x.id===editId);
+    if(s.type==='excel'){const n=document.getElementById('srcName').value.trim();if(!n){showErr('srcErr','El nombre no puede quedar vacío.');flashField('srcName');return;}s.name=n;}
+    else{const n=document.getElementById('sheetName').value.trim();const u=document.getElementById('sheetUrl').value.trim();
+      if(!n){showErr('srcErr','El nombre no puede quedar vacío.');flashField('sheetName');return;}
+      if(u&&!isSheetUrl(u)){showErr('srcErr','La URL no parece de Google Sheets (docs.google.com/spreadsheets).');flashField('sheetUrl');return;}
+      s.name=n;s.url=u;}
+    s.updated=now();persist();close_('srcOverlay');toast('Fuente actualizada',s.name,'success');return;
+  }
+  if(srcMode==='excel'){
+    const n=document.getElementById('srcName').value.trim();
+    if(!n){showErr('srcErr','Ponle un nombre a la fuente.');flashField('srcName');return;}
+    if(invalidFile){showErr('srcErr','El archivo tiene un problema. Subí un Excel/CSV válido.');return;}
+    if(!parsedFile){showErr('srcErr','Subí un archivo Excel o CSV antes de guardar.');return;}
+    DB.sources.unshift({id:uid(),name:n,type:'excel',
+      rows:parsedFile.rows,cols:parsedFile.cols,size:parsedFile.size,
+      preview:parsedFile.preview,
+      created:now(),updated:now(),status:'ok'});
+    persist();close_('srcOverlay');toast('Fuente agregada',n+' · '+parsedFile.rows+' filas','success');
+  }else{
+    const n=document.getElementById('sheetName').value.trim();
+    const u=document.getElementById('sheetUrl').value.trim();
+    if(!n){showErr('srcErr','Ponle un nombre a la fuente.');flashField('sheetName');return;}
+    if(!u){showErr('srcErr','Pegá la URL de la hoja de Google Sheets.');flashField('sheetUrl');return;}
+    if(!isSheetUrl(u)){showErr('srcErr','Esa URL no parece de Google Sheets. Debe contener docs.google.com/spreadsheets.');flashField('sheetUrl');return;}
+    DB.sources.unshift({id:uid(),name:n,type:'sheets',url:u,rows:0,cols:0,created:now(),updated:now(),status:'sync'});
+    persist();close_('srcOverlay');toast('Hoja conectada',n+' · sincronizando…','success');
+  }
+}
+function isSheetUrl(u){return /docs\.google\.com\/spreadsheets/i.test(u);}
+function flashField(id){const el=document.getElementById(id);el.style.borderColor='var(--red)';setTimeout(()=>el.style.borderColor='',900);el.focus();}
+function resync(id){
+  const s=DB.sources.find(x=>x.id===id);if(!s)return;
+  // Google Sheets puede fallar el acceso (simulado). Excel siempre re-sincroniza ok.
+  if(s.type==='sheets' && s.status!=='error' && Math.random()<0.28){
+    s.status='error';s.errorMsg='No se pudo acceder a la hoja (simulado). Verificá los permisos de acceso por enlace.';
+    s.updated=now();persist();
+    toast('No se pudo sincronizar',s.name+': la hoja no respondió. Tocá Reintentar.','error');
+    return;
+  }
+  s.status=s.type==='sheets'?'sync':'ok';s.errorMsg=null;s.updated=now();persist();
+  toast(s.status==='error'?'Reintentando…':'Fuente actualizada',s.name,'success');
+}
+function delSource(id){
+  const s=DB.sources.find(x=>x.id===id);if(!s)return;
+  askConfirm({
+    title:'Borrar fuente',
+    message:'Se quitará "'+s.name+'" de la base de conocimientos. Esta acción no se puede deshacer.',
+    okLabel:'Borrar fuente'
+  },()=>{
+    DB.sources=DB.sources.filter(x=>x.id!==id);persist();
+    toast('Fuente eliminada',s.name,'info');
+  });
+}
+
+function genPreviewFor(s){
+  const n=s.name.toLowerCase();
+  if(n.includes('faq')||n.includes('pregunta'))
+    return [['Pregunta','Respuesta'],['¿Cómo creo una cuenta?','Desde el botón "Registrarse" en la web.'],['¿Tienen tienda física?','Sí, atención de lunes a viernes.']];
+  if(n.includes('precio')||n.includes('catálogo')||n.includes('catalogo')||n.includes('producto'))
+    return [['SKU','Producto','Precio','Stock'],['SKU-2001','Producto A','1990','15'],['SKU-2002','Producto B','3450','7'],['SKU-2003','Producto C','899','0']];
+  if(n.includes('inventario')||n.includes('stock'))
+    return [['SKU','Producto','Disponible','Depósito'],['SKU-3001','Artículo X','42','Central'],['SKU-3002','Artículo Y','0','Norte']];
+  return [['Columna 1','Columna 2','Columna 3'],['Dato','Dato','Dato'],['Dato','Dato','Dato']];
+}
+let currentPreview=null;
+function norm(s){return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
+function isNumericCol(vals){const nn=vals.filter(v=>v!=='');return nn.length>0 && nn.every(v=>/^[\$\s]*[\d.,]+%?$/.test(v));}
+function categoricalCols(head,body){
+  const out=[];
+  head.forEach((h,i)=>{
+    const vals=body.map(r=>String(r[i]==null?'':r[i]).trim());
+    const nonEmpty=vals.filter(v=>v!=='');
+    if(!nonEmpty.length)return;
+    const distinct=[...new Set(nonEmpty)];
+    // categórica: pocos valores distintos, no es columna única (tipo ID/SKU) ni puramente numérica larga
+    const few=distinct.length<=15 && distinct.length<nonEmpty.length;
+    if(few && !isNumericCol(nonEmpty)) out.push({i,name:h||('Columna '+(i+1)),values:distinct.sort((a,b)=>a.localeCompare(b))});
+  });
+  return out;
+}
+function openPreview(id){
+  const s=DB.sources.find(x=>x.id===id);if(!s)return;
+  document.getElementById('prevTitle').textContent=s.name;
+  const metaTxt=s.type==='excel'
+    ? `${FMT[s.type]} · ${s.rows} filas · ${s.cols} columnas${s.size?' · '+s.size:''}`
+    : `${FMT[s.type]} · ${s.rows||'—'} filas · actualizado ${ago(s.updated)}`;
+  document.getElementById('prevMeta').textContent=metaTxt;
+  let data=(s.preview&&s.preview.length)?s.preview:genPreviewFor(s);
+  const real=!!(s.preview&&s.preview.length);
+  document.getElementById('prevNote').textContent=real
+    ? 'El buscador y los filtros actúan sobre la muestra cargada. El chatbot usará el contenido completo del archivo.'
+    : 'Muestra representativa de la estructura. Al conectar la fuente real se mostrarán sus datos.';
+  currentPreview=(data&&data.length)?{head:data[0],body:data.slice(1)}:null;
+  document.getElementById('prevSearch').value='';
+  // poblar filtro por categoría
+  const colSel=document.getElementById('prevCol');
+  const bar=document.getElementById('prevFilterBar');
+  currentPreview && (currentPreview.cats=categoricalCols(currentPreview.head,currentPreview.body));
+  if(currentPreview && currentPreview.cats.length){
+    bar.classList.remove('hidden');
+    colSel.innerHTML=currentPreview.cats.map(c=>`<option value="${c.i}">${esc(c.name)}</option>`).join('');
+    // por defecto, preferir una columna tipo "categoría"
+    const pref=currentPreview.cats.find(c=>/categor/i.test(c.name));
+    colSel.value=String((pref||currentPreview.cats[0]).i);
+    populatePrevVal();
+  }else{
+    bar.classList.add('hidden');
+  }
+  renderPrevTable();
+  show('prevOverlay');
+}
+function populatePrevVal(){
+  const colSel=document.getElementById('prevCol'),valSel=document.getElementById('prevVal');
+  const col=currentPreview.cats.find(c=>String(c.i)===colSel.value)||currentPreview.cats[0];
+  const label=norm(col.name).includes('categor')?'Todas las categorías':'Todas';
+  valSel.innerHTML=`<option value="__all__">${label}</option>`+col.values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+}
+function onPrevCol(){populatePrevVal();renderPrevTable();}
+function clearPrevFilter(){document.getElementById('prevVal').value='__all__';document.getElementById('prevSearch').value='';renderPrevTable();}
+function hl(text,term){
+  const t=String(text==null?'':text);
+  if(!term)return esc(t);
+  const nt=norm(t),nq=norm(term);const idx=nt.indexOf(nq);
+  if(idx<0)return esc(t);
+  return esc(t.slice(0,idx))+'<mark>'+esc(t.slice(idx,idx+term.length))+'</mark>'+esc(t.slice(idx+term.length));
+}
+function renderPrevTable(){
+  const wrap=document.getElementById('prevTableWrap');
+  if(!currentPreview){wrap.innerHTML='<div class="prev-empty">No hay contenido para previsualizar.</div>';document.getElementById('prevFcount').textContent='';return;}
+  const q=(document.getElementById('prevSearch').value||'').trim();
+  document.getElementById('prevClr').classList.toggle('show',!!q);
+  const terms=norm(q).split(/\s+/).filter(Boolean);
+  const {head,body}=currentPreview;
+  // filtro por categoría
+  let colIdx=-1,colVal='__all__';
+  if(currentPreview.cats&&currentPreview.cats.length){
+    colIdx=parseInt(document.getElementById('prevCol').value,10);
+    colVal=document.getElementById('prevVal').value;
+  }
+  const rows=body.filter(r=>{
+    if(colVal!=='__all__' && colIdx>=0 && String(r[colIdx]==null?'':r[colIdx]).trim()!==colVal)return false;
+    if(!terms.length)return true;
+    const joined=norm(r.join(' '));
+    return terms.every(t=>joined.includes(t));
+  });
+  const filtering=!!q || colVal!=='__all__';
+  document.getElementById('prevFcount').innerHTML=`<b>${rows.length}</b> de ${body.length} filas`;
+  if(!rows.length){
+    wrap.innerHTML='<div class="prev-empty">Ninguna fila coincide con el filtro aplicado.</div>';return;
+  }
+  const firstTerm=q.split(/\s+/)[0]||'';
+  wrap.innerHTML='<table><thead><tr>'+head.map(h=>`<th>${esc(h)}</th>`).join('')+'</tr></thead><tbody>'+
+    rows.map(r=>'<tr>'+head.map((_,i)=>`<td>${hl(r[i],firstTerm)}</td>`).join('')+'</tr>').join('')+
+    '</tbody></table>';
+}
+
+/* ---------- modal rastreo ---------- */
+function openCrawl(){
+  document.getElementById('crName').value='';document.getElementById('crUrl').value='';
+  document.getElementById('crawlAnim').classList.remove('show','error');
+  document.getElementById('crawlFoot').style.display='flex';
+  hideErr('crErr');
+  document.querySelectorAll('#crFields .check').forEach((c,i)=>c.classList.toggle('on',i<3));
+  show('crawlOverlay');
+}
+function toggleField(el){el.classList.toggle('on');}
+function isHttpUrl(u){return /^https?:\/\/.+\..+/i.test(u);}
+function runCrawl(){
+  hideErr('crErr');
+  const name=document.getElementById('crName').value.trim();
+  const url=document.getElementById('crUrl').value.trim();
+  if(!name){showErr('crErr','Ponle un nombre al objetivo.');flashField('crName');return;}
+  if(!url){showErr('crErr','Indicá la URL a rastrear.');flashField('crUrl');return;}
+  if(!isHttpUrl(url)){showErr('crErr','La URL no es válida. Debe empezar con http:// o https://');flashField('crUrl');return;}
+  const fields=[...document.querySelectorAll('#crFields .check.on')].map(c=>c.dataset.f);
+  if(!fields.length){showErr('crErr','Elegí al menos un dato para extraer.');return;}
+
+  document.getElementById('crawlFoot').style.display='none';
+  const anim=document.getElementById('crawlAnim');anim.classList.add('show');anim.classList.remove('error');
+  const bar=document.getElementById('crawlBar'),msg=document.getElementById('crawlMsg');
+  // resultado simulado: 18% falla de conexión, 18% sin resultados, resto ok
+  const roll=Math.random();
+  const outcome=roll<0.18?'fail':roll<0.36?'empty':'ok';
+  const steps=[['Conectando con el sitio…',18],['Analizando estructura…',45],['Extrayendo productos…',78],['Indexando resultados…',100]];
+  let i=0;
+  const tick=()=>{
+    // si falla la conexión, cortamos en el paso 1
+    if(outcome==='fail'&&i===1){
+      anim.classList.add('error');bar.style.width='45%';
+      msg.textContent='No se pudo conectar con el sitio (simulado).';
+      showErr('crErr','El sitio no respondió o bloqueó el acceso. Revisá la URL e intentá de nuevo.');
+      document.getElementById('crawlFoot').style.display='flex';
+      anim.classList.remove('show');
+      toast('Rastreo fallido',name+': no se pudo conectar.','error');
+      return;
+    }
+    if(i<steps.length){msg.textContent=steps[i][0];bar.style.width=steps[i][1]+'%';i++;setTimeout(tick,520);}
+    else{
+      const tg={id:uid(),name,url,fields,created:now(),lastRun:now()};
+      if(outcome==='empty'){
+        tg.status='empty';tg.note='Sin resultados en el último rastreo';
+        DB.targets.unshift(tg);activeTarget=tg.id;persist();renderCrawler();close_('crawlOverlay');
+        toast('Sin resultados',name+': no se encontraron productos. Probá otra URL.','info');
+      }else{
+        const n=Math.floor(Math.random()*6)+5;
+        DB.products=[...genProducts(tg.id,n,name),...DB.products];
+        DB.targets.unshift(tg);activeTarget=tg.id;persist();renderCrawler();close_('crawlOverlay');
+        toast('Rastreo completado',name+': '+n+' productos extraídos.','success');
+      }
+    }
+  };
+  tick();
+}
+function delTarget(id){
+  const t=DB.targets.find(x=>x.id===id);if(!t)return;
+  const c=DB.products.filter(p=>p.targetId===id).length;
+  askConfirm({
+    title:'Borrar objetivo',
+    message:'Se borrará "'+t.name+'"'+(c?' y sus '+c+' productos rastreados':'')+'. Esta acción no se puede deshacer.',
+    okLabel:'Borrar objetivo'
+  },()=>{
+    DB.targets=DB.targets.filter(x=>x.id!==id);
+    DB.products=DB.products.filter(p=>p.targetId!==id);
+    if(activeTarget===id)activeTarget='all';
+    persist();renderCrawler();
+    toast('Objetivo eliminado',t.name,'info');
+  });
+}
+function rerun(){
+  if(!DB.targets.length){toast('Nada para re-ejecutar','Primero creá un objetivo de rastreo.','info');return;}
+  const targets=activeTarget==='all'?DB.targets:DB.targets.filter(t=>t.id===activeTarget);
+  let totalNew=0;
+  targets.forEach(t=>{
+    DB.products=DB.products.filter(p=>p.targetId!==t.id);
+    const n=Math.floor(Math.random()*6)+5;
+    DB.products=[...genProducts(t.id,n,t.name),...DB.products];
+    t.lastRun=now();t.status=null;t.note=null;totalNew+=n;
+  });
+  persist();renderCrawler();
+  toast('Rastreo re-ejecutado',totalNew+' productos actualizados.','success');
+}
+
+/* ---------- multimedia ---------- */
+const MTYPES={
+  image:{label:'Imagen',short:'IMG',accent:'var(--blue)',icon:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>'},
+  pdf:{label:'PDF',short:'PDF',accent:'var(--red)',icon:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h4"/>'},
+  voice:{label:'Nota de voz',short:'VOZ',accent:'var(--accent)',icon:'<path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 17v4"/>'},
+  audio:{label:'Audio',short:'AUDIO',accent:'var(--green)',icon:'<path d="M3 10v4M7 7v10M11 4v16M15 8v8M19 11v2"/>'},
+  video:{label:'Video',short:'VIDEO',accent:'var(--amber)',icon:'<rect x="2" y="5" width="14" height="14" rx="2"/><path d="M22 8l-6 4 6 4V8z"/>'}
+};
+const REC_SAMPLES={
+  image:['Imagen de un producto sobre fondo neutro; se distinguen color, forma y detalles de marca.','Captura de pantalla con información de un pedido y su número de seguimiento.','Foto de una etiqueta con código de barras y especificaciones técnicas.'],
+  pdf:['Documento con condiciones de garantía: cobertura, plazos y exclusiones.','Catálogo en PDF con listado de productos, precios y características.','Instructivo paso a paso para configurar el producto.'],
+  voice:['Transcripción: "Quería consultar el estado de mi pedido y si puedo cambiar la dirección de envío."','Transcripción: "¿Tienen stock del modelo nuevo y cuánto sale con envío?"'],
+  audio:['Transcripción del audio: mensaje de atención al cliente con horarios y formas de contacto.','Transcripción del audio: explicación de las formas de pago disponibles.'],
+  video:['Video tutorial: pasos de instalación y configuración, con transcripción del audio.','Video de presentación del producto mostrando funciones principales.']
+};
+function detectType(file){
+  const m=(file.type||'').toLowerCase(),ext=(file.name.split('.').pop()||'').toLowerCase();
+  if(m.startsWith('image/')||['jpg','jpeg','png','gif','webp','heic'].includes(ext))return 'image';
+  if(m==='application/pdf'||ext==='pdf')return 'pdf';
+  if(m.startsWith('video/')||['mp4','mov','webm','mkv','avi'].includes(ext))return 'video';
+  if(m.startsWith('audio/')||['mp3','wav','m4a','aac','flac'].includes(ext))return 'audio';
+  if(['ogg','opus','amr'].includes(ext))return 'voice';
+  return null;
+}
+let mediaFile=null,mediaType=null,mediaThumb=null,mediaDur=null,mediaInvalid=false;
+function openMedia(){
+  mediaFile=null;mediaType=null;mediaThumb=null;mediaDur=null;mediaInvalid=false;
+  document.getElementById('mediaInput').value='';
+  document.getElementById('mediaFileBox').classList.remove('show','error');
+  document.getElementById('mediaTypeField').style.display='none';
+  hideErr('mediaErr');
+  show('mediaOverlay');
+}
+function onMediaFile(input){
+  const f=input.files[0];if(!f)return;
+  hideErr('mediaErr');mediaInvalid=false;mediaThumb=null;mediaDur=null;
+  const fb=document.getElementById('mediaFileBox');fb.classList.add('show');fb.classList.remove('error');
+  document.getElementById('mediaFileName').textContent=f.name;
+  const det=document.getElementById('mediaFileDetail');det.classList.remove('err');
+  if(f.size>25*1048576){
+    mediaInvalid=true;fb.classList.add('error');det.classList.add('err');
+    det.textContent='El archivo supera el límite de 25 MB en esta demo.';
+    toast('Archivo demasiado grande','Probá con uno de menos de 25 MB.','error');return;
+  }
+  let t=detectType(f);
+  if(!t){
+    mediaInvalid=true;fb.classList.add('error');det.classList.add('err');
+    det.textContent='Tipo no admitido. Usá imagen, PDF, audio o video.';
+    toast('Tipo no admitido','Ese formato no se puede analizar.','error');return;
+  }
+  mediaFile={name:f.name,size:fmtBytes(f.size)};mediaType=t;
+  det.textContent=MTYPES[t].label+' · '+fmtBytes(f.size);
+  // selector de tipo (permite corregir, ej. audio→nota de voz)
+  buildTypePicker(t);
+  document.getElementById('mediaTypeField').style.display='block';
+  // miniatura para imágenes
+  if(t==='image'){
+    const r=new FileReader();
+    r.onload=e=>{makeThumb(e.target.result,th=>{mediaThumb=th;});};
+    r.readAsDataURL(f);
+  }
+  // duración para audio/video
+  if(t==='audio'||t==='video'||t==='voice'){
+    try{
+      const el=document.createElement(t==='video'?'video':'audio');
+      el.preload='metadata';el.onloadedmetadata=()=>{
+        if(isFinite(el.duration)){const s=Math.round(el.duration);mediaDur=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');det.textContent=MTYPES[mediaType].label+' · '+mediaFile.size+' · '+mediaDur;}
+        URL.revokeObjectURL(el.src);
+      };
+      el.src=URL.createObjectURL(f);
+    }catch(e){}
+  }
+}
+function makeThumb(dataUrl,cb){
+  const img=new Image();
+  img.onload=()=>{
+    const max=240,sc=Math.min(1,max/Math.max(img.width,img.height));
+    const c=document.createElement('canvas');c.width=img.width*sc;c.height=img.height*sc;
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    try{cb(c.toDataURL('image/jpeg',0.6));}catch(e){cb(null);}
+  };
+  img.onerror=()=>cb(null);
+  img.src=dataUrl;
+}
+function buildTypePicker(sel){
+  const order=['image','pdf','voice','audio','video'];
+  document.getElementById('mediaTypePick').innerHTML=order.map(k=>
+    `<div class="tpick${k===sel?' on':''}" data-t="${k}" onclick="pickType('${k}')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${MTYPES[k].icon}</svg>${MTYPES[k].label}</div>`).join('');
+}
+function pickType(k){mediaType=k;document.querySelectorAll('#mediaTypePick .tpick').forEach(e=>e.classList.toggle('on',e.dataset.t===k));
+  const det=document.getElementById('mediaFileDetail');det.textContent=MTYPES[k].label+' · '+(mediaFile?mediaFile.size:'')+(mediaDur?' · '+mediaDur:'');}
+function saveMedia(){
+  hideErr('mediaErr');
+  if(!mediaFile){showErr('mediaErr','Subí un archivo para analizar.');return;}
+  if(mediaInvalid){showErr('mediaErr','El archivo tiene un problema. Probá con otro.');return;}
+  const item={id:uid(),name:mediaFile.name,type:mediaType,size:mediaFile.size,thumb:mediaThumb||null,dur:mediaDur||null,
+    pages:mediaType==='pdf'?(Math.floor(Math.random()*8)+2):null,
+    created:now(),status:'processing',rec:null,summary:'',tags:[],instructions:'',confidence:null,verified:false};
+  DB.media.unshift(item);persist();close_('mediaOverlay');
+  toast('Archivo agregado','Analizando '+item.name+'…','info');
+  analyzeMedia(item.id);
+}
+function analyzeMedia(id){
+  // simular análisis del modelo (con ~16% de fallo)
+  setTimeout(()=>{
+    const it=DB.media.find(x=>x.id===id);if(!it)return;
+    if(Math.random()<0.16){
+      it.status='error';it.confidence=null;
+      it.errorMsg='No se pudo analizar el archivo. Puede estar dañado o en un formato no legible.';
+      persist();
+      toast('No se pudo analizar',it.name+': tocá Reintentar para volver a procesarlo.','error');
+      return;
+    }
+    const pool=REC_SAMPLES[it.type]||REC_SAMPLES.image;
+    if(!it.rec)it.rec=pool[Math.floor(Math.random()*pool.length)];
+    it.confidence=Math.floor(Math.random()*40)+58; // 58–97
+    it.status='ready';it.errorMsg=null;persist();
+    const low=it.confidence<70;
+    toast(low?'Análisis con baja confianza':'Análisis completo',
+      low?it.name+': conviene revisar el contenido reconocido.':it.name+' ya puede ser respondido por el bot.',
+      low?'info':'success');
+  },1800);
+}
+function retryMedia(id){
+  const m=DB.media.find(x=>x.id===id);if(!m)return;
+  m.status='processing';m.errorMsg=null;persist();
+  toast('Reintentando','Volviendo a analizar '+m.name+'…','info');
+  // en el reintento, alta probabilidad de éxito
+  setTimeout(()=>{
+    const it=DB.media.find(x=>x.id===id);if(!it)return;
+    if(Math.random()<0.06){it.status='error';it.errorMsg='Sigue sin poder analizarse. Probá con otro archivo o formato.';persist();toast('No se pudo analizar',it.name,'error');return;}
+    const pool=REC_SAMPLES[it.type]||REC_SAMPLES.image;
+    it.rec=pool[Math.floor(Math.random()*pool.length)];
+    it.confidence=Math.floor(Math.random()*30)+68;it.status='ready';it.errorMsg=null;persist();
+    toast('Análisis completo',it.name+' ya puede ser respondido por el bot.','success');
+  },1500);
+}
+function confInfo(m){
+  if(m.verified)return {cls:'ver',text:'Verificado',icon:true};
+  if(m.confidence==null)return null;
+  const c=m.confidence;
+  return {cls:c>=85?'hi':c>=70?'mid':'lo',text:'Confianza '+c+'%',icon:false};
+}
+function delMedia(id){
+  const m=DB.media.find(x=>x.id===id);if(!m)return;
+  askConfirm({title:'Borrar archivo',message:'Se quitará "'+m.name+'" de la base de conocimientos. Esta acción no se puede deshacer.',okLabel:'Borrar archivo'},
+    ()=>{DB.media=DB.media.filter(x=>x.id!==id);persist();toast('Archivo eliminado',m.name,'info');});
+}
+function renderMedia(){
+  const wrap=document.getElementById('mediaWrap');if(!wrap)return;
+  updateStats();
+  const q=(document.getElementById('mediaSearch')?.value||'').trim();
+  const type=document.getElementById('mediaType')?.value||'all';
+  document.getElementById('mediaClr')?.classList.toggle('show',!!q);
+  if(!DB.media.length){
+    document.getElementById('mediaFcount').textContent='';
+    wrap.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg><p>Aún no hay archivos. Agrega una imagen, PDF, audio o video.</p></div>';
+    return;
+  }
+  const nq=norm(q);
+  const list=DB.media.filter(m=>(type==='all'||m.type===type)&&(!nq||norm(m.name).includes(nq)||norm(m.rec||'').includes(nq)));
+  document.getElementById('mediaFcount').innerHTML=`<b>${list.length}</b> de ${DB.media.length}`;
+  if(!list.length){
+    wrap.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.5-3.5"/></svg><p>Ningún archivo coincide con la búsqueda.</p></div>';return;
+  }
+  wrap.innerHTML='<div class="media-grid">'+list.map(m=>{
+    const cfg=MTYPES[m.type];
+    const thumb=m.thumb?`<img src="${m.thumb}" alt="">`:`<svg class="ph" viewBox="0 0 24 24" fill="none" stroke="${cfg.accent}" stroke-width="1.6">${cfg.icon}</svg>`;
+    const dur=m.dur?`<span class="mdur">${m.dur}</span>`:'';
+    const ci=confInfo(m);
+    const conf=ci?`<span class="conf ${ci.cls}">${ci.icon?'<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>':'<span class="cd"></span>'}${ci.text}</span>`:'';
+    const tags=(m.tags&&m.tags.length)?`<div class="mtags">${m.tags.slice(0,3).map(tg=>`<span class="mtag">${esc(tg)}</span>`).join('')}</div>`:'';
+    let rec;
+    if(m.status==='processing')rec=`<div class="mrec proc"><span class="mini-spin"></span>Analizando contenido…</div>`;
+    else if(m.status==='error')rec=`<div class="mrec err">${esc(m.errorMsg||'No se pudo analizar.')}</div>`;
+    else rec=`<div class="mrec">${esc(m.summary||m.rec||'')}</div>`;
+    const editBtn=m.status==='ready'?`<button class="ico-btn" title="Editar contenido" onclick="openMediaEdit('${m.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>`:'';
+    const retryBtn=m.status==='error'?`<button class="ico-btn" title="Reintentar análisis" onclick="retryMedia('${m.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6"/></svg></button>`:'';
+    return `<div class="mcard">
+      <div class="mthumb" onclick="openMediaPreview('${m.id}')">
+        <span class="mtype-badge" style="color:${cfg.accent}"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2">${cfg.icon}</svg>${cfg.short}</span>
+        ${thumb}${dur}
+      </div>
+      <div class="mbody">
+        <div style="display:flex;align-items:flex-start;gap:8px;justify-content:space-between">
+          <div class="mn">${esc(m.name)}</div>${conf}
+        </div>
+        ${rec}
+        ${tags}
+        <div class="mfoot">
+          <span class="mdate">${ago(m.created)}${m.pages?' · '+m.pages+' pág.':''}${m.size?' · '+m.size:''}</span>
+          <span class="mact">
+            ${retryBtn}${editBtn}
+            <button class="ico-btn" title="Ver" onclick="openMediaPreview('${m.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
+            <button class="ico-btn danger" title="Borrar" onclick="delMedia('${m.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+          </span>
+        </div>
+      </div>
+    </div>`;
+  }).join('')+'</div>';
+}
+function exampleQA(m){
+  const t=m.type;
+  if(t==='image')return ['¿Qué muestra esta imagen?','Según el análisis de la imagen, '+ (m.rec||'').charAt(0).toLowerCase()+(m.rec||'').slice(1)];
+  if(t==='pdf')return ['¿Qué dice este documento?','El documento explica lo siguiente: '+(m.rec||'')];
+  if(t==='voice'||t==='audio')return ['¿Qué dice este audio?','El audio contiene esto: '+(m.rec||'')];
+  return ['¿De qué trata este video?','El video muestra lo siguiente: '+(m.rec||'')];
+}
+function openMediaPreview(id){
+  const m=DB.media.find(x=>x.id===id);if(!m)return;
+  const cfg=MTYPES[m.type];
+  document.getElementById('mprevTitle').textContent=m.name;
+  document.getElementById('mprevMeta').textContent=cfg.label+(m.size?' · '+m.size:'')+(m.dur?' · '+m.dur:'')+(m.pages?' · '+m.pages+' páginas':'')+' · '+ago(m.created);
+  const editBtn=document.getElementById('mprevEdit');
+  editBtn.onclick=()=>{close_('mprevOverlay');openMediaEdit(m.id);};
+  editBtn.style.display=m.status==='ready'?'inline-flex':'none';
+  const visual=m.thumb
+    ? `<div style="border:1px solid var(--border);border-radius:11px;overflow:hidden;margin-bottom:14px"><img src="${m.thumb}" style="width:100%;display:block"></div>`
+    : `<div style="border:1px solid var(--border);border-radius:11px;background:var(--surface-2);height:120px;display:grid;place-items:center;margin-bottom:14px"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="${cfg.accent}" stroke-width="1.5">${cfg.icon}</svg></div>`;
+  let content;
+  if(m.status==='processing'){
+    content=`<div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/></svg>El archivo se está analizando. En unos segundos el chatbot podrá responder sobre él.</div>`;
+  }else if(m.status==='error'){
+    content=`<div class="nomatch" style="margin-bottom:14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>${esc(m.errorMsg||'No se pudo analizar el archivo.')} El chatbot no podrá responder sobre él hasta que se procese.</div>
+      <button class="btn btn-primary" onclick="retryMedia('${m.id}');close_('mprevOverlay');"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6"/></svg> Reintentar análisis</button>`;
+  }else{
+    const label={image:'Lo que reconoce el chatbot',pdf:'Texto detectado',voice:'Transcripción',audio:'Transcripción',video:'Contenido detectado'}[m.type];
+    const ci=confInfo(m);
+    const confLine=ci?`<span class="conf ${ci.cls}">${ci.icon?'<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>':'<span class="cd"></span>'}${ci.text}</span>`:'';
+    const lowNote=(!m.verified&&m.confidence!=null&&m.confidence<70)
+      ? `<div class="note" style="margin-bottom:14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>Reconocimiento con baja confianza. Conviene revisar y corregir el contenido antes de que el bot lo use.</div>`
+      : '';
+    const summary=m.summary?`<div class="mprev-block"><div class="lbl">Resumen</div><p>${esc(m.summary)}</p></div>`:'';
+    const tags=(m.tags&&m.tags.length)?`<div class="mprev-block"><div class="lbl">Etiquetas</div><div class="mtags">${m.tags.map(tg=>`<span class="mtag">${esc(tg)}</span>`).join('')}</div></div>`:'';
+    const instr=m.instructions?`<div class="mprev-block"><div class="lbl">Instrucciones para el chatbot</div><div class="instr">${esc(m.instructions)}</div></div>`:'';
+    const qa=exampleQA(m);
+    content=`${lowNote}
+      <div class="mprev-block"><div class="lbl" style="display:flex;align-items:center;justify-content:space-between">${label}${confLine}</div><p>${esc(m.rec||'')}</p></div>
+      ${summary}${tags}${instr}
+      <div class="qa">
+        <div class="ql">Ejemplo de respuesta del chatbot</div>
+        <div class="qq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>${esc(qa[0])}</div>
+        <div class="qa-ans"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="11" rx="2"/><path d="M12 8V5M8 13h.01M16 13h.01"/></svg><span>${esc(qa[1])}</span></div>
+      </div>`;
+  }
+  document.getElementById('mprevBody').innerHTML=visual+content;
+  show('mprevOverlay');
+}
+/* edición de contenido reconocido */
+let medEditId=null;
+function openMediaEdit(id){
+  const m=DB.media.find(x=>x.id===id);if(!m)return;
+  medEditId=id;
+  const recLabel={image:'Descripción reconocida',pdf:'Texto detectado',voice:'Transcripción',audio:'Transcripción',video:'Contenido detectado'}[m.type]||'Contenido reconocido';
+  document.getElementById('medRecLabel').textContent=recLabel;
+  document.getElementById('medEditName').textContent=m.name;
+  document.getElementById('medRec').value=m.rec||'';
+  document.getElementById('medSummary').value=m.summary||'';
+  document.getElementById('medTags').value=(m.tags||[]).join(', ');
+  document.getElementById('medInstr').value=m.instructions||'';
+  document.getElementById('medVerify').classList.toggle('on',!!m.verified);
+  show('medEditOverlay');
+}
+function saveMediaEdit(){
+  const m=DB.media.find(x=>x.id===medEditId);if(!m)return;
+  m.rec=document.getElementById('medRec').value.trim();
+  m.summary=document.getElementById('medSummary').value.trim();
+  m.tags=document.getElementById('medTags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  m.instructions=document.getElementById('medInstr').value.trim();
+  m.verified=document.getElementById('medVerify').classList.contains('on');
+  persist();close_('medEditOverlay');
+  toast('Contenido actualizado',m.verified?m.name+' marcado como verificado.':m.name,'success');
+}
+
+/* ---------- recursos enviables ---------- */
+const RTYPES={
+  pdf:{label:'PDF',icon:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>',accent:'var(--red)'},
+  image:{label:'Imagen',icon:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',accent:'var(--blue)'},
+  link:{label:'Enlace',icon:'<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/>',accent:'var(--accent)'},
+  text:{label:'Texto',icon:'<path d="M4 7V4h16v3M9 20h6M12 4v16"/>',accent:'var(--green)'}
+};
+let resType='pdf',resEditId=null,resItems=[],resPendingFile=null;
+
+function renderResCats(){
+  const sel=document.getElementById('resCat');if(!sel)return;
+  const cur=sel.value||'all';
+  const cats=[...new Set((DB.resources||[]).map(r=>r.category).filter(Boolean))].sort();
+  sel.innerHTML='<option value="all">Todas las categorías</option>'+cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  sel.value=[...sel.options].some(o=>o.value===cur)?cur:'all';
+}
+function renderRes(){
+  const wrap=document.getElementById('resWrap');if(!wrap)return;
+  updateStats();renderResCats();
+  const q=norm((document.getElementById('resSearch')?.value||'').trim());
+  const cat=document.getElementById('resCat')?.value||'all';
+  document.getElementById('resClr')?.classList.toggle('show',!!q);
+  if(!(DB.resources||[]).length){
+    document.getElementById('resFcount').textContent='';
+    wrap.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><p>Aún no hay recursos. Agrega un PDF, imagen, enlace o texto para que el bot lo envíe.</p></div>';
+    return;
+  }
+  const list=DB.resources.filter(r=>(cat==='all'||r.category===cat)&&(!q||norm(r.name).includes(q)||norm((r.triggers||[]).join(' ')).includes(q)));
+  document.getElementById('resFcount').innerHTML=`<b>${list.length}</b> de ${DB.resources.length}`;
+  if(!list.length){wrap.innerHTML='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.5-3.5"/></svg><p>Ningún recurso coincide con la búsqueda.</p></div>';return;}
+  wrap.innerHTML='<table><thead><tr><th>Recurso</th><th>Tipo</th><th>Disparadores</th><th>Estado</th><th style="text-align:right">Acciones</th></tr></thead><tbody>'+
+    list.map(r=>{
+      const items=resItemsOf(r);
+      const lead=RTYPES[(items[0]&&items[0].type)||'pdf'];
+      const trigs=(r.triggers||[]).slice(0,4).map(t=>`<span class="trig">${esc(t)}</span>`).join('')+((r.triggers||[]).length>4?`<span class="trig">+${r.triggers.length-4}</span>`:'');
+      const mini=items.slice(0,3).map(it=>`<span class="tm" style="color:${RTYPES[it.type].accent}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${RTYPES[it.type].icon}</svg></span>`).join('')+(items.length>3?`<span class="more">+${items.length-3}</span>`:'');
+      const itemsLabel=items.length===1?RTYPES[items[0].type].label:items.length+' elementos';
+      return `<tr>
+        <td><div class="src-name"><div class="src-ic" style="background:rgba(255,255,255,.04);color:${lead.accent}"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">${lead.icon}</svg></div>
+          <div><div class="nm" style="cursor:pointer" onclick="openResView('${r.id}')">${esc(r.name)}</div><div class="meta">${esc(r.category||'')} · ${itemsLabel}</div></div></div></td>
+        <td><div class="types-mini">${mini}</div></td>
+        <td><div class="trigs">${trigs||'<span class="faint">sin disparadores</span>'}</div></td>
+        <td><div class="switch ${r.active?'on':''}" title="${r.active?'Activo':'Inactivo'}" onclick="toggleRes('${r.id}')"></div></td>
+        <td><div class="actions">
+          <button class="ico-btn" title="Ver" onclick="openResView('${r.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
+          <button class="ico-btn" title="Editar" onclick="editRes('${r.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
+          <button class="ico-btn danger" title="Borrar" onclick="delRes('${r.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+        </div></td></tr>`;
+    }).join('')+'</tbody></table>';
+}
+function buildResTypePicker(sel){
+  document.getElementById('resTypePick').innerHTML=['pdf','image','link','text'].map(k=>
+    `<div class="tpick${k===sel?' on':''}" data-t="${k}" onclick="pickResType('${k}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${RTYPES[k].icon}</svg>${RTYPES[k].label}</div>`).join('');
+}
+function pickResType(k){
+  resType=k;resPendingFile=null;
+  document.querySelectorAll('#resTypePick .tpick').forEach(e=>e.classList.toggle('on',e.dataset.t===k));
+  document.getElementById('resFileField').style.display=(k==='pdf'||k==='image')?'block':'none';
+  document.getElementById('resUrl').style.display=k==='link'?'block':'none';
+  document.getElementById('resText').style.display=k==='text'?'block':'none';
+  document.getElementById('resFilePrompt').innerHTML='<b>Haz clic para subir</b> '+(k==='image'?'la imagen':'el PDF');
+  document.getElementById('resFileInput').accept=k==='image'?'image/*':'application/pdf';
+  document.getElementById('resFileInput').value='';
+}
+function resItemsOf(r){
+  if(r.items&&r.items.length)return r.items;
+  if(r.type)return [{type:r.type,fileName:r.fileName,fileDetail:r.fileDetail,thumb:r.thumb,url:r.url,text:r.text}];
+  return [];
+}
+function renderResItems(){
+  const box=document.getElementById('resItemsList');
+  if(!resItems.length){box.innerHTML='<div class="faint" style="font-size:12px;margin-bottom:10px">Todavía no agregaste elementos. Sumá uno o varios abajo.</div>';return;}
+  box.innerHTML=resItems.map((it,i)=>{
+    const cfg=RTYPES[it.type];
+    const main=it.type==='pdf'||it.type==='image'?(it.fileName||cfg.label):it.type==='link'?(it.url||''):it.type==='text'?(it.text||'').slice(0,60):cfg.label;
+    const sub=it.type==='pdf'||it.type==='image'?(it.fileDetail||cfg.label):cfg.label;
+    return `<div class="ritem"><div class="ri-ic" style="color:${cfg.accent}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${cfg.icon}</svg></div>
+      <div class="ri-tx"><div class="ri-n">${esc(main)}</div><div class="ri-t">${esc(sub)}</div></div>
+      <button class="ri-x" type="button" title="Quitar" onclick="removeResItem(${i})"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>`;
+  }).join('');
+}
+function removeResItem(i){resItems.splice(i,1);renderResItems();}
+function onResFile(input){
+  const f=input.files[0];if(!f)return;
+  hideErr('resErr');resPendingFile=null;
+  const ext=(f.name.split('.').pop()||'').toLowerCase(),mime=(f.type||'').toLowerCase();
+  const okPdf=resType==='pdf'&&(mime==='application/pdf'||ext==='pdf');
+  const okImg=resType==='image'&&(mime.startsWith('image/')||['jpg','jpeg','png','gif','webp','heic'].includes(ext));
+  if(!okPdf&&!okImg){
+    document.getElementById('resFilePrompt').innerHTML='<b>Haz clic para subir</b> '+(resType==='image'?'la imagen':'el PDF');
+    document.getElementById('resFileInput').value='';
+    showErr('resErr',resType==='image'?'Ese archivo no es una imagen. Elegí un .jpg, .png, etc.':'Ese archivo no es un PDF. Elegí un archivo .pdf.');
+    return;
+  }
+  if(f.size>15*1048576){
+    document.getElementById('resFileInput').value='';
+    showErr('resErr','El archivo supera el límite de 15 MB en esta demo.');
+    return;
+  }
+  resPendingFile={type:resType,fileName:f.name,fileDetail:RTYPES[resType].label+' · '+fmtBytes(f.size),thumb:null};
+  document.getElementById('resFilePrompt').innerHTML='<b>'+esc(f.name)+'</b> · listo para agregar';
+  if(resType==='image'){const r=new FileReader();r.onload=e=>makeThumb(e.target.result,th=>{if(resPendingFile)resPendingFile.thumb=th;});r.readAsDataURL(f);}
+}
+function addResItem(){
+  hideErr('resErr');
+  if(resType==='link'){
+    const u=document.getElementById('resUrl').value.trim();
+    if(!u||!/^https?:\/\/.+/i.test(u)){showErr('resErr','Pegá un enlace válido (http/https) para agregarlo.');return;}
+    resItems.push({type:'link',url:u});document.getElementById('resUrl').value='';
+  }else if(resType==='text'){
+    const tx=document.getElementById('resText').value.trim();
+    if(!tx){showErr('resErr','Escribí el texto antes de agregarlo.');return;}
+    resItems.push({type:'text',text:tx});document.getElementById('resText').value='';
+  }else{ // pdf/image
+    if(!resPendingFile){showErr('resErr','Elegí el archivo '+(resType==='image'?'de imagen':'PDF')+' antes de agregarlo.');return;}
+    resItems.push(resPendingFile);resPendingFile=null;
+    document.getElementById('resFilePrompt').innerHTML='<b>Haz clic para subir</b> '+(resType==='image'?'otra imagen':'otro PDF');
+    document.getElementById('resFileInput').value='';
+  }
+  renderResItems();
+}
+function openRes(){
+  resEditId=null;resType='pdf';resPendingFile=null;resItems=[];hideErr('resErr');
+  document.getElementById('resModalTitle').textContent='Agregar recurso';
+  ['resName','resUrl','resText','resMsg','resTriggers'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('resCatSel').value='Garantía';
+  document.getElementById('resActive').classList.add('on');
+  buildResTypePicker('pdf');pickResType('pdf');renderResItems();
+  show('resOverlay');
+}
+function editRes(id){
+  const r=DB.resources.find(x=>x.id===id);if(!r)return;
+  resEditId=id;resType='pdf';resPendingFile=null;resItems=resItemsOf(r).map(it=>Object.assign({},it));hideErr('resErr');
+  document.getElementById('resModalTitle').textContent='Editar recurso';
+  document.getElementById('resName').value=r.name||'';
+  document.getElementById('resCatSel').value=r.category||'Otros';
+  document.getElementById('resUrl').value='';document.getElementById('resText').value='';
+  document.getElementById('resMsg').value=r.message||'';
+  document.getElementById('resTriggers').value=(r.triggers||[]).join(', ');
+  document.getElementById('resActive').classList.toggle('on',!!r.active);
+  buildResTypePicker('pdf');pickResType('pdf');renderResItems();
+  show('resOverlay');
+}
+function saveRes(){
+  hideErr('resErr');
+  const name=document.getElementById('resName').value.trim();
+  if(!name){showErr('resErr','Ponle un nombre al recurso.');flashField('resName');return;}
+  if(!resItems.length){showErr('resErr','Agregá al menos un elemento (archivo, enlace o texto) a la lista.');return;}
+  const triggers=document.getElementById('resTriggers').value.split(',').map(t=>t.trim()).filter(Boolean);
+  if(!triggers.length){showErr('resErr','Agregá al menos un disparador (qué dice el cliente).');flashField('resTriggers');return;}
+  const base={
+    name,category:document.getElementById('resCatSel').value,
+    items:resItems.map(it=>Object.assign({},it)),
+    message:document.getElementById('resMsg').value.trim(),triggers,
+    active:document.getElementById('resActive').classList.contains('on')
+  };
+  // aviso de disparadores compartidos con otro recurso (posible ambigüedad)
+  const mine=triggers.map(norm);
+  const clashes=[];
+  DB.resources.forEach(o=>{
+    if(o.id===resEditId)return;
+    (o.triggers||[]).forEach(t=>{ if(mine.includes(norm(t))&&!clashes.includes(o.name))clashes.push(o.name); });
+  });
+  if(resEditId){const r=DB.resources.find(x=>x.id===resEditId);['type','fileName','fileDetail','thumb','url','text'].forEach(k=>delete r[k]);Object.assign(r,base);toast('Recurso actualizado',name,'success');}
+  else{DB.resources.unshift(Object.assign({id:uid(),created:now()},base));toast('Recurso agregado',name+' · '+resItems.length+(resItems.length>1?' elementos':' elemento'),'success');}
+  persist();close_('resOverlay');
+  if(clashes.length){
+    toast('Disparador repetido','Algunas frases también las usa: '+clashes.slice(0,2).join(', ')+'. El bot podría dudar cuál enviar.','info');
+  }
+}
+function toggleRes(id){const r=DB.resources.find(x=>x.id===id);if(!r)return;r.active=!r.active;persist();toast(r.active?'Recurso activado':'Recurso desactivado',r.name,'info');}
+function delRes(id){
+  const r=DB.resources.find(x=>x.id===id);if(!r)return;
+  askConfirm({title:'Borrar recurso',message:'El chatbot dejará de poder enviar "'+r.name+'". Esta acción no se puede deshacer.',okLabel:'Borrar recurso'},
+    ()=>{DB.resources=DB.resources.filter(x=>x.id!==id);persist();toast('Recurso eliminado',r.name,'info');});
+}
+function itemAttach(it,name){
+  const cfg=RTYPES[it.type];
+  if(it.type==='pdf'||it.type==='image'){
+    return `<div class="battach"><div class="ai" style="color:${cfg.accent}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">${cfg.icon}</svg></div>
+      <div><div class="an">${esc(it.fileName||name)}</div><div class="at">${esc(it.fileDetail||cfg.label)}</div></div>
+      <span class="dl"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></span></div>`;
+  }
+  if(it.type==='link'){
+    return `<div class="battach"><div class="ai" style="color:${cfg.accent}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">${cfg.icon}</svg></div>
+      <div><div class="an">${esc(name)}</div><div class="at">${esc(it.url||'')}</div></div>
+      <span class="dl"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M7 7h10v10"/></svg></span></div>`;
+  }
+  return `<div class="btext">${esc(it.text||'')}</div>`;
+}
+function resBubble(r){
+  const items=resItemsOf(r);
+  const msg=r.message||'Te comparto esta información:';
+  const attaches=items.map(it=>itemAttach(it,r.name)).join('');
+  return `<div class="bubble"><div class="bot-av"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="11" rx="2"/><path d="M12 8V5M8 13h.01M16 13h.01"/></svg></div>
+    <div class="bmsg">${esc(msg)}${attaches}</div></div>`;
+}
+function openResView(id){
+  const r=DB.resources.find(x=>x.id===id);if(!r)return;
+  const items=resItemsOf(r);
+  document.getElementById('resViewTitle').textContent=r.name;
+  document.getElementById('resViewMeta').textContent=(r.category||'')+' · '+items.length+(items.length>1?' elementos':' elemento')+(r.active?'':' · inactivo');
+  const trigs=(r.triggers||[]).map(t=>`<span class="trig">${esc(t)}</span>`).join('');
+  document.getElementById('resViewBody').innerHTML=`
+    <div class="mprev-block"><div class="lbl">Se envía cuando el cliente dice</div><div class="trigs">${trigs||'<span class="faint">sin disparadores</span>'}</div></div>
+    <div class="mprev-block"><div class="lbl">Así lo envía el chatbot</div>${resBubble(r)}</div>
+    ${r.active?'':'<div class="nomatch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>Este recurso está inactivo: el bot no lo enviará hasta que lo actives.</div>'}`;
+  document.getElementById('resViewEdit').onclick=()=>{close_('resViewOverlay');editRes(r.id);};
+  show('resViewOverlay');
+}
+function runResTest(){
+  const q=norm((document.getElementById('resTest').value||'').trim());
+  const out=document.getElementById('resTestOut');
+  if(!q){out.innerHTML='<div class="nomatch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>Escribí una consulta para probar.</div>';return;}
+  const matches=(DB.resources||[]).filter(r=>r.active).map(r=>{
+    const hit=(r.triggers||[]).map(t=>norm(t)).filter(t=>t&&(q.includes(t)||t.includes(q)));
+    return {r,score:hit.reduce((a,t)=>Math.max(a,t.length),0)};
+  }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score);
+  if(!matches.length){
+    out.innerHTML='<div class="nomatch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>Ningún recurso coincide. El bot respondería con el resto de su base de conocimientos, sin adjuntar un documento.</div>';
+    return;
+  }
+  out.innerHTML=`<div class="faint" style="font-size:11.5px;margin-bottom:8px">El chatbot enviaría:</div>`+matches.slice(0,2).map(x=>resBubble(x.r)).join('<div style="height:10px"></div>');
+}
+
+/* ---------- comportamiento del bot (Verde) ---------- */
+function defaultVerde(){
+  return {
+    nombre:'Verde', rol:'asesor de ventas experto', empresa:'Pantalla Verde',
+    rubro:'tecnología, accesorios, repuestos y servicio técnico', idioma:'Español rioplatense',
+    rasgos:['confiado','honesto','ayuda genuina','no presiona'],
+    trato:'vos', lineas:3, emojis:'moderado',
+    ventajas:[
+      {emoji:'⚡',texto:'Servicio técnico express: reparación el mismo día'},
+      {emoji:'📝',texto:'Garantía escrita en todos los trabajos, sin letra chica'},
+      {emoji:'✅',texto:'Repuestos de calidad verificada'},
+      {emoji:'👨‍🔧',texto:'Atención personalizada y diagnóstico honesto'}
+    ],
+    pasos:[
+      {titulo:'Saludo y detección de necesidad',desc:'Saludar cálido + UNA sola pregunta.',ejemplo:'¡Hola! Soy Verde de Pantalla Verde 👋 ¿En qué te puedo ayudar hoy?',activo:true},
+      {titulo:'Diagnóstico',desc:'Preguntar antes de dar precios: modelo y falla (servicio técnico); uso y presupuesto (compras); modelo y calidad (repuestos).',ejemplo:'',activo:true},
+      {titulo:'Presentar la solución con valor',desc:'Vender el beneficio, no el precio; mencionar rapidez + garantía; si no hay precio exacto, ofrecer cotizar.',ejemplo:'',activo:true},
+      {titulo:'Manejo de objeciones',desc:'Usar las respuestas guionadas de la sección de objeciones.',ejemplo:'',activo:true},
+      {titulo:'Cierre de venta',desc:'Pedir compromiso directo con preguntas de acción. Nunca "¿qué te parece?" ni "¿lo pensás?".',ejemplo:'¿Querés que te agendemos para hoy? / ¿Te paso la dirección? / ¿Arrancamos con el pedido?',activo:true},
+      {titulo:'Derivación a asesor humano',desc:'Si piden persona, hay reclamo o no puede resolver.',ejemplo:'Ahora mismo te conecto con uno de nuestros asesores, un momento por favor 🙌',activo:true}
+    ],
+    objeciones:[
+      {obj:'lo pienso',resp:'Entiendo perfectamente. ¿Hay algo puntual que te genera duda? Así te doy información precisa y no perdés tiempo.'},
+      {obj:'está caro',resp:'Te entiendo. Mirá, lo que incluye el precio es la reparación el mismo día más garantía escrita. ¿Cuánto tiempo llevás sin poder usar el equipo?'},
+      {obj:'voy a buscar otro presupuesto',resp:'Bárbaro, es lo correcto. Solo te digo que nosotros lo resolvemos hoy mismo con garantía escrita. Si encontrás mejor propuesta, volvé sin problema 🙌'}
+    ],
+    reglas:[
+      'Nunca inventar precios; si no sabe, ofrecer cotizar.',
+      'Siempre mencionar garantía escrita + servicio express como diferencial.',
+      'Máximo 3 líneas por mensaje en WhatsApp.',
+      'Si el cliente saluda, responder solo con el saludo primero, sin bombardear con info.',
+      'Ser honesto: si algo no se puede reparar, decirlo. La confianza vale más que una venta.'
+    ],
+    frases:{
+      bienvenida:'¡Hola! Soy Verde de Pantalla Verde 👋 ¿En qué te puedo ayudar hoy?',
+      derivacion:'Ahora mismo te conecto con uno de nuestros asesores, un momento por favor 🙌',
+      error:'Disculpá, tuve un problema técnico. Ahora mismo te conecto con uno de nuestros asesores 🙌'
+    },
+    tecnico:{modelo:'claude-sonnet-4-5',maxTokens:1000,memoria:20},
+    encendido:true
+  };
+}
+let vRasgos=[],vVentajas=[],vPasos=[],vObjeciones=[],vReglas=[],dragPaso=null;
+function renderVerde(){
+  if(!DB.verde)DB.verde=defaultVerde();
+  const v=DB.verde;
+  if(v.encendido===undefined)v.encendido=true;
+  renderVerdePower();
+  document.getElementById('v_nombre').value=v.nombre||'';
+  document.getElementById('v_rol').value=v.rol||'';
+  document.getElementById('v_empresa').value=v.empresa||'';
+  document.getElementById('v_rubro').value=v.rubro||'';
+  document.getElementById('v_idioma').value=v.idioma||'Español rioplatense';
+  document.getElementById('v_trato').value=v.trato||'vos';
+  document.getElementById('v_lineas').value=v.lineas||3;
+  document.getElementById('v_emojis').value=v.emojis||'moderado';
+  const fr=v.frases||{};
+  document.getElementById('v_fBien').value=fr.bienvenida||'';
+  document.getElementById('v_fDeriv').value=fr.derivacion||'';
+  document.getElementById('v_fError').value=fr.error||'';
+  const tc=v.tecnico||{};
+  document.getElementById('v_modelo').value=tc.modelo||'claude-sonnet-4-5';
+  document.getElementById('v_tokens').value=tc.maxTokens||1000;
+  document.getElementById('v_memoria').value=tc.memoria||20;
+  vRasgos=(v.rasgos||[]).slice();
+  vVentajas=(v.ventajas||[]).map(x=>Object.assign({},x));
+  vPasos=(v.pasos||[]).map(x=>Object.assign({},x));
+  vObjeciones=(v.objeciones||[]).map(x=>Object.assign({},x));
+  vReglas=(v.reglas||[]).slice();
+  renderRasgos();renderVentajas();renderPasos();renderObj();renderReglas();
+  renderSim();updateSimHint();
+  buildVerdePrompt();
+}
+/* --- Power on/off (Verde) --- */
+function renderVerdePower(){
+  const on=DB.verde.encendido!==false;
+  const card=document.getElementById('v_powerCard');if(!card)return;
+  card.classList.toggle('off',!on);
+  document.getElementById('v_powerIc').innerHTML=on
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v10M18.4 6.6a9 9 0 1 1-12.8 0"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64A9 9 0 1 1 5.64 6.64M12 2v6"/><path d="M2 2l20 20"/></svg>';
+  document.getElementById('v_powerTitle').textContent=on?'Verde está encendido':'Verde está apagado';
+  document.getElementById('v_powerSub').textContent=on
+    ? 'Atiende a los clientes por WhatsApp con esta configuración.'
+    : 'No responde a los clientes. Los mensajes que lleguen no serán atendidos por el bot.';
+  const btn=document.getElementById('v_powerBtn');
+  btn.className='btn '+(on?'btn-danger':'btn-primary');
+  btn.innerHTML=on
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64A9 9 0 1 1 5.64 6.64M12 2v6"/></svg> Apagar bot'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v10M18.4 6.6a9 9 0 1 1-12.8 0"/></svg> Encender bot';
+}
+function toggleVerdePower(){
+  const on=DB.verde.encendido!==false;
+  if(on){
+    askConfirm({title:'Apagar el bot',message:'Verde dejará de responder a los clientes en WhatsApp hasta que lo vuelvas a encender. ¿Confirmás?',okLabel:'Apagar bot',icon:'warn'},
+      ()=>{DB.verde.encendido=false;persist();renderVerdePower();buildVerdePrompt();toast('Bot apagado','Verde no atenderá clientes hasta encenderlo.','info');});
+  }else{
+    DB.verde.encendido=true;persist();renderVerdePower();buildVerdePrompt();toast('Bot encendido','Verde ya vuelve a atender a los clientes.','success');
+  }
+}
+/* --- Simulador (probar a Verde vía backend) --- */
+let simState=[];
+function renderSim(){
+  const box=document.getElementById('v_simChat');if(!box)return;
+  if(!simState.length){box.innerHTML='<div class="sim-empty">Todavía no hay mensajes. Escribí algo como "hola, se me rompió la pantalla" para empezar.</div>';return;}
+  box.innerHTML=simState.map(m=>`<div class="sbub ${m.role}">${esc(m.text)}</div>`).join('');
+  box.scrollTop=box.scrollHeight;
+}
+function simReset(){simState=[];renderSim();const i=document.getElementById('v_simInput');if(i)i.value='';}
+async function updateSimHint(){
+  const hint=document.getElementById('v_simHint');if(!hint)return;
+  let ia=false,server=false;
+  try{const r=await fetch('/api/health',{cache:'no-store'});if(r.ok){const j=await r.json();server=true;ia=!!j.ia;}}catch(e){server=false;}
+  if(!server){
+    hint.style.display='flex';
+    hint.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg><span>El simulador necesita el <b>servidor encendido</b>. Abrí el dashboard desde <b>http://localhost:3000</b> (no como archivo suelto) para poder chatear con Verde.</span>';
+  }else if(!ia){
+    hint.style.display='flex';
+    hint.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg><span>Falta cargar la <b>clave de IA</b> en el archivo <b>.env</b> del servidor. Sin ella, Verde responde con su mensaje de error.</span>';
+  }else{hint.style.display='none';}
+}
+async function simSend(){
+  const input=document.getElementById('v_simInput');
+  const btn=document.getElementById('v_simSend');
+  const msg=(input.value||'').trim();
+  if(!msg)return;
+  simState.push({role:'user',text:msg});input.value='';
+  simState.push({role:'typing',text:'Verde está escribiendo…'});renderSim();
+  btn.disabled=true;
+  let reply=null,errText=null;
+  try{
+    const r=await fetch('/api/simulate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg,from:'dashboard'})});
+    if(r.ok){const j=await r.json();reply=j.reply;}
+    else{const j=await r.json().catch(()=>({}));errText=j.error||('El servidor respondió con error '+r.status+'.');}
+  }catch(e){errText='No me pude conectar con el servidor. Abrí el dashboard desde http://localhost:3000 con el servidor encendido.';}
+  simState=simState.filter(m=>m.role!=='typing');
+  if(reply!=null)simState.push({role:'bot',text:reply});
+  else simState.push({role:'err',text:errText||'No se pudo generar la respuesta.'});
+  renderSim();btn.disabled=false;input.focus();
+}
+/* --- Ventajas (C) --- */
+function renderVentajas(){
+  document.getElementById('v_ventajasList').innerHTML=vVentajas.map((x,i)=>
+    `<div class="vrow">
+      <input class="vemoji" value="${esc(x.emoji||'')}" maxlength="4" oninput="vVentajas[${i}].emoji=this.value;buildVerdePrompt()" placeholder="⭐">
+      <input class="vtext" value="${esc(x.texto||'')}" oninput="vVentajas[${i}].texto=this.value;buildVerdePrompt()" placeholder="Describí la ventaja…">
+      <button class="vdel" type="button" title="Quitar" onclick="delVentaja(${i})"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+    </div>`).join('')||'<div class="faint" style="font-size:12px">Sin ventajas todavía.</div>';
+}
+function addVentaja(){vVentajas.push({emoji:'',texto:''});renderVentajas();buildVerdePrompt();
+  const inputs=document.querySelectorAll('#v_ventajasList .vtext');if(inputs.length)inputs[inputs.length-1].focus();}
+function delVentaja(i){vVentajas.splice(i,1);renderVentajas();buildVerdePrompt();}
+/* --- Pasos (D) --- */
+function renderPasos(){
+  const box=document.getElementById('v_pasosList');
+  box.innerHTML=vPasos.map((p,i)=>
+    `<div class="pcard${p.activo===false?' off':''}" draggable="true" data-i="${i}"
+       ondragstart="pasoDragStart(${i},event)" ondragover="event.preventDefault()" ondrop="pasoDrop(${i})" ondragend="pasoDragEnd()">
+      <div class="phead">
+        <span class="pgrip" title="Arrastrar para reordenar"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg></span>
+        <span class="pnum">${i+1}</span>
+        <input class="ptitle" value="${esc(p.titulo||'')}" oninput="vPasos[${i}].titulo=this.value;buildVerdePrompt()" placeholder="Título del paso">
+        <div class="pmove"><button type="button" title="Subir" onclick="movePaso(${i},-1)"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 15l6-6 6 6"/></svg></button><button type="button" title="Bajar" onclick="movePaso(${i},1)"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></button></div>
+        <div class="switch ${p.activo===false?'':'on'}" title="${p.activo===false?'Desactivado':'Activo'}" onclick="togglePaso(${i})"></div>
+      </div>
+      <textarea rows="2" oninput="vPasos[${i}].desc=this.value;buildVerdePrompt()" placeholder="Instrucción para el bot…">${esc(p.desc||'')}</textarea>
+      <input class="pex" value="${esc(p.ejemplo||'')}" oninput="vPasos[${i}].ejemplo=this.value;buildVerdePrompt()" placeholder="Ejemplo de frase (opcional)">
+      <div class="pfoot"><span class="lbl">${p.activo===false?'No se incluye en el cerebro':'Se incluye en el cerebro'}</span>
+        <button class="pdel" type="button" title="Borrar paso" onclick="delPaso(${i})"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+      </div>
+    </div>`).join('')||'<div class="faint" style="font-size:12px">Sin pasos todavía.</div>';
+}
+function addPaso(){vPasos.push({titulo:'Nuevo paso',desc:'',ejemplo:'',activo:true});renderPasos();buildVerdePrompt();}
+function delPaso(i){vPasos.splice(i,1);renderPasos();buildVerdePrompt();}
+function togglePaso(i){vPasos[i].activo=vPasos[i].activo===false?true:false;renderPasos();buildVerdePrompt();}
+function movePaso(i,d){const j=i+d;if(j<0||j>=vPasos.length)return;const t=vPasos[i];vPasos[i]=vPasos[j];vPasos[j]=t;renderPasos();buildVerdePrompt();}
+function pasoDragStart(i,e){dragPaso=i;e.dataTransfer.effectAllowed='move';const c=e.target.closest('.pcard');if(c)c.classList.add('dragging');}
+function pasoDragEnd(){dragPaso=null;document.querySelectorAll('.pcard.dragging').forEach(c=>c.classList.remove('dragging'));}
+function pasoDrop(i){if(dragPaso==null||dragPaso===i)return;const it=vPasos.splice(dragPaso,1)[0];vPasos.splice(i,0,it);dragPaso=null;renderPasos();buildVerdePrompt();}
+/* --- Objeciones (E) --- */
+function renderObj(){
+  document.getElementById('v_objList').innerHTML=vObjeciones.map((o,i)=>
+    `<div class="objrow">
+      <div class="oh"><span class="obadge">SI EL CLIENTE DICE</span>
+        <input class="oobj" value="${esc(o.obj||'')}" oninput="vObjeciones[${i}].obj=this.value;buildVerdePrompt()" placeholder='Ej. "está caro"'>
+        <button class="odel" type="button" title="Quitar" onclick="delObj(${i})"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+      </div>
+      <span class="ra">↳ Verde responde</span>
+      <textarea class="oresp" rows="2" oninput="vObjeciones[${i}].resp=this.value;buildVerdePrompt()" placeholder="Respuesta que debe dar…">${esc(o.resp||'')}</textarea>
+    </div>`).join('')||'<div class="faint" style="font-size:12px">Sin objeciones todavía.</div>';
+}
+function addObj(){vObjeciones.push({obj:'',resp:''});renderObj();buildVerdePrompt();
+  const els=document.querySelectorAll('#v_objList .oobj');if(els.length)els[els.length-1].focus();}
+function delObj(i){vObjeciones.splice(i,1);renderObj();buildVerdePrompt();}
+/* --- Reglas (F) --- */
+function renderReglas(){
+  document.getElementById('v_reglasList').innerHTML=vReglas.map((r,i)=>
+    `<div class="regrow">
+      <span class="rnum">${i+1}</span>
+      <input class="rtext" value="${esc(r||'')}" oninput="vReglas[${i}]=this.value;buildVerdePrompt()" placeholder="Escribí la regla…">
+      <div class="rmove"><button type="button" title="Subir" onclick="moveRegla(${i},-1)"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 15l6-6 6 6"/></svg></button><button type="button" title="Bajar" onclick="moveRegla(${i},1)"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></button></div>
+      <button class="rdel" type="button" title="Quitar" onclick="delRegla(${i})"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
+    </div>`).join('')||'<div class="faint" style="font-size:12px">Sin reglas todavía.</div>';
+}
+function addRegla(){vReglas.push('');renderReglas();buildVerdePrompt();
+  const els=document.querySelectorAll('#v_reglasList .rtext');if(els.length)els[els.length-1].focus();}
+function delRegla(i){vReglas.splice(i,1);renderReglas();buildVerdePrompt();}
+function moveRegla(i,d){const j=i+d;if(j<0||j>=vReglas.length)return;const t=vReglas[i];vReglas[i]=vReglas[j];vReglas[j]=t;renderReglas();buildVerdePrompt();}
+function renderRasgos(){
+  document.getElementById('v_rasgosChips').innerHTML=vRasgos.map((r,i)=>
+    `<span class="chip-tag">${esc(r)}<button type="button" onclick="removeRasgo(${i})"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span>`).join('');
+}
+function rasgoKey(e){
+  if(e.key==='Enter'){e.preventDefault();const val=e.target.value.trim();if(val&&!vRasgos.includes(val)){vRasgos.push(val);e.target.value='';renderRasgos();buildVerdePrompt();}}
+  else if(e.key==='Backspace'&&!e.target.value&&vRasgos.length){vRasgos.pop();renderRasgos();buildVerdePrompt();}
+}
+function removeRasgo(i){vRasgos.splice(i,1);renderRasgos();buildVerdePrompt();}
+function saveVerde(section){
+  const v=DB.verde;
+  if(section==='identidad'){
+    const nombre=document.getElementById('v_nombre').value.trim();
+    const empresa=document.getElementById('v_empresa').value.trim();
+    if(!nombre){showVerdeErr('El nombre del bot no puede quedar vacío.');flashField('v_nombre');return;}
+    if(!empresa){showVerdeErr('Indicá el nombre de la empresa.');flashField('v_empresa');return;}
+    v.nombre=nombre;v.rol=document.getElementById('v_rol').value.trim();v.empresa=empresa;
+    v.rubro=document.getElementById('v_rubro').value.trim();v.idioma=document.getElementById('v_idioma').value;
+    persist();toast('Identidad guardada','Los cambios ya forman parte del cerebro de Verde.','success');
+  }else if(section==='personalidad'){
+    if(!vRasgos.length){showVerdeErr('Agregá al menos un rasgo de personalidad.');return;}
+    v.rasgos=vRasgos.slice();v.trato=document.getElementById('v_trato').value;
+    v.lineas=Math.max(1,parseInt(document.getElementById('v_lineas').value,10)||3);
+    v.emojis=document.getElementById('v_emojis').value;
+    persist();toast('Personalidad guardada','Verde ya habla con este estilo.','success');
+  }else if(section==='ventajas'){
+    const clean=vVentajas.filter(x=>(x.texto||'').trim());
+    if(!clean.length){showVerdeErr('Agregá al menos una ventaja con texto.');return;}
+    v.ventajas=clean.map(x=>({emoji:(x.emoji||'').trim(),texto:x.texto.trim()}));
+    vVentajas=v.ventajas.map(x=>Object.assign({},x));renderVentajas();
+    persist();toast('Ventajas guardadas',v.ventajas.length+' diferenciales activos.','success');
+  }else if(section==='pasos'){
+    const clean=vPasos.filter(x=>(x.titulo||'').trim());
+    if(!clean.length){showVerdeErr('Agregá al menos un paso con título.');return;}
+    v.pasos=clean.map(x=>({titulo:x.titulo.trim(),desc:(x.desc||'').trim(),ejemplo:(x.ejemplo||'').trim(),activo:x.activo!==false}));
+    vPasos=v.pasos.map(x=>Object.assign({},x));renderPasos();
+    const act=v.pasos.filter(s=>s.activo).length;
+    persist();toast('Pasos guardados',act+' de '+v.pasos.length+' pasos activos.','success');
+  }else if(section==='objeciones'){
+    const clean=vObjeciones.filter(o=>(o.obj||'').trim()&&(o.resp||'').trim());
+    if(!clean.length){showVerdeErr('Cada objeción necesita la frase del cliente y la respuesta.');return;}
+    v.objeciones=clean.map(o=>({obj:o.obj.trim(),resp:o.resp.trim()}));
+    vObjeciones=v.objeciones.map(x=>Object.assign({},x));renderObj();
+    persist();toast('Objeciones guardadas',v.objeciones.length+' respuestas listas.','success');
+  }else if(section==='reglas'){
+    const clean=vReglas.map(r=>(r||'').trim()).filter(Boolean);
+    if(!clean.length){showVerdeErr('Agregá al menos una regla.');return;}
+    v.reglas=clean;vReglas=clean.slice();renderReglas();
+    persist();toast('Reglas guardadas',v.reglas.length+' reglas de oro.','success');
+  }else if(section==='frases'){
+    const bien=document.getElementById('v_fBien').value.trim();
+    if(!bien){showVerdeErr('El mensaje de bienvenida no puede quedar vacío.');flashField('v_fBien');return;}
+    v.frases={bienvenida:bien,derivacion:document.getElementById('v_fDeriv').value.trim(),error:document.getElementById('v_fError').value.trim()};
+    persist();toast('Frases guardadas','Los mensajes clave quedaron actualizados.','success');
+  }else if(section==='tecnico'){
+    const modelo=document.getElementById('v_modelo').value.trim();
+    if(!modelo){showVerdeErr('Indicá el identificador del modelo de IA.');flashField('v_modelo');return;}
+    if(!/^claude-[a-z0-9.\-]+$/i.test(modelo)){showVerdeErr('El identificador no parece válido. Suele empezar con "claude-". Confirmalo con tu programador.');flashField('v_modelo');return;}
+    const tk=parseInt(document.getElementById('v_tokens').value,10);
+    const mem=parseInt(document.getElementById('v_memoria').value,10);
+    if(isNaN(tk)||tk<100||tk>8000){showVerdeErr('El largo de respuesta debe estar entre 100 y 8000 tokens.');flashField('v_tokens');return;}
+    if(isNaN(mem)||mem<2||mem>100){showVerdeErr('La memoria debe estar entre 2 y 100 mensajes.');flashField('v_memoria');return;}
+    v.tecnico={modelo,maxTokens:tk,memoria:mem};
+    persist();toast('Parámetros guardados','Modelo: '+modelo,'success');
+  }
+}
+function showVerdeErr(msg){toast('Falta un dato',msg,'error');}
+function snapVerde(src){
+  const g=id=>document.getElementById(id);
+  if(src==='dom'){
+    return JSON.stringify({
+      nombre:(g('v_nombre').value||'').trim(),rol:(g('v_rol').value||'').trim(),empresa:(g('v_empresa').value||'').trim(),
+      rubro:(g('v_rubro').value||'').trim(),idioma:g('v_idioma').value,trato:g('v_trato').value,
+      lineas:parseInt(g('v_lineas').value,10)||0,emojis:g('v_emojis').value,
+      rasgos:vRasgos.slice(),
+      ventajas:vVentajas.filter(x=>(x.texto||'').trim()).map(x=>({emoji:(x.emoji||'').trim(),texto:x.texto.trim()})),
+      pasos:vPasos.filter(x=>(x.titulo||'').trim()).map(x=>({titulo:x.titulo.trim(),desc:(x.desc||'').trim(),ejemplo:(x.ejemplo||'').trim(),activo:x.activo!==false})),
+      objeciones:vObjeciones.filter(o=>(o.obj||'').trim()&&(o.resp||'').trim()).map(o=>({obj:o.obj.trim(),resp:o.resp.trim()})),
+      reglas:vReglas.map(r=>(r||'').trim()).filter(Boolean),
+      frases:{bienvenida:(g('v_fBien').value||'').trim(),derivacion:(g('v_fDeriv').value||'').trim(),error:(g('v_fError').value||'').trim()},
+      tecnico:{modelo:(g('v_modelo').value||'').trim(),maxTokens:parseInt(g('v_tokens').value,10)||0,memoria:parseInt(g('v_memoria').value,10)||0}
+    });
+  }
+  const v=DB.verde||{},fr=v.frases||{},tc=v.tecnico||{};
+  return JSON.stringify({
+    nombre:(v.nombre||'').trim(),rol:(v.rol||'').trim(),empresa:(v.empresa||'').trim(),
+    rubro:(v.rubro||'').trim(),idioma:v.idioma||'Español rioplatense',trato:v.trato||'vos',
+    lineas:v.lineas||0,emojis:v.emojis||'moderado',
+    rasgos:(v.rasgos||[]).slice(),
+    ventajas:(v.ventajas||[]).map(x=>({emoji:(x.emoji||'').trim(),texto:(x.texto||'').trim()})),
+    pasos:(v.pasos||[]).map(x=>({titulo:(x.titulo||'').trim(),desc:(x.desc||'').trim(),ejemplo:(x.ejemplo||'').trim(),activo:x.activo!==false})),
+    objeciones:(v.objeciones||[]).map(o=>({obj:(o.obj||'').trim(),resp:(o.resp||'').trim()})),
+    reglas:(v.reglas||[]).map(r=>(r||'').trim()).filter(Boolean),
+    frases:{bienvenida:(fr.bienvenida||'').trim(),derivacion:(fr.derivacion||'').trim(),error:(fr.error||'').trim()},
+    tecnico:{modelo:(tc.modelo||'').trim(),maxTokens:tc.maxTokens||0,memoria:tc.memoria||0}
+  });
+}
+function verdeHasUnsaved(){
+  if(!document.getElementById('v_nombre')||!DB.verde)return false;
+  try{return snapVerde('dom')!==snapVerde('db');}catch(e){return false;}
+}
+function buildVerdePrompt(){
+  const pre=document.getElementById('v_preview');if(!pre||!DB.verde)return;
+  const v=DB.verde;
+  // valores en vivo de A y B (los demás vienen de la config guardada)
+  const nombre=document.getElementById('v_nombre').value||v.nombre;
+  const rol=document.getElementById('v_rol').value||v.rol;
+  const empresa=document.getElementById('v_empresa').value||v.empresa;
+  const rubro=document.getElementById('v_rubro').value||v.rubro;
+  const idioma=document.getElementById('v_idioma').value||v.idioma;
+  const trato=document.getElementById('v_trato').value||v.trato;
+  const lineas=document.getElementById('v_lineas').value||v.lineas;
+  const emojis=document.getElementById('v_emojis').value||v.emojis;
+  const tratoTxt={vos:'Tratá al cliente de "vos" (rioplatense)',['tú']:'Tratá al cliente de "tú"',usted:'Tratá al cliente de "usted" (formal)'}[trato];
+  const emojiTxt={nada:'No uses emojis.',moderado:'Usá emojis con moderación.',abundante:'Usá emojis de forma abundante.'}[emojis];
+  const H=t=>`<b>== ${t} ==</b>`;
+  let p='';
+  if(DB.verde.encendido===false){p+=`<span style="color:var(--red)">⛔ BOT APAGADO — Verde no está atendiendo clientes en este momento.</span>\n\n`;}
+  p+=`Sos ${esc(nombre)}, ${esc(rol)} de ${esc(empresa)}. Rubro: ${esc(rubro)}.\nHablás en ${esc(idioma)}.\n\n`;
+  p+=H('PERSONALIDAD')+'\n';
+  p+=`Rasgos: ${vRasgos.length?esc(vRasgos.join(', ')):'—'}.\n${esc(tratoTxt)}. Mensajes cortos, máximo ${esc(String(lineas))} líneas por mensaje. ${esc(emojiTxt)}\n\n`;
+  p+=H('VENTAJAS / DIFERENCIALES')+'\n'+(vVentajas.filter(x=>(x.texto||'').trim()).map(x=>`• ${x.emoji?x.emoji+' ':''}${esc(x.texto)}`).join('\n')||'—')+'\n\n';
+  p+=H('PROCESO DE VENTA')+'\n'+(vPasos.filter(s=>s.activo!==false&&(s.titulo||'').trim()).map((s,i)=>`${i+1}. ${esc(s.titulo)}${s.desc?': '+esc(s.desc):''}${s.ejemplo?'\n   Ej: "'+esc(s.ejemplo)+'"':''}`).join('\n')||'—')+'\n\n';
+  p+=H('MANEJO DE OBJECIONES')+'\n'+(vObjeciones.filter(o=>(o.obj||'').trim()).map(o=>`- Si dice "${esc(o.obj)}" → ${esc(o.resp)}`).join('\n')||'—')+'\n\n';
+  p+=H('REGLAS DE ORO')+'\n'+(vReglas.filter(r=>(r||'').trim()).map((r,i)=>`${i+1}. ${esc(r)}`).join('\n')||'—')+'\n\n';
+  const fBien=(document.getElementById('v_fBien')||{}).value||'';
+  const fDeriv=(document.getElementById('v_fDeriv')||{}).value||'';
+  const fError=(document.getElementById('v_fError')||{}).value||'';
+  p+=H('FRASES CLAVE')+'\n'+
+    `Bienvenida: "${esc(fBien)}"\n`+
+    `Al derivar a un humano: "${esc(fDeriv)}"\n`+
+    `Si hay un error técnico: "${esc(fError)}"`;
+  pre.innerHTML=p;
+}
+
+/* ---------- vincular bot ---------- */
+function connRow(id,name,desc,state){
+  const cfg={ok:{c:'var(--green)',t:'Conectado'},warn:{c:'var(--amber)',t:'Atención'},pend:{c:'var(--faint)',t:'Pendiente'},wait:{c:'var(--muted)',t:'…'}}[state];
+  const dot=state==='wait'?'<span class="mini-spin" style="width:14px;height:14px;margin:0"></span>':`<span style="width:9px;height:9px;border-radius:50%;background:${cfg.c};display:inline-block"></span>`;
+  return `<div id="conn-${id}" style="display:flex;align-items:center;gap:11px;padding:11px 12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;background:var(--surface-2)">
+    <span style="flex:none;width:16px;display:grid;place-items:center">${dot}</span>
+    <div style="flex:1"><div style="font-size:13px;font-weight:600">${esc(name)}</div><div style="font-size:11.5px;color:var(--muted);margin-top:1px">${esc(desc)}</div></div>
+  </div>`;
+}
+async function openConn(){show('linkOverlay');await checkConn();}
+async function checkConn(){
+  const box=document.getElementById('connRows');
+  box.innerHTML=connRow('server','Servidor / base de datos','Verificando…','wait')
+    +connRow('wa','WhatsApp (Twilio)','Pendiente — próximo paso del servidor','pend')
+    +connRow('ia','IA (Anthropic)','Pendiente — próximo paso del servidor','pend');
+  let ok=false;
+  try{const r=await fetch('/api/health',{cache:'no-store'});ok=r.ok;}catch(e){ok=false;}
+  _backendOk=ok;
+  const sRow=document.getElementById('conn-server');
+  if(sRow)sRow.outerHTML=connRow('server','Servidor / base de datos',
+    ok?'Conectado — tus cambios se guardan en el servidor':'Sin servidor — estás en modo navegador (se guarda en este equipo)',
+    ok?'ok':'warn');
+  updateBot();
+}
+function updateBot(){
+  const on=_backendOk===true;
+  const badge=document.getElementById('botBadge');
+  const st=document.getElementById('botStatusText');
+  if(on){
+    badge.classList.add('linked');badge.innerHTML='<span class="pulse"></span> Servidor · Conectado';
+    if(st)st.textContent='Servidor conectado';
+  }else if(_backendOk===false){
+    badge.classList.remove('linked');badge.innerHTML='<span class="pulse"></span> Modo navegador';
+    if(st)st.textContent='Modo navegador (sin servidor)';
+  }else{
+    badge.classList.remove('linked');badge.innerHTML='<span class="pulse"></span> Verificando…';
+    if(st)st.textContent='Verificando…';
+  }
+}
+
+/* ---------- helpers modal ---------- */
+function show(id){document.getElementById(id).classList.add('show');}
+function close_(id){document.getElementById(id).classList.remove('show');}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show');}));
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    const open=[...document.querySelectorAll('.overlay.show')].pop();
+    if(open){if(open.id==='confirmOverlay')confirmCb=null;open.classList.remove('show');}
+  }
+});
+
+/* ---------- persist + render ---------- */
+function persist(){save();renderSources();renderCrawler();renderMedia();renderRes();}
+/* ---------- init ---------- */
+(async()=>{
+  const saved=await load();
+  if(saved&&saved.sources)DB=Object.assign({sources:[],targets:[],products:[],media:[],resources:[],verde:null,bot:{linked:false,endpoint:''}},saved);
+  else{seed();await save();}
+  if(!DB.verde){DB.verde=defaultVerde();await save();}
+  document.getElementById('boot').style.display='none';
+  document.getElementById('app').style.display='grid';
+  renderSources();renderCrawler();renderMedia();renderRes();updateBot();
+})();
+</script>
