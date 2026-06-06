@@ -2592,7 +2592,12 @@ function renderSim(){
   box.innerHTML=simState.map(m=>`<div class="sbub ${m.role}">${esc(m.text)}</div>`).join('');
   box.scrollTop=box.scrollHeight;
 }
-function simReset(){simState=[];renderSim();const i=document.getElementById('v_simInput');if(i)i.value='';}
+function simReset(){
+  simState=[];renderSim();
+  const i=document.getElementById('v_simInput');if(i)i.value='';
+  // borrar también la memoria guardada en el servidor (si está conectado)
+  fetch('/api/simulate/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({from:'dashboard'})}).catch(()=>{});
+}
 async function updateSimHint(){
   const hint=document.getElementById('v_simHint');if(!hint)return;
   let ia=false,server=false;

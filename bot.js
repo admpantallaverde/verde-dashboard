@@ -95,6 +95,11 @@ function saveConversations(obj) {
     console.error('No se pudo guardar conversations.json:', e.message);
   }
 }
+function resetConversation(from) {
+  const convs = loadConversations();
+  if (convs[from]) { delete convs[from]; saveConversations(convs); }
+  return true;
+}
 
 /* ---------- llamada a la IA (Anthropic) ---------- */
 async function callClaude(system, messages, v) {
@@ -224,4 +229,4 @@ async function getReply(from, body) {
   return reply;
 }
 
-module.exports = { buildSystemPrompt, getReply, getVerde, callClaude, findProducts, productBlock };
+module.exports = { buildSystemPrompt, getReply, getVerde, callClaude, findProducts, productBlock, resetConversation };
