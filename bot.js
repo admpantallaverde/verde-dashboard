@@ -140,7 +140,13 @@ function getSource() {
 }
 // Columnas confirmadas (base 0): Nombre=2, Stock=5, Precio venta=6, Precio con descuento=8
 const COL = { NAME: 2, STOCK: 5, PV: 6, PD: 8 };
-const STOP = new Set(['el','la','los','las','un','una','unos','unas','de','del','para','por','con','y','o','a','en','me','te','le','lo','al','su','mi','se','es','que','cuanto','cuanta','cuantos','cuantas','cuesta','cuestan','sale','salen','precio','precios','vale','valen','tiene','tienen','tenes','hay','quiero','dame','decime','busco','necesito','tienes','cual','sobre','este','esta','ese','esa','del','hola','buenas','dia','dias','tardes','noches']);
+const STOP = new Set(['el','la','los','las','un','una','unos','unas','de','del','para','por','con','y','o','a','en','me','te','le','lo','al','su','mi','se','es','que','cuanto','cuanta','cuantos','cuantas','cuesta','cuestan','sale','salen','precio','precios','vale','valen','tiene','tienen','tenes','hay','quiero','dame','decime','busco','necesito','tienes','cual','sobre','este','esta','ese','esa','hola','buenas','dia','dias','tardes','noches',
+  // preguntas generales que NO son de productos: no deben disparar el catálogo
+  'direccion','direcciones','ubicados','ubicado','ubicacion','ubicado','queda','quedan','quedas','estan','estas','donde','local','locales','sucursal','sucursales','horario','horarios','hora','horas','abren','abre','cierran','cierra','abierto','abiertos','cerrado','atienden','atencion',
+  'pago','pagos','pagar','tarjeta','tarjetas','efectivo','transferencia','debito','credito','cuotas','financiacion',
+  'envio','envios','envian','envia','delivery','mandan','manda','reparto','llega','llegan',
+  'telefono','telefonos','celular','contacto','contactar','llamar','whatsapp','correo','mail','email','web','pagina','instagram','facebook',
+  'garantia','garantias','factura','iva','cambio','devolucion','reparan','reparacion','arreglan','arreglo','service','tecnico','demoran','demora','tarda','tardan']);
 function findProducts(query, limit) {
   limit = limit || 8;
   const src = getSource();
@@ -176,12 +182,7 @@ function findProducts(query, limit) {
 function productBlock(query) {
   const { hasSource, found, tokens } = findProducts(query);
   if (!hasSource || !tokens.length) return '';
-  if (!found.length) {
-    return '\n\n=== CATÁLOGO (INSTRUCCIÓN OBLIGATORIA) ===\n' +
-      'En el catálogo NO figura ningún producto que coincida con lo que pidió el cliente. ' +
-      'No afirmes que lo tenés. Si no estás seguro de manejarlo, decílo con naturalidad y ofrecé que un asesor lo verifique. ' +
-      'NUNCA des un precio: los precios siempre los confirma un asesor humano.';
-  }
+  if (!found.length) return ''; // no es una consulta de producto reconocible: Verde responde normal
   let b = '\n\n=== CATÁLOGO (INSTRUCCIÓN OBLIGATORIA) ===\n' +
     'Estos productos SÍ existen en el catálogo (es info real). REGLAS:\n' +
     '1) Confirmá con naturalidad y tu propio tono que sí tenés el/los producto(s).\n' +
