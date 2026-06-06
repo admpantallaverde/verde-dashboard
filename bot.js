@@ -146,11 +146,16 @@ function findProducts(query, limit) {
   const body = src.preview.slice(1);
   const tokens = norm(query).split(/\s+/).filter(w => w && !STOP.has(w));
   if (!tokens.length) return { hasSource: true, found: [], tokens: [] };
+  // números: palabra exacta ("16" no matchea "2016" ni "1630"). Texto/modelos: prefijo ("a21" matchea "a21s")
+  const rxs = tokens.map(t => {
+    const e = t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return /^\d+$/.test(t) ? new RegExp('\\b' + e + '\\b') : new RegExp('\\b' + e);
+  });
   const found = [];
   for (const r of body) {
     const name = norm(r[COL.NAME]);
     if (!name) continue;
-    if (tokens.every(t => name.includes(t))) {
+    if (rxs.every(rx => rx.test(name))) {
       found.push({
         nombre: String(r[COL.NAME] == null ? '' : r[COL.NAME]).trim(),
         precio: cleanNum(r[COL.PV]),
