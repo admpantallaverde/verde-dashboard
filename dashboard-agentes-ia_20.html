@@ -166,6 +166,10 @@ input,select{font-family:inherit;font-size:14px}
 .prev-filter .fdrop{min-width:120px}
 .pf-clear{font-size:12px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;transition:.15s}
 .pf-clear:hover{color:var(--text);background:var(--surface-3)}
+.pf-group{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}
+.pf-item{display:flex;flex-direction:column;gap:3px}
+.pf-item .pf-name{font-size:11px;color:var(--faint);font-weight:600;padding-left:2px}
+.pf-item .fdrop{min-width:140px}
 
 /* multimedia */
 .media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;padding:18px 20px}
@@ -1092,8 +1096,7 @@ tbody tr:hover{background:var(--surface-2)}
       </div>
       <div class="prev-filter" id="prevFilterBar">
         <span class="pf-label">Filtrar por</span>
-        <select class="fdrop" id="prevCol" onchange="onPrevCol()"></select>
-        <select class="fdrop" id="prevVal" onchange="renderPrevTable()"></select>
+        <div id="prevFilters" class="pf-group"></div>
         <button class="pf-clear" id="prevFilterClr" onclick="clearPrevFilter()">Limpiar</button>
       </div>
       <div id="prevTableWrap" class="prev-wrap"></div>
@@ -1796,7 +1799,7 @@ function categoricalCols(head,body){
     if(!nonEmpty.length)return;
     const distinct=[...new Set(nonEmpty)];
     // categórica: pocos valores distintos, no es columna única (tipo ID/SKU) ni puramente numérica larga
-    const few=distinct.length<=15 && distinct.length<nonEmpty.length;
+    const few=distinct.length<=80 && distinct.length<nonEmpty.length;
     if(few && !isNumericCol(nonEmpty)) out.push({i,name:h||('Columna '+(i+1)),values:distinct.sort((a,b)=>a.localeCompare(b))});
   });
   return out;
@@ -1818,39 +1821,51 @@ function openPreview(id){
     : 'Muestra representativa de la estructura. Al conectar la fuente real se mostrarán sus datos.';
   currentPreview=(data&&data.length)?{head:data[0],body:data.slice(1)}:null;
   document.getElementById('prevSearch').value='';
-  // poblar filtro por categoría
-  const colSel=document.getElementById('prevCol');
+  // filtros por columna (Categoría, Subcategoría, etc.)
   const bar=document.getElementById('prevFilterBar');
   currentPreview && (currentPreview.cats=categoricalCols(currentPreview.head,currentPreview.body));
   if(currentPreview && currentPreview.cats.length){
     bar.classList.remove('hidden');
-    colSel.innerHTML=currentPreview.cats.map(c=>`<option value="${c.i}">${esc(c.name)}</option>`).join('');
-    // por defecto, preferir una columna tipo "categoría"
-    const pref=currentPreview.cats.find(c=>/categor/i.test(c.name));
-    colSel.value=String((pref||currentPreview.cats[0]).i);
-    populatePrevVal();
+    buildPrevFilters();
   }else{
     bar.classList.add('hidden');
   }
   renderPrevTable();
   show('prevOverlay');
 }
-function populatePrevVal(){
-  const colSel=document.getElementById('prevCol'),valSel=document.getElementById('prevVal');
-  const col=currentPreview.cats.find(c=>String(c.i)===colSel.value)||currentPreview.cats[0];
-  const label=norm(col.name).includes('categor')?'Todas las categorías':'Todas';
-  valSel.innerHTML=`<option value="__all__">${label}</option>`+col.values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+function buildPrevFilters(){
+  const box=document.getElementById('prevFilters');
+  box.innerHTML=currentPreview.cats.map(c=>{
+    const allLabel=norm(c.name).includes('categor')?'Todas':'Todos';
+    const opts=`<option value="__all__">${allLabel}</option>`+c.values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+    return `<label class="pf-item"><span class="pf-name">${esc(c.name)}</span><select class="fdrop" data-col="${c.i}" onchange="renderPrevTable()">${opts}</select></label>`;
+  }).join('');
 }
-function onPrevCol(){populatePrevVal();renderPrevTable();}
-function clearPrevFilter(){document.getElementById('prevVal').value='__all__';document.getElementById('prevSearch').value='';renderPrevTable();}
-function hl(text,term){
+function clearPrevFilter(){
+  document.querySelectorAll('#prevFilters select').forEach(s=>s.value='__all__');
+  document.getElementById('prevSearch').value='';
+  renderPrevTable();
+}
+function hl(text,terms){
   let t=String(text==null?'':text);
   // mostrar precios/números con decimales sin decimales (redondeo al más cercano); no toca textos ni códigos enteros
   if(/^-?\d+\.\d+$/.test(t.trim()))t=String(Math.round(parseFloat(t)));
-  if(!term)return esc(t);
-  const nt=norm(t),nq=norm(term);const idx=nt.indexOf(nq);
-  if(idx<0)return esc(t);
-  return esc(t.slice(0,idx))+'<mark>'+esc(t.slice(idx,idx+term.length))+'</mark>'+esc(t.slice(idx+term.length));
+  const list=Array.isArray(terms)?terms.filter(Boolean):(terms?[terms]:[]);
+  if(!list.length)return esc(t);
+  const nt=norm(t);
+  if(nt.length!==t.length)return esc(t); // seguridad con acentos: no resaltar antes que romper
+  const mark=new Array(t.length).fill(false);
+  list.forEach(term=>{
+    const nq=norm(term);if(!nq)return;
+    let from=0,idx;
+    while((idx=nt.indexOf(nq,from))>=0){for(let k=idx;k<idx+nq.length;k++)mark[k]=true;from=idx+nq.length;}
+  });
+  let out='',i=0;
+  while(i<t.length){
+    if(mark[i]){let j=i;while(j<t.length&&mark[j])j++;out+='<mark>'+esc(t.slice(i,j))+'</mark>';i=j;}
+    else{let j=i;while(j<t.length&&!mark[j])j++;out+=esc(t.slice(i,j));i=j;}
+  }
+  return out;
 }
 function renderPrevTable(){
   const wrap=document.getElementById('prevTableWrap');
@@ -1859,29 +1874,26 @@ function renderPrevTable(){
   document.getElementById('prevClr').classList.toggle('show',!!q);
   const terms=norm(q).split(/\s+/).filter(Boolean);
   const {head,body}=currentPreview;
-  // filtro por categoría
-  let colIdx=-1,colVal='__all__';
-  if(currentPreview.cats&&currentPreview.cats.length){
-    colIdx=parseInt(document.getElementById('prevCol').value,10);
-    colVal=document.getElementById('prevVal').value;
-  }
+  // filtros por columna activos (Categoría, Subcategoría, …) — se combinan (Y)
+  const active=[...document.querySelectorAll('#prevFilters select')]
+    .map(s=>({i:parseInt(s.dataset.col,10),v:s.value}))
+    .filter(x=>x.v!=='__all__');
   const rows=body.filter(r=>{
-    if(colVal!=='__all__' && colIdx>=0 && String(r[colIdx]==null?'':r[colIdx]).trim()!==colVal)return false;
+    for(const a of active){ if(String(r[a.i]==null?'':r[a.i]).trim()!==a.v) return false; }
     if(!terms.length)return true;
     const joined=norm(r.join(' '));
     return terms.every(t=>joined.includes(t));
   });
-  const filtering=!!q || colVal!=='__all__';
+  const filtering=!!q || active.length>0;
   document.getElementById('prevFcount').innerHTML=`<b>${rows.length}</b> de ${body.length} filas`;
   if(!rows.length){
     wrap.innerHTML='<div class="prev-empty">Ninguna fila coincide con el filtro aplicado.</div>';return;
   }
-  const firstTerm=q.split(/\s+/)[0]||'';
   const CAP=500;
   const shown=rows.slice(0,CAP);
   const extra=rows.length-shown.length;
   wrap.innerHTML='<table><thead><tr>'+head.map(h=>`<th>${esc(h)}</th>`).join('')+'</tr></thead><tbody>'+
-    shown.map(r=>'<tr>'+head.map((_,i)=>`<td>${hl(r[i],firstTerm)}</td>`).join('')+'</tr>').join('')+
+    shown.map(r=>'<tr>'+head.map((_,i)=>`<td>${hl(r[i],terms)}</td>`).join('')+'</tr>').join('')+
     '</tbody></table>'+
     (extra>0?`<div class="prev-empty" style="padding:12px">Mostrando las primeras ${CAP} filas. Hay ${extra} más que coinciden — afiná la búsqueda para verlas.</div>`:'');
 }
