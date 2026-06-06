@@ -26,7 +26,14 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
 app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ extended: false })); // Twilio manda formularios
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders: (res, filePath) => {
+    // el dashboard (index.html) no se guarda en caché: siempre la última versión
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    }
+  }
+}));
 
 /* ---------- API de configuración (Paso 1) ---------- */
 app.get('/api/state', (req, res) => {
