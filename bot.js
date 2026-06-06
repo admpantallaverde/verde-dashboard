@@ -177,24 +177,19 @@ function productBlock(query) {
   const { hasSource, found, tokens } = findProducts(query);
   if (!hasSource || !tokens.length) return '';
   if (!found.length) {
-    return '\n\n=== CATÁLOGO DE PRECIOS (INSTRUCCIÓN OBLIGATORIA) ===\n' +
-      'No hay NINGÚN producto en el catálogo que coincida con lo que pidió el cliente. ' +
-      'PROHIBIDO inventar, estimar o dar "precios de mercado". ' +
-      'Decí que no tenés ese dato a mano y ofrecé que un asesor lo cotice.';
+    return '\n\n=== CATÁLOGO (INSTRUCCIÓN OBLIGATORIA) ===\n' +
+      'En el catálogo NO figura ningún producto que coincida con lo que pidió el cliente. ' +
+      'No afirmes que lo tenés. Si no estás seguro de manejarlo, decílo con naturalidad y ofrecé que un asesor lo verifique. ' +
+      'NUNCA des un precio: los precios siempre los confirma un asesor humano.';
   }
-  let b = '\n\n=== CATÁLOGO DE PRECIOS (INSTRUCCIÓN OBLIGATORIA) ===\n' +
-    'Estos son los ÚNICOS precios válidos, salidos de la base real. REGLAS ESTRICTAS:\n' +
-    '1) Decí EXACTAMENTE el precio que figura acá. PROHIBIDO inventar, estimar, redondear o dar "precios de mercado" o rangos.\n' +
-    '2) Si un producto dice "precio a confirmar con un asesor", NO inventes un número: decí que el asesor se lo confirma.\n' +
-    '3) Si el cliente pide algo que NO está en esta lista, decí que no lo tenés a mano y ofrecé cotización. NUNCA inventes.\n' +
-    'Productos encontrados:';
-  found.forEach(p => {
-    let line = '\n• ' + p.nombre;
-    line += (p.precio != null) ? ' | Precio venta: $' + p.precio : ' | Precio: a confirmar con un asesor';
-    if (p.precioDesc != null && p.precioDesc !== p.precio) line += ' | Con descuento: $' + p.precioDesc;
-    if (p.stock != null) line += ' | Stock: ' + p.stock;
-    b += line;
-  });
+  let b = '\n\n=== CATÁLOGO (INSTRUCCIÓN OBLIGATORIA) ===\n' +
+    'Estos productos SÍ existen en el catálogo (es info real). REGLAS:\n' +
+    '1) Confirmá con naturalidad y tu propio tono que sí tenés el/los producto(s).\n' +
+    '2) PROHIBIDO decir un precio, estimar, dar rangos o "precios de mercado". El precio SIEMPRE lo confirma un asesor humano.\n' +
+    '3) Para el precio, derivá al asesor con tu estilo (sin inventar números).\n' +
+    '4) Usá esta info solo para reconocer el producto; no menciones stock ni códigos salvo que el cliente pregunte.\n' +
+    'Productos que coinciden:';
+  found.forEach(p => { b += '\n• ' + p.nombre; });
   return b;
 }
 
