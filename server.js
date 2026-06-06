@@ -103,6 +103,17 @@ function escapeXml(s) {
 app.post('/webhook', async (req, res) => {
   const from = req.body.From || 'desconocido';
   const body = req.body.Body || '';
+  // Si el cliente manda una imagen, captura o PDF (ej: un comprobante de pago),
+  // Verde NO intenta interpretarlo: agradece y deriva a un asesor humano.
+  const numMedia = parseInt((req.body && req.body.NumMedia) || '0', 10) || 0;
+  if (numMedia > 0) {
+    const fr = (bot.getVerde().frases) || {};
+    const reply = fr.adjunto || '¡Gracias! 🙌 Recibí tu archivo. En un momento un asesor lo revisa y te confirma todo. Si querés, dejame por acá cualquier dato que quieras sumar.';
+    console.log('WhatsApp << (adjunto x' + numMedia + ') de', from, '→ derivado a humano');
+    res.set('Content-Type', 'text/xml');
+    res.send('<?xml version="1.0" encoding="UTF-8"?><Response><Message>' + escapeXml(reply) + '</Message></Response>');
+    return;
+  }
   console.log('WhatsApp <<', from, ':', body);
   let reply;
   try {
