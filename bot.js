@@ -130,7 +130,9 @@ function norm(s) {
 function cleanNum(v) {
   if (v == null || v === '') return null;
   const n = parseFloat(v);
-  return isNaN(n) ? String(v) : Math.round(n);
+  if (isNaN(n)) return String(v);
+  if (n <= 0) return null; // precio en 0 = sin cargar; lo confirma un asesor
+  return Math.round(n);
 }
 function getSource() {
   const s = readState();
@@ -156,10 +158,14 @@ function findProducts(query, limit) {
     const name = norm(r[COL.NAME]);
     if (!name) continue;
     if (rxs.every(rx => rx.test(name))) {
+      let precio = cleanNum(r[COL.PV]);
+      let precioDesc = cleanNum(r[COL.PD]);
+      if (precio === 0) precio = null;        // $0 = sin precio cargado
+      if (precioDesc === 0) precioDesc = null;
       found.push({
         nombre: String(r[COL.NAME] == null ? '' : r[COL.NAME]).trim(),
-        precio: cleanNum(r[COL.PV]),
-        precioDesc: cleanNum(r[COL.PD]),
+        precio: precio,
+        precioDesc: precioDesc,
         stock: (r[COL.STOCK] == null || r[COL.STOCK] === '') ? null : r[COL.STOCK]
       });
       if (found.length >= limit) break;
@@ -171,17 +177,24 @@ function productBlock(query) {
   const { hasSource, found, tokens } = findProducts(query);
   if (!hasSource || !tokens.length) return '';
   if (!found.length) {
-    return '\n\n== BÚSQUEDA EN EL CATÁLOGO ==\nNo se encontraron productos que coincidan con lo que pidió el cliente. NO inventes precios ni stock: ofrecé cotizar o derivá a un asesor.';
+    return '\n\n=== CATÁLOGO DE PRECIOS (INSTRUCCIÓN OBLIGATORIA) ===\n' +
+      'No hay NINGÚN producto en el catálogo que coincida con lo que pidió el cliente. ' +
+      'PROHIBIDO inventar, estimar o dar "precios de mercado". ' +
+      'Decí que no tenés ese dato a mano y ofrecé que un asesor lo cotice.';
   }
-  let b = '\n\n== PRODUCTOS DEL CATÁLOGO (datos REALES — usá EXCLUSIVAMENTE estos precios y stock; no inventes) ==';
+  let b = '\n\n=== CATÁLOGO DE PRECIOS (INSTRUCCIÓN OBLIGATORIA) ===\n' +
+    'Estos son los ÚNICOS precios válidos, salidos de la base real. REGLAS ESTRICTAS:\n' +
+    '1) Decí EXACTAMENTE el precio que figura acá. PROHIBIDO inventar, estimar, redondear o dar "precios de mercado" o rangos.\n' +
+    '2) Si un producto dice "precio a confirmar con un asesor", NO inventes un número: decí que el asesor se lo confirma.\n' +
+    '3) Si el cliente pide algo que NO está en esta lista, decí que no lo tenés a mano y ofrecé cotización. NUNCA inventes.\n' +
+    'Productos encontrados:';
   found.forEach(p => {
     let line = '\n• ' + p.nombre;
-    if (p.precio != null) line += ' | Precio: $' + p.precio;
+    line += (p.precio != null) ? ' | Precio venta: $' + p.precio : ' | Precio: a confirmar con un asesor';
     if (p.precioDesc != null && p.precioDesc !== p.precio) line += ' | Con descuento: $' + p.precioDesc;
     if (p.stock != null) line += ' | Stock: ' + p.stock;
     b += line;
   });
-  b += '\nSi ninguno coincide exactamente con lo que pide el cliente, no inventes: ofrecé cotizar o derivá.';
   return b;
 }
 
