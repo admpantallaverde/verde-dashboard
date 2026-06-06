@@ -20,6 +20,28 @@ const bot = require('./bot.js');
 const app = express();
 const PORT = process.env.PORT || 3003;
 
+/* ============================================================
+   NÚMEROS INTERNOS DE LA EMPRESA
+   Si uno de estos números le escribe al bot por WhatsApp,
+   Verde NO responde nada (no lo trata como cliente).
+   Cargá acá los números con código de país, entre comillas.
+   Ejemplo: '+59899123456'
+   ============================================================ */
+const NUMEROS_INTERNOS = [
+  // '+59899123456',   // ej: encargado
+  // '+59891234567',   // ej: otro local
+];
+// normaliza un número: deja solo dígitos (ignora 'whatsapp:', '+', espacios, guiones)
+function soloDigitos(s) { return String(s || '').replace(/\D/g, ''); }
+function esNumeroInterno(from) {
+  const f = soloDigitos(from);
+  if (!f) return false;
+  return NUMEROS_INTERNOS.some(n => {
+    const d = soloDigitos(n);
+    return d && (f === d || f.endsWith(d) || d.endsWith(f));
+  });
+}
+
 const DATA_DIR = path.join(__dirname, 'data');
 const STATE_FILE = path.join(DATA_DIR, 'state.json');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -103,6 +125,13 @@ function escapeXml(s) {
 app.post('/webhook', async (req, res) => {
   const from = req.body.From || 'desconocido';
   const body = req.body.Body || '';
+  // Si escribe un número INTERNO de la empresa: silencio total (no lo tratamos como cliente).
+  if (esNumeroInterno(from)) {
+    console.log('WhatsApp << (número interno) de', from, '→ sin respuesta');
+    res.set('Content-Type', 'text/xml');
+    res.send('<?xml version="1.0" encoding="UTF-8"?><Response></Response>');
+    return;
+  }
   // Si el cliente manda una imagen, captura o PDF (ej: un comprobante de pago),
   // Verde NO intenta interpretarlo: agradece y deriva a un asesor humano.
   const numMedia = parseInt((req.body && req.body.NumMedia) || '0', 10) || 0;
