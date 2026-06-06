@@ -1706,7 +1706,7 @@ function onFile(input){
         toast('Archivo vacío','No se detectaron filas con datos.','error');
         return;
       }
-      const preview=json.slice(0,51).map(r=>r.slice(0,8).map(c=>String(c==null?'':c).slice(0,60)));
+      const preview=json.slice(0,10001).map(r=>r.slice(0,30).map(c=>String(c==null?'':c).slice(0,80)));
       parsedFile={rows,cols,size:fmtBytes(f.size),preview};
       detail.textContent=`${rows} filas · ${cols} columnas · ${fmtBytes(f.size)}`;
     }catch(err){
@@ -1810,8 +1810,11 @@ function openPreview(id){
   document.getElementById('prevMeta').textContent=metaTxt;
   let data=(s.preview&&s.preview.length)?s.preview:genPreviewFor(s);
   const real=!!(s.preview&&s.preview.length);
+  const loadedRows=(data&&data.length)?data.length-1:0;
   document.getElementById('prevNote').textContent=real
-    ? 'El buscador y los filtros actúan sobre la muestra cargada. El chatbot usará el contenido completo del archivo.'
+    ? (s.rows && loadedRows>=s.rows
+        ? `Buscás sobre las ${s.rows} filas del archivo.`
+        : `Buscás sobre una muestra de ${loadedRows} filas (el archivo tiene ${s.rows}).`)
     : 'Muestra representativa de la estructura. Al conectar la fuente real se mostrarán sus datos.';
   currentPreview=(data&&data.length)?{head:data[0],body:data.slice(1)}:null;
   document.getElementById('prevSearch').value='';
@@ -1841,7 +1844,9 @@ function populatePrevVal(){
 function onPrevCol(){populatePrevVal();renderPrevTable();}
 function clearPrevFilter(){document.getElementById('prevVal').value='__all__';document.getElementById('prevSearch').value='';renderPrevTable();}
 function hl(text,term){
-  const t=String(text==null?'':text);
+  let t=String(text==null?'':text);
+  // mostrar precios/números con decimales sin decimales (redondeo al más cercano); no toca textos ni códigos enteros
+  if(/^-?\d+\.\d+$/.test(t.trim()))t=String(Math.round(parseFloat(t)));
   if(!term)return esc(t);
   const nt=norm(t),nq=norm(term);const idx=nt.indexOf(nq);
   if(idx<0)return esc(t);
@@ -1872,9 +1877,13 @@ function renderPrevTable(){
     wrap.innerHTML='<div class="prev-empty">Ninguna fila coincide con el filtro aplicado.</div>';return;
   }
   const firstTerm=q.split(/\s+/)[0]||'';
+  const CAP=500;
+  const shown=rows.slice(0,CAP);
+  const extra=rows.length-shown.length;
   wrap.innerHTML='<table><thead><tr>'+head.map(h=>`<th>${esc(h)}</th>`).join('')+'</tr></thead><tbody>'+
-    rows.map(r=>'<tr>'+head.map((_,i)=>`<td>${hl(r[i],firstTerm)}</td>`).join('')+'</tr>').join('')+
-    '</tbody></table>';
+    shown.map(r=>'<tr>'+head.map((_,i)=>`<td>${hl(r[i],firstTerm)}</td>`).join('')+'</tr>').join('')+
+    '</tbody></table>'+
+    (extra>0?`<div class="prev-empty" style="padding:12px">Mostrando las primeras ${CAP} filas. Hay ${extra} más que coinciden — afiná la búsqueda para verlas.</div>`:'');
 }
 
 /* ---------- modal rastreo ---------- */
