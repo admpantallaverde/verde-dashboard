@@ -83,9 +83,10 @@ function registrar(datos) {
   agregarMensaje(c, m);
   if (datos.tipo === 'cliente') {
     c.ultimoClienteEn = m.en;
-    if (c.apagado && !c.esperaDesde) c.esperaDesde = m.en;   // empieza a correr el resguardo
+    if (c.apagado && !c.esperaDesde) { c.esperaDesde = m.en; c.esperaTipo = 'apagado'; }   // empieza a correr el resguardo
   }
-  if (datos.tipo === 'equipo') c.esperaDesde = null;          // alguien del equipo respondió
+  if (datos.tipo === 'equipo') { c.esperaDesde = null; c.esperaTipo = null; }   // alguien del equipo respondió
+  if (datos.tipo === 'verde' && c.esperaTipo === 'pausa') { c.esperaDesde = null; c.esperaTipo = null; }   // Verde volvió a responder
   guardar(d);
   return c;
 }
@@ -100,6 +101,7 @@ function apagar(clave, usuario) {
   if (c.apagado) return c;
   c.apagado = { en: reloj(), porId: (usuario && usuario.id) || null, porNombre: nombreDe(usuario) };
   c.esperaDesde = null;
+  c.esperaTipo = null;
   agregarMensaje(c, { en: reloj(), tipo: 'sistema', texto: nombreDe(usuario) + ' apagó a Verde en este chat.' });
   guardar(d);
   return c;
@@ -112,6 +114,7 @@ function encender(clave, usuario) {
   if (!c.apagado) return c;
   c.apagado = null;
   c.esperaDesde = null;
+  c.esperaTipo = null;
   agregarMensaje(c, { en: reloj(), tipo: 'sistema', texto: nombreDe(usuario) + ' encendió a Verde en este chat.' });
   guardar(d);
   return c;
@@ -128,10 +131,31 @@ function estaApagado(clave) {
 }
 
 /* ---------- resguardo de 5 minutos ---------- */
-// Chats con Verde apagado cuyo cliente espera hace 5 minutos o más sin respuesta del equipo.
+// Chats cuyo cliente espera hace 5 minutos o más sin respuesta del equipo: con Verde apagado en el chat,
+// o con Verde en pausa porque respondió una persona del equipo y el cliente volvió a escribir.
 function esperasVencidas(minutos) {
   const limite = reloj() - (Number(minutos) > 0 ? Number(minutos) : ESPERA_MINUTOS) * 60000;
-  return Object.values(cargar().chats).filter(c => c.apagado && c.esperaDesde && c.esperaDesde <= limite);
+  return Object.values(cargar().chats).filter(c => c.esperaDesde && c.esperaDesde <= limite && (c.apagado || c.esperaTipo === 'pausa'));
+}
+// Verde está en pausa en este chat y el cliente volvió a escribir: empieza a correr el resguardo.
+function iniciarEsperaPorPausa(clave) {
+  const d = cargar();
+  const c = d.chats[clave];
+  if (!c || c.esperaDesde) return false;
+  c.esperaDesde = c.ultimoClienteEn || reloj();
+  c.esperaTipo = 'pausa';
+  guardar(d);
+  return true;
+}
+// «Devolver a Verde»: Verde retoma el chat, así que el resguardo de la pausa ya no corre.
+function cerrarEsperaDePausa(clave) {
+  const d = cargar();
+  const c = d.chats[clave];
+  if (!c || c.esperaTipo !== 'pausa') return false;
+  c.esperaDesde = null;
+  c.esperaTipo = null;
+  guardar(d);
+  return true;
 }
 // Mensajes del cliente desde que empezó la espera (para armar la atención).
 function mensajesClienteDesde(clave, desde) {
@@ -144,6 +168,7 @@ function cerrarEspera(clave, texto) {
   const c = d.chats[clave];
   if (!c) return;
   c.esperaDesde = null;
+  c.esperaTipo = null;
   if (texto) agregarMensaje(c, { en: reloj(), tipo: 'sistema', texto });
   guardar(d);
 }
@@ -288,6 +313,6 @@ function purgar() {
 module.exports = {
   MAX_MENSAJES, RETENCION_DIAS, VENTANA_HORAS, ESPERA_MINUTOS,
   claveValida, registrar, anotarSistema, apagar, encender, estaApagado, apagados,
-  esperasVencidas, mensajesClienteDesde, cerrarEspera, sembrarDesdeAtencion,
+  esperasVencidas, mensajesClienteDesde, cerrarEspera, sembrarDesdeAtencion, iniciarEsperaPorPausa, cerrarEsperaDePausa,
   lista, detalle, purgar, _usarReloj
 };

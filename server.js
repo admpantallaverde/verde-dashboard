@@ -29,7 +29,7 @@ const usuarios = require('./usuarios.js');
 const atencion = require('./atencion.js');
 const conversaciones = require('./conversaciones.js');
 
-const VERSION = '1.3.4';
+const VERSION = '1.3.5';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -485,6 +485,8 @@ async function manejarEntrante(msg, nombres) {
       console.log('360 << de', quien, '→ volvió a escribir después de «Marcar atendido»: regresa a «Por responder»');
       await avisarEquipo(r.atencion, 'volvió a escribir');
     } else {
+      // Si nadie del equipo le responde en 5 minutos, el resguardo pasa el chat a «Chats por responder».
+      if (!atencion.tienePendiente(clave)) conversaciones.iniciarEsperaPorPausa(clave);
       console.log('360 << de', quien, '→ conversación en pausa (la atiende una persona del equipo)');
     }
     return;
@@ -669,13 +671,46 @@ app.post('/api/conversaciones/:clave/encender', requiere(['admin', 'asesor']), (
     res.json({ ok: true, conversacion: conDatosDelPanel(detalleConversacion(clave), req) });
   } catch (e) { responderError(res, e); }
 });
-// «Reanudar ahora»: termina la pausa automática de 12 horas (por ejemplo, después de una respuesta del equipo).
-app.post('/api/conversaciones/:clave/reanudar', requiere(['admin', 'asesor']), (req, res) => {
+// Después de «Devolver a Verde»: si la última palabra del chat fue del cliente, Verde la responde enseguida.
+async function responderConsultaPendiente(clave) {
+  const sin = motivo => ({ respondio: false, derivo: false, motivo: motivo || '' });
+  const d = detalleConversacion(clave);
+  if (!d) return sin();
+  const ultimo = (d.mensajes || []).filter(m => m.tipo !== 'sistema').pop();
+  if (!ultimo || ultimo.tipo !== 'cliente') return sin();   // no quedó ninguna consulta sin responder
+  if (/^\[El cliente envió /.test(ultimo.texto)) return sin('La última consulta es un archivo: Verde no interpreta archivos y responde cuando el cliente escriba.');
+  if (bot.getVerde().encendido === false) return sin('Verde está apagado para todos los chats desde «Comportamiento del bot».');
+  if (conversaciones.estaApagado(clave) || atencion.tienePendiente(clave)) return sin();
+  if (!d360Configurado()) return sin('La conexión con WhatsApp (360dialog) no está configurada en el servidor.');
+  if (!d.puedeResponder) return sin(d.motivoNoResponder);
+  const r = await bot.responderPendiente(clave, { puedeResponder: () => !conversaciones.estaApagado(clave) && !atencion.tienePendiente(clave) });
+  if (!r) return sin();
+  const ok = await enviarWhatsApp(d.destino, r.texto);
+  console.log('360 >> (chat devuelto a Verde)', ok ? 'enviado' : 'NO enviado', ':', r.texto.slice(0, 200));
+  if (!ok) return sin('WhatsApp no aceptó la respuesta de Verde. Si el cliente vuelve a escribir, Verde le responde.');
+  conversaciones.registrar({ clave, tipo: 'verde', texto: r.texto });
+  if (r.derivar) {
+    const a = atencion.derivar({ clave, destino: d.destino, numero: d.numero, nombre: d.nombre, mensajeCliente: ultimo.texto, respuestaVerde: r.texto,
+      motivo: r.error ? 'Verde tuvo un problema técnico y lo derivó a una persona del equipo.' : 'Verde lo derivó a una persona del equipo.' });
+    console.log('360 → derivado: pasa a «Chats por responder»');
+    await avisarEquipo(a.atencion);
+  }
+  return { respondio: true, derivo: !!r.derivar, motivo: '' };
+}
+// «Devolver a Verde»: termina la pausa de 12 horas y, si el cliente dejó una consulta sin responder, Verde la responde enseguida.
+app.post('/api/conversaciones/:clave/reanudar', requiere(['admin', 'asesor']), async (req, res) => {
   try {
     const clave = claveDeRuta(req);
     if (!detalleConversacion(clave)) return res.status(404).json({ error: 'La conversación no existe.' });
-    if (bot.quitarPausa(clave)) conversaciones.anotarSistema(clave, quienEs(req) + ' reanudó a Verde en este chat (terminó la pausa automática).');
-    res.json({ ok: true, conversacion: conDatosDelPanel(detalleConversacion(clave), req) });
+    let verde = { respondio: false, derivo: false, motivo: '' };
+    if (bot.quitarPausa(clave)) {
+      conversaciones.cerrarEsperaDePausa(clave);
+      conversaciones.anotarSistema(clave, quienEs(req) + ' devolvió el chat a Verde.');
+      console.log('Panel: ' + quienEs(req) + ' devolvió el chat ' + clave + ' a Verde');
+      // Pasa por la misma cola que los mensajes del cliente, para no cruzarse con uno que llegue en ese momento.
+      verde = (await enColaCliente(clave, () => responderConsultaPendiente(clave))) || verde;
+    }
+    res.json({ ok: true, conversacion: conDatosDelPanel(detalleConversacion(clave), req), verde });
   } catch (e) { responderError(res, e); }
 });
 // Respuesta de una persona del equipo desde el panel (solo texto, con su firma).
@@ -708,7 +743,7 @@ app.post('/api/conversaciones/:clave/responder', requiere(['admin', 'asesor']), 
   } catch (e) { responderError(res, e); }
 });
 
-/* ---------- Resguardo: Verde apagado en un chat y el cliente espera 5 minutos sin respuesta ---------- */
+/* ---------- Resguardo: el cliente espera 5 minutos sin respuesta con Verde apagado o en pausa en su chat ---------- */
 let revisandoEsperas = false;
 async function revisarEsperas() {
   if (revisandoEsperas) return;
@@ -716,16 +751,17 @@ async function revisarEsperas() {
   try {
     for (const c of conversaciones.esperasVencidas()) {
       if (atencion.tienePendiente(c.clave)) { conversaciones.cerrarEspera(c.clave, null); continue; }
+      const porPausa = !c.apagado;
       const textos = conversaciones.mensajesClienteDesde(c.clave, c.esperaDesde);
       const d = atencion.derivar({ clave: c.clave, destino: c.destino, numero: c.numero, nombre: c.nombre, mensajeCliente: textos[0] || '',
-        motivo: 'Verde está apagado en este chat y el cliente esperó 5 minutos sin respuesta.' });
+        motivo: porPausa ? 'Verde estaba en pausa en este chat y el cliente esperó 5 minutos sin respuesta.' : 'Verde está apagado en este chat y el cliente esperó 5 minutos sin respuesta.' });
       for (const t of textos.slice(1)) atencion.mensajeCliente({ clave: c.clave, texto: t });
       conversaciones.cerrarEspera(c.clave, 'El cliente esperó 5 minutos sin respuesta: el chat pasó a «Chats por responder».');
-      console.log('Resguardo: el chat ' + c.clave + ' pasó a «Chats por responder» (Verde apagado y 5 minutos sin respuesta)');
-      await avisarEquipo(d.atencion, 'Verde apagado en ese chat');
+      console.log('Resguardo: el chat ' + c.clave + ' pasó a «Chats por responder» (' + (porPausa ? 'Verde en pausa' : 'Verde apagado') + ' y 5 minutos sin respuesta)');
+      await avisarEquipo(d.atencion, porPausa ? 'Verde en pausa en ese chat' : 'Verde apagado en ese chat');
     }
   } catch (e) {
-    console.error('No se pudieron revisar las esperas con Verde apagado:', e.message);
+    console.error('No se pudieron revisar las esperas de 5 minutos:', e.message);
   } finally {
     revisandoEsperas = false;
   }

@@ -1063,6 +1063,29 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
   :root[data-menu="corto"] #suSalir .su-salir-ic{display:block;width:18px;height:18px}
 }
 
+/* ===================== 1.3.5: devolver el chat a Verde ===================== */
+.btn-devolver{flex:none;display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:0 16px;border-radius:20px;border:none;background:var(--wa-acento);color:var(--wa-acento-ink);font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.btn-devolver:hover{background:var(--wa-acento-hover)}
+.btn-devolver svg,.franja-devolver svg{width:16px;height:16px;flex:none}
+.btn-devolver:focus-visible,.conv-franja .franja-devolver:focus-visible{outline:2px solid var(--wa-acento);outline-offset:2px}
+.btn-devolver:disabled,.conv-franja .franja-devolver:disabled{opacity:.75;cursor:progress}
+/* Interruptor en pausa: ámbar, para que no parezca que Verde está respondiendo */
+.sw[data-pausa="true"] .pista{background:#d99a00}
+.sw.sw-mini[data-pausa="true"]{border-color:var(--wa-ambar-borde);background:var(--wa-ambar-bg)}
+.sw[data-pausa="true"] .sw-tx{color:var(--wa-ambar-tx)}
+.sw .sw-corto{display:none}
+/* En el celular, el botón va en la franja de estado */
+.conv-franja .franja-devolver{display:none;background:var(--wa-acento);color:var(--wa-acento-ink);border-color:var(--wa-acento)}
+/* Consulta del cliente que quedó sin responder durante la pausa */
+.sin-resp{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;margin-top:2px;padding:3px 10px;border-radius:14px;font-size:12px;font-weight:600;line-height:1.4;background:var(--wa-ambar-bg);color:var(--wa-ambar-tx);border:1px solid var(--wa-ambar-borde)}
+.sin-resp svg{width:14px;height:14px;flex:none}
+@media(max-width:600px){
+  .conv-cab .btn-devolver{display:none}
+  .conv-franja .franja-devolver{display:inline-flex}
+  .sw .sw-largo{display:none}
+  .sw .sw-corto{display:inline}
+}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -1531,7 +1554,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
           <div class="conv-cab">
             <button class="conv-volver" type="button" onclick="cerrarConversacion()" aria-label="Volver a la lista de chats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
             <span class="chat-av conv-av" id="convAvatar" aria-hidden="true"></span>
-            <div class="conv-cab-tx"><h3 id="convTitulo"><span class="c-nom" id="convNombre">Conversación</span><span class="c-num" id="convNumero"></span></h3><div class="conv-estados" id="convEstados"></div></div><button type="button" class="sw sw-mini" id="convSwitch" role="switch" aria-checked="true" aria-label="Verde en este chat" data-clave="" onclick="tocarInterruptor(this)"><span class="pista" aria-hidden="true"><span class="bola"></span></span><span class="sw-tx">Verde</span></button>
+            <div class="conv-cab-tx"><h3 id="convTitulo"><span class="c-nom" id="convNombre">Conversación</span><span class="c-num" id="convNumero"></span></h3><div class="conv-estados" id="convEstados"></div></div><button type="button" class="sw sw-mini" id="convSwitch" role="switch" aria-checked="true" aria-label="Verde en este chat" data-clave="" onclick="tocarInterruptor(this)"><span class="pista" aria-hidden="true"><span class="bola"></span></span><span class="sw-tx">Verde</span></button><button type="button" class="btn-devolver oculto" id="convDevolver" data-clave="" onclick="reanudarVerde(this)">Devolver a Verde</button>
             <button class="pill-btn conv-marcar oculto" type="button" id="convMarcar" data-id="" onclick="marcarDesdeConversacion()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Marcar atendido</button>
           </div>
           <div class="conv-franja oculto" id="convFranja" role="status"></div>
@@ -4318,7 +4341,7 @@ function htmlControlVerde(c){
   if(c.apagado)h+='<div class="conv-aviso gris">'+IC132.reloj+'<span class="txt">Si el cliente escribe y nadie del equipo responde en 5 minutos, el chat pasa a «Chats por responder» y se avisa a los celulares del equipo.</span></div>';
   else if(c.pendiente)h+='<div class="conv-aviso rojo">'+IC132.reloj+'<span class="txt">Espera a una persona del equipo: Verde no responde mientras el chat está en «Chats por responder».</span></div>';
   else if(c.pausaHasta)h+='<div class="conv-aviso ambar">'+IC132.reloj+'<span class="txt">En pausa hasta '+escH(hastaTexto(c.pausaHasta))+' porque una persona del equipo atendió este chat. Después Verde vuelve a responder solo.</span>'
-    +'<button type="button" class="btn-mini" data-clave="'+escH(c.clave)+'" onclick="reanudarVerde(this)">Reanudar ahora</button></div>';
+    +'<button type="button" class="btn-mini" data-clave="'+escH(c.clave)+'" onclick="reanudarVerde(this)">Devolver a Verde</button></div>';
   if(c.verdeGeneral===false)h+='<div class="conv-aviso gris">'+IC132.info+'<span class="txt">Verde está apagado para todos los chats desde «Comportamiento del bot».</span></div>';
   return h;
 }
@@ -4372,12 +4395,20 @@ async function encenderVerde(clave,btn){
   toast('Verde encendido en este chat',c.pendiente?'Responde cuando el chat deje de estar en «Chats por responder».':(c.pausaHasta?'Sigue en pausa hasta '+hastaTexto(c.pausaHasta)+' porque una persona del equipo atendió el chat.':'Verde vuelve a responder a este cliente.'),'success');
   refrescarListas();
 }
+// «Devolver a Verde»: termina la pausa y, si el cliente dejó una consulta sin responder, Verde la responde enseguida.
 async function reanudarVerde(btn){
-  const clave=btn.dataset.clave;btn.disabled=true;
+  const clave=btn&&btn.dataset.clave;if(!clave)return;
+  const botones=[...document.querySelectorAll('#convDevolver,[onclick^="reanudarVerde"]')].filter(b=>b.dataset.clave===clave);
+  const antes=botones.map(b=>b.innerHTML);
+  botones.forEach(b=>{b.disabled=true;b.setAttribute('aria-busy','true');b.innerHTML=IC134.bot+'Devolviendo…';});
   const r=await api('/api/conversaciones/'+encodeURIComponent(clave)+'/reanudar',{method:'POST',body:{}});
-  if(!r.ok){btn.disabled=false;toast('No se pudo reanudar a Verde',r.json.error||'','error');return;}
+  botones.forEach((b,i)=>{b.disabled=false;b.removeAttribute('aria-busy');b.innerHTML=antes[i];});
+  if(!r.ok){toast('No se pudo devolver el chat a Verde',r.json.error||'','error');return;}
   aplicarConversacion(r.json.conversacion);
-  toast('Verde reanudado','Verde vuelve a responder en este chat.','success');
+  const v=r.json.verde||{};
+  toast('Chat devuelto a Verde',v.respondio
+    ?(v.derivo?'Verde respondió y volvió a derivar la consulta: el chat pasó a «Chats por responder».':'Verde respondió la consulta pendiente del cliente.')
+    :(v.motivo||'Verde responde cuando el cliente vuelva a escribir.'),'success');
   refrescarListas();
 }
 
@@ -4626,11 +4657,18 @@ function renderMensajes(ms){
 }
 function pintarSwitch(c){
   const s=document.getElementById('convSwitch');if(!s)return;
-  const on=!c.apagado;
+  const on=!c.apagado,pausa=on&&!!c.pausaHasta;
   s.setAttribute('aria-checked',String(on));
   s.dataset.clave=c.clave;
-  s.setAttribute('aria-label',on?'Verde en este chat: encendido':'Verde en este chat: apagado');
-  s.title=on?'Verde responde en este chat. Tocar para apagarlo.':'Verde está apagado en este chat. Tocar para volver a encenderlo.';
+  s.dataset.pausa=String(pausa);
+  const tx=s.querySelector('.sw-tx');
+  if(tx)tx.innerHTML=pausa?'<span class="sw-largo">Verde en pausa</span><span class="sw-corto">En pausa</span>':'Verde';
+  s.setAttribute('aria-label',!on?'Verde en este chat: apagado':(pausa?'Verde en este chat: en pausa':'Verde en este chat: encendido'));
+  s.title=!on?'Verde está apagado en este chat. Tocar para volver a encenderlo.'
+    :pausa?'Verde está en pausa porque respondió una persona del equipo. Para que vuelva a responder, usar «Devolver a Verde». Este interruptor lo apaga sin límite de tiempo.'
+    :'Verde responde en este chat. Tocar para apagarlo.';
+  const b=document.getElementById('convDevolver');
+  if(b){b.classList.toggle('oculto',!enPausaVerde(c));b.dataset.clave=c.clave;}
 }
 function pintarFranja(c){
   const f=document.getElementById('convFranja');if(!f)return;
@@ -4646,10 +4684,11 @@ function pintarFranja(c){
     txt='Verde apagado en este chat desde '+minuscula1(horaCorta(info.en))+' por '+(info.porNombre||'Acceso general')+'. Si el cliente escribe y nadie responde en 5 minutos, pasa a «Chats por responder».';
     corto='Verde apagado en este chat desde '+minuscula1(horaCorta(info.en))+'.';
   }else if(c.pausaHasta){
+    const hasta=hastaTexto(c.pausaHasta);
     clase='ambar';
-    txt='En pausa hasta '+hastaTexto(c.pausaHasta)+' porque una persona del equipo atendió este chat.';
-    corto='En pausa hasta '+hastaTexto(c.pausaHasta)+'.';
-    boton='<button type="button" class="btn-mini" data-clave="'+escH(c.clave)+'" onclick="reanudarVerde(this)">Reanudar ahora</button>';
+    txt='Verde está en pausa en este chat hasta '+hasta+' porque respondió una persona del equipo. Al terminar de atender, tocar «Devolver a Verde».';
+    corto='En pausa hasta '+hasta+'.';
+    boton='<button type="button" class="btn-mini franja-devolver" data-clave="'+escH(c.clave)+'" onclick="reanudarVerde(this)">'+IC134.bot+'Devolver a Verde</button>';
   }else if(c.verdeGeneral===false){
     clase='gris';ic=IC134.info;
     txt='Verde está apagado para todos los chats desde «Comportamiento del bot».';
@@ -4676,6 +4715,7 @@ function pintarConversacion(c,primera){
     box.innerHTML=renderMensajes(ms);
     if(primera||cerca)box.scrollTop=box.scrollHeight;
   }
+  pintarSinResponder(c);
   // campo para responder: la firma va dentro del campo, sin renglones extra
   const ta=document.getElementById('convTexto'),btn=document.getElementById('convEnviar');
   const noResp=document.getElementById('convNoResp');
@@ -4698,5 +4738,29 @@ function pintarConversacion(c,primera){
 }
 
 pintarTema();pintarMenu();
+
+
+/* ===================== 1.3.5: devolver el chat a Verde ===================== */
+IC134.bot='<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="16" y1="16" x2="16.01" y2="16"/></svg>';
+(function(){const b=document.getElementById('convDevolver');if(b)b.insertAdjacentHTML('afterbegin',IC134.bot);})();
+// Verde está en pausa porque respondió una persona del equipo (y el chat no espera a nadie ni está apagado).
+function enPausaVerde(c){return !!(c&&c.pausaHasta&&!c.apagado&&!c.pendiente);}
+// Marca la consulta del cliente que quedó sin responder durante la pausa.
+function pintarSinResponder(c){
+  const box=document.getElementById('convMensajes');if(!box)return;
+  let chip=document.getElementById('convSinResp');
+  const ms=(c.mensajes||[]).filter(m=>m.tipo!=='sistema');
+  const mostrar=enPausaVerde(c)&&ms.length>0&&ms[ms.length-1].tipo==='cliente';
+  if(!mostrar){if(chip)chip.remove();return;}
+  if(!chip){
+    chip=document.createElement('div');chip.id='convSinResp';chip.className='sin-resp';
+    chip.innerHTML=IC134.reloj+'<span>Consulta sin responder · Verde la responde al devolverle el chat</span>';
+  }
+  if(box.lastElementChild!==chip){
+    const cerca=box.scrollHeight-box.scrollTop-box.clientHeight<80;
+    box.appendChild(chip);
+    if(cerca)box.scrollTop=box.scrollHeight;
+  }
+}
 
 </script>

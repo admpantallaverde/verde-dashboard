@@ -415,7 +415,39 @@ async function responder(from, body, opciones) {
   return { texto: reply, derivar: sep.derivar, error: false };
 }
 
+// «Devolver a Verde» desde el panel: Verde responde la última consulta del cliente que quedó sin
+// respuesta durante la pausa, sin agregar un mensaje nuevo al historial.
+// Devuelve { texto, derivar, error } o null si no hay nada pendiente o Verde no debe responder.
+function responderPendiente(from, opciones) {
+  return enCola(String(from), () => responderUltima(String(from), opciones || {}));
+}
+async function responderUltima(from, opciones) {
+  const v = getVerde();
+  const fr = v.frases || {};
+  if (v.encendido === false) return null;
+  const convs = loadConversations();
+  const hist = Array.isArray(convs[from]) ? convs[from] : [];
+  const ultimo = hist[hist.length - 1];
+  if (!ultimo || ultimo.role !== 'user') return null;   // la última palabra fue del equipo o de Verde
+  if (noDebeResponder(from, opciones)) return null;
+  const system = buildSystemPrompt(v) + bloqueContexto() + productBlock(String(ultimo.content || ''));
+  let crudo;
+  try {
+    crudo = await callClaude(system, paraLaIA(hist, memoriaDe(v)), v);
+  } catch (e) {
+    console.error('Error al consultar la IA:', e.message);
+    if (noDebeResponder(from, opciones)) return null;
+    return { texto: fr.error || 'Disculpá, tuve un problema técnico. Ahora mismo te conecto con uno de nuestros asesores 🙌', derivar: true, error: true };
+  }
+  const sep = separarDerivacion(crudo);
+  const reply = sep.texto || fr.derivacion || 'Te paso con un asesor para que te ayude. 🙌';
+  if (noDebeResponder(from, opciones)) return null;
+  registrarMensaje(from, 'assistant', reply);
+  return { texto: reply, derivar: sep.derivar, error: false };
+}
+
 module.exports = {
+  responderPendiente,
   buildSystemPrompt, getReply, getVerde, callClaude, findProducts, productBlock, resetConversation,
   registrarMensaje, pausar, estaPausado, quitarPausa, pausasVigentes, resolverModelo, armarPedido, paraLaIA, MODELO_PREDETERMINADO,
   responderCliente, separarDerivacion, listarModelos, modeloPermitido

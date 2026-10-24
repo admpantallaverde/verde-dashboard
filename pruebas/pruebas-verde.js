@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.3.4';
+const VERSION_ESPERADA = '1.3.5';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -516,10 +516,10 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   await api('/api/logout', 'POST', {}, galletaC);
   process.env.VERDE_LOGIN = '';
 
-  mostrar('36) «Reanudar ahora» termina la pausa automática');
+  mostrar('36) «Devolver a Verde» termina la pausa automática');
   rr = await api('/api/conversaciones/' + claveV + '/reanudar', 'POST', {});
   dc = (await json(rr)).conversacion || {};
-  verificar(rr.status === 200 && !dc.pausaHasta && dc.verde === true && /reanudó a Verde/.test(dc.mensajes[dc.mensajes.length - 1].texto), 'Verde vuelve a atender el chat y queda anotado');
+  verificar(rr.status === 200 && !dc.pausaHasta && dc.verde === true && /devolvió el chat a Verde/.test(dc.mensajes[dc.mensajes.length - 1].texto), 'Verde vuelve a atender el chat y queda anotado quién se lo devolvió');
   antesEnvN = envios360.length;
   await post360(avisoDe('59871000001', 'Valeria Conv', 'perfecto, gracias', 'cv5'));
   await espera(500);
@@ -572,6 +572,96 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   rr = await api('/api/chats/' + dc.pendienteId + '/atendido', 'POST', { motivo: 'llamada' });
   dc = await json(await api('/api/conversaciones/' + encodeURIComponent('wa:59871000009')));
   verificar(rr.status === 200 && dc.pendienteId === null && dc.pendiente === false, 'después de marcarlo, la conversación ya no figura por responder');
+
+
+  mostrar('42) «Devolver a Verde»: responde enseguida la consulta que quedó pendiente');
+  const claveL = encodeURIComponent('wa:59872000001');
+  await post360(avisoDe('59872000001', 'Lucía Devolver', 'quiero el precio exacto de la pantalla del A54', 'dv1'));
+  await espera(500);
+  verificar((await json(await api('/api/chats/pendientes'))).lista.some(x => x.numero === '59872000001'), 'al pedir el precio, Verde deriva y el chat pasa a «Chats por responder»');
+  rr = await api('/api/conversaciones/' + claveL + '/responder', 'POST', { texto: 'Hola Lucía, el cambio de pantalla cuesta $ 4.900.' });
+  dc = (await json(rr)).conversacion || {};
+  verificar(rr.status === 200 && dc.pausaHasta && !dc.pendiente, 'el asesor pasa el precio desde el panel y Verde queda en pausa');
+  antesEnvN = envios360.length;
+  let antesIA42 = llamadasIA.length;
+  await post360(avisoDe('59872000001', 'Lucía Devolver', '¿y tienen fundas para ese modelo?', 'dv2'));
+  await espera(500);
+  verificar(envios360.length === antesEnvN && llamadasIA.length === antesIA42, 'durante la pausa Verde no responde la consulta nueva');
+  rr = await api('/api/conversaciones/' + claveL + '/reanudar', 'POST', {});
+  let rj = await json(rr);
+  dc = rj.conversacion || {};
+  const salio42 = envios360[envios360.length - 1] || { body: { text: {} } };
+  verificar(rr.status === 200 && rj.verde && rj.verde.respondio === true && rj.verde.derivo === false, 'al devolverle el chat, Verde responde enseguida');
+  verificar(envios360.length === antesEnvN + 1 && salio42.body.to === '59872000001' && /^Respuesta de Verde \d+$/.test(salio42.body.text.body), 'la respuesta sale por WhatsApp al cliente');
+  const pedido42 = (llamadasIA[llamadasIA.length - 1] || { body: { messages: [] } }).body.messages;
+  verificar(pedido42.some(m => m.role === 'assistant' && /\[Asesor humano\].*4\.900/.test(String(m.content))) && /fundas/.test(String((pedido42[pedido42.length - 1] || {}).content)), 'Verde responde sabiendo lo que dijo el asesor y la consulta pendiente');
+  verificar(!dc.pausaHasta && dc.mensajes.some(m => m.tipo === 'sistema' && /Acceso general devolvió el chat a Verde/.test(m.texto)) && dc.mensajes[dc.mensajes.length - 1].tipo === 'verde', 'queda anotado quién devolvió el chat y la respuesta de Verde');
+
+  mostrar('43) Sin consulta pendiente, Verde espera el próximo mensaje');
+  await api('/api/conversaciones/' + claveL + '/responder', 'POST', { texto: 'Cualquier otra cosa, me escribís.' });
+  antesEnvN = envios360.length; antesIA42 = llamadasIA.length;
+  rr = await api('/api/conversaciones/' + claveL + '/reanudar', 'POST', {});
+  rj = await json(rr);
+  verificar(rr.status === 200 && rj.verde && rj.verde.respondio === false && envios360.length === antesEnvN && llamadasIA.length === antesIA42 && !rj.conversacion.pausaHasta, 'si la última palabra fue del asesor, Verde no envía nada y queda listo para el próximo mensaje');
+  await post360(avisoDe('59872000001', 'Lucía Devolver', 'gracias', 'dv2b'));
+  await espera(500);
+  verificar(envios360.length === antesEnvN + 1, 'cuando el cliente vuelve a escribir, Verde responde');
+
+  mostrar('44) Si la consulta pendiente vuelve a ser un precio, Verde deriva de nuevo');
+  await api('/api/conversaciones/' + claveL + '/responder', 'POST', { texto: 'Te confirmo el stock enseguida.' });
+  await post360(avisoDe('59872000001', 'Lucía Devolver', '¿y el precio exacto de la batería?', 'dv3'));
+  await espera(500);
+  rr = await api('/api/conversaciones/' + claveL + '/reanudar', 'POST', {});
+  rj = await json(rr);
+  verificar(rj.verde && rj.verde.respondio === true && rj.verde.derivo === true && (await json(await api('/api/chats/pendientes'))).lista.some(x => x.numero === '59872000001'), 'Verde responde y deriva: el chat vuelve a «Chats por responder»');
+
+  mostrar('45) Resguardo: el cliente escribe durante la pausa y nadie responde en 5 minutos');
+  await post360(avisoDe('59872000002', 'Mario Pausa', 'hola, ¿tienen cargadores?', 'dv4'));
+  await espera(500);
+  await post360(eco('59872000002', 'Hola Mario, sí tenemos.\n— Carla', 'dv4eco'));
+  await espera(300);
+  antesEnvN = envios360.length;
+  await post360(avisoDe('59872000002', 'Mario Pausa', '¿y de carga rápida?', 'dv5'));
+  await espera(500);
+  verificar(envios360.length === antesEnvN, 'durante la pausa Verde no responde');
+  await revisarEsperas();
+  verificar(!(await json(await api('/api/chats/pendientes'))).lista.some(x => x.numero === '59872000002'), 'antes de los 5 minutos el chat no pasa a «Chats por responder»');
+  conversacionesMod._usarReloj(() => Date.now() + 6 * 60000);
+  const avisos45 = envios360.length;
+  await revisarEsperas();
+  conversacionesMod._usarReloj(null);
+  const pend45 = (await json(await api('/api/chats/pendientes'))).lista.find(x => x.numero === '59872000002');
+  verificar(pend45 && /carga rápida/.test(pend45.ultimoMensaje), 'a los 5 minutos sin respuesta pasa a «Chats por responder»');
+  const det45 = pend45 ? await json(await api('/api/chats/' + pend45.id)) : {};
+  verificar(/estaba en pausa/.test(JSON.stringify(det45)), 'el motivo indica que Verde estaba en pausa');
+  verificar(envios360.slice(avisos45).some(x => ['59899000101', '59899000102'].includes(x.body.to)), 'y se avisa a los celulares del equipo');
+  await revisarEsperas();
+  verificar((await json(await api('/api/chats/pendientes'))).lista.filter(x => x.numero === '59872000002').length === 1, 'el resguardo no duplica el chat');
+
+  mostrar('46) Si el equipo responde a tiempo o devuelve el chat a Verde, el resguardo no deriva');
+  await post360(avisoDe('59872000003', 'Nora Pausa', 'hola', 'dv6'));
+  await espera(500);
+  await post360(eco('59872000003', 'Hola Nora, te atiendo yo.\n— Carla', 'dv6eco'));
+  await espera(300);
+  await post360(avisoDe('59872000003', 'Nora Pausa', '¿abren el sábado?', 'dv7'));
+  await espera(500);
+  rr = await api('/api/conversaciones/' + encodeURIComponent('wa:59872000003') + '/reanudar', 'POST', {});
+  rj = await json(rr);
+  verificar(rj.verde && rj.verde.respondio === true, 'al devolverle el chat, Verde responde la consulta del sábado');
+  await post360(avisoDe('59872000004', 'Pablo Pausa', 'hola', 'dv8'));
+  await espera(500);
+  await post360(eco('59872000004', 'Hola Pablo.\n— Carla', 'dv8eco'));
+  await espera(300);
+  await post360(avisoDe('59872000004', 'Pablo Pausa', '¿tienen fundas?', 'dv9'));
+  await espera(500);
+  await post360(eco('59872000004', 'Sí, tenemos varias.\n— Carla', 'dv9eco'));
+  await espera(300);
+  conversacionesMod._usarReloj(() => Date.now() + 6 * 60000);
+  await revisarEsperas();
+  conversacionesMod._usarReloj(null);
+  const pend46 = (await json(await api('/api/chats/pendientes'))).lista.map(x => x.numero);
+  verificar(!pend46.includes('59872000003'), 'después de «Devolver a Verde» el resguardo ya no deriva ese chat');
+  verificar(!pend46.includes('59872000004'), 'si una persona del equipo responde dentro de los 5 minutos, el chat no se deriva');
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }
