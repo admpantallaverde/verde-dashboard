@@ -493,6 +493,165 @@ tbody tr:hover{background:var(--surface-2)}
   .stats{grid-template-columns:1fr 1fr}
   .main{padding:20px}
 }
+
+/* ===================== 1.3.1 ===================== */
+/* Todas las pantallas a ancho completo */
+.main{max-width:none}
+.topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+/* Accesos principales del menú */
+.side-top{display:flex;flex-direction:column;gap:2px;margin-bottom:2px}
+.side-link{display:flex;align-items:center;gap:12px;width:100%;min-height:42px;padding:9px 12px;border-radius:10px;color:var(--text);font-weight:600;font-size:13.5px;text-align:left;transition:background .15s}
+.side-link:hover{background:var(--surface-2)}
+.side-link.active{background:var(--surface-3);font-weight:700}
+.side-link svg{width:18px;height:18px;flex:none;color:var(--muted)}
+.side-link.active svg{color:var(--text)}
+.side-count{margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:#25d366;color:#0b0c10;font-size:11.5px;font-weight:700;display:none;align-items:center;justify-content:center}
+.side-count.show{display:inline-flex}
+.side-user{display:flex;align-items:center;gap:10px;margin-top:12px;padding:4px 4px 0}
+.side-user .su-av{width:32px;height:32px;border-radius:50%;background:var(--surface-3);display:grid;place-items:center;font-size:12px;font-weight:700;flex:none}
+.side-user .su-tx{flex:1;min-width:0;display:flex;flex-direction:column}
+.side-user .su-tx b{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.side-user .su-tx span{font-size:11px;color:var(--muted)}
+.side-user .btn{padding:7px 10px;font-size:12px}
+/* Campos del editor en columnas, aprovechando el ancho */
+.campos-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));column-gap:18px}
+.campos-grid .field{margin-bottom:15px}
+.campos-grid .campo-ancho{grid-column:1/-1}
+.verde-grid{grid-template-columns:minmax(0,1fr)!important}
+.verde-forms .panel{margin-bottom:18px}
+/* Paneles laterales (cerebro, detalle, usuario) */
+.overlay.drawer{justify-content:flex-end;align-items:stretch;padding:0}
+.drawer-panel{width:560px;max-width:100%;height:100%;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;animation:entraDer .22s ease-out;color:var(--text)}
+@keyframes entraDer{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
+.drawer-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px;border-bottom:1px solid var(--border-soft)}
+.drawer-head h3{font-family:'Bricolage Grotesque';font-size:18px;font-weight:800;letter-spacing:-.3px}
+.drawer-head p{font-size:12.5px;color:var(--muted);margin-top:3px}
+.drawer-body{flex:1;overflow:auto;padding:16px 18px}
+.drawer-foot{display:flex;justify-content:flex-end;gap:10px;padding:14px 18px;border-top:1px solid var(--border-soft);background:var(--surface-2)}
+.drawer-panel .prompt-preview{max-height:none}
+/* Paneles con fondo claro (detalle de un chat, marcar atendido, avisos) */
+.claro{--text:#111b21;--muted:#54656f;--faint:#667781;--surface:#ffffff;--surface-2:#f7f8fa;--surface-3:#eef1f3;--border:#d1d7db;--border-soft:#e9edef;--accent:#008069;--accent-ink:#ffffff;color:#111b21}
+/* Selector de IA (sección H) */
+.ia-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:16px}
+.ia-card{display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:12px;background:var(--surface-2);border:2px solid var(--border);cursor:pointer;text-align:left;color:var(--text);transition:border-color .15s}
+.ia-card:hover{border-color:var(--muted)}
+.ia-card.sel{border-color:var(--accent);background:rgba(201,242,77,.06)}
+.ia-card .ia-top{display:flex;align-items:center;gap:10px}
+.ia-card .ia-top input{width:18px;height:18px;margin:0;accent-color:var(--accent)}
+.ia-card .ia-nom{font-family:'Bricolage Grotesque';font-size:16px;font-weight:700}
+.ia-card .ia-desc{font-size:13px;color:var(--muted)}
+.ia-card .ia-datos{display:flex;flex-direction:column;gap:4px;padding-top:10px;border-top:1px solid var(--border);font-size:12.5px}
+.ia-card .ia-datos .fila{display:flex;justify-content:space-between;gap:8px}
+.ia-card .ia-datos .fila>span{color:var(--muted)}
+.ia-tag{align-self:flex-start;font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:3px 9px;border-radius:30px}
+.ia-tag.rec{background:var(--accent);color:var(--accent-ink)}
+.ia-tag.mas{color:#9dbcff;background:rgba(107,155,255,.12);border:1px solid rgba(107,155,255,.35)}
+.ia-tag.max{color:var(--amber);background:rgba(244,193,82,.12);border:1px solid rgba(244,193,82,.35)}
+/* ===== Pantallas de chats: fondo claro, estilo lista de chats ===== */
+.app.modo-claro .main{background:#f0f2f5;min-height:100vh;--text:#111b21;--muted:#54656f;--faint:#667781;--surface:#ffffff;--surface-2:#f7f8fa;--surface-3:#eef1f3;--border:#d1d7db;--border-soft:#e9edef;--accent:#008069;--accent-ink:#ffffff;color:#111b21}
+.app.modo-claro .main .badge{background:#fff}
+.app.modo-claro .main .panel{box-shadow:0 1px 2px rgba(11,20,26,.08)}
+.chat-head{display:flex;align-items:center;gap:10px;padding:10px 12px 10px 18px;border-bottom:1px solid var(--border-soft);flex-wrap:wrap}
+.chat-head h3{font-size:16px;font-weight:700}
+.cnt-verde{min-width:22px;height:22px;padding:0 7px;border-radius:11px;background:#25d366;color:#0b0c10;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.cnt-verde.cero{background:#e9edef;color:#54656f}
+.ic-btn{width:44px;height:44px;border-radius:50%;display:inline-grid;place-items:center;color:var(--muted)}
+.ic-btn:hover{background:var(--surface-2)}
+.ic-btn svg{width:18px;height:18px}
+.pill-btn{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--accent);font-weight:600;font-size:13px}
+.pill-btn:hover{background:var(--surface-2)}
+.pill-btn svg{width:15px;height:15px}
+.chat-list{list-style:none;margin:0;padding:0}
+.chat-row{display:flex;align-items:center;gap:14px;padding:10px 16px;border-bottom:1px solid var(--border-soft)}
+.chat-row:last-child{border-bottom:none}
+.chat-row.clic{cursor:pointer}
+.chat-row.clic:hover{background:var(--surface-2)}
+.chat-row.alerta{background:#fdecea}
+.chat-av{width:48px;height:48px;border-radius:50%;background:#dfe5e7;color:#54656f;display:grid;place-items:center;font-weight:600;font-size:16px;flex:none}
+.chat-av svg{width:24px;height:24px}
+.chat-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.chat-l1{display:flex;align-items:baseline;gap:10px}
+.chat-nom{font-size:15.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-num{font-size:12.5px;color:var(--faint);white-space:nowrap}
+.chat-hora{margin-left:auto;font-size:12.5px;color:var(--faint);white-space:nowrap}
+.chat-hora.roja{color:#c5221f;font-weight:700}
+.chat-l2{display:flex;align-items:center;gap:10px}
+.chat-msg{flex:1;min-width:0;font-size:14px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.punto-rojo{width:10px;height:10px;border-radius:50%;background:#c5221f;flex:none}
+.chat-l3{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.estado{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px}
+.estado::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.estado.ok{background:#e7f6ef;color:#00704a}
+.estado.man{background:#fff4d6;color:#7a4f00}
+.estado.mal{background:#fbd5d1;color:#a50e0e}
+.sin-firma{color:#a50e0e;font-weight:700}
+.chips-filtro{display:flex;gap:8px;flex-wrap:wrap}
+.chip-f{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 14px;border-radius:18px;font-size:13px;font-weight:600;border:1px solid #d1d7db;background:#fff;color:#54656f}
+.chip-f.sel{background:#e7f6ef;color:#00704a;border-color:#b6e2cd;font-weight:700}
+.chip-f.rojo{color:#a50e0e;border-color:#f3b8b2}
+.buscador{flex:1 1 360px;display:flex;align-items:center;gap:10px;min-height:44px;padding:0 14px;border-radius:22px;background:#f0f2f5}
+.buscador svg{width:18px;height:18px;color:#54656f;flex:none}
+.buscador input{flex:1;min-width:0;border:none;background:none;outline:none;color:#111b21;font-size:14px}
+.vacio-chats{display:flex;flex-direction:column;align-items:center;gap:8px;padding:44px 20px;text-align:center}
+.vacio-chats .vc-ic{width:64px;height:64px;border-radius:50%;background:#e7f6ef;color:#008069;display:grid;place-items:center}
+.vacio-chats .vc-ic svg{width:30px;height:30px}
+.vacio-chats b{font-family:'Bricolage Grotesque';font-size:17px}
+.vacio-chats span{font-size:13px;color:var(--muted);max-width:460px}
+.nota-clara{display:flex;gap:10px;font-size:12.5px;color:var(--muted);padding:0 4px;margin-top:14px}
+.nota-clara svg{width:17px;height:17px;flex:none;color:var(--accent);margin-top:1px}
+/* Recorrido de una atención */
+.recorrido{list-style:none;margin:0;padding:0}
+.paso-r{display:flex;gap:12px}
+.paso-r .pr-linea{display:flex;flex-direction:column;align-items:center;width:14px;flex:none}
+.paso-r .pr-punto{width:12px;height:12px;border-radius:50%;margin-top:6px;background:#54656f}
+.paso-r .pr-palo{flex:1;width:2px;background:var(--border-soft);margin-top:4px}
+.paso-r .pr-cuerpo{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;padding-bottom:14px}
+.paso-r .pr-quien{display:flex;gap:8px;align-items:baseline;font-size:12.5px;color:var(--muted)}
+.paso-r .pr-quien b{color:var(--text)}
+.paso-r .pr-txt{background:var(--surface-2);border:1px solid var(--border-soft);border-radius:10px;padding:8px 11px;font-size:13.5px;white-space:pre-wrap;word-break:break-word}
+.paso-r.alerta .pr-txt{background:#fdecea;border-color:#f3b8b2}
+.paso-r.alerta .pr-punto{background:#a50e0e}
+.paso-r.verde .pr-punto{background:#008069}
+.paso-r.ambar .pr-punto{background:#7a4f00}
+/* Opciones de «Marcar atendido» */
+.opcion-m{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:14px;margin-bottom:8px}
+.opcion-m.sel{border:2px solid var(--accent);background:rgba(0,128,105,.06)}
+.opcion-m input{width:18px;height:18px;margin:0;accent-color:var(--accent)}
+/* Contraseña temporal */
+.clave-box{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-radius:12px;background:var(--surface-2);border:1px dashed var(--accent);font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;letter-spacing:1px}
+/* Ingreso */
+.login-screen{position:fixed;inset:0;z-index:80;background:var(--bg);display:none;align-items:center;justify-content:center;padding:40px 20px;overflow:auto}
+.login-screen.show{display:flex}
+.login-box{width:100%;max-width:400px;display:flex;flex-direction:column;gap:22px}
+.login-marca{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+.login-marca .logo{width:52px;height:52px;border-radius:14px}
+.login-marca h1{font-family:'Bricolage Grotesque';font-size:24px;font-weight:800;letter-spacing:-.5px}
+.login-marca span{font-size:13px;color:var(--muted)}
+.login-form{background:var(--surface);border:1px solid var(--border-soft);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:4px}
+.login-form .btn{justify-content:center;min-height:46px;font-size:14px}
+.login-err{display:none;padding:10px 12px;border-radius:10px;background:rgba(247,114,114,.12);color:var(--red);font-size:13px;margin-bottom:10px}
+.login-err.show{display:block}
+.login-pie{text-align:center;font-size:12.5px;color:var(--muted)}
+.ojo-fila{display:flex;gap:8px}
+.ojo-fila input{flex:1;min-width:0}
+.ojo-btn{width:46px;height:46px;border-radius:9px;display:grid;place-items:center;background:var(--surface-2);border:1px solid var(--border);color:var(--muted);flex:none}
+.ojo-btn svg{width:18px;height:18px}
+.oculto{display:none!important}
+/* Ajustes tras revisar las capturas */
+.main{min-width:0}
+.field input[type=password],.field input[type=tel]{width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:11px 13px;color:var(--text);transition:.15s}
+.field label.opcion-m{display:flex;font-size:14px;font-weight:500;color:var(--text);margin-bottom:8px}
+.paso-r:last-child .pr-palo{display:none}
+#usrTabla td:first-child{white-space:nowrap}
+.side-user .su-tx span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:600px){
+  .chat-row{flex-wrap:wrap;gap:10px 12px;padding:12px}
+  .chat-av{width:42px;height:42px;font-size:14px}
+  .chat-row>.pill-btn{flex-basis:100%;justify-content:center}
+  .chat-head{padding:10px 8px 10px 14px}
+  .buscador{flex-basis:100%}
+}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -510,6 +669,11 @@ tbody tr:hover{background:var(--surface-2)}
       </div>
     </div>
 
+    <div class="side-top">
+      <button class="side-link" id="leaf-chats" onclick="go('chats')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>Chats por responder<span class="side-count" id="cntPend">0</span></button>
+      <button class="side-link" id="leaf-respondidos" onclick="go('respondidos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Chats respondidos</button>
+    </div>
+    <div id="navAdmin">
     <div class="nav-label">Categorías</div>
 
     <button class="tree-parent open" id="parentBtn" onclick="toggleParent()">
@@ -546,6 +710,11 @@ tbody tr:hover{background:var(--surface-2)}
       </div>
     </div>
 
+    </div>
+    <div id="navSistema">
+      <div class="nav-label">Sistema</div>
+      <button class="tree-leaf" id="leaf-usuarios" onclick="go('usuarios')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Usuarios</button>
+    </div>
     <div class="side-foot">
       <div class="bot-card">
         <div class="row">
@@ -559,6 +728,11 @@ tbody tr:hover{background:var(--surface-2)}
         </div>
         <button class="link-btn" onclick="openConn()">Ver estado de conexión</button>
       </div>
+      <div class="side-user" id="sideUser">
+        <span class="su-av" id="suAv">AG</span>
+        <div class="su-tx"><b id="suNombre">Acceso general</b><span id="suRol">Ingreso con usuario propio inactivo</span></div>
+        <button class="btn btn-ghost oculto" type="button" id="suSalir" onclick="cerrarSesion()">Cerrar sesión</button>
+      </div>
     </div>
   </aside>
 
@@ -566,11 +740,14 @@ tbody tr:hover{background:var(--surface-2)}
   <main class="main">
     <div class="topbar">
       <div>
-        <div class="crumb"><b>Agentes IA</b> › <b>Base de Conocimientos</b> › <span id="crumbLeaf">Fuentes de datos</span></div>
+        <div class="crumb" id="crumb"><b>Agentes IA</b> › <b>Base de Conocimientos</b> › <span id="crumbLeaf">Fuentes de datos</span></div>
         <div class="title" id="viewTitle">Fuentes de datos</div>
         <div class="subtitle" id="viewSub">Carga archivos Excel o conecta Google Sheets. Esta información alimentará al chatbot una vez vinculado.</div>
       </div>
-      <div class="badge" id="botBadge"><span class="pulse"></span> Chatbot · No vinculado</div>
+      <div class="topbar-right">
+        <button class="btn btn-primary oculto" type="button" id="btnCerebro" onclick="abrirCerebro()"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Ver cerebro de Verde</button>
+        <div class="badge" id="botBadge"><span class="pulse"></span> Chatbot · No vinculado</div>
+      </div>
     </div>
 
     <!-- ===== VIEW: FUENTES ===== -->
@@ -770,7 +947,7 @@ tbody tr:hover{background:var(--surface-2)}
 
       <div class="note" style="margin-bottom:20px;border-left:3px solid var(--accent)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
-        <span>Acá editás <b>cómo habla y vende Verde</b> sin tocar código. A la derecha ves, en vivo, el "cerebro" que se le arma al bot. Cuando un programador conecte el servidor de WhatsApp, esta configuración será la que use.</span>
+        <span>Aquí se edita <b>cómo habla y vende Verde</b>, sin tocar código. El «cerebro» que se arma para el bot se ve en vivo con el botón «Ver cerebro de Verde».</span>
       </div>
 
       <div class="panel" style="margin-bottom:20px">
@@ -796,7 +973,7 @@ tbody tr:hover{background:var(--surface-2)}
               <div><h3><span class="sec-let">A</span> Identidad del bot</h3><p>Quién es y a qué se dedica.</p></div>
               <button class="btn btn-primary" onclick="saveVerde('identidad')">Guardar</button>
             </div>
-            <div style="padding:16px 20px">
+            <div style="padding:16px 20px" class="campos-grid">
               <div class="field"><label>Nombre del bot</label><input type="text" id="v_nombre" oninput="buildVerdePrompt()"></div>
               <div class="field"><label>Rol / descripción</label><input type="text" id="v_rol" oninput="buildVerdePrompt()"></div>
               <div class="field"><label>Empresa</label><input type="text" id="v_empresa" oninput="buildVerdePrompt()"></div>
@@ -813,8 +990,8 @@ tbody tr:hover{background:var(--surface-2)}
               <div><h3><span class="sec-let">B</span> Personalidad y tono</h3><p>Cómo se comporta al escribir.</p></div>
               <button class="btn btn-primary" onclick="saveVerde('personalidad')">Guardar</button>
             </div>
-            <div style="padding:16px 20px">
-              <div class="field">
+            <div style="padding:16px 20px" class="campos-grid">
+              <div class="field campo-ancho">
                 <label>Rasgos de personalidad <span class="faint" style="font-weight:400">(escribí y Enter para agregar)</span></label>
                 <div class="tagbox" id="v_rasgosBox" onclick="document.getElementById('v_rasgosInput').focus()">
                   <span id="v_rasgosChips"></span>
@@ -885,7 +1062,7 @@ tbody tr:hover{background:var(--surface-2)}
               <div><h3><span class="sec-let">G</span> Frases clave</h3><p>Mensajes fijos que Verde usa en momentos puntuales.</p></div>
               <button class="btn btn-primary" onclick="saveVerde('frases')">Guardar</button>
             </div>
-            <div style="padding:16px 20px">
+            <div style="padding:16px 20px" class="campos-grid">
               <div class="field"><label>Mensaje de bienvenida</label><textarea id="v_fBien" rows="2" oninput="buildVerdePrompt()" placeholder="Primer saludo del bot…"></textarea></div>
               <div class="field"><label>Mensaje al derivar a un humano</label><textarea id="v_fDeriv" rows="2" oninput="buildVerdePrompt()" placeholder="Cuando pasa a un asesor…"></textarea></div>
               <div class="field" style="margin-bottom:0"><label>Mensaje de error técnico</label><textarea id="v_fError" rows="2" oninput="buildVerdePrompt()" placeholder="Si el bot falla…"></textarea></div>
@@ -895,48 +1072,189 @@ tbody tr:hover{background:var(--surface-2)}
           <!-- Sección H: Parámetros técnicos -->
           <div class="panel">
             <div class="panel-head">
-              <div><h3><span class="sec-let">H</span> Parámetros técnicos</h3><p>Avanzado. Si no estás seguro, dejalo como está.</p></div>
+              <div><h3><span class="sec-let">H</span> Parámetros técnicos</h3><p>La inteligencia artificial que usa Verde para responder y los límites de cada respuesta.</p></div>
               <button class="btn btn-primary" onclick="saveVerde('tecnico')">Guardar</button>
             </div>
             <div style="padding:16px 20px">
-              <div class="note" style="margin-bottom:14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg><span>Tocá esto solo si sabés lo que hacés. El identificador del modelo conviene confirmarlo con tu programador.</span></div>
-              <div class="field"><label>Modelo de IA</label>
-                <input type="text" id="v_modelo" list="v_modelos" oninput="buildVerdePrompt()" placeholder="claude-…">
-                <datalist id="v_modelos">
-                  <option value="claude-sonnet-4-5"></option>
-                  <option value="claude-sonnet-4-6"></option>
-                  <option value="claude-opus-4-8"></option>
-                  <option value="claude-haiku-4-5"></option>
-                </datalist>
-              </div>
+              <div class="field" style="margin-bottom:6px"><label>Inteligencia artificial que usa Verde</label></div>
+              <input type="hidden" id="v_modelo">
+              <div class="ia-cards" id="iaCards" role="radiogroup" aria-label="Inteligencia artificial que usa Verde"></div>
+              <div class="note" style="margin-bottom:16px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Al cambiar de inteligencia artificial, conviene probarla en el simulador antes de dejarla atendiendo a los clientes. El cambio se aplica desde el próximo mensaje.</span></div>
+              <div class="campos-grid">
               <div class="field"><label>Largo máximo de respuesta (tokens)</label><input type="number" id="v_tokens" min="100" max="8000" step="50"></div>
-              <div class="field" style="margin-bottom:0"><label>Memoria de conversación (cantidad de mensajes)</label><input type="number" id="v_memoria" min="2" max="100"></div>
-            </div>
-          </div>
-
-          <div class="note" style="border-left:3px solid var(--green)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>
-            <span><b>Editor completo.</b> Ya podés configurar todo el comportamiento de Verde. Falta sumar el <b>simulador</b> y el botón de <b>restaurar valores por defecto</b>.</span>
-          </div>
-        </div>
-
-        <!-- Vista previa del prompt -->
-        <div class="verde-preview">
-          <div class="panel" style="position:sticky;top:20px">
-            <div class="panel-head">
-              <div><h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0"/></svg> Cerebro de Verde <span class="faint" style="font-weight:500;font-size:12px">(vista previa en vivo)</span></h3><p>Esto es lo que recibe el bot. Se arma solo con lo que editás.</p></div>
-            </div>
-            <div style="padding:16px 20px">
-              <pre id="v_preview" class="prompt-preview"></pre>
+              <div class="field"><label>Memoria de conversación (cantidad de mensajes)</label><input type="number" id="v_memoria" min="2" max="100"></div>
+              </div>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- ===== VISTA: CHATS POR RESPONDER ===== -->
+    <div class="view" id="view-chats">
+      <div class="panel" style="margin-bottom:0">
+        <div class="chat-head">
+          <h3>Esperando respuesta</h3>
+          <span class="cnt-verde cero" id="chatsCnt">0</span>
+          <button class="ic-btn" type="button" style="margin-left:auto" aria-label="Actualizar la lista" onclick="actualizarContador(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
+          <button class="pill-btn" type="button" id="btnAvisos" onclick="go('avisos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> Avisos</button>
+        </div>
+        <ul class="chat-list" id="chatsLista"></ul>
+      </div>
+      <div class="nota-clara"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Cuando una persona del equipo le responde desde el celular o desde WhatsApp Web, el chat pasa solo a «Chats respondidos». Si se atendió por una llamada o en el local, usar «Marcar atendido» e indicar el motivo. En rojo, las esperas de más de 5 minutos.</span></div>
+    </div>
+
+    <!-- ===== VISTA: CHATS RESPONDIDOS ===== -->
+    <div class="view" id="view-respondidos">
+      <div class="panel" style="margin-bottom:0">
+        <div style="display:flex;flex-direction:column;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border-soft)">
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <label class="buscador"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="search" id="respBuscar" placeholder="Buscar por cliente, número, mensaje o asesor" aria-label="Buscar en chats respondidos" oninput="buscarRespondidos()"></label>
+            <label style="display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)">Período
+              <select id="respPeriodo" onchange="cargarRespondidos()" style="min-height:44px;padding:0 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px">
+                <option value="hoy">Hoy</option>
+                <option value="7" selected>Últimos 7 días</option>
+                <option value="30">Últimos 30 días</option>
+                <option value="90">Últimos 3 meses</option>
+              </select>
+            </label>
+          </div>
+          <div class="chips-filtro" role="group" aria-label="Filtrar por cómo se cerró" id="respChips"></div>
+        </div>
+        <ul class="chat-list" id="respLista"></ul>
+      </div>
+      <div class="nota-clara"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Quién respondió desde el celular se identifica por la firma al final del mensaje (configurada en Sistema › Usuarios), porque WhatsApp no informa qué persona escribió. Si el cliente vuelve a escribir después de un «Marcar atendido», el chat regresa solo a «Por responder» y se avisa de nuevo. El historial se conserva 3 meses y después se borra solo.</span></div>
+    </div>
+
+    <!-- ===== VISTA: AVISOS A CELULARES DEL EQUIPO ===== -->
+    <div class="view" id="view-avisos">
+      <button class="btn btn-ghost" type="button" onclick="go('chats')" style="margin-bottom:14px"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg> Volver a Chats por responder</button>
+      <div class="panel" style="margin-bottom:0">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:28px;padding:22px">
+          <div>
+            <div class="field"><label>Números que reciben avisos</label>
+              <div class="tagbox" id="avChips" style="cursor:default"></div>
+            </div>
+            <div class="field"><label for="avNuevo">Agregar un número</label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap"><input type="tel" inputmode="tel" id="avNuevo" placeholder="+598 9X XXX XXX" style="flex:1 1 200px" onkeydown="if(event.key==='Enter')agregarNumeroAviso()"><button class="btn btn-ghost" type="button" onclick="agregarNumeroAviso()">Agregar</button></div>
+            </div>
+            <div class="field" style="margin-bottom:0"><label for="avPlantilla">Nombre de la plantilla aprobada en Meta <span class="faint" style="font-weight:400">(se completa al conectar el número real)</span></label>
+              <input type="text" id="avPlantilla" placeholder="por ejemplo: chat_por_responder">
+            </div>
+          </div>
+          <div>
+            <div class="field" style="margin-bottom:6px"><label>Vista previa del aviso</label></div>
+            <div style="background:#efeae2;border:1px solid #e9edef;border-radius:12px;padding:16px">
+              <div style="max-width:380px;background:#fff;color:#111b21;border-radius:0 10px 10px 10px;padding:9px 12px 7px;font-size:13.5px;line-height:1.45;display:flex;flex-direction:column;gap:2px;box-shadow:0 1px 1px rgba(11,20,26,.13)">
+                <span style="font-size:12px;font-weight:600;color:#008069">Pantalla Verde</span>
+                <span style="font-weight:700">Chat por responder</span>
+                <span>Cliente: Nombre del cliente (+598 9X XXX XXX)</span>
+                <span>Pidió: «Mensaje del cliente»</span>
+                <span>Responder desde el WhatsApp de la tienda.</span>
+              </div>
+            </div>
+            <p class="faint" style="margin-top:8px">El texto del aviso se registra en Meta como plantilla, un requisito para poder enviarlo a un celular que no escribió al número de la tienda en las últimas 24 horas.</p>
+          </div>
+        </div>
+        <div class="drawer-foot" style="border-radius:0 0 14px 14px"><button class="btn btn-ghost" type="button" onclick="go('chats')">Cancelar</button><button class="btn btn-primary" type="button" onclick="guardarAvisosPanel()">Guardar</button></div>
+      </div>
+    </div>
+
+    <!-- ===== VISTA: USUARIOS ===== -->
+    <div class="view" id="view-usuarios">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:14px"><button class="btn btn-primary" type="button" onclick="abrirUsuario()"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nuevo usuario</button></div>
+      <div class="panel">
+        <div style="overflow-x:auto">
+          <table style="min-width:900px">
+            <thead><tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Firma en WhatsApp</th><th>Estado</th><th>Último ingreso</th><th style="text-align:right">Acciones</th></tr></thead>
+            <tbody id="usrTabla"></tbody>
+          </table>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px">
+        <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span><b>Administrador:</b> acceso a todo el panel, incluidos la configuración de Verde, los usuarios y la supervisión. <b>Asesor:</b> atiende los chats por responder y consulta el historial; no puede cambiar la configuración.</span></div>
+        <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Los usuarios no se eliminan: se desactivan, para que el historial siga mostrando quién atendió cada chat. Las contraseñas se guardan cifradas y nadie puede verlas.</span></div>
       </div>
     </div>
   </main>
 </div>
 
 <div class="toasts" id="toasts"></div>
+
+<!-- ===== 1.3.1: VENTANAS NUEVAS ===== -->
+<div class="overlay" id="atOverlay">
+  <div class="modal claro" style="max-width:480px">
+    <div class="modal-head"><div><h3>Marcar como atendido</h3><p id="atCliente"></p></div><button class="x-btn" type="button" onclick="close_('atOverlay')" aria-label="Cerrar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="modal-body">
+      <div class="field" style="margin-bottom:8px"><label>¿Cómo se atendió? (obligatorio)</label></div>
+      <div id="atOpciones" role="radiogroup" aria-label="Cómo se atendió"></div>
+      <div class="field" style="margin-top:8px"><label for="atDetalle">Detalle (obligatorio si se elige «Otro motivo»)</label><textarea id="atDetalle" rows="2" maxlength="300"></textarea></div>
+      <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Queda registrado a nombre de <b id="atQuien">Acceso general</b>. Si el cliente vuelve a escribir, el chat regresa a «Por responder».</span></div>
+      <div class="login-err" id="atErr" style="margin-top:10px"></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" type="button" onclick="close_('atOverlay')">Cancelar</button><button class="btn btn-primary" type="button" id="atOk" onclick="confirmarAtendido()">Confirmar</button></div>
+  </div>
+</div>
+
+<div class="overlay drawer" id="detOverlay">
+  <div class="drawer-panel claro">
+    <div class="drawer-head"><div style="display:flex;flex-direction:column;gap:6px"><h3 id="detTitulo">Detalle de la atención</h3><span id="detEstado"></span></div><button class="x-btn" type="button" onclick="close_('detOverlay')" aria-label="Cerrar el detalle"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="drawer-body"><div class="faint" style="margin-bottom:10px;font-weight:600">Recorrido de la atención</div><ol class="recorrido" id="detRecorrido"></ol></div>
+    <div class="drawer-foot"><button class="btn btn-primary oculto" type="button" id="detIrPend" onclick="close_('detOverlay');go('chats')">Ir a «Por responder»</button><button class="btn btn-ghost" type="button" onclick="close_('detOverlay')">Cerrar</button></div>
+  </div>
+</div>
+
+<div class="overlay drawer" id="usrOverlay">
+  <div class="drawer-panel">
+    <div class="drawer-head"><div><h3 id="usrTitulo">Nuevo usuario</h3></div><button class="x-btn" type="button" onclick="close_('usrOverlay')" aria-label="Cerrar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="drawer-body">
+      <div class="field"><label for="usrNombre">Nombre y apellido</label><input type="text" id="usrNombre" maxlength="60"></div>
+      <div class="field"><label for="usrUsuario">Usuario para entrar al panel</label><input type="text" id="usrUsuario" maxlength="30" autocomplete="off" autocapitalize="none"><p class="faint" style="margin-top:5px" id="usrUsuarioAyuda">Letras sin acentos, números, punto, guion o guion bajo (de 3 a 30).</p></div>
+      <div class="field"><label>Rol</label><div id="usrRoles" role="radiogroup" aria-label="Rol"></div></div>
+      <div class="field"><label for="usrFirma">Firma en WhatsApp</label><input type="text" id="usrFirma" maxlength="40" placeholder="por ejemplo: — Carla"><p class="faint" style="margin-top:5px">Cada mensaje que envíe desde el celular debe terminar con esta firma. Así el historial sabe quién respondió.</p></div>
+      <div class="note" id="usrNotaClave"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>Al guardar se genera una <b>contraseña temporal</b> que se muestra una sola vez. La persona la cambia por una propia en su primer ingreso.</span></div>
+      <div class="login-err" id="usrErr" style="margin-top:10px"></div>
+    </div>
+    <div class="drawer-foot"><button class="btn btn-ghost" type="button" onclick="close_('usrOverlay')">Cancelar</button><button class="btn btn-primary" type="button" id="usrOk" onclick="guardarUsuarioPanel()">Crear usuario</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="claveOverlay">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-head"><div><h3>Contraseña temporal</h3><p id="claveDe"></p></div><button class="x-btn" type="button" onclick="close_('claveOverlay')" aria-label="Cerrar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="modal-body"><div class="clave-box"><span id="claveTxt"></span><button class="btn btn-ghost" type="button" onclick="copiarClave()">Copiar</button></div><p class="faint" style="margin-top:10px">Se muestra una sola vez. Entregarla a la persona: al ingresar, el panel le pide cambiarla por una propia.</p></div>
+    <div class="modal-foot"><button class="btn btn-primary" type="button" onclick="close_('claveOverlay')">Listo</button></div>
+  </div>
+</div>
+
+<div class="overlay drawer" id="cerebroOverlay">
+  <div class="drawer-panel">
+    <div class="drawer-head"><div><h3>Cerebro de Verde <span class="faint" style="font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500">(vista previa en vivo)</span></h3><p>Lo que recibe el bot. Se actualiza mientras se edita.</p></div><button class="x-btn" type="button" onclick="close_('cerebroOverlay')" aria-label="Cerrar el cerebro de Verde"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="drawer-body"><pre id="v_preview" class="prompt-preview"></pre></div>
+  </div>
+</div>
+
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <div class="login-marca"><div class="logo"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div><h1>Nexus IA</h1><span>Panel de control · Ingreso</span></div></div>
+    <form class="login-form" id="formIngreso" onsubmit="event.preventDefault();ingresarPanel()">
+      <div class="login-err" id="loginErr"></div>
+      <div class="field"><label for="liUsuario">Usuario</label><input type="text" id="liUsuario" autocomplete="username" autocapitalize="none"></div>
+      <div class="field"><label for="liClave">Contraseña</label><div class="ojo-fila"><input type="password" id="liClave" autocomplete="current-password"><button type="button" class="ojo-btn" aria-label="Mostrar la contraseña" onclick="verClave('liClave',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+      <button class="btn btn-primary" type="submit" id="liOk">Ingresar</button>
+    </form>
+    <form class="login-form oculto" id="formCambio" onsubmit="event.preventDefault();cambiarClavePanel()">
+      <div style="margin-bottom:8px"><b style="font-size:15px">Crear una contraseña propia</b><p class="faint" style="margin-top:4px">La contraseña actual es temporal. Elegir una nueva de al menos 8 caracteres.</p></div>
+      <div class="login-err" id="cambioErr"></div>
+      <div class="field" id="campoActual"><label for="ccActual">Contraseña actual</label><input type="password" id="ccActual" autocomplete="current-password"></div>
+      <div class="field"><label for="ccNueva">Contraseña nueva</label><div class="ojo-fila"><input type="password" id="ccNueva" autocomplete="new-password"><button type="button" class="ojo-btn" aria-label="Mostrar la contraseña" onclick="verClave('ccNueva',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+      <div class="field"><label for="ccRepetir">Repetir la contraseña nueva</label><input type="password" id="ccRepetir" autocomplete="new-password"></div>
+      <button class="btn btn-primary" type="submit" id="ccOk">Guardar y entrar</button>
+    </form>
+    <p class="login-pie">Si olvidó su contraseña, el administrador puede restablecerla. Después de varios intentos fallidos, el ingreso se bloquea por unos minutos.</p>
+  </div>
+</div>
+
 
 <!-- ===== MODAL: CONFIRM ===== -->
 <div class="overlay" id="confirmOverlay">
@@ -1290,10 +1608,13 @@ async function load(){
   return null;
 }
 async function save(){
+  if(_cargaFallida){toast('No se guardó','La configuración no se cargó bien al abrir el panel. Recargar la página antes de hacer cambios.','error');return;}
+  if(esAsesor())return;
   if(_backendOk!==false){
     try{
       const r=await fetch('/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({state:DB})});
       if(r.ok){_backendOk=true; return;}
+      if(r.status===401||r.status===403){toast('No se guardó','La sesión venció o este usuario no tiene permiso. Ingresar de nuevo y repetir el cambio.','error');return;}
     }catch(e){_backendOk=false;}
   }
   try{await window.storage.set(KEY,JSON.stringify(DB));}catch(e){console.warn('storage no disponible',e);}
@@ -1413,8 +1734,9 @@ function go(view){
 }
 function _doGo(view){
   currentView=view;
-  document.querySelectorAll('.tree-leaf').forEach(l=>l.classList.remove('active'));
-  document.getElementById('leaf-'+view).classList.add('active');
+  document.querySelectorAll('.tree-leaf,.side-link').forEach(l=>l.classList.remove('active'));
+  const hoja=document.getElementById('leaf-'+view)||document.getElementById('leaf-'+(VISTA_PADRE[view]||''));
+  if(hoja)hoja.classList.add('active');
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('show'));
   document.getElementById('view-'+view).classList.add('show');
   const meta={
@@ -1422,12 +1744,24 @@ function _doGo(view){
     rastreador:['Rastreador Web','Extrae productos, precios y disponibilidad de sitios web hacia la base de conocimientos.'],
     multimedia:['Multimedia','Fotos, imágenes, PDF, notas de voz, audios y videos que el chatbot reconoce para poder responder sobre ellos.'],
     recursos:['Recursos enviables','PDF, imágenes, enlaces o textos que el chatbot reconoce y envía al cliente cuando pregunta por temas clave.'],
-    verde:['Comportamiento del bot','Editá la personalidad, los pasos de venta, las objeciones y las reglas de Verde sin tocar código.']
+    verde:['Comportamiento del bot','Editá la personalidad, los pasos de venta, las objeciones y las reglas de Verde sin tocar código.'],
+    chats:['Chats por responder','Clientes que Verde derivó a un asesor. Mientras esperan, Verde no les responde.','<b>Atención</b> › Chats por responder'],
+    respondidos:['Chats respondidos','Historial de los chats que Verde derivó y cómo se atendió cada uno, para supervisar la atención.','<b>Atención</b> › Chats respondidos'],
+    avisos:['Avisos a celulares del equipo','Cada vez que un chat entra a «Chats por responder», estos números reciben un aviso por WhatsApp. Verde nunca les responde como a un cliente.','<b>Atención</b> › <b>Chats por responder</b> › Avisos'],
+    usuarios:['Usuarios','Personas que pueden entrar al panel. Cada acción queda registrada con su usuario.','<b>Sistema</b> › Usuarios']
   }[view];
   if(view==='verde')renderVerde();
   document.getElementById('viewTitle').textContent=meta[0];
   document.getElementById('viewSub').textContent=meta[1];
-  document.getElementById('crumbLeaf').textContent=meta[0];
+  const crumb=document.getElementById('crumb');
+  if(meta[2])crumb.innerHTML=meta[2];
+  else{crumb.innerHTML=CRUMB_ORIGINAL;document.getElementById('crumbLeaf').textContent=meta[0];}
+  document.getElementById('app').classList.toggle('modo-claro',VISTAS_CLARAS.includes(view));
+  document.getElementById('btnCerebro').classList.toggle('oculto',view!=='verde');
+  if(view==='chats')actualizarContador(true);
+  if(view==='respondidos')cargarRespondidos();
+  if(view==='avisos')cargarAvisos();
+  if(view==='usuarios')cargarUsuarios();
 }
 
 /* ---------- render fuentes ---------- */
@@ -2522,7 +2856,7 @@ function defaultVerde(){
       derivacion:'Ahora mismo te conecto con uno de nuestros asesores, un momento por favor 🙌',
       error:'Disculpá, tuve un problema técnico. Ahora mismo te conecto con uno de nuestros asesores 🙌'
     },
-    tecnico:{modelo:'claude-sonnet-4-5',maxTokens:1000,memoria:20},
+    tecnico:{modelo:'claude-sonnet-5-5',maxTokens:1000,memoria:20},
     encendido:true
   };
 }
@@ -2545,7 +2879,7 @@ function renderVerde(){
   document.getElementById('v_fDeriv').value=fr.derivacion||'';
   document.getElementById('v_fError').value=fr.error||'';
   const tc=v.tecnico||{};
-  document.getElementById('v_modelo').value=tc.modelo||'claude-sonnet-4-5';
+  document.getElementById('v_modelo').value=modeloUI(tc.modelo||'');pintarSelectorIA();
   document.getElementById('v_tokens').value=tc.maxTokens||1000;
   document.getElementById('v_memoria').value=tc.memoria||20;
   vRasgos=(v.rasgos||[]).slice();
@@ -2791,7 +3125,7 @@ function snapVerde(src){
     objeciones:(v.objeciones||[]).map(o=>({obj:(o.obj||'').trim(),resp:(o.resp||'').trim()})),
     reglas:(v.reglas||[]).map(r=>(r||'').trim()).filter(Boolean),
     frases:{bienvenida:(fr.bienvenida||'').trim(),derivacion:(fr.derivacion||'').trim(),error:(fr.error||'').trim()},
-    tecnico:{modelo:(tc.modelo||'').trim(),maxTokens:tc.maxTokens||0,memoria:tc.memoria||0}
+    tecnico:{modelo:modeloUI((tc.modelo||'').trim()),maxTokens:tc.maxTokens||0,memoria:tc.memoria||0}
   });
 }
 function verdeHasUnsaved(){
@@ -2842,35 +3176,7 @@ function connRow(id,name,desc,state){
   </div>`;
 }
 async function openConn(){show('linkOverlay');await checkConn();}
-async function checkConn(){
-  const box=document.getElementById('connRows');
-  box.innerHTML=connRow('server','Servidor / base de datos','Verificando…','wait')
-    +connRow('wa','WhatsApp (Twilio)','Pendiente — próximo paso del servidor','pend')
-    +connRow('ia','IA (Anthropic)','Pendiente — próximo paso del servidor','pend');
-  let ok=false;
-  try{const r=await fetch('/api/health',{cache:'no-store'});ok=r.ok;}catch(e){ok=false;}
-  _backendOk=ok;
-  const sRow=document.getElementById('conn-server');
-  if(sRow)sRow.outerHTML=connRow('server','Servidor / base de datos',
-    ok?'Conectado — tus cambios se guardan en el servidor':'Sin servidor — estás en modo navegador (se guarda en este equipo)',
-    ok?'ok':'warn');
-  updateBot();
-}
-function updateBot(){
-  const on=_backendOk===true;
-  const badge=document.getElementById('botBadge');
-  const st=document.getElementById('botStatusText');
-  if(on){
-    badge.classList.add('linked');badge.innerHTML='<span class="pulse"></span> Servidor · Conectado';
-    if(st)st.textContent='Servidor conectado';
-  }else if(_backendOk===false){
-    badge.classList.remove('linked');badge.innerHTML='<span class="pulse"></span> Modo navegador';
-    if(st)st.textContent='Modo navegador (sin servidor)';
-  }else{
-    badge.classList.remove('linked');badge.innerHTML='<span class="pulse"></span> Verificando…';
-    if(st)st.textContent='Verificando…';
-  }
-}
+/* checkConn() y updateBot(): ver el bloque 1.3.1 */
 
 /* ---------- helpers modal ---------- */
 function show(id){document.getElementById(id).classList.add('show');}
@@ -2885,14 +3191,486 @@ document.addEventListener('keydown',e=>{
 
 /* ---------- persist + render ---------- */
 function persist(){save();renderSources();renderCrawler();renderMedia();renderRes();}
-/* ---------- init ---------- */
-(async()=>{
-  const saved=await load();
-  if(saved&&saved.sources)DB=Object.assign({sources:[],targets:[],products:[],media:[],resources:[],verde:null,bot:{linked:false,endpoint:''}},saved);
-  else{seed();await save();}
-  if(!DB.verde){DB.verde=defaultVerde();await save();}
+/* ===================== 1.3.1: sesión, chats, usuarios, avisos y selector de IA ===================== */
+let SESION={loginActivo:false,usuario:null};
+let _appIniciada=false,_cargaFallida=false,_salud=null,_claveTemporalIngresada=null,_usuarioInicial=null;
+const VISTAS_CLARAS=['chats','respondidos','avisos'];
+const VISTA_PADRE={avisos:'chats'};
+const CRUMB_ORIGINAL=document.getElementById('crumb').innerHTML;
+const SVG131={
+  x:'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+  persona:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  lupa:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>'
+};
+
+/* ---------- utilidades ---------- */
+function escH(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function iniciales(n){const p=String(n||'').trim().split(/\s+/).filter(Boolean);return(((p[0]||'')[0]||'')+((p[1]||'')[0]||'')).toUpperCase();}
+function recortar(s,n){s=String(s||'').replace(/\s+/g,' ').trim();return s.length>n?s.slice(0,n-1)+'…':s;}
+function minuscula1(s){s=String(s||'');return s.charAt(0).toLowerCase()+s.slice(1);}
+const _fmtDia=new Intl.DateTimeFormat('es-UY',{timeZone:'America/Montevideo',year:'numeric',month:'2-digit',day:'2-digit'});
+const _fmtHora=new Intl.DateTimeFormat('es-UY',{timeZone:'America/Montevideo',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
+// "Hoy 11:42", "Ayer 18:10" o "12/10 09:40" (hora de Montevideo)
+function horaCorta(ms){
+  if(!ms)return '—';
+  const dia=_fmtDia.format(new Date(ms)),hoy=_fmtDia.format(new Date()),ayer=_fmtDia.format(new Date(Date.now()-86400000));
+  const hora=_fmtHora.format(new Date(ms));
+  if(dia===hoy)return 'Hoy '+hora;
+  if(dia===ayer)return 'Ayer '+hora;
+  return dia.slice(0,5)+' '+hora;
+}
+function tiempoEspera(min){
+  min=Math.max(0,Math.floor(min||0));
+  if(min<1)return 'recién';
+  if(min<60)return min+' min';
+  const h=Math.floor(min/60),m=min%60;
+  return h+' h'+(m?' '+m+' min':'');
+}
+async function api(ruta,opciones){
+  const o=Object.assign({},opciones||{});
+  o.headers=Object.assign({},o.headers||{});
+  if(o.body!==undefined&&typeof o.body!=='string'){o.headers['Content-Type']='application/json';o.body=JSON.stringify(o.body);}
+  o.cache='no-store';
+  let r;
+  try{r=await fetch(ruta,o);}catch(e){return{ok:false,status:0,json:{error:'No hay conexión con el servidor.'}};}
+  let j={};try{j=await r.json();}catch(e){j={};}
+  return{ok:r.ok,status:r.status,json:j||{}};
+}
+
+/* ---------- sesión vencida: cualquier pedido rechazado vuelve a pedir el ingreso ---------- */
+const _fetchBase=window.fetch.bind(window);
+window.fetch=async function(entrada,opciones){
+  const r=await _fetchBase(entrada,opciones);
+  try{
+    const u=typeof entrada==='string'?entrada:((entrada&&entrada.url)||'');
+    if(r.status===401&&/\/api\//.test(u)&&!/\/api\/(login|sesion|clave)/.test(u)&&SESION.loginActivo){
+      mostrarLogin('La sesión venció. Ingresar de nuevo para continuar.');
+    }
+  }catch(e){}
+  return r;
+};
+
+/* ---------- ingreso con usuario propio ---------- */
+async function iniciarSesion(){
+  const r=await api('/api/sesion');
+  if(r.ok)SESION={loginActivo:!!r.json.loginActivo,usuario:r.json.usuario||null};
+  if(SESION.loginActivo&&!SESION.usuario){mostrarLogin();return;}
+  if(SESION.usuario&&SESION.usuario.debeCambiar){mostrarCambio();return;}
+  await arrancarApp();
+}
+function mostrarLogin(msg){
+  document.getElementById('boot').style.display='none';
+  document.getElementById('formIngreso').classList.remove('oculto');
+  document.getElementById('formCambio').classList.add('oculto');
+  const e=document.getElementById('loginErr');e.textContent=msg||'';e.classList.toggle('show',!!msg);
+  document.getElementById('loginScreen').classList.add('show');
+  setTimeout(()=>{const u=document.getElementById('liUsuario');if(u)u.focus();},50);
+}
+function mostrarCambio(){
+  document.getElementById('boot').style.display='none';
+  document.getElementById('formIngreso').classList.add('oculto');
+  document.getElementById('formCambio').classList.remove('oculto');
+  document.getElementById('campoActual').classList.toggle('oculto',!!_claveTemporalIngresada);
+  ['ccActual','ccNueva','ccRepetir'].forEach(id=>{document.getElementById(id).value='';});
+  const e=document.getElementById('cambioErr');e.textContent='';e.classList.remove('show');
+  document.getElementById('loginScreen').classList.add('show');
+}
+function ocultarLogin(){document.getElementById('loginScreen').classList.remove('show');}
+function verClave(id,btn){
+  const i=document.getElementById(id);const ver=i.type==='password';
+  i.type=ver?'text':'password';btn.setAttribute('aria-label',ver?'Ocultar la contraseña':'Mostrar la contraseña');
+}
+async function ingresarPanel(){
+  const usuario=document.getElementById('liUsuario').value.trim();
+  const clave=document.getElementById('liClave').value;
+  const err=document.getElementById('loginErr');
+  const fallo=m=>{err.textContent=m;err.classList.add('show');};
+  if(!usuario||!clave)return fallo('Completar el usuario y la contraseña.');
+  const btn=document.getElementById('liOk');btn.disabled=true;
+  const r=await api('/api/login',{method:'POST',body:{usuario,clave}});
+  btn.disabled=false;
+  if(!r.ok)return fallo(r.json.error||'No se pudo ingresar.');
+  document.getElementById('liClave').value='';
+  SESION.loginActivo=true;SESION.usuario=r.json.usuario;
+  if(SESION.usuario.debeCambiar){_claveTemporalIngresada=clave;mostrarCambio();return;}
+  await entrarTrasIngreso();
+}
+async function cambiarClavePanel(){
+  const actual=_claveTemporalIngresada||document.getElementById('ccActual').value;
+  const nueva=document.getElementById('ccNueva').value;
+  const rep=document.getElementById('ccRepetir').value;
+  const err=document.getElementById('cambioErr');
+  const fallo=m=>{err.textContent=m;err.classList.add('show');};
+  if(!actual)return fallo('Escribir la contraseña actual.');
+  if(nueva.length<8)return fallo('La contraseña nueva debe tener al menos 8 caracteres.');
+  if(nueva!==rep)return fallo('Las dos contraseñas nuevas no coinciden.');
+  const btn=document.getElementById('ccOk');btn.disabled=true;
+  const r=await api('/api/clave',{method:'POST',body:{actual,nueva}});
+  btn.disabled=false;
+  if(!r.ok)return fallo(r.json.error||'No se pudo cambiar la contraseña.');
+  _claveTemporalIngresada=null;SESION.usuario=r.json.usuario;
+  toast('Contraseña actualizada','Ya se puede usar el panel con la contraseña nueva.','success');
+  await entrarTrasIngreso();
+}
+async function entrarTrasIngreso(){
+  ocultarLogin();
+  if(!_appIniciada){await arrancarApp();return;}
+  // Sesión renovada: si es la misma persona se sigue donde estaba; si es otra, se recarga el panel.
+  if(SESION.usuario&&SESION.usuario.id===_usuarioInicial){actualizarContador(true);return;}
+  location.reload();
+}
+async function cerrarSesion(){
+  await api('/api/logout',{method:'POST'});
+  location.reload();
+}
+function esAsesor(){return !!(SESION.usuario&&SESION.usuario.rol==='asesor');}
+function pintarUsuario(){
+  const u=SESION.usuario;
+  document.getElementById('suNombre').textContent=u?u.nombre:'Acceso general';
+  document.getElementById('suRol').textContent=u?(u.rolNombre||u.rol):(SESION.loginActivo?'':'Ingreso con usuario propio inactivo');
+  document.getElementById('suAv').textContent=u?(iniciales(u.nombre)||'?'):'AG';
+  document.getElementById('suSalir').classList.toggle('oculto',!u);
+}
+function aplicarRol(){
+  const a=esAsesor();
+  document.getElementById('navAdmin').classList.toggle('oculto',a);
+  document.getElementById('navSistema').classList.toggle('oculto',a);
+  document.getElementById('btnAvisos').classList.toggle('oculto',a);
+}
+
+/* ---------- arranque del panel ---------- */
+async function arrancarApp(){
+  const asesor=esAsesor();
+  if(!asesor){
+    let ok=false,estado=null;
+    try{
+      const r=await fetch('/api/state',{headers:{'Accept':'application/json'},cache:'no-store'});
+      if(r.ok){const j=await r.json();estado=j?j.state:null;ok=true;_backendOk=true;}
+    }catch(e){_backendOk=false;}
+    if(ok){
+      // Solo se cargan datos iniciales cuando el servidor confirma que no hay nada guardado.
+      if(estado)DB=Object.assign({sources:[],targets:[],products:[],media:[],resources:[],verde:null,bot:{linked:false,endpoint:''}},estado);
+      else{seed();await save();}
+      if(!DB.verde){DB.verde=defaultVerde();await save();}
+    }else{
+      _cargaFallida=true;
+      toast('No se pudo cargar la configuración','Recargar la página. Mientras tanto no se guarda ningún cambio, para no perder la configuración.','error');
+    }
+  }
   document.getElementById('boot').style.display='none';
   document.getElementById('app').style.display='grid';
-  renderSources();renderCrawler();renderMedia();renderRes();updateBot();
+  _appIniciada=true;_usuarioInicial=SESION.usuario?SESION.usuario.id:null;
+  pintarUsuario();aplicarRol();
+  if(!asesor){renderSources();renderCrawler();renderMedia();renderRes();}
+  await revisarSalud();
+  setInterval(revisarSalud,60000);
+  await actualizarContador();
+  setInterval(()=>actualizarContador(),30000);
+  if(asesor)_doGo('chats');
+}
+async function revisarSalud(){
+  try{
+    const r=await fetch('/api/health',{cache:'no-store'});
+    if(r.ok){_salud=await r.json();_backendOk=true;}else _backendOk=false;
+  }catch(e){_backendOk=false;}
+  updateBot();
+}
+
+/* ---------- chats por responder ---------- */
+let CHATS_PEND=[];
+async function actualizarContador(pintar){
+  const r=await api('/api/chats/pendientes');
+  if(!r.ok)return;
+  CHATS_PEND=r.json.lista||[];
+  const n=r.json.total||0;
+  const c=document.getElementById('cntPend');c.textContent=n;c.classList.toggle('show',n>0);
+  if(currentView==='chats'||pintar)renderChats();
+}
+function renderChats(){
+  const n=CHATS_PEND.length;
+  const cnt=document.getElementById('chatsCnt');cnt.textContent=n;cnt.classList.toggle('cero',n===0);
+  const ul=document.getElementById('chatsLista');
+  if(!n){ul.innerHTML='<li class="vacio-chats"><span class="vc-ic">'+SVG131.check+'</span><b>No hay chats por responder</b><span>Cuando Verde derive a un cliente a un asesor, el chat aparecerá aquí y llegará el aviso a los celulares del equipo.</span></li>';return;}
+  const ahora=Date.now();
+  ul.innerHTML=CHATS_PEND.map(c=>{
+    const min=Math.max(0,Math.floor((ahora-c.creadoEn)/60000));
+    const roja=min>5;
+    const nombre=c.nombre||(c.numero?'+'+c.numero:'Cliente sin número visible');
+    const av=c.nombre?escH(iniciales(c.nombre)):SVG131.persona;
+    return '<li class="chat-row"><span class="chat-av" aria-hidden="true">'+av+'</span>'
+      +'<div class="chat-main"><div class="chat-l1"><span class="chat-nom">'+escH(nombre)+'</span>'
+      +(c.nombre&&c.numero?'<span class="chat-num">+'+escH(c.numero)+'</span>':'')
+      +'<span class="chat-hora'+(roja?' roja':'')+'">'+escH(tiempoEspera(min))+'</span></div>'
+      +'<div class="chat-l2"><span class="chat-msg">'+escH(c.ultimoMensaje||'')+'</span>'+(roja?'<span class="punto-rojo" aria-hidden="true"></span>':'')+'</div></div>'
+      +'<button class="pill-btn" type="button" data-id="'+escH(c.id)+'" onclick="abrirAtendido(this.dataset.id)" aria-label="Marcar como atendido el chat de '+escH(nombre)+'">'+SVG131.check+' Marcar atendido</button></li>';
+  }).join('');
+}
+
+/* ---------- «Marcar atendido» ---------- */
+const MOTIVOS_PANEL=[['llamada','Por llamada'],['local','En el local'],['no_necesita','Ya no necesita atención'],['otro','Otro motivo']];
+let _atId=null,_atMotivo=null;
+function abrirAtendido(id){
+  const c=CHATS_PEND.find(x=>x.id===id);if(!c)return;
+  _atId=id;_atMotivo=null;
+  document.getElementById('atCliente').textContent=(c.nombre?c.nombre+' · ':'')+(c.numero?'+'+c.numero:'Cliente sin número visible');
+  document.getElementById('atDetalle').value='';
+  document.getElementById('atQuien').textContent=SESION.usuario?SESION.usuario.nombre:'Acceso general';
+  const e=document.getElementById('atErr');e.textContent='';e.classList.remove('show');
+  pintarMotivos();show('atOverlay');
+}
+function pintarMotivos(){
+  document.getElementById('atOpciones').innerHTML=MOTIVOS_PANEL.map(([k,t])=>
+    '<label class="opcion-m'+(_atMotivo===k?' sel':'')+'"><input type="radio" name="atMotivo" value="'+k+'"'+(_atMotivo===k?' checked':'')+' onchange="elegirMotivo(this.value)">'+escH(t)+'</label>').join('');
+}
+function elegirMotivo(k){_atMotivo=k;pintarMotivos();if(k==='otro'){const d=document.getElementById('atDetalle');if(d)d.focus();}}
+async function confirmarAtendido(){
+  const e=document.getElementById('atErr');const fallo=m=>{e.textContent=m;e.classList.add('show');};
+  if(!_atMotivo)return fallo('Falta indicar cómo se atendió el chat.');
+  const detalle=document.getElementById('atDetalle').value.trim();
+  if(_atMotivo==='otro'&&detalle.length<3)return fallo('Con «Otro motivo» hay que escribir el detalle.');
+  const btn=document.getElementById('atOk');btn.disabled=true;
+  const r=await api('/api/chats/'+encodeURIComponent(_atId)+'/atendido',{method:'POST',body:{motivo:_atMotivo,detalle}});
+  btn.disabled=false;
+  if(!r.ok)return fallo(r.json.error||'No se pudo marcar el chat.');
+  close_('atOverlay');
+  toast('Chat marcado como atendido','Pasó a «Chats respondidos».','success');
+  actualizarContador(true);
+}
+
+/* ---------- chats respondidos ---------- */
+const FILTROS_RESP=[['todos','Todos'],['whatsapp','Respondidos por WhatsApp'],['manual','Marcados a mano'],['volvio','Volvió a escribir']];
+let RESP={filtro:'todos',datos:null},_tBuscar=null;
+function buscarRespondidos(){clearTimeout(_tBuscar);_tBuscar=setTimeout(cargarRespondidos,300);}
+function filtrarRespondidos(f){RESP.filtro=f;cargarRespondidos();}
+async function cargarRespondidos(){
+  const q=new URLSearchParams({buscar:document.getElementById('respBuscar').value.trim(),periodo:document.getElementById('respPeriodo').value,filtro:RESP.filtro});
+  const r=await api('/api/chats/respondidos?'+q.toString());
+  if(!r.ok){toast('No se pudo cargar el historial',r.json.error||'','error');return;}
+  RESP.datos=r.json;renderRespondidos();
+}
+function pildoraEstado(c){
+  const ci=c.cierre||{};
+  if(c.estado==='pendiente')return '<span class="estado mal">Por responder</span>';
+  if(c.volvioAEscribir)return '<span class="estado mal">Volvió a escribir</span>';
+  if(ci.tipo==='whatsapp')return '<span class="estado ok">Respondido por WhatsApp</span>';
+  return '<span class="estado man">Marcado a mano</span>';
+}
+function renderRespondidos(){
+  const d=RESP.datos||{lista:[],totales:{}};const t=d.totales||{};
+  document.getElementById('respChips').innerHTML=FILTROS_RESP.map(([k,txt])=>
+    '<button type="button" class="chip-f'+(RESP.filtro===k?' sel':(k==='volvio'?' rojo':''))+'" aria-pressed="'+(RESP.filtro===k)+'" onclick="filtrarRespondidos(\''+k+'\')">'+escH(txt)+' <span>'+(t[k]||0)+'</span></button>').join('');
+  const ul=document.getElementById('respLista');
+  const lista=d.lista||[];
+  if(!lista.length){ul.innerHTML='<li class="vacio-chats"><span class="vc-ic">'+SVG131.lupa+'</span><b>No hay chats para mostrar</b><span>Probar con otro período, otro filtro u otra búsqueda.</span></li>';return;}
+  ul.innerHTML=lista.map(c=>{
+    const nombre=c.nombre||(c.numero?'+'+c.numero:'Cliente sin número visible');
+    const av=c.nombre?escH(iniciales(c.nombre)):SVG131.persona;
+    const ci=c.cierre||{};const det=[];
+    if(ci.tipo==='whatsapp'){
+      det.push(ci.firma?'Firma: <b>'+escH(ci.usuarioNombre||'')+'</b>':'<span class="sin-firma">Sin firma</span>');
+      if(ci.texto)det.push('«'+escH(recortar(ci.texto,60))+'»');
+    }else if(ci.tipo==='manual'){
+      det.push('Por <b>'+escH(ci.usuarioNombre||'')+'</b>');
+      det.push('Motivo: '+escH(minuscula1(ci.motivoTexto||''))+(ci.detalle?' ('+escH(recortar(ci.detalle,60))+')':''));
+    }
+    if(c.volvioAEscribir)det.push('Regresó a «Por responder»');
+    det.push('Esperó '+escH(tiempoEspera(c.esperaMin)));
+    return '<li class="chat-row clic'+(c.volvioAEscribir?' alerta':'')+'" tabindex="0" role="button" data-id="'+escH(c.id)+'" onclick="abrirDetalle(this.dataset.id)" onkeydown="if(event.key===\'Enter\')abrirDetalle(this.dataset.id)">'
+      +'<span class="chat-av" aria-hidden="true">'+av+'</span><div class="chat-main">'
+      +'<div class="chat-l1"><span class="chat-nom">'+escH(nombre)+'</span>'+(c.nombre&&c.numero?'<span class="chat-num">+'+escH(c.numero)+'</span>':'')+'<span class="chat-hora">'+escH(horaCorta(c.cerradoEn))+'</span></div>'
+      +'<div class="chat-l2"><span class="chat-msg">'+escH(c.ultimoMensaje||'')+'</span></div>'
+      +'<div class="chat-l3">'+pildoraEstado(c)+det.map(x=>'<span>'+x+'</span>').join('<span aria-hidden="true" style="color:#aebac1">·</span>')+'</div>'
+      +'</div></li>';
+  }).join('');
+}
+
+/* ---------- detalle de una atención ---------- */
+const QUIEN_EVENTO={cliente:'Cliente',verde:'Verde',derivado:'Sistema',aviso:'Sistema',whatsapp:'Equipo por WhatsApp',manual:'Panel',reapertura:'Sistema'};
+async function abrirDetalle(id){
+  const r=await api('/api/chats/'+encodeURIComponent(id));
+  if(!r.ok){toast('No se pudo abrir el chat',r.json.error||'','error');return;}
+  const c=r.json;
+  document.getElementById('detTitulo').textContent=c.nombre?(c.nombre+(c.numero?' · +'+c.numero:'')):(c.numero?'+'+c.numero:'Cliente sin número visible');
+  document.getElementById('detEstado').innerHTML=pildoraEstado(c);
+  document.getElementById('detRecorrido').innerHTML=(c.eventos||[]).map(ev=>{
+    const clase=ev.tipo==='reapertura'?' alerta':(ev.tipo==='manual'?' ambar':(ev.tipo==='cliente'?'':' verde'));
+    const extra=ev.tipo==='whatsapp'?(ev.firma?' · firma: '+escH(ev.firma):' · sin firma'):'';
+    return '<li class="paso-r'+clase+'"><div class="pr-linea"><span class="pr-punto"></span><span class="pr-palo"></span></div>'
+      +'<div class="pr-cuerpo"><div class="pr-quien"><b>'+escH(horaCorta(ev.en))+'</b><span>'+escH(QUIEN_EVENTO[ev.tipo]||'Sistema')+extra+'</span></div>'
+      +'<div class="pr-txt">'+escH(ev.texto)+'</div></div></li>';
+  }).join('');
+  document.getElementById('detIrPend').classList.toggle('oculto',!(c.volvioAEscribir||c.estado==='pendiente'));
+  show('detOverlay');
+}
+
+/* ---------- avisos a celulares del equipo ---------- */
+let AVISOS={numeros:[],plantilla:'',idioma:'es'};
+async function cargarAvisos(){
+  const r=await api('/api/avisos');
+  if(r.ok)AVISOS=Object.assign({numeros:[],plantilla:'',idioma:'es'},r.json);
+  pintarAvisos();
+}
+function pintarAvisos(){
+  const box=document.getElementById('avChips');
+  box.innerHTML=AVISOS.numeros.length
+    ?AVISOS.numeros.map((n,i)=>'<span class="chip-tag">+'+escH(n)+'<button type="button" aria-label="Quitar este número" onclick="quitarNumeroAviso('+i+')">'+SVG131.x+'</button></span>').join('')
+    :'<span class="faint">Todavía no hay números cargados.</span>';
+  document.getElementById('avPlantilla').value=AVISOS.plantilla||'';
+}
+function agregarNumeroAviso(){
+  const i=document.getElementById('avNuevo');
+  const d=String(i.value||'').replace(/\D/g,'');
+  if(d.length<8||d.length>15){toast('Número no válido','Escribirlo con el código de país, por ejemplo +598 9X XXX XXX.','error');return;}
+  if(AVISOS.numeros.length>=10){toast('Límite alcanzado','Se pueden cargar hasta 10 números.','error');return;}
+  if(!AVISOS.numeros.includes(d))AVISOS.numeros.push(d);
+  i.value='';pintarAvisos();
+}
+function quitarNumeroAviso(i){AVISOS.numeros.splice(i,1);pintarAvisos();}
+async function guardarAvisosPanel(){
+  const plantilla=document.getElementById('avPlantilla').value.trim();
+  const r=await api('/api/avisos',{method:'PUT',body:{numeros:AVISOS.numeros,plantilla,idioma:AVISOS.idioma||'es'}});
+  if(!r.ok){toast('No se guardó',r.json.error||'Revisar los datos.','error');return;}
+  AVISOS=r.json.avisos;pintarAvisos();
+  toast('Avisos guardados',AVISOS.numeros.length===1?'1 número recibe avisos.':AVISOS.numeros.length+' números reciben avisos.','success');
+}
+
+/* ---------- usuarios ---------- */
+const ROLES_PANEL=[['admin','Administrador','Acceso a todo el panel, la configuración y los usuarios.'],['asesor','Asesor','Atiende los chats por responder y consulta el historial.']];
+let USUARIOS=[],_usrId=null,_usrRol='asesor';
+async function cargarUsuarios(){
+  const r=await api('/api/usuarios');
+  if(!r.ok){toast('No se pudo cargar la lista de usuarios',r.json.error||'','error');return;}
+  USUARIOS=r.json.usuarios||[];pintarUsuarios();
+}
+function pintarUsuarios(){
+  const tb=document.getElementById('usrTabla');
+  if(!USUARIOS.length){tb.innerHTML='<tr><td colspan="7"><div class="empty"><p>Todavía no hay usuarios. Crear el primero con «Nuevo usuario».</p></div></td></tr>';return;}
+  tb.innerHTML=USUARIOS.map(u=>{
+    const rol=u.rol==='admin'
+      ?'<span class="pill" style="background:rgba(201,242,77,.12);color:var(--accent)">Administrador</span>'
+      :'<span class="pill" style="background:rgba(107,155,255,.12);color:#9dbcff">Asesor</span>';
+    const est=u.activo?'<span class="pill ok"><span class="d"></span>Activo</span>':'<span class="pill off"><span class="d"></span>Inactivo</span>';
+    const acc='<button class="btn btn-ghost" type="button" data-id="'+escH(u.id)+'" onclick="abrirUsuario(this.dataset.id)">Editar</button> '
+      +'<button class="btn btn-ghost" type="button" data-id="'+escH(u.id)+'" onclick="restablecerUsuario(this.dataset.id)">Restablecer contraseña</button> '
+      +'<button class="btn btn-ghost" type="button" data-id="'+escH(u.id)+'" data-activo="'+(!u.activo)+'" onclick="cambiarActivo(this.dataset.id,this.dataset.activo===\'true\')">'+(u.activo?'Desactivar':'Activar')+'</button>';
+    return '<tr><td><b>'+escH(u.nombre)+'</b></td><td>'+escH(u.usuario)+'</td><td>'+rol+'</td><td>'+escH(u.firma||'—')+'</td><td>'+est+'</td><td>'+escH(u.ultimoIngreso?horaCorta(u.ultimoIngreso):'—')+'</td><td style="text-align:right;white-space:nowrap">'+acc+'</td></tr>';
+  }).join('');
+}
+function pintarRoles(){
+  document.getElementById('usrRoles').innerHTML=ROLES_PANEL.map(([k,t,d])=>
+    '<label class="opcion-m'+(_usrRol===k?' sel':'')+'" style="align-items:flex-start;padding:12px 14px;min-height:0"><input type="radio" name="usrRol" value="'+k+'"'+(_usrRol===k?' checked':'')+' style="margin-top:2px" onchange="_usrRol=this.value;pintarRoles()"><span style="display:flex;flex-direction:column;gap:2px"><b>'+t+'</b><span class="faint">'+d+'</span></span></label>').join('');
+}
+function abrirUsuario(id){
+  _usrId=id||null;const u=id?USUARIOS.find(x=>x.id===id):null;
+  document.getElementById('usrTitulo').textContent=u?'Editar usuario':'Nuevo usuario';
+  document.getElementById('usrNombre').value=u?u.nombre:'';
+  const us=document.getElementById('usrUsuario');us.value=u?u.usuario:'';us.disabled=!!u;
+  document.getElementById('usrUsuarioAyuda').textContent=u?'El usuario no se puede cambiar.':'Letras sin acentos, números, punto, guion o guion bajo (de 3 a 30).';
+  document.getElementById('usrFirma').value=u?(u.firma||''):'';
+  _usrRol=u?u.rol:'asesor';pintarRoles();
+  document.getElementById('usrNotaClave').classList.toggle('oculto',!!u);
+  document.getElementById('usrOk').textContent=u?'Guardar cambios':'Crear usuario';
+  const e=document.getElementById('usrErr');e.textContent='';e.classList.remove('show');
+  show('usrOverlay');
+}
+async function guardarUsuarioPanel(){
+  const e=document.getElementById('usrErr');const fallo=m=>{e.textContent=m;e.classList.add('show');};
+  const datos={nombre:document.getElementById('usrNombre').value.trim(),rol:_usrRol,firma:document.getElementById('usrFirma').value.trim()};
+  if(!datos.nombre)return fallo('Falta el nombre.');
+  const btn=document.getElementById('usrOk');btn.disabled=true;
+  let r;
+  if(_usrId){r=await api('/api/usuarios/'+encodeURIComponent(_usrId),{method:'PUT',body:datos});}
+  else{
+    datos.usuario=document.getElementById('usrUsuario').value.trim().toLowerCase();
+    if(!/^[a-z0-9._-]{3,30}$/.test(datos.usuario)){btn.disabled=false;return fallo('El usuario debe tener entre 3 y 30 caracteres: letras sin acentos, números, punto, guion o guion bajo.');}
+    r=await api('/api/usuarios',{method:'POST',body:datos});
+  }
+  btn.disabled=false;
+  if(!r.ok)return fallo(r.json.error||'No se pudo guardar.');
+  const eraNuevo=!_usrId;
+  close_('usrOverlay');await cargarUsuarios();
+  if(eraNuevo)mostrarClaveTemporal(r.json.usuario,r.json.claveTemporal);
+  else toast('Usuario actualizado',datos.nombre,'success');
+}
+function cambiarActivo(id,activo){
+  const u=USUARIOS.find(x=>x.id===id);if(!u)return;
+  const accion=async()=>{
+    const r=await api('/api/usuarios/'+encodeURIComponent(id),{method:'PUT',body:{activo}});
+    if(!r.ok){toast('No se pudo cambiar',r.json.error||'','error');return;}
+    toast(activo?'Usuario activado':'Usuario desactivado',u.nombre,'success');cargarUsuarios();
+  };
+  if(activo){accion();return;}
+  askConfirm({title:'Desactivar usuario',message:'«'+u.nombre+'» ya no podrá ingresar al panel y se cerrarán sus sesiones abiertas. Su historial se conserva.',okLabel:'Desactivar',icon:'warn'},accion);
+}
+function restablecerUsuario(id){
+  const u=USUARIOS.find(x=>x.id===id);if(!u)return;
+  askConfirm({title:'Restablecer contraseña',message:'Se genera una contraseña temporal nueva para «'+u.nombre+'» y se cierran sus sesiones abiertas.',okLabel:'Restablecer',icon:'warn'},async()=>{
+    const r=await api('/api/usuarios/'+encodeURIComponent(id)+'/restablecer',{method:'POST'});
+    if(!r.ok){toast('No se pudo restablecer',r.json.error||'','error');return;}
+    mostrarClaveTemporal(u,r.json.claveTemporal);
+  });
+}
+function mostrarClaveTemporal(u,clave){
+  document.getElementById('claveDe').textContent='Para '+u.nombre+' (usuario: '+u.usuario+')';
+  document.getElementById('claveTxt').textContent=clave;
+  show('claveOverlay');
+}
+function copiarClave(){
+  const t=document.getElementById('claveTxt').textContent;
+  (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject(new Error('sin portapapeles')))
+    .then(()=>toast('Copiada','La contraseña temporal quedó copiada.','success'))
+    .catch(()=>toast('No se pudo copiar','Seleccionarla y copiarla a mano.','error'));
+}
+
+/* ---------- selector de IA (sección H) y cerebro ---------- */
+const IA_OPCIONES=[
+  {id:'claude-sonnet-5-5',nombre:'Claude Sonnet 5.5',tag:'Recomendada',clase:'rec',desc:'Rápida y equilibrada. Ideal para atender a los clientes todos los días.',vel:'Rápida',costo:'Referencia'},
+  {id:'claude-opus-5-5',nombre:'Claude Opus 5.5',tag:'Más avanzada',clase:'mas',desc:'Razona mejor las consultas difíciles. Responde un poco más lento.',vel:'Media',costo:'Desde el doble'},
+  {id:'claude-fable-5-1',nombre:'Claude Fable 5.1',tag:'La más avanzada',clase:'max',desc:'La máxima capacidad disponible. Es la más lenta y la más cara.',vel:'Más lenta',costo:'Desde 5 veces'}
+];
+// Un modelo que no está en la lista (por ejemplo, uno retirado) se muestra como Sonnet 5.5, que es el que usa el servidor en su lugar.
+function modeloUI(id){return IA_OPCIONES.some(o=>o.id===id)?id:'claude-sonnet-5-5';}
+function pintarSelectorIA(){
+  const val=document.getElementById('v_modelo').value;
+  document.getElementById('iaCards').innerHTML=IA_OPCIONES.map(o=>
+    '<label class="ia-card'+(o.id===val?' sel':'')+'"><span class="ia-top"><input type="radio" name="iaModelo" value="'+o.id+'"'+(o.id===val?' checked':'')+' onchange="elegirIA(this.value)"><span class="ia-nom">'+o.nombre+'</span></span>'
+    +'<span class="ia-tag '+o.clase+'">'+o.tag+'</span><span class="ia-desc">'+o.desc+'</span>'
+    +'<span class="ia-datos"><span class="fila"><span>Velocidad</span><b>'+o.vel+'</b></span><span class="fila"><span>Costo por respuesta</span><b>'+o.costo+'</b></span></span></label>').join('');
+}
+function elegirIA(id){document.getElementById('v_modelo').value=id;pintarSelectorIA();buildVerdePrompt();}
+function abrirCerebro(){buildVerdePrompt();show('cerebroOverlay');}
+
+/* ---------- estado de la conexión ---------- */
+async function checkConn(){
+  const box=document.getElementById('connRows');
+  box.innerHTML=connRow('server','Servidor / base de datos','Verificando…','wait')
+    +connRow('wa','WhatsApp (360dialog)','Verificando…','wait')
+    +connRow('ia','IA (Anthropic)','Verificando…','wait');
+  await revisarSalud();
+  const ok=_backendOk===true,s=_salud||{};
+  box.innerHTML=connRow('server','Servidor / base de datos',ok?('Conectado'+(s.version?' (versión '+s.version+')':'')+': los cambios se guardan en el servidor'):'Sin conexión con el servidor',ok?'ok':'warn')
+    +connRow('wa','WhatsApp (360dialog)',!ok?'Sin datos':(s.wa360?(s.bot?'Conectado: Verde recibe y responde mensajes':'Conectado: Verde está apagado y no responde'):'Falta configurar la conexión con 360dialog'),!ok?'pend':(s.wa360?(s.bot?'ok':'warn'):'pend'))
+    +connRow('ia','IA (Anthropic)',!ok?'Sin datos':(s.ia?'Clave cargada: Verde puede responder':'Falta la clave de IA en el servidor'),!ok?'pend':(s.ia?'ok':'warn'));
+  updateBot();
+}
+function updateBot(){
+  const badge=document.getElementById('botBadge');
+  const st=document.getElementById('botStatusText');
+  const s=_salud||{};
+  let txt='Verificando…',enLinea=false,lateral='Verificando…';
+  if(_backendOk===true){
+    if(s.wa360&&s.bot){txt='WhatsApp · Conectado';enLinea=true;lateral='WhatsApp conectado';}
+    else if(s.wa360){txt='Verde · Apagado';lateral='Verde apagado';}
+    else{txt='Servidor · Conectado';enLinea=true;lateral='Servidor conectado';}
+  }else if(_backendOk===false){txt='Sin conexión con el servidor';lateral='Sin conexión';}
+  badge.classList.toggle('linked',enLinea);
+  badge.innerHTML='<span class="pulse"></span> '+txt;
+  if(st)st.textContent=lateral;
+}
+
+/* ---------- init ---------- */
+(async()=>{
+  await iniciarSesion();
 })();
 </script>
