@@ -17,7 +17,7 @@ if [ ! -d "$PROD/node_modules" ]; then
 fi
 
 mkdir -p "$TMP/data" "$TMP/public"
-cp "$ORIGEN/server.js" "$ORIGEN/bot.js" "$ORIGEN/usuarios.js" "$ORIGEN/atencion.js" "$ORIGEN/usuarios-cli.js" "$ORIGEN/configurar-360.js" "$ORIGEN/pruebas/pruebas-verde.js" "$TMP/"
+cp "$ORIGEN/server.js" "$ORIGEN/bot.js" "$ORIGEN/usuarios.js" "$ORIGEN/atencion.js" "$ORIGEN/conversaciones.js" "$ORIGEN/usuarios-cli.js" "$ORIGEN/configurar-360.js" "$ORIGEN/pruebas/pruebas-verde.js" "$TMP/"
 ln -s "$PROD/node_modules" "$TMP/node_modules"
 echo "<html>panel de prueba</html>" > "$TMP/public/index.html"
 cat > "$TMP/.env" <<'FIN'

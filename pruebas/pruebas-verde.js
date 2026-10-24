@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.3.1';
+const VERSION_ESPERADA = '1.3.2';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -429,6 +429,141 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(cli.status === 1 && /No existe el usuario/.test(cli.stdout), 'avisa si el usuario no existe');
   cli = spawnSync(process.execPath, ['usuarios-cli.js', 'listar'], { cwd: __dirname, encoding: 'utf8' });
   verificar(cli.status === 0 && /dueno/.test(cli.stdout) && /carla/.test(cli.stdout), 'lista los usuarios');
+
+  mostrar('32) Conversaciones: cada chat queda registrado para el panel');
+  const conversacionesMod = require('./conversaciones.js');
+  const { revisarEsperas } = require('./server.js');
+  await post360(avisoDe('59871000001', 'Valeria Conv', 'hola, ¿tienen fundas para el iPhone 15?', 'cv1'));
+  await espera(500);
+  let lc = await json(await api('/api/conversaciones'));
+  let fila = (lc.lista || []).find(x => x.numero === '59871000001');
+  verificar(fila && fila.nombre === 'Valeria Conv' && fila.verde === true && fila.ultimo && fila.ultimo.tipo === 'verde', 'el chat aparece con su nombre, el último mensaje y el estado «Verde atendiendo»');
+  const claveV = encodeURIComponent('wa:59871000001');
+  let dc = await json(await api('/api/conversaciones/' + claveV));
+  verificar(dc.mensajes && dc.mensajes.length === 2 && dc.mensajes[0].tipo === 'cliente' && dc.mensajes[1].tipo === 'verde' && dc.puedeResponder === true, 'el detalle muestra los mensajes con su autor y permite responder');
+  rr = await api('/api/conversaciones/' + encodeURIComponent('wa:../../etc/passwd'));
+  verificar(rr.status === 400, 'una identificación de chat no válida se rechaza');
+  rr = await api('/api/conversaciones/' + encodeURIComponent('wa:59800000000'));
+  verificar(rr.status === 404, 'un chat que no existe devuelve «no existe»');
+
+  mostrar('33) Buscar en Conversaciones: nombre, número en cualquier formato y mensajes');
+  await post360(avisoDe('59899123456', 'Lucía Búsqueda', 'necesito cambiar la pantalla del Samsung A54', 'cv2'));
+  await espera(500);
+  const buscarConv = async q => ((await json(await api('/api/conversaciones?buscar=' + encodeURIComponent(q)))).lista || []).map(x => x.numero);
+  verificar((await buscarConv('lucia busqueda')).includes('59899123456'), 'encuentra por nombre sin importar tildes ni mayúsculas');
+  verificar((await buscarConv('099 123 456')).includes('59899123456') && (await buscarConv('+598 99 123 456')).includes('59899123456') && (await buscarConv('99123456')).includes('59899123456'), 'encuentra el número escrito de cualquier forma');
+  let rb = await json(await api('/api/conversaciones?buscar=' + encodeURIComponent('PANTALLA del samsung')));
+  fila = (rb.lista || []).find(x => x.numero === '59899123456');
+  verificar(fila && fila.coincidencia && /pantalla del Samsung/.test(fila.coincidencia.texto), 'encuentra por el contenido de los mensajes e indica cuál coincide');
+  verificar(!(await buscarConv('zzzz-no-existe')).length, 'sin coincidencias, la lista queda vacía');
+
+  mostrar('34) Apagar a Verde en un chat puntual');
+  let antesEnvN = envios360.length;
+  rr = await api('/api/conversaciones/' + claveV + '/apagar', 'POST', {});
+  dc = (await json(rr)).conversacion || {};
+  verificar(rr.status === 200 && dc.apagado === true && dc.apagadoInfo && dc.apagadoInfo.porNombre === 'Acceso general' && /apagó a Verde/.test(dc.mensajes[dc.mensajes.length - 1].texto), 'se apaga, queda registrado quién lo hizo y se anota en la conversación');
+  await post360(avisoDe('59871000001', 'Valeria Conv', '¿y en color negro?', 'cv3'));
+  await espera(500);
+  verificar(envios360.length === antesEnvN, 'con Verde apagado en ese chat, Verde no responde');
+  await post360(avisoDe('59871000002', 'Otro Cliente', 'hola', 'cv4'));
+  await espera(500);
+  verificar(envios360.length === antesEnvN + 1 && envios360[envios360.length - 1].body.to === '59871000002', 'los demás chats siguen atendidos por Verde');
+  lc = await json(await api('/api/conversaciones?estado=apagado'));
+  verificar((lc.lista || []).some(x => x.numero === '59871000001' && x.apagado) && lc.totales.apagado >= 1, 'el filtro «Verde apagado» muestra el chat');
+  await revisarEsperas();
+  verificar(!(await json(await api('/api/chats/pendientes'))).lista.some(x => x.numero === '59871000001'), 'antes de los 5 minutos el chat no pasa a «Chats por responder»');
+  conversacionesMod._usarReloj(() => Date.now() + 6 * 60000);
+  const avisosAntes = envios360.length;
+  await revisarEsperas();
+  conversacionesMod._usarReloj(null);
+  let pendV = (await json(await api('/api/chats/pendientes'))).lista.find(x => x.numero === '59871000001');
+  verificar(pendV && pendV.apagado === true && /color negro/.test(pendV.ultimoMensaje), 'a los 5 minutos sin respuesta pasa a «Chats por responder» marcado «Verde apagado»');
+  verificar(envios360.slice(avisosAntes).some(x => ['59899000101', '59899000102'].includes(x.body.to)), 'y se avisa a los celulares del equipo');
+  await revisarEsperas();
+  verificar((await json(await api('/api/chats/pendientes'))).lista.filter(x => x.numero === '59871000001').length === 1, 'el resguardo no duplica el chat');
+  rr = await api('/api/conversaciones/' + claveV + '/encender', 'POST', {});
+  dc = (await json(rr)).conversacion || {};
+  verificar(rr.status === 200 && dc.apagado === false && /encendió a Verde/.test(dc.mensajes[dc.mensajes.length - 1].texto), 'se vuelve a encender y queda anotado');
+
+  mostrar('35) Responder desde el panel');
+  process.env.VERDE_LOGIN = 'activo';
+  rr = await api('/api/login', 'POST', { usuario: 'carla', clave: 'CarlaSegura2026' });
+  const galletaC = (rr.headers.get('set-cookie') || '').split(';')[0];
+  antesEnvN = envios360.length;
+  rr = await api('/api/conversaciones/' + claveV + '/responder', 'POST', { texto: 'Hola Valeria, sí tenemos en negro.' }, galletaC);
+  let respP = await json(rr);
+  const enviadoP = envios360[envios360.length - 1] || { body: { text: {} } };
+  verificar(rr.status === 200 && envios360.length === antesEnvN + 1 && enviadoP.body.to === '59871000001' && enviadoP.body.text.body === 'Hola Valeria, sí tenemos en negro.\n— Carla', 'el mensaje sale por WhatsApp con la firma de quien responde');
+  const msgsP = (respP.conversacion || {}).mensajes || [];
+  const ultimoP = msgsP[msgsP.length - 1] || {};
+  verificar(ultimoP.tipo === 'equipo' && ultimoP.origen === 'panel' && ultimoP.autor === 'Carla Méndez', 'queda en la conversación como respuesta del equipo desde el panel');
+  verificar(respP.conversacion && respP.conversacion.persona === true && respP.conversacion.pausaHasta > Date.now(), 'Verde queda en pausa en ese chat');
+  pendV = (await json(await api('/api/chats/pendientes', 'GET', null, galletaC))).lista.find(x => x.numero === '59871000001');
+  const respV = ((await json(await api('/api/chats/respondidos?periodo=7', 'GET', null, galletaC))).lista || []).find(x => x.numero === '59871000001');
+  verificar(!pendV && respV && respV.cierre.origen === 'panel' && respV.cierre.usuarioNombre === 'Carla Méndez', 'el chat pasa a «Chats respondidos» como respondido desde el panel por Carla');
+  rr = await api('/api/conversaciones/' + claveV + '/responder', 'POST', { texto: 'Gracias — Carla' }, galletaC);
+  verificar(rr.status === 200 && envios360[envios360.length - 1].body.text.body === 'Gracias — Carla', 'si el mensaje ya termina con la firma, no se repite');
+  rr = await api('/api/conversaciones/' + claveV + '/responder', 'POST', { texto: '   ' }, galletaC);
+  verificar(rr.status === 400, 'un mensaje vacío no se envía');
+  conversacionesMod._usarReloj(() => Date.now() + 25 * 3600000);
+  rr = await api('/api/conversaciones/' + claveV + '/responder', 'POST', { texto: 'hola' }, galletaC);
+  conversacionesMod._usarReloj(null);
+  verificar(rr.status === 409 && /24 horas/.test((await json(rr)).error || ''), 'pasadas 24 horas del último mensaje del cliente, no se puede responder desde el panel');
+  rr = await api('/api/conversaciones/' + claveV + '/responder', 'POST', { texto: 'hola' });
+  verificar(rr.status === 401, 'sin sesión no se puede responder');
+  rr = await api('/api/conversaciones/' + claveV + '/apagar', 'POST', {});
+  verificar(rr.status === 401, 'sin sesión no se puede apagar a Verde');
+  await api('/api/logout', 'POST', {}, galletaC);
+  process.env.VERDE_LOGIN = '';
+
+  mostrar('36) «Reanudar ahora» termina la pausa automática');
+  rr = await api('/api/conversaciones/' + claveV + '/reanudar', 'POST', {});
+  dc = (await json(rr)).conversacion || {};
+  verificar(rr.status === 200 && !dc.pausaHasta && dc.verde === true && /reanudó a Verde/.test(dc.mensajes[dc.mensajes.length - 1].texto), 'Verde vuelve a atender el chat y queda anotado');
+  antesEnvN = envios360.length;
+  await post360(avisoDe('59871000001', 'Valeria Conv', 'perfecto, gracias', 'cv5'));
+  await espera(500);
+  verificar(envios360.length === antesEnvN + 1 && envios360[envios360.length - 1].body.to === '59871000001', 'y responde el siguiente mensaje del cliente');
+
+  mostrar('37) Si alguien interviene mientras Verde prepara la respuesta, no la envía');
+  antesEnvN = envios360.length;
+  let envioCarrera = post360(avisoDe('59871000003', 'Carrera Uno', 'hola, ¿abren mañana?', 'cv6'));
+  await espera(60);
+  await api('/api/conversaciones/' + encodeURIComponent('wa:59871000003') + '/apagar', 'POST', {});
+  await envioCarrera; await espera(400);
+  verificar(envios360.length === antesEnvN, 'si apagan a Verde en ese chat mientras prepara la respuesta, la descarta');
+  antesEnvN = envios360.length;
+  envioCarrera = post360(avisoDe('59871000004', 'Carrera Dos', 'hola, ¿tienen cargadores?', 'cv7'));
+  await espera(60);
+  await post360(eco('59871000004', 'Hola, te atiendo yo.\n— Carla', 'cv7eco'));
+  await envioCarrera; await espera(400);
+  verificar(envios360.length === antesEnvN, 'si una persona responde desde el celular mientras Verde prepara la respuesta, Verde no la envía');
+  modoIA = 'error400';
+  antesEnvN = envios360.length;
+  envioCarrera = post360(avisoDe('59871000005', 'Carrera Tres', 'una consulta', 'cv8'));
+  await espera(60);
+  await api('/api/conversaciones/' + encodeURIComponent('wa:59871000005') + '/apagar', 'POST', {});
+  await envioCarrera; await espera(500);
+  modoIA = 'ok';
+  verificar(envios360.length === antesEnvN && !(await json(await api('/api/chats/pendientes'))).lista.some(x => x.numero === '59871000005'), 'tampoco envía la frase de error si la IA falla y alguien ya intervino');
+
+  mostrar('38) Chats derivados antes de instalar esta versión');
+  atencionMod.derivar({ clave: 'wa:59871000009', destino: { to: '59871000009' }, numero: '59871000009', nombre: 'Cliente Anterior', mensajeCliente: 'consulta de antes', respuestaVerde: 'Te paso con un asesor', motivo: 'Verde lo derivó a una persona del equipo.' });
+  dc = await json(await api('/api/conversaciones/' + encodeURIComponent('wa:59871000009')));
+  verificar((dc.mensajes || []).some(m => m.tipo === 'cliente' && m.texto === 'consulta de antes') && dc.pendiente === true && dc.puedeResponder === true, 'al abrirlo, la conversación se arma con su recorrido y se puede responder');
+
+  mostrar('39) «Chats por responder» trae lo necesario para el buscador');
+  const pAnt = (await json(await api('/api/chats/pendientes'))).lista.find(x => x.numero === '59871000009');
+  verificar(pAnt && pAnt.clave === 'wa:59871000009' && Array.isArray(pAnt.textos) && pAnt.textos.includes('consulta de antes') && pAnt.apagado === false, 'cada chat trae su identificación, los mensajes del cliente y si Verde está apagado');
+
+  mostrar('40) Conversaciones: borrado automático a los 3 meses');
+  conversacionesMod._usarReloj(() => Date.now() + 91 * 86400000);
+  const borradasC = conversacionesMod.purgar();
+  conversacionesMod._usarReloj(null);
+  lc = await json(await api('/api/conversaciones'));
+  verificar(borradasC >= 1 && (lc.lista || []).length >= 1 && lc.lista.every(x => x.apagado), 'se borran los chats sin movimiento, salvo los que tienen a Verde apagado');
+  const permisosC = (fs.statSync(path.join(__dirname, 'data', 'conversaciones-panel.json')).mode & 0o777).toString(8);
+  verificar(permisosC === '600', 'el archivo de conversaciones es privado');
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }

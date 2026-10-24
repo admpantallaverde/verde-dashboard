@@ -70,7 +70,7 @@ function anotarMensaje(a, texto) { evento(a, 'cliente', texto); a.ultimoMensaje 
 function sinAcentos(s) { return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
 function resumen(a, ahora) {
   return {
-    id: a.id, nombre: a.nombre, numero: a.numero, estado: a.estado, creadoEn: a.creadoEn,
+    id: a.id, clave: a.clave, nombre: a.nombre, numero: a.numero, estado: a.estado, creadoEn: a.creadoEn,
     ultimoMensaje: a.ultimoMensaje, ultimoMensajeEn: a.ultimoMensajeEn, cerradoEn: a.cerradoEn,
     esperaMin: Math.max(0, Math.floor(((a.cerradoEn || ahora) - a.creadoEn) / 60000)),
     cierre: a.cierre, volvioAEscribir: !!a.volvioAEscribir, reabiertaDe: a.reabiertaDe || null
@@ -129,15 +129,15 @@ function respuestaEquipo(datos) {
   if (p) {
     p.estado = 'respondido';
     p.cerradoEn = reloj();
-    p.cierre = { tipo: 'whatsapp', firma: !!firma, usuarioId: firma ? firma.usuarioId : null, usuarioNombre: firma ? firma.nombre : null, texto: corto(datos.texto, 500) };
-    evento(p, 'whatsapp', datos.texto, { firma: firma ? firma.nombre : null });
+    p.cierre = { tipo: 'whatsapp', firma: !!firma, usuarioId: firma ? firma.usuarioId : null, usuarioNombre: firma ? firma.nombre : null, texto: corto(datos.texto, 500), origen: datos.origen || 'celular' };
+    evento(p, 'whatsapp', datos.texto, { firma: firma ? firma.nombre : null, origen: datos.origen || 'celular' });
     guardar(d);
     return p;
   }
   // Respuesta posterior a un cierre reciente: se suma a su recorrido para la supervisión.
   const u = ultimaDe(d, datos.clave);
   if (u && u.estado !== 'pendiente' && reloj() - (u.cerradoEn || 0) < 12 * 3600 * 1000) {
-    evento(u, 'whatsapp', datos.texto, { firma: firma ? firma.nombre : null });
+    evento(u, 'whatsapp', datos.texto, { firma: firma ? firma.nombre : null, origen: datos.origen || 'celular' });
     guardar(d);
     return u;
   }
@@ -172,10 +172,16 @@ function anotarAvisos(id, texto) {
   guardar(d);
 }
 
+/* ---------- consultas para «Conversaciones» ---------- */
+function clavesPendientes() { return new Set(cargar().lista.filter(x => x.estado === 'pendiente').map(x => x.clave)); }
+function ultimaPorClave(clave) { return ultimaDe(cargar(), clave); }
+
 /* ---------- listas para el panel ---------- */
 function pendientes() {
   const ahora = reloj();
-  return cargar().lista.filter(a => a.estado === 'pendiente').sort((x, y) => x.creadoEn - y.creadoEn).map(a => resumen(a, ahora));
+  // «textos»: todos los mensajes del cliente en ese chat, para el buscador de «Chats por responder».
+  return cargar().lista.filter(a => a.estado === 'pendiente').sort((x, y) => x.creadoEn - y.creadoEn)
+    .map(a => Object.assign(resumen(a, ahora), { textos: a.eventos.filter(e => e.tipo === 'cliente').slice(-30).map(e => e.texto) }));
 }
 
 const FILTROS = {
@@ -229,5 +235,5 @@ function purgar(dias) {
 
 module.exports = {
   MOTIVOS, RETENCION_DIAS, tienePendiente, pendienteId, derivar, mensajeCliente, respuestaEquipo, marcarAtendido,
-  anotarAvisos, pendientes, respondidos, detalle, purgar, _usarReloj
+  anotarAvisos, pendientes, respondidos, detalle, purgar, clavesPendientes, ultimaPorClave, _usarReloj
 };

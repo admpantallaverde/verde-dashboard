@@ -27,8 +27,9 @@ const crypto = require('crypto');
 const bot = require('./bot.js');
 const usuarios = require('./usuarios.js');
 const atencion = require('./atencion.js');
+const conversaciones = require('./conversaciones.js');
 
-const VERSION = '1.3.1';
+const VERSION = '1.3.2';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -455,6 +456,7 @@ async function manejarEntrante(msg, nombres) {
   const info = interpretar(msg);
   if (info.clase === 'ignorar') { console.log('360 <<', info.tipo, 'de', quien, '→ se ignora'); return; }
   const textoCliente = info.clase === 'adjunto' ? '[El cliente envió ' + info.desc + info.leyenda + ']' : info.texto;
+  conversaciones.registrar({ clave, numero, nombre, destino, tipo: 'cliente', texto: textoCliente });
 
   const v = bot.getVerde();
   if (v.encendido === false) { console.log('360 << de', quien, '→ Verde apagado, sin respuesta'); return; }
@@ -464,6 +466,14 @@ async function manejarEntrante(msg, nombres) {
     bot.registrarMensaje(clave, 'user', textoCliente);
     atencion.mensajeCliente({ clave, destino, numero, nombre, texto: textoCliente, enPausa: bot.estaPausado(clave) });
     console.log('360 << de', quien, '→ espera a una persona del equipo (Verde no responde)');
+    return;
+  }
+
+  // 1b) Verde está apagado en este chat: no responde. Si nadie del equipo responde en 5 minutos,
+  //     el resguardo pasa el chat a «Chats por responder» y avisa al equipo.
+  if (conversaciones.estaApagado(clave)) {
+    bot.registrarMensaje(clave, 'user', textoCliente);
+    console.log('360 << de', quien, '→ Verde está apagado en este chat (lo atiende una persona del equipo)');
     return;
   }
 
@@ -487,6 +497,7 @@ async function manejarEntrante(msg, nombres) {
     bot.registrarMensaje(clave, 'user', textoCliente);
     const ok = await enviarWhatsApp(destino, resp);
     if (ok) bot.registrarMensaje(clave, 'assistant', resp);
+    if (ok) conversaciones.registrar({ clave, tipo: 'verde', texto: resp });
     const d = atencion.derivar({ clave, destino, numero, nombre, mensajeCliente: textoCliente, respuestaVerde: ok ? resp : null, motivo: 'El cliente envió ' + info.desc + ': lo revisa una persona del equipo.' });
     console.log('360 << adjunto de', quien, '→', ok ? 'derivado a una persona' : 'NO se pudo responder', '· pasa a «Chats por responder»');
     await avisarEquipo(d.atencion);
@@ -496,9 +507,11 @@ async function manejarEntrante(msg, nombres) {
   // 4) Texto: responde Verde y, si deriva, el chat pasa a «Chats por responder».
   if (!textoCliente.trim()) return;
   console.log('360 << de', quien, ':', textoCliente.slice(0, 200));
-  const r = await bot.responderCliente(clave, textoCliente);
-  if (!r) { console.log('360 >> sin respuesta (Verde apagado o conversación en pausa)'); return; }
+  // Si mientras la IA prepara la respuesta alguien apaga a Verde en este chat, la respuesta se descarta.
+  const r = await bot.responderCliente(clave, textoCliente, { puedeResponder: () => !conversaciones.estaApagado(clave) });
+  if (!r) { console.log('360 >> sin respuesta (Verde apagado o una persona del equipo tomó la conversación)'); return; }
   const ok = await enviarWhatsApp(destino, r.texto);
+  if (ok) conversaciones.registrar({ clave, tipo: 'verde', texto: r.texto });
   console.log('360 >>', ok ? 'enviado' : 'NO enviado', ':', r.texto.slice(0, 200));
   if (r.derivar) {
     const d = atencion.derivar({
@@ -522,7 +535,9 @@ function manejarEco(eco) {
   const hasta = bot.pausar(clave, PAUSA_HORAS);
   bot.registrarMensaje(clave, 'assistant', '[Asesor humano] ' + texto);
   const firma = info.clase === 'texto' ? usuarios.detectarFirma(info.texto) : null;
-  const a = atencion.respuestaEquipo({ clave, texto, firma });
+  conversaciones.registrar({ clave, numero: eco.to ? String(eco.to) : '', destino: eco.to ? { to: String(eco.to) } : { recipient: cliente },
+    tipo: 'equipo', texto, autor: firma ? firma.nombre : '', origen: 'celular', firma: !!firma });
+  const a = atencion.respuestaEquipo({ clave, texto, firma, origen: 'celular' });
   console.log('360 eco: una persona del equipo respondió desde el celular' + (firma ? ' (firma: ' + firma.nombre + ')' : ' (sin firma)') +
     (a && a.estado === 'respondido' ? ' · el chat pasa a «Chats respondidos»' : '') +
     ' → Verde en pausa con ese cliente hasta', new Date(hasta).toLocaleString('es-UY', { timeZone: 'America/Montevideo' }));
@@ -573,7 +588,8 @@ async function procesarAviso360(body) {
    CHATS POR RESPONDER Y CHATS RESPONDIDOS (para el panel)
    ============================================================ */
 app.get('/api/chats/pendientes', requiere(['admin', 'asesor']), (req, res) => {
-  const lista = atencion.pendientes();
+  const apagados = conversaciones.apagados();
+  const lista = atencion.pendientes().map(p => Object.assign(p, { apagado: apagados.has(p.clave) }));
   res.json({ total: lista.length, lista });
 });
 app.get('/api/chats/respondidos', requiere(['admin', 'asesor']), (req, res) => {
@@ -599,11 +615,129 @@ app.put('/api/avisos', requiere(['admin']), (req, res) => {
   catch (e) { responderError(res, e); }
 });
 
+/* ============================================================
+   CONVERSACIONES: todos los chats, interruptor de Verde por chat y respuesta desde el panel
+   ============================================================ */
+function contexto() { return { pendientes: atencion.clavesPendientes(), pausas: bot.pausasVigentes() }; }
+function quienEs(req) { return req.usuario ? req.usuario.nombre : 'Acceso general'; }
+function claveDeRuta(req) {
+  const clave = String(req.params.clave || '');
+  if (!conversaciones.claveValida(clave)) { const e = new Error('El chat no es válido.'); e.publico = true; e.codigo = 400; throw e; }
+  return clave;
+}
+// Si el chat todavía no está en el registro (por ejemplo, derivado antes de instalar esta versión), se arma con su atención.
+function detalleConversacion(clave) {
+  let d = conversaciones.detalle(clave, contexto());
+  if (!d) {
+    const a = atencion.ultimaPorClave(clave);
+    if (a && conversaciones.sembrarDesdeAtencion(a)) d = conversaciones.detalle(clave, contexto());
+  }
+  return d;
+}
+function conDatosDelPanel(d, req) {
+  if (!d) return d;
+  d.verdeGeneral = bot.getVerde().encendido !== false;
+  d.firmaUsuario = req.usuario ? (req.usuario.firma || '') : '';
+  d.d360 = d360Configurado();
+  return d;
+}
+app.get('/api/conversaciones', requiere(['admin', 'asesor']), (req, res) => {
+  res.json(conversaciones.lista({ buscar: req.query.buscar, estado: req.query.estado }, contexto()));
+});
+app.get('/api/conversaciones/:clave', requiere(['admin', 'asesor']), (req, res) => {
+  try {
+    const d = detalleConversacion(claveDeRuta(req));
+    if (!d) return res.status(404).json({ error: 'La conversación no existe.' });
+    res.json(conDatosDelPanel(d, req));
+  } catch (e) { responderError(res, e); }
+});
+app.post('/api/conversaciones/:clave/apagar', requiere(['admin', 'asesor']), (req, res) => {
+  try {
+    const clave = claveDeRuta(req);
+    if (!detalleConversacion(clave)) return res.status(404).json({ error: 'La conversación no existe.' });
+    conversaciones.apagar(clave, req.usuario);
+    console.log('Panel: ' + quienEs(req) + ' apagó a Verde en el chat ' + clave);
+    res.json({ ok: true, conversacion: conDatosDelPanel(detalleConversacion(clave), req) });
+  } catch (e) { responderError(res, e); }
+});
+app.post('/api/conversaciones/:clave/encender', requiere(['admin', 'asesor']), (req, res) => {
+  try {
+    const clave = claveDeRuta(req);
+    conversaciones.encender(clave, req.usuario);
+    console.log('Panel: ' + quienEs(req) + ' encendió a Verde en el chat ' + clave);
+    res.json({ ok: true, conversacion: conDatosDelPanel(detalleConversacion(clave), req) });
+  } catch (e) { responderError(res, e); }
+});
+// «Reanudar ahora»: termina la pausa automática de 12 horas (por ejemplo, después de una respuesta del equipo).
+app.post('/api/conversaciones/:clave/reanudar', requiere(['admin', 'asesor']), (req, res) => {
+  try {
+    const clave = claveDeRuta(req);
+    if (!detalleConversacion(clave)) return res.status(404).json({ error: 'La conversación no existe.' });
+    if (bot.quitarPausa(clave)) conversaciones.anotarSistema(clave, quienEs(req) + ' reanudó a Verde en este chat (terminó la pausa automática).');
+    res.json({ ok: true, conversacion: conDatosDelPanel(detalleConversacion(clave), req) });
+  } catch (e) { responderError(res, e); }
+});
+// Respuesta de una persona del equipo desde el panel (solo texto, con su firma).
+app.post('/api/conversaciones/:clave/responder', requiere(['admin', 'asesor']), async (req, res) => {
+  try {
+    const clave = claveDeRuta(req);
+    const d = detalleConversacion(clave);
+    if (!d) return res.status(404).json({ error: 'La conversación no existe.' });
+    if (!d360Configurado()) return res.status(503).json({ error: 'La conexión con WhatsApp (360dialog) no está configurada en el servidor.' });
+    if (!d.puedeResponder) return res.status(409).json({ error: d.motivoNoResponder });
+    let texto = String((req.body && req.body.texto) || '').replace(/\r\n/g, '\n').trim();
+    if (!texto) return res.status(400).json({ error: 'Escribir el mensaje antes de enviar.' });
+    if (texto.length > 3900) return res.status(400).json({ error: 'El mensaje es demasiado largo (máximo 3900 caracteres).' });
+    const u = req.usuario;
+    const firma = u && u.firma ? String(u.firma).trim() : '';
+    if (firma && !texto.endsWith(firma)) texto = texto + '\n' + firma;
+    // La pausa se pone antes de enviar: si Verde estaba preparando una respuesta, la descarta.
+    const habiaPausa = bot.estaPausado(clave);
+    bot.pausar(clave, PAUSA_HORAS);
+    const ok = await enviarWhatsApp(d.destino, texto);
+    if (!ok) {
+      if (!habiaPausa) bot.quitarPausa(clave);
+      return res.status(502).json({ error: 'WhatsApp no aceptó el mensaje. Probar de nuevo en unos segundos.' });
+    }
+    bot.registrarMensaje(clave, 'assistant', '[Asesor humano] ' + texto);
+    conversaciones.registrar({ clave, tipo: 'equipo', texto, autor: quienEs(req), origen: 'panel', firma: !!firma });
+    const cerrada = atencion.respuestaEquipo({ clave, texto, firma: u ? { usuarioId: u.id, nombre: u.nombre, firma } : null, origen: 'panel' });
+    console.log('Panel: ' + quienEs(req) + ' respondió a ' + clave + (cerrada && cerrada.estado === 'respondido' ? ' · el chat pasa a «Chats respondidos»' : ''));
+    res.json({ ok: true, conversacion: conDatosDelPanel(detalleConversacion(clave), req) });
+  } catch (e) { responderError(res, e); }
+});
+
+/* ---------- Resguardo: Verde apagado en un chat y el cliente espera 5 minutos sin respuesta ---------- */
+let revisandoEsperas = false;
+async function revisarEsperas() {
+  if (revisandoEsperas) return;
+  revisandoEsperas = true;
+  try {
+    for (const c of conversaciones.esperasVencidas()) {
+      if (atencion.tienePendiente(c.clave)) { conversaciones.cerrarEspera(c.clave, null); continue; }
+      const textos = conversaciones.mensajesClienteDesde(c.clave, c.esperaDesde);
+      const d = atencion.derivar({ clave: c.clave, destino: c.destino, numero: c.numero, nombre: c.nombre, mensajeCliente: textos[0] || '',
+        motivo: 'Verde está apagado en este chat y el cliente esperó 5 minutos sin respuesta.' });
+      for (const t of textos.slice(1)) atencion.mensajeCliente({ clave: c.clave, texto: t });
+      conversaciones.cerrarEspera(c.clave, 'El cliente esperó 5 minutos sin respuesta: el chat pasó a «Chats por responder».');
+      console.log('Resguardo: el chat ' + c.clave + ' pasó a «Chats por responder» (Verde apagado y 5 minutos sin respuesta)');
+      await avisarEquipo(d.atencion, 'Verde apagado en ese chat');
+    }
+  } catch (e) {
+    console.error('No se pudieron revisar las esperas con Verde apagado:', e.message);
+  } finally {
+    revisandoEsperas = false;
+  }
+}
+setInterval(revisarEsperas, 30000).unref();
+
 /* ---------- Borrado automático del historial (3 meses) ---------- */
 function purgarHistorial() {
   try {
     const n = atencion.purgar();
     if (n) console.log('Historial: se borraron ' + n + ' chats de más de 3 meses.');
+    const m = conversaciones.purgar();
+    if (m) console.log('Conversaciones: se borraron ' + m + ' chats sin movimiento hace más de 3 meses.');
   } catch (e) { console.error('No se pudo limpiar el historial:', e.message); }
 }
 purgarHistorial();
@@ -626,3 +760,6 @@ app.listen(PORT, HOST, () => {
   console.log('  Ingreso con usuario propio: ' + (loginActivo() ? 'ACTIVO' : 'inactivo (el panel lo protege Nginx)'));
   console.log('====================================================');
 });
+
+// Para las pruebas automáticas (no cambia el funcionamiento).
+module.exports = { app, revisarEsperas };

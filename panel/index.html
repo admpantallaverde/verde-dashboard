@@ -652,6 +652,107 @@ tbody tr:hover{background:var(--surface-2)}
   .buscador{flex-basis:100%}
 }
 
+
+/* ===================== 1.3.2 ===================== */
+/* Menú: el pie (conexión y usuario) siempre visible; lo de arriba se desplaza si no entra */
+.side{overflow-y:auto;scrollbar-width:thin}
+.side-foot{position:sticky;bottom:-22px;background:var(--surface);padding-bottom:22px;margin-bottom:-22px;z-index:2}
+/* Buscador de «Chats por responder» */
+.busq-fila{display:flex;flex-direction:column;gap:6px;padding:12px 16px;border-bottom:1px solid var(--border-soft)}
+.busq-fila .buscador{flex:none}
+.busq-info{font-size:12.5px;color:var(--muted);padding:0 6px}
+.buscador .limpiar{flex:none;width:36px;height:36px;border-radius:50%;display:inline-grid;place-items:center;color:#54656f}
+.buscador .limpiar:hover{background:#e3e8eb}
+.buscador .limpiar svg{width:16px;height:16px}
+mark.res{background:#fff1a8;color:#111b21;border-radius:3px;padding:0 2px}
+.chat-acciones{display:flex;gap:8px;flex:none;flex-wrap:wrap;justify-content:flex-end}
+.pill-btn.prim{background:#008069;color:#fff;border-color:#008069}
+.pill-btn.prim:hover{background:#00705c}
+.tag-apagado{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:20px;background:#e9edef;color:#3b4a54;white-space:nowrap}
+.tag-apagado svg{width:12px;height:12px}
+/* Estados de una conversación */
+.estado.per{background:#e3eefc;color:#1a4fa3}
+.estado.apa{background:#e9edef;color:#3b4a54}
+.chat-row .estados{display:flex;gap:6px;flex:none;flex-wrap:wrap}
+.pref-v{color:#00704a;font-weight:600}
+.pref-c{color:#54656f;font-weight:600}
+.pref-e{color:#1a4fa3;font-weight:600}
+.lista-info{font-size:12.5px;color:var(--muted);padding:10px 16px;border-top:1px solid var(--border-soft)}
+/* Panel lateral de una conversación */
+.drawer-panel.conv-panel{width:560px}
+.conv-control{margin:14px 18px 0;padding:12px 14px;border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column;gap:10px;background:var(--surface)}
+.conv-control.off{background:var(--surface-2)}
+.conv-control.det{margin:0 0 14px}
+.conv-sw-fila{display:flex;align-items:center;gap:14px}
+.conv-sw-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.conv-sw-tx b{font-size:14.5px}
+.conv-sw-tx span{font-size:12.5px;color:var(--muted)}
+.sw{flex:none;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0;background:none;border:none;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer}
+.sw .pista{position:relative;display:block;width:52px;height:30px;border-radius:15px;background:#8696a0;transition:background .15s}
+.sw .bola{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(11,20,26,.3);transition:left .15s}
+.sw[aria-checked="true"] .pista{background:#008069}
+.sw[aria-checked="true"] .bola{left:25px}
+.sw .sw-tx{color:#3b4a54}
+.sw[aria-checked="true"] .sw-tx{color:#008069}
+.sw:disabled{opacity:.6;cursor:wait}
+.sw:focus-visible{outline:2px solid #008069;outline-offset:3px;border-radius:16px}
+.conv-aviso{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;border-radius:10px;font-size:12.5px}
+.conv-aviso svg{width:16px;height:16px;flex:none}
+.conv-aviso.ambar{background:#fff4d6;color:#7a4f00}
+.conv-aviso.rojo{background:#fdecea;color:#a50e0e}
+.conv-aviso.gris{background:#eef1f3;color:#3b4a54}
+.conv-aviso .txt{flex:1 1 240px;min-width:0}
+.conv-aviso .btn-mini{flex:none;min-height:36px;padding:0 14px;border-radius:18px;font-weight:700;font-size:12.5px;font-family:inherit;background:#fff;border:1px solid #f2d48a;color:#7a4f00;cursor:pointer}
+.conv-aviso .btn-mini:disabled{opacity:.6;cursor:wait}
+.conv-sub{padding:14px 18px 6px;font-size:12px;font-weight:600;color:var(--muted)}
+.conv-mensajes{flex:1 1 auto;min-height:0;overflow:auto;margin:0 18px;padding:12px;border-radius:12px;background:#efeae2;display:flex;flex-direction:column;gap:8px}
+.burbuja{max-width:82%;box-sizing:border-box;border-radius:10px;padding:6px 10px 4px;box-shadow:0 1px 1px rgba(11,20,26,.13);display:flex;flex-direction:column;color:#111b21}
+.burbuja .quien{font-size:11.5px;font-weight:700}
+.burbuja .txt{font-size:13.5px;white-space:pre-wrap;word-break:break-word}
+.burbuja .hora{align-self:flex-end;font-size:11px;color:#667781}
+.burbuja.cli{align-self:flex-start;background:#fff;border-radius:0 10px 10px 10px}
+.burbuja.ver{align-self:flex-end;background:#d9fdd3;border-radius:10px 0 10px 10px}
+.burbuja.ver .quien{color:#00704a}
+.burbuja.equ{align-self:flex-end;background:#e3eefc;border-radius:10px 0 10px 10px}
+.burbuja.equ .quien{color:#1a4fa3}
+.linea-sis{align-self:center;max-width:90%;box-sizing:border-box;background:#fff4d6;color:#7a4f00;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;text-align:center}
+.conv-vacio{margin:auto;color:#54656f;font-size:13px;text-align:center;padding:20px}
+.conv-composer{margin-top:12px;display:flex;flex-direction:column;gap:8px;padding:12px 18px 16px;border-top:1px solid var(--border-soft);background:var(--surface-2)}
+.conv-composer .fila{display:flex;align-items:flex-end;gap:10px}
+.conv-composer textarea{flex:1;min-width:0;min-height:48px;max-height:140px;box-sizing:border-box;resize:none;border:1px solid var(--border);border-radius:12px;padding:12px;background:#fff;color:#111b21;font-family:inherit;font-size:14px;line-height:1.4}
+.conv-composer textarea:focus{outline:none;border-color:#008069}
+.conv-composer textarea:disabled{background:#eef1f3;color:#667781}
+.btn-enviar{flex:none;width:48px;height:48px;border-radius:50%;border:none;background:#008069;color:#fff;display:inline-grid;place-items:center;cursor:pointer}
+.btn-enviar:hover{background:#00705c}
+.btn-enviar:disabled{background:#aebac1;cursor:not-allowed}
+.btn-enviar svg{width:20px;height:20px}
+.conv-pista{font-size:12px;color:var(--muted)}
+.conv-error{font-size:12.5px;color:#a50e0e;font-weight:600}
+/* Confirmación para apagar a Verde en un chat */
+.conf-lista{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.conf-lista li{display:flex;gap:10px;font-size:13.5px}
+.conf-lista svg{width:18px;height:18px;flex:none;margin-top:2px;color:#3b4a54}
+.btn.btn-apagar{background:#3b4a54;color:#fff}
+.btn.btn-apagar:hover{background:#2c383f}
+@media(max-width:600px){
+  .chat-row>.chat-acciones{flex-basis:100%}
+  .chat-acciones .pill-btn{flex:1;justify-content:center}
+  .chat-l2{flex-wrap:wrap}
+  .conv-control{margin:12px 12px 0}
+  .conv-sub{padding:12px 12px 6px}
+  .conv-mensajes{margin:0 12px}
+  .conv-composer{padding:10px 12px 14px}
+}
+
+
+/* Ajustes tras revisar las capturas (1.3.2) */
+#pendBuscar::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;display:none}
+body:has(.overlay.drawer.show) .toasts{right:auto;left:20px}
+@media(max-width:600px){
+  .chat-l1{flex-wrap:wrap;row-gap:2px}
+  .chat-l1 .tag-apagado{order:10}
+  body:has(.overlay.drawer.show) .toasts{left:12px;right:12px;top:12px;bottom:auto;max-width:none}
+}
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -671,6 +772,7 @@ tbody tr:hover{background:var(--surface-2)}
 
     <div class="side-top">
       <button class="side-link" id="leaf-chats" onclick="go('chats')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>Chats por responder<span class="side-count" id="cntPend">0</span></button>
+      <button class="side-link" id="leaf-conversaciones" onclick="go('conversaciones')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"/><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"/></svg>Conversaciones</button>
       <button class="side-link" id="leaf-respondidos" onclick="go('respondidos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Chats respondidos</button>
     </div>
     <div id="navAdmin">
@@ -1099,9 +1201,26 @@ tbody tr:hover{background:var(--surface-2)}
           <button class="ic-btn" type="button" style="margin-left:auto" aria-label="Actualizar la lista" onclick="actualizarContador(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
           <button class="pill-btn" type="button" id="btnAvisos" onclick="go('avisos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> Avisos</button>
         </div>
+        <div class="busq-fila">
+          <div class="buscador"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="search" id="pendBuscar" placeholder="Buscar por nombre, número o mensaje" aria-label="Buscar en chats por responder" oninput="buscarPendientes()"><button type="button" class="limpiar oculto" id="pendLimpiar" aria-label="Borrar la búsqueda" onclick="limpiarBusquedaPend()"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+          <span class="busq-info oculto" id="pendInfo" aria-live="polite"></span>
+        </div>
         <ul class="chat-list" id="chatsLista"></ul>
       </div>
-      <div class="nota-clara"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Cuando una persona del equipo le responde desde el celular o desde WhatsApp Web, el chat pasa solo a «Chats respondidos». Si se atendió por una llamada o en el local, usar «Marcar atendido» e indicar el motivo. En rojo, las esperas de más de 5 minutos.</span></div>
+      <div class="nota-clara"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Cuando una persona del equipo responde desde este panel, desde el celular o desde WhatsApp Web, el chat pasa solo a «Chats respondidos». Si se atendió por una llamada o en el local, usar «Marcar atendido» e indicar el motivo. En rojo, las esperas de más de 5 minutos.</span></div>
+    </div>
+
+    <!-- ===== VISTA: CONVERSACIONES ===== -->
+    <div class="view" id="view-conversaciones">
+      <div class="panel" style="margin-bottom:0">
+        <div style="display:flex;flex-direction:column;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border-soft)">
+          <label class="buscador" style="flex:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="search" id="convBuscar" placeholder="Buscar por nombre, número o mensaje" aria-label="Buscar en conversaciones" oninput="buscarConversaciones()"></label>
+          <div class="chips-filtro" role="group" aria-label="Filtrar por estado" id="convChips"></div>
+        </div>
+        <ul class="chat-list" id="convLista"></ul>
+        <div class="lista-info oculto" id="convInfo"></div>
+      </div>
+      <div class="nota-clara"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Verde se pausa solo en un chat cuando una persona del equipo escribe desde el WhatsApp de la tienda o desde este panel, y vuelve a responder 12 horas después del último mensaje de esa persona. Con el interruptor de cada chat se puede apagar sin límite de tiempo y volver a encender.</span></div>
     </div>
 
     <!-- ===== VISTA: CHATS RESPONDIDOS ===== -->
@@ -1199,8 +1318,8 @@ tbody tr:hover{background:var(--surface-2)}
 <div class="overlay drawer" id="detOverlay">
   <div class="drawer-panel claro">
     <div class="drawer-head"><div style="display:flex;flex-direction:column;gap:6px"><h3 id="detTitulo">Detalle de la atención</h3><span id="detEstado"></span></div><button class="x-btn" type="button" onclick="close_('detOverlay')" aria-label="Cerrar el detalle"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
-    <div class="drawer-body"><div class="faint" style="margin-bottom:10px;font-weight:600">Recorrido de la atención</div><ol class="recorrido" id="detRecorrido"></ol></div>
-    <div class="drawer-foot"><button class="btn btn-primary oculto" type="button" id="detIrPend" onclick="close_('detOverlay');go('chats')">Ir a «Por responder»</button><button class="btn btn-ghost" type="button" onclick="close_('detOverlay')">Cerrar</button></div>
+    <div class="drawer-body"><div class="conv-control det oculto" id="detControl"></div><div class="faint" style="margin-bottom:10px;font-weight:600">Recorrido de la atención</div><ol class="recorrido" id="detRecorrido"></ol></div>
+    <div class="drawer-foot"><button class="btn btn-ghost oculto" type="button" id="detIrPend" onclick="close_('detOverlay');go('chats')">Ir a «Por responder»</button><button class="btn btn-primary oculto" type="button" id="detAbrirConv" onclick="abrirConvDesdeDetalle()">Abrir conversación</button><button class="btn btn-ghost" type="button" onclick="close_('detOverlay')">Cerrar</button></div>
   </div>
 </div>
 
@@ -1231,6 +1350,43 @@ tbody tr:hover{background:var(--surface-2)}
   <div class="drawer-panel">
     <div class="drawer-head"><div><h3>Cerebro de Verde <span class="faint" style="font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500">(vista previa en vivo)</span></h3><p>Lo que recibe el bot. Se actualiza mientras se edita.</p></div><button class="x-btn" type="button" onclick="close_('cerebroOverlay')" aria-label="Cerrar el cerebro de Verde"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
     <div class="drawer-body"><pre id="v_preview" class="prompt-preview"></pre></div>
+  </div>
+</div>
+
+<div class="overlay drawer" id="convOverlay">
+  <div class="drawer-panel claro conv-panel" role="dialog" aria-modal="true" aria-labelledby="convTitulo">
+    <div class="drawer-head">
+      <div style="display:flex;flex-direction:column;gap:6px;min-width:0"><h3 id="convTitulo">Conversación</h3><div id="convEstados" style="display:flex;gap:6px;flex-wrap:wrap"></div></div>
+      <button class="x-btn" type="button" onclick="cerrarConversacion()" aria-label="Cerrar la conversación"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="conv-control oculto" id="convControl"></div>
+    <div class="conv-sub">Últimos mensajes</div>
+    <div class="conv-mensajes" id="convMensajes" aria-live="polite"></div>
+    <div class="conv-composer">
+      <div class="conv-aviso ambar oculto" id="convNoResp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="txt" id="convNoRespTx"></span></div>
+      <div class="fila">
+        <textarea id="convTexto" rows="1" placeholder="Escribir un mensaje…" aria-label="Mensaje para el cliente" maxlength="3900" onkeydown="teclaComposer(event)" oninput="ajustarAlto(this)"></textarea>
+        <button class="btn-enviar" type="button" id="convEnviar" aria-label="Enviar el mensaje" onclick="enviarRespuesta()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+      </div>
+      <span class="conv-error oculto" id="convError" role="alert"></span>
+      <span class="conv-pista" id="convPista"></span>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="apagarOverlay">
+  <div class="modal claro" style="max-width:520px" role="dialog" aria-modal="true" aria-labelledby="apTit">
+    <div class="modal-head"><div><h3 id="apTit">¿Apagar a Verde en este chat?</h3><p id="apCliente"></p></div><button class="x-btn" type="button" onclick="close_('apagarOverlay')" aria-label="Cerrar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+    <div class="modal-body">
+      <ul class="conf-lista">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg><span>Verde deja de responder a este cliente hasta que alguien lo vuelva a encender. Los demás chats siguen igual.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>La conversación continúa desde este panel o desde el WhatsApp de la tienda.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Si el cliente escribe y nadie del equipo responde en 5 minutos, el chat pasa a «Chats por responder» y se avisa a los celulares del equipo.</span></li>
+      </ul>
+      <div class="note" style="margin-top:14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Queda registrado a nombre de <b id="apQuien">Acceso general</b>.</span></div>
+      <div class="login-err" id="apErr" style="margin-top:10px"></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" type="button" onclick="close_('apagarOverlay')">Cancelar</button><button class="btn btn-apagar" type="button" id="apOk" onclick="confirmarApagar()">Apagar en este chat</button></div>
   </div>
 </div>
 
@@ -1748,6 +1904,7 @@ function _doGo(view){
     chats:['Chats por responder','Clientes que Verde derivó a un asesor. Mientras esperan, Verde no les responde.','<b>Atención</b> › Chats por responder'],
     respondidos:['Chats respondidos','Historial de los chats que Verde derivó y cómo se atendió cada uno, para supervisar la atención.','<b>Atención</b> › Chats respondidos'],
     avisos:['Avisos a celulares del equipo','Cada vez que un chat entra a «Chats por responder», estos números reciben un aviso por WhatsApp. Verde nunca les responde como a un cliente.','<b>Atención</b> › <b>Chats por responder</b> › Avisos'],
+    conversaciones:['Conversaciones','Todos los chats que atiende Verde. Desde aquí se puede responder a un cliente o apagar a Verde en un chat puntual.','<b>Atención</b> › Conversaciones'],
     usuarios:['Usuarios','Personas que pueden entrar al panel. Cada acción queda registrada con su usuario.','<b>Sistema</b> › Usuarios']
   }[view];
   if(view==='verde')renderVerde();
@@ -1762,6 +1919,7 @@ function _doGo(view){
   if(view==='respondidos')cargarRespondidos();
   if(view==='avisos')cargarAvisos();
   if(view==='usuarios')cargarUsuarios();
+  if(view==='conversaciones')cargarConversaciones();
 }
 
 /* ---------- render fuentes ---------- */
@@ -3194,7 +3352,7 @@ function persist(){save();renderSources();renderCrawler();renderMedia();renderRe
 /* ===================== 1.3.1: sesión, chats, usuarios, avisos y selector de IA ===================== */
 let SESION={loginActivo:false,usuario:null};
 let _appIniciada=false,_cargaFallida=false,_salud=null,_claveTemporalIngresada=null,_usuarioInicial=null;
-const VISTAS_CLARAS=['chats','respondidos','avisos'];
+const VISTAS_CLARAS=['chats','conversaciones','respondidos','avisos'];
 const VISTA_PADRE={avisos:'chats'};
 const CRUMB_ORIGINAL=document.getElementById('crumb').innerHTML;
 const SVG131={
@@ -3387,25 +3545,7 @@ async function actualizarContador(pintar){
   const c=document.getElementById('cntPend');c.textContent=n;c.classList.toggle('show',n>0);
   if(currentView==='chats'||pintar)renderChats();
 }
-function renderChats(){
-  const n=CHATS_PEND.length;
-  const cnt=document.getElementById('chatsCnt');cnt.textContent=n;cnt.classList.toggle('cero',n===0);
-  const ul=document.getElementById('chatsLista');
-  if(!n){ul.innerHTML='<li class="vacio-chats"><span class="vc-ic">'+SVG131.check+'</span><b>No hay chats por responder</b><span>Cuando Verde derive a un cliente a un asesor, el chat aparecerá aquí y llegará el aviso a los celulares del equipo.</span></li>';return;}
-  const ahora=Date.now();
-  ul.innerHTML=CHATS_PEND.map(c=>{
-    const min=Math.max(0,Math.floor((ahora-c.creadoEn)/60000));
-    const roja=min>5;
-    const nombre=c.nombre||(c.numero?'+'+c.numero:'Cliente sin número visible');
-    const av=c.nombre?escH(iniciales(c.nombre)):SVG131.persona;
-    return '<li class="chat-row"><span class="chat-av" aria-hidden="true">'+av+'</span>'
-      +'<div class="chat-main"><div class="chat-l1"><span class="chat-nom">'+escH(nombre)+'</span>'
-      +(c.nombre&&c.numero?'<span class="chat-num">+'+escH(c.numero)+'</span>':'')
-      +'<span class="chat-hora'+(roja?' roja':'')+'">'+escH(tiempoEspera(min))+'</span></div>'
-      +'<div class="chat-l2"><span class="chat-msg">'+escH(c.ultimoMensaje||'')+'</span>'+(roja?'<span class="punto-rojo" aria-hidden="true"></span>':'')+'</div></div>'
-      +'<button class="pill-btn" type="button" data-id="'+escH(c.id)+'" onclick="abrirAtendido(this.dataset.id)" aria-label="Marcar como atendido el chat de '+escH(nombre)+'">'+SVG131.check+' Marcar atendido</button></li>';
-  }).join('');
-}
+/* renderChats(): ver el bloque 1.3.2 */
 
 /* ---------- «Marcar atendido» ---------- */
 const MOTIVOS_PANEL=[['llamada','Por llamada'],['local','En el local'],['no_necesita','Ya no necesita atención'],['otro','Otro motivo']];
@@ -3468,7 +3608,8 @@ function renderRespondidos(){
     const av=c.nombre?escH(iniciales(c.nombre)):SVG131.persona;
     const ci=c.cierre||{};const det=[];
     if(ci.tipo==='whatsapp'){
-      det.push(ci.firma?'Firma: <b>'+escH(ci.usuarioNombre||'')+'</b>':'<span class="sin-firma">Sin firma</span>');
+      if(ci.origen==='panel')det.push('Desde el panel: <b>'+escH(ci.usuarioNombre||'Acceso general')+'</b>');
+      else det.push(ci.firma?'Firma: <b>'+escH(ci.usuarioNombre||'')+'</b>':'<span class="sin-firma">Sin firma</span>');
       if(ci.texto)det.push('«'+escH(recortar(ci.texto,60))+'»');
     }else if(ci.tipo==='manual'){
       det.push('Por <b>'+escH(ci.usuarioNombre||'')+'</b>');
@@ -3487,22 +3628,7 @@ function renderRespondidos(){
 
 /* ---------- detalle de una atención ---------- */
 const QUIEN_EVENTO={cliente:'Cliente',verde:'Verde',derivado:'Sistema',aviso:'Sistema',whatsapp:'Equipo por WhatsApp',manual:'Panel',reapertura:'Sistema'};
-async function abrirDetalle(id){
-  const r=await api('/api/chats/'+encodeURIComponent(id));
-  if(!r.ok){toast('No se pudo abrir el chat',r.json.error||'','error');return;}
-  const c=r.json;
-  document.getElementById('detTitulo').textContent=c.nombre?(c.nombre+(c.numero?' · +'+c.numero:'')):(c.numero?'+'+c.numero:'Cliente sin número visible');
-  document.getElementById('detEstado').innerHTML=pildoraEstado(c);
-  document.getElementById('detRecorrido').innerHTML=(c.eventos||[]).map(ev=>{
-    const clase=ev.tipo==='reapertura'?' alerta':(ev.tipo==='manual'?' ambar':(ev.tipo==='cliente'?'':' verde'));
-    const extra=ev.tipo==='whatsapp'?(ev.firma?' · firma: '+escH(ev.firma):' · sin firma'):'';
-    return '<li class="paso-r'+clase+'"><div class="pr-linea"><span class="pr-punto"></span><span class="pr-palo"></span></div>'
-      +'<div class="pr-cuerpo"><div class="pr-quien"><b>'+escH(horaCorta(ev.en))+'</b><span>'+escH(QUIEN_EVENTO[ev.tipo]||'Sistema')+extra+'</span></div>'
-      +'<div class="pr-txt">'+escH(ev.texto)+'</div></div></li>';
-  }).join('');
-  document.getElementById('detIrPend').classList.toggle('oculto',!(c.volvioAEscribir||c.estado==='pendiente'));
-  show('detOverlay');
-}
+/* abrirDetalle(): ver el bloque 1.3.2 */
 
 /* ---------- avisos a celulares del equipo ---------- */
 let AVISOS={numeros:[],plantilla:'',idioma:'es'};
@@ -3668,6 +3794,354 @@ function updateBot(){
   badge.innerHTML='<span class="pulse"></span> '+txt;
   if(st)st.textContent=lateral;
 }
+
+/* ===================== 1.3.2: buscador, Conversaciones, interruptor de Verde y respuesta desde el panel ===================== */
+const IC132={
+  power:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>',
+  responder:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>',
+  reloj:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+  info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+  mensajes:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"/><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"/></svg>'
+};
+
+/* ---------- búsqueda: nombre, número en cualquier formato y mensajes ---------- */
+function normalizarTexto(s){return String(s==null?'':s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
+function prepararBusqueda(q){
+  const original=String(q||'').trim();
+  const t=normalizarTexto(original);
+  if(!t)return null;
+  const dig=t.replace(/\D/g,'');
+  const esNumero=dig.length>=3&&!/[a-z]/.test(t);
+  const variantes=esNumero?[dig].concat(dig.startsWith('0')?['598'+dig.slice(1)]:[]):[];
+  return {t,esNumero,variantes,original};
+}
+// Resalta la búsqueda en un texto, sin importar tildes ni mayúsculas.
+function resaltar(texto,b){
+  texto=String(texto||'');
+  if(!b||b.esNumero)return escH(texto);
+  let norm='';const mapa=[];
+  for(let i=0;i<texto.length;i++){const n=normalizarTexto(texto[i]);for(const ch of n){norm+=ch;mapa.push(i);}}
+  let out='',ultimo=0,desde=0,idx;
+  while(b.t&&(idx=norm.indexOf(b.t,desde))!==-1){
+    const ini=mapa[idx],fin=mapa[idx+b.t.length-1]+1;
+    if(ini<ultimo){desde=idx+1;continue;}
+    out+=escH(texto.slice(ultimo,ini))+'<mark class="res">'+escH(texto.slice(ini,fin))+'</mark>';
+    ultimo=fin;desde=idx+b.t.length;
+  }
+  return out+escH(texto.slice(ultimo));
+}
+function coincidePendiente(c,b){
+  if(!b)return{si:true,msg:null};
+  if(b.esNumero){const n=String(c.numero||'');return{si:b.variantes.some(v=>n.includes(v)),msg:null};}
+  if(normalizarTexto(c.nombre).includes(b.t))return{si:true,msg:null};
+  const ts=(c.textos&&c.textos.length)?c.textos:[c.ultimoMensaje||''];
+  for(let i=ts.length-1;i>=0;i--)if(normalizarTexto(ts[i]).includes(b.t))return{si:true,msg:ts[i]};
+  return{si:false,msg:null};
+}
+function primerNombre(n){return String(n||'').trim().split(/\s+/)[0]||'';}
+function hastaTexto(ms){
+  const dia=_fmtDia.format(new Date(ms)),hoy=_fmtDia.format(new Date()),man=_fmtDia.format(new Date(Date.now()+86400000));
+  const h=_fmtHora.format(new Date(ms));
+  if(dia===hoy)return 'las '+h;
+  if(dia===man)return 'mañana a las '+h;
+  return 'el '+dia.slice(0,5)+' a las '+h;
+}
+
+/* ---------- «Chats por responder»: buscador y botón «Responder» ---------- */
+function buscarPendientes(){renderChats();}
+function limpiarBusquedaPend(){const i=document.getElementById('pendBuscar');i.value='';renderChats();i.focus();}
+function renderChats(){
+  const n=CHATS_PEND.length;
+  const cnt=document.getElementById('chatsCnt');cnt.textContent=n;cnt.classList.toggle('cero',n===0);
+  const ul=document.getElementById('chatsLista');
+  const b=prepararBusqueda(document.getElementById('pendBuscar').value);
+  document.getElementById('pendLimpiar').classList.toggle('oculto',!b);
+  const info=document.getElementById('pendInfo');
+  if(!n){info.classList.add('oculto');ul.innerHTML='<li class="vacio-chats"><span class="vc-ic">'+SVG131.check+'</span><b>No hay chats por responder</b><span>Cuando Verde derive a un cliente a un asesor, el chat aparecerá aquí y llegará el aviso a los celulares del equipo.</span></li>';return;}
+  const filas=[];
+  for(const c of CHATS_PEND){const r=coincidePendiente(c,b);if(r.si)filas.push({c,msg:r.msg});}
+  if(b){info.textContent=filas.length+' de '+n+(n===1?' chat coincide':' chats coinciden')+' con «'+b.original+'»';info.classList.remove('oculto');}
+  else info.classList.add('oculto');
+  if(!filas.length){ul.innerHTML='<li class="vacio-chats"><span class="vc-ic">'+SVG131.lupa+'</span><b>No hay chats que coincidan</b><span>Probar con otro nombre, número o palabra del mensaje.</span></li>';return;}
+  const ahora=Date.now();
+  ul.innerHTML=filas.map(({c,msg})=>{
+    const min=Math.max(0,Math.floor((ahora-c.creadoEn)/60000));
+    const roja=min>5;
+    const nombre=c.nombre||(c.numero?'+'+c.numero:'Cliente sin número visible');
+    const av=c.nombre?escH(iniciales(c.nombre)):SVG131.persona;
+    const mostrar=msg||c.ultimoMensaje||'';
+    return '<li class="chat-row"><span class="chat-av" aria-hidden="true">'+av+'</span>'
+      +'<div class="chat-main"><div class="chat-l1"><span class="chat-nom">'+escH(nombre)+'</span>'
+      +(c.nombre&&c.numero?'<span class="chat-num">+'+escH(c.numero)+'</span>':'')
+      +(c.apagado?'<span class="tag-apagado">'+IC132.power+'Verde apagado en este chat</span>':'')
+      +'<span class="chat-hora'+(roja?' roja':'')+'">'+escH(tiempoEspera(min))+'</span></div>'
+      +'<div class="chat-l2"><span class="chat-msg">'+resaltar(mostrar,b)+'</span>'+(roja?'<span class="punto-rojo" aria-hidden="true"></span>':'')+'</div></div>'
+      +'<div class="chat-acciones">'
+      +(c.clave?'<button class="pill-btn prim" type="button" data-clave="'+escH(c.clave)+'" onclick="abrirConversacion(this.dataset.clave)" aria-label="Responder a '+escH(nombre)+'">'+IC132.responder+' Responder</button>':'')
+      +'<button class="pill-btn" type="button" data-id="'+escH(c.id)+'" onclick="abrirAtendido(this.dataset.id)" aria-label="Marcar como atendido el chat de '+escH(nombre)+'">'+SVG131.check+' Marcar atendido</button>'
+      +'</div></li>';
+  }).join('');
+}
+
+/* ---------- pantalla «Conversaciones» ---------- */
+const FILTROS_CONV=[['todas','Todas'],['verde','Verde atendiendo'],['persona','Atiende una persona'],['apagado','Verde apagado'],['pendiente','Por responder']];
+let CONVL={filtro:'todas',datos:null},_tConv=null;
+function buscarConversaciones(){clearTimeout(_tConv);_tConv=setTimeout(cargarConversaciones,300);}
+function filtrarConversaciones(f){CONVL.filtro=f;cargarConversaciones();}
+async function cargarConversaciones(){
+  const q=new URLSearchParams({buscar:document.getElementById('convBuscar').value.trim(),estado:CONVL.filtro});
+  const r=await api('/api/conversaciones?'+q.toString());
+  if(!r.ok){if(r.status!==401)toast('No se pudo cargar la lista de conversaciones',r.json.error||'','error');return;}
+  CONVL.datos=r.json;renderConversaciones();
+}
+function pillsConversacion(c){
+  const p=[];
+  if(c.apagado)p.push('<span class="estado apa">Verde apagado</span>');
+  if(c.pendiente)p.push('<span class="estado mal">Por responder</span>');
+  if(!p.length)p.push(c.persona?'<span class="estado per">Atiende una persona</span>':'<span class="estado ok">Verde atendiendo</span>');
+  return p.join('');
+}
+function prefijoMensaje(m){
+  if(!m)return '';
+  if(m.tipo==='verde')return '<b class="pref-v">Verde:</b> ';
+  if(m.tipo==='cliente')return '<b class="pref-c">Cliente:</b> ';
+  if(m.tipo==='equipo')return '<b class="pref-e">'+escH(m.autor?primerNombre(m.autor):'Equipo')+' (equipo):</b> ';
+  return '';
+}
+function renderConversaciones(){
+  const d=CONVL.datos||{lista:[],totales:{},total:0};const t=d.totales||{};
+  document.getElementById('convChips').innerHTML=FILTROS_CONV.map(([k,txt])=>
+    '<button type="button" class="chip-f'+(CONVL.filtro===k?' sel':(k==='pendiente'?' rojo':''))+'" aria-pressed="'+(CONVL.filtro===k)+'" onclick="filtrarConversaciones(\''+k+'\')">'+escH(txt)+' <span>'+(t[k]||0)+'</span></button>').join('');
+  const ul=document.getElementById('convLista');
+  const lista=d.lista||[];
+  const b=prepararBusqueda(document.getElementById('convBuscar').value);
+  const info=document.getElementById('convInfo');
+  if(d.total>lista.length){info.textContent='Se muestran los '+lista.length+' chats con movimiento más reciente, de un total de '+d.total+'. Usar el buscador para encontrar los demás.';info.classList.remove('oculto');}
+  else info.classList.add('oculto');
+  if(!lista.length){
+    ul.innerHTML=(b||CONVL.filtro!=='todas')
+      ?'<li class="vacio-chats"><span class="vc-ic">'+SVG131.lupa+'</span><b>No hay conversaciones para mostrar</b><span>Probar con otro filtro u otra búsqueda.</span></li>'
+      :'<li class="vacio-chats"><span class="vc-ic">'+IC132.mensajes+'</span><b>Todavía no hay conversaciones registradas</b><span>Los chats aparecen aquí a medida que los clientes escriben.</span></li>';
+    return;
+  }
+  ul.innerHTML=lista.map(c=>{
+    const nombre=c.nombre||(c.numero?'+'+c.numero:'Cliente sin número visible');
+    const av=c.nombre?escH(iniciales(c.nombre)):SVG131.persona;
+    const m=c.coincidencia||c.ultimo;
+    return '<li class="chat-row clic" tabindex="0" role="button" data-clave="'+escH(c.clave)+'" onclick="abrirConversacion(this.dataset.clave)" onkeydown="if(event.key===\'Enter\')abrirConversacion(this.dataset.clave)">'
+      +'<span class="chat-av" aria-hidden="true">'+av+'</span><div class="chat-main">'
+      +'<div class="chat-l1"><span class="chat-nom">'+escH(nombre)+'</span>'+(c.nombre&&c.numero?'<span class="chat-num">+'+escH(c.numero)+'</span>':'')+'<span class="chat-hora">'+escH(horaCorta(c.ultimoEn))+'</span></div>'
+      +'<div class="chat-l2"><span class="chat-msg">'+prefijoMensaje(m)+(m?(c.coincidencia?resaltar(m.texto,b):escH(m.texto)):'')+'</span><span class="estados">'+pillsConversacion(c)+'</span></div>'
+      +'</div></li>';
+  }).join('');
+}
+
+/* ---------- interruptor «Verde en este chat» (se usa en la conversación y en el detalle de un chat derivado) ---------- */
+function htmlControlVerde(c){
+  const on=!c.apagado;
+  const info=c.apagadoInfo||{};
+  const texto=on?'Encendido: Verde responde los mensajes de este cliente.'
+    :'Apagado desde '+minuscula1(horaCorta(info.en))+' por '+(info.porNombre||'Acceso general')+'. Verde no responde en este chat hasta que se vuelva a encender.';
+  let h='<div class="conv-sw-fila"><div class="conv-sw-tx"><b>Verde en este chat</b><span>'+escH(texto)+'</span></div>'
+    +'<button type="button" class="sw" role="switch" aria-checked="'+on+'" aria-label="Verde en este chat" data-clave="'+escH(c.clave)+'" onclick="tocarInterruptor(this)">'
+    +'<span class="pista" aria-hidden="true"><span class="bola"></span></span><span class="sw-tx">'+(on?'Encendido':'Apagado')+'</span></button></div>';
+  if(c.apagado)h+='<div class="conv-aviso gris">'+IC132.reloj+'<span class="txt">Si el cliente escribe y nadie del equipo responde en 5 minutos, el chat pasa a «Chats por responder» y se avisa a los celulares del equipo.</span></div>';
+  else if(c.pendiente)h+='<div class="conv-aviso rojo">'+IC132.reloj+'<span class="txt">Espera a una persona del equipo: Verde no responde mientras el chat está en «Chats por responder».</span></div>';
+  else if(c.pausaHasta)h+='<div class="conv-aviso ambar">'+IC132.reloj+'<span class="txt">En pausa hasta '+escH(hastaTexto(c.pausaHasta))+' porque una persona del equipo atendió este chat. Después Verde vuelve a responder solo.</span>'
+    +'<button type="button" class="btn-mini" data-clave="'+escH(c.clave)+'" onclick="reanudarVerde(this)">Reanudar ahora</button></div>';
+  if(c.verdeGeneral===false)h+='<div class="conv-aviso gris">'+IC132.info+'<span class="txt">Verde está apagado para todos los chats desde «Comportamiento del bot».</span></div>';
+  return h;
+}
+function datosDeClave(clave){
+  if(CONV.datos&&CONV.datos.clave===clave)return CONV.datos;
+  if(DET.conv&&DET.conv.clave===clave)return DET.conv;
+  return null;
+}
+function tocarInterruptor(btn){
+  const clave=btn.dataset.clave;
+  if(btn.getAttribute('aria-checked')==='true')abrirApagar(clave);
+  else encenderVerde(clave,btn);
+}
+// Actualiza la conversación abierta y el detalle del chat derivado, si muestran ese chat.
+function aplicarConversacion(c){
+  if(!c)return;
+  if(CONV.clave===c.clave)pintarConversacion(c,false);
+  if(DET.clave===c.clave&&document.getElementById('detOverlay').classList.contains('show'))pintarControlDetalle(c);
+}
+function refrescarListas(){
+  actualizarContador();
+  if(currentView==='conversaciones')cargarConversaciones();
+  if(currentView==='respondidos')cargarRespondidos();
+}
+let _apClave=null;
+function abrirApagar(clave){
+  _apClave=clave;
+  const c=datosDeClave(clave);
+  document.getElementById('apCliente').textContent=c?((c.nombre?c.nombre+' · ':'')+(c.numero?'+'+c.numero:'Cliente sin número visible')):'';
+  document.getElementById('apQuien').textContent=SESION.usuario?SESION.usuario.nombre:'Acceso general';
+  const e=document.getElementById('apErr');e.textContent='';e.classList.remove('show');
+  show('apagarOverlay');
+}
+async function confirmarApagar(){
+  const btn=document.getElementById('apOk');btn.disabled=true;
+  const r=await api('/api/conversaciones/'+encodeURIComponent(_apClave)+'/apagar',{method:'POST',body:{}});
+  btn.disabled=false;
+  if(!r.ok){const e=document.getElementById('apErr');e.textContent=r.json.error||'No se pudo apagar a Verde en este chat.';e.classList.add('show');return;}
+  close_('apagarOverlay');
+  aplicarConversacion(r.json.conversacion);
+  toast('Verde apagado en este chat','Verde no responde a este cliente hasta que se vuelva a encender.','success');
+  refrescarListas();
+}
+async function encenderVerde(clave,btn){
+  if(btn)btn.disabled=true;
+  const r=await api('/api/conversaciones/'+encodeURIComponent(clave)+'/encender',{method:'POST',body:{}});
+  if(btn)btn.disabled=false;
+  if(!r.ok){toast('No se pudo encender a Verde',r.json.error||'','error');return;}
+  const c=r.json.conversacion;
+  aplicarConversacion(c);
+  toast('Verde encendido en este chat',c.pendiente?'Responde cuando el chat deje de estar en «Chats por responder».':(c.pausaHasta?'Sigue en pausa hasta '+hastaTexto(c.pausaHasta)+' porque una persona del equipo atendió el chat.':'Verde vuelve a responder a este cliente.'),'success');
+  refrescarListas();
+}
+async function reanudarVerde(btn){
+  const clave=btn.dataset.clave;btn.disabled=true;
+  const r=await api('/api/conversaciones/'+encodeURIComponent(clave)+'/reanudar',{method:'POST',body:{}});
+  if(!r.ok){btn.disabled=false;toast('No se pudo reanudar a Verde',r.json.error||'','error');return;}
+  aplicarConversacion(r.json.conversacion);
+  toast('Verde reanudado','Verde vuelve a responder en este chat.','success');
+  refrescarListas();
+}
+
+/* ---------- conversación abierta: mensajes, interruptor y respuesta desde el panel ---------- */
+let CONV={clave:null,datos:null,timer:null};
+function convAbierta(){return document.getElementById('convOverlay').classList.contains('show');}
+async function abrirConversacion(clave){
+  if(!clave)return;
+  CONV.clave=clave;CONV.datos=null;
+  document.getElementById('convTitulo').textContent='Conversación';
+  document.getElementById('convEstados').innerHTML='';
+  const ctl=document.getElementById('convControl');ctl.className='conv-control oculto';ctl.innerHTML='';
+  document.getElementById('convMensajes').innerHTML='<div class="conv-vacio">Cargando la conversación…</div>';
+  const ta=document.getElementById('convTexto');ta.value='';ajustarAlto(ta);
+  document.getElementById('convError').classList.add('oculto');
+  show('convOverlay');
+  await refrescarConversacion(true);
+  clearInterval(CONV.timer);
+  CONV.timer=setInterval(()=>{
+    if(!convAbierta()){clearInterval(CONV.timer);CONV.timer=null;CONV.clave=null;return;}
+    if(!document.hidden)refrescarConversacion(false);
+  },5000);
+}
+function cerrarConversacion(){close_('convOverlay');clearInterval(CONV.timer);CONV.timer=null;CONV.clave=null;}
+async function refrescarConversacion(primera){
+  const clave=CONV.clave;if(!clave)return;
+  const r=await api('/api/conversaciones/'+encodeURIComponent(clave));
+  if(clave!==CONV.clave)return;
+  if(!r.ok){
+    if(primera)document.getElementById('convMensajes').innerHTML='<div class="conv-vacio">'+escH(r.json.error||'No se pudo abrir la conversación.')+'</div>';
+    return;
+  }
+  pintarConversacion(r.json,primera);
+}
+function renderMensajes(ms){
+  if(!ms||!ms.length)return '<div class="conv-vacio">Todavía no hay mensajes registrados en este chat.</div>';
+  return ms.map(m=>{
+    const hora='<span class="hora">'+escH(horaCorta(m.en))+'</span>';
+    if(m.tipo==='sistema')return '<div class="linea-sis">'+escH(horaCorta(m.en))+' · '+escH(m.texto)+'</div>';
+    if(m.tipo==='cliente')return '<div class="burbuja cli"><span class="txt">'+escH(m.texto)+'</span>'+hora+'</div>';
+    if(m.tipo==='verde')return '<div class="burbuja ver"><span class="quien">Verde</span><span class="txt">'+escH(m.texto)+'</span>'+hora+'</div>';
+    const quien=(m.autor?m.autor+' (equipo)':'Equipo')+(m.origen==='panel'?' · desde el panel':(m.firma?'':' · sin firma'));
+    return '<div class="burbuja equ"><span class="quien">'+escH(quien)+'</span><span class="txt">'+escH(m.texto)+'</span>'+hora+'</div>';
+  }).join('');
+}
+function pintarConversacion(c,primera){
+  const anterior=CONV.datos;CONV.datos=c;
+  document.getElementById('convTitulo').textContent=c.nombre?(c.nombre+(c.numero?' · +'+c.numero:'')):(c.numero?'+'+c.numero:'Cliente sin número visible');
+  document.getElementById('convEstados').innerHTML=pillsConversacion(c);
+  const ctl=document.getElementById('convControl');
+  ctl.className='conv-control'+(c.apagado?' off':'');
+  ctl.innerHTML=htmlControlVerde(c);
+  const box=document.getElementById('convMensajes');
+  const ms=c.mensajes||[];
+  const ultimo=ms.length?ms[ms.length-1].en:0;
+  const cambio=primera||!anterior||(anterior.mensajes||[]).length!==ms.length||((anterior.mensajes||[]).slice(-1)[0]||{}).en!==ultimo;
+  if(cambio){
+    const cerca=box.scrollHeight-box.scrollTop-box.clientHeight<80;
+    box.innerHTML=renderMensajes(ms);
+    if(primera||cerca)box.scrollTop=box.scrollHeight;
+  }
+  // campo para responder
+  const ta=document.getElementById('convTexto'),btn=document.getElementById('convEnviar');
+  const noResp=document.getElementById('convNoResp');
+  const puede=!!c.puedeResponder&&c.d360!==false;
+  const motivo=c.d360===false?'La conexión con WhatsApp (360dialog) no está configurada en el servidor.':c.motivoNoResponder;
+  noResp.classList.toggle('oculto',puede);
+  document.getElementById('convNoRespTx').textContent=puede?'':(motivo||'');
+  ta.disabled=!puede;btn.disabled=!puede;
+  ta.placeholder=puede?'Escribir un mensaje…':'No se puede responder desde el panel';
+  ta.setAttribute('aria-label','Mensaje para '+(c.nombre||(c.numero?'+'+c.numero:'el cliente')));
+  const firma=String(c.firmaUsuario||'').trim();
+  let pista=firma?'Sale desde el WhatsApp de la tienda con la firma «'+firma+'».':'Sale desde el WhatsApp de la tienda sin firma'+(SESION.usuario?' (este usuario no tiene una firma configurada).':'.');
+  if(!c.apagado)pista+=' Al enviar, Verde queda en pausa en este chat.';
+  document.getElementById('convPista').textContent=pista;
+  document.getElementById('convPista').classList.toggle('oculto',!puede);
+}
+function ajustarAlto(ta){ta.style.height='auto';ta.style.height=Math.min(ta.scrollHeight||48,140)+'px';}
+function teclaComposer(e){
+  // En la computadora, Enter envía y Mayúscula + Enter agrega una línea (como en WhatsApp Web).
+  if(e.key==='Enter'&&!e.shiftKey&&window.matchMedia&&window.matchMedia('(pointer: fine)').matches){e.preventDefault();enviarRespuesta();}
+}
+async function enviarRespuesta(){
+  const ta=document.getElementById('convTexto'),btn=document.getElementById('convEnviar'),err=document.getElementById('convError');
+  const texto=ta.value.trim();
+  if(!CONV.clave||btn.disabled)return;
+  if(!texto){err.textContent='Escribir el mensaje antes de enviar.';err.classList.remove('oculto');ta.focus();return;}
+  btn.disabled=true;ta.disabled=true;
+  const r=await api('/api/conversaciones/'+encodeURIComponent(CONV.clave)+'/responder',{method:'POST',body:{texto}});
+  btn.disabled=false;ta.disabled=false;
+  if(!r.ok){err.textContent=r.json.error||'No se pudo enviar el mensaje.';err.classList.remove('oculto');if(r.json&&r.status===409)refrescarConversacion(false);return;}
+  ta.value='';ajustarAlto(ta);err.classList.add('oculto');
+  pintarConversacion(r.json.conversacion,true);
+  refrescarListas();
+  if(!ta.disabled)ta.focus();
+}
+
+/* ---------- detalle de un chat derivado: interruptor y «Abrir conversación» ---------- */
+let DET={id:null,clave:null,conv:null};
+async function abrirDetalle(id){
+  const r=await api('/api/chats/'+encodeURIComponent(id));
+  if(!r.ok){toast('No se pudo abrir el chat',r.json.error||'','error');return;}
+  const c=r.json;
+  DET={id,clave:c.clave||null,conv:null};
+  document.getElementById('detTitulo').textContent=c.nombre?(c.nombre+(c.numero?' · +'+c.numero:'')):(c.numero?'+'+c.numero:'Cliente sin número visible');
+  document.getElementById('detEstado').innerHTML=pildoraEstado(c);
+  document.getElementById('detRecorrido').innerHTML=(c.eventos||[]).map(ev=>{
+    const clase=ev.tipo==='reapertura'?' alerta':(ev.tipo==='manual'?' ambar':(ev.tipo==='cliente'?'':' verde'));
+    const desdePanel=ev.tipo==='whatsapp'&&ev.origen==='panel';
+    const quien=desdePanel?'Equipo desde el panel':(QUIEN_EVENTO[ev.tipo]||'Sistema');
+    const extra=ev.tipo==='whatsapp'?(desdePanel?' · '+escH(ev.firma||'Acceso general'):(ev.firma?' · firma: '+escH(ev.firma):' · sin firma')):'';
+    return '<li class="paso-r'+clase+'"><div class="pr-linea"><span class="pr-punto"></span><span class="pr-palo"></span></div>'
+      +'<div class="pr-cuerpo"><div class="pr-quien"><b>'+escH(horaCorta(ev.en))+'</b><span>'+escH(quien)+extra+'</span></div>'
+      +'<div class="pr-txt">'+escH(ev.texto)+'</div></div></li>';
+  }).join('');
+  document.getElementById('detIrPend').classList.toggle('oculto',!(c.volvioAEscribir||c.estado==='pendiente'));
+  document.getElementById('detAbrirConv').classList.toggle('oculto',!c.clave);
+  const ctl=document.getElementById('detControl');ctl.className='conv-control det oculto';ctl.innerHTML='';
+  show('detOverlay');
+  if(c.clave){
+    const rc=await api('/api/conversaciones/'+encodeURIComponent(c.clave));
+    if(rc.ok&&DET.clave===c.clave)pintarControlDetalle(rc.json);
+  }
+}
+function pintarControlDetalle(conv){
+  DET.conv=conv;
+  const ctl=document.getElementById('detControl');
+  ctl.className='conv-control det'+(conv.apagado?' off':'');
+  ctl.innerHTML=htmlControlVerde(conv);
+}
+function abrirConvDesdeDetalle(){const clave=DET.clave;if(!clave)return;close_('detOverlay');abrirConversacion(clave);}
+
+// La lista de «Conversaciones» se actualiza sola cada 15 segundos mientras está a la vista.
+setInterval(()=>{if(_appIniciada&&currentView==='conversaciones'&&!document.hidden&&!convAbierta())cargarConversaciones();},15000);
 
 /* ---------- init ---------- */
 (async()=>{

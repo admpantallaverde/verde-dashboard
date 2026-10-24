@@ -175,6 +175,28 @@ function estaPausado(clave) {
   const p = leerJson(PAUSAS_FILE);
   return !!(p[clave] && p[clave] > Date.now());
 }
+// «Reanudar ahora» desde el panel: termina la pausa automática de ese chat.
+function quitarPausa(clave) {
+  const p = leerJson(PAUSAS_FILE);
+  if (!Object.prototype.hasOwnProperty.call(p, clave)) return false;
+  delete p[clave];
+  guardarJson(PAUSAS_FILE, p);
+  return true;
+}
+// Pausas vigentes { clave: hasta } (para la pantalla «Conversaciones»).
+function pausasVigentes() {
+  const ahora = Date.now();
+  const p = leerJson(PAUSAS_FILE);
+  const r = {};
+  for (const k of Object.keys(p)) if (p[k] > ahora) r[k] = p[k];
+  return r;
+}
+// Antes de enviar se vuelve a revisar: mientras la IA preparaba la respuesta, una persona del
+// equipo pudo tomar la conversación o alguien pudo apagar a Verde en este chat.
+function noDebeResponder(from, opciones) {
+  if (estaPausado(from)) return true;
+  return !!(opciones && typeof opciones.puedeResponder === 'function' && !opciones.puedeResponder());
+}
 
 /* ---------- una conversación a la vez por cliente ---------- */
 // Si un cliente manda varios mensajes seguidos, se responden en orden y sin pisar el historial.
@@ -378,13 +400,15 @@ async function responder(from, body, opciones) {
   } catch (e) {
     console.error('Error al consultar la IA:', e.message);
     // La frase de error deriva a un asesor: el chat pasa a «Chats por responder».
+    if (noDebeResponder(from, opciones)) return null;
     return { texto: fr.error || 'Disculpá, tuve un problema técnico. Ahora mismo te conecto con uno de nuestros asesores 🙌', derivar: true, error: true };
   }
   const sep = separarDerivacion(crudo);
   const reply = sep.texto || fr.derivacion || 'Te paso con un asesor para que te ayude. 🙌';
 
-  // 3) si mientras pensaba una persona del equipo tomó la conversación, no se responde
-  if (estaPausado(from)) return null;
+  // 3) si mientras pensaba una persona del equipo tomó la conversación, o alguien apagó a Verde
+  //    en este chat, no se responde
+  if (noDebeResponder(from, opciones)) return null;
 
   // 4) se guarda la respuesta de Verde (sin la marca)
   registrarMensaje(from, 'assistant', reply);
@@ -393,6 +417,6 @@ async function responder(from, body, opciones) {
 
 module.exports = {
   buildSystemPrompt, getReply, getVerde, callClaude, findProducts, productBlock, resetConversation,
-  registrarMensaje, pausar, estaPausado, resolverModelo, armarPedido, paraLaIA, MODELO_PREDETERMINADO,
+  registrarMensaje, pausar, estaPausado, quitarPausa, pausasVigentes, resolverModelo, armarPedido, paraLaIA, MODELO_PREDETERMINADO,
   responderCliente, separarDerivacion, listarModelos, modeloPermitido
 };
