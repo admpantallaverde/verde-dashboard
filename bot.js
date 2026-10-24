@@ -4,7 +4,8 @@
  * Toma la configuración que editás en el dashboard (data/state.json),
  * arma el prompt, le pregunta a la IA (Anthropic) y devuelve la respuesta.
  * Guarda el historial de cada conversación en disco (data/conversations.json)
- * para que NO se pierda al reiniciar.
+ * para que NO se pierda al reiniciar, y las pausas de cada cliente
+ * (data/pausas.json) cuando una persona del equipo toma la conversación.
  *
  * No hace falta tocar este archivo.
  */
@@ -15,6 +16,19 @@ const path = require('path');
 const DATA_DIR = path.join(__dirname, 'data');
 const STATE_FILE = path.join(DATA_DIR, 'state.json');
 const CONV_FILE = path.join(DATA_DIR, 'conversations.json');
+const PAUSAS_FILE = path.join(DATA_DIR, 'pausas.json');
+
+/* ---------- modelo de IA ---------- */
+const MODELO_PREDETERMINADO = 'claude-sonnet-5-5';
+// Modelos retirados o por retirarse → reemplazo recomendado por Anthropic.
+// Así Verde no deja de responder si el panel todavía tiene un modelo viejo.
+const MODELOS_REEMPLAZO = {
+  'claude-sonnet-4-5': 'claude-sonnet-5-5',
+  'claude-sonnet-4-5-20250929': 'claude-sonnet-5-5',
+  'claude-sonnet-4-0': 'claude-sonnet-5-5',
+  'claude-sonnet-4-20250514': 'claude-sonnet-5-5'
+};
+const ESFUERZOS_VALIDOS = ['low', 'medium', 'high'];
 
 /* ---------- leer configuración guardada por el dashboard ---------- */
 function readState() {
@@ -74,49 +88,144 @@ Al derivar a un humano: "${fr.derivacion || ''}"
 Si hay un error técnico: "${fr.error || ''}"`;
 }
 
-/* ---------- historial de conversaciones (persistente) ---------- */
-function loadConversations() {
+/* ---------- lectura y escritura segura de archivos JSON ---------- */
+function leerJson(archivo) {
   try {
-    if (!fs.existsSync(CONV_FILE)) return {};
-    const raw = fs.readFileSync(CONV_FILE, 'utf8');
+    if (!fs.existsSync(archivo)) return {};
+    const raw = fs.readFileSync(archivo, 'utf8');
     return raw ? JSON.parse(raw) : {};
   } catch (e) {
-    console.error('No se pudo leer conversations.json:', e.message);
+    console.error('No se pudo leer ' + path.basename(archivo) + ':', e.message);
     return {};
   }
 }
-function saveConversations(obj) {
+function guardarJson(archivo, obj) {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    const tmp = CONV_FILE + '.tmp';
+    const tmp = archivo + '.tmp';
     fs.writeFileSync(tmp, JSON.stringify(obj, null, 2), 'utf8');
-    fs.renameSync(tmp, CONV_FILE);
+    fs.renameSync(tmp, archivo);
   } catch (e) {
-    console.error('No se pudo guardar conversations.json:', e.message);
+    console.error('No se pudo guardar ' + path.basename(archivo) + ':', e.message);
   }
 }
+
+/* ---------- historial de conversaciones (persistente) ---------- */
+function loadConversations() { return leerJson(CONV_FILE); }
+function saveConversations(obj) { guardarJson(CONV_FILE, obj); }
 function resetConversation(from) {
   const convs = loadConversations();
   if (convs[from]) { delete convs[from]; saveConversations(convs); }
   return true;
 }
+function memoriaDe(v) {
+  const n = parseInt(v && v.tecnico && v.tecnico.memoria, 10);
+  return n >= 2 ? n : 20;
+}
+// Une mensajes seguidos del mismo rol (por ejemplo, dos mensajes del cliente sin respuesta).
+function unirSeguidos(hist) {
+  const out = [];
+  for (const m of (Array.isArray(hist) ? hist : [])) {
+    if (!m || (m.role !== 'user' && m.role !== 'assistant') || typeof m.content !== 'string') continue;
+    const ult = out[out.length - 1];
+    if (ult && ult.role === m.role) ult.content += '\n\n' + m.content;
+    else out.push({ role: m.role, content: m.content });
+  }
+  return out;
+}
+// Lo que se le envía a la IA: los últimos mensajes, empezando siempre por un mensaje del cliente.
+function paraLaIA(hist, n) {
+  const t = unirSeguidos(hist).slice(-Math.max(2, n || 20));
+  while (t.length && t[0].role !== 'user') t.shift();
+  return t;
+}
+// Agrega un mensaje al historial de un cliente sin consultar a la IA.
+function registrarMensaje(clave, rol, texto) {
+  const v = getVerde();
+  const convs = loadConversations();
+  const hist = Array.isArray(convs[clave]) ? convs[clave] : [];
+  hist.push({ role: rol, content: String(texto == null ? '' : texto) });
+  convs[clave] = unirSeguidos(hist).slice(-memoriaDe(v));
+  saveConversations(convs);
+}
+
+/* ---------- pausas: cuando una persona del equipo toma la conversación ---------- */
+function pausar(clave, horas) {
+  const h = Number(horas) > 0 ? Number(horas) : 12;
+  const ahora = Date.now();
+  const p = leerJson(PAUSAS_FILE);
+  for (const k of Object.keys(p)) if (!(p[k] > ahora)) delete p[k]; // limpia pausas vencidas
+  p[clave] = ahora + h * 3600 * 1000;
+  guardarJson(PAUSAS_FILE, p);
+  return p[clave];
+}
+function estaPausado(clave) {
+  const p = leerJson(PAUSAS_FILE);
+  return !!(p[clave] && p[clave] > Date.now());
+}
+
+/* ---------- una conversación a la vez por cliente ---------- */
+// Si un cliente manda varios mensajes seguidos, se responden en orden y sin pisar el historial.
+const colas = new Map();
+function enCola(clave, tarea) {
+  const previa = colas.get(clave) || Promise.resolve();
+  const actual = previa.then(tarea, tarea);
+  const fin = actual.catch(() => {});
+  colas.set(clave, fin);
+  fin.then(() => { if (colas.get(clave) === fin) colas.delete(clave); });
+  return actual;
+}
 
 /* ---------- llamada a la IA (Anthropic) ---------- */
+const modelosAvisados = new Set();
+function resolverModelo(v) {
+  const elegido = String((v && v.tecnico && v.tecnico.modelo) || '').trim() || MODELO_PREDETERMINADO;
+  const reemplazo = MODELOS_REEMPLAZO[elegido];
+  if (reemplazo) {
+    if (!modelosAvisados.has(elegido)) {
+      modelosAvisados.add(elegido);
+      console.warn('Aviso: el modelo "' + elegido + '" está retirado o por retirarse; se usa "' + reemplazo + '". Actualizalo en el panel (Parámetros técnicos).');
+    }
+    return reemplazo;
+  }
+  return elegido;
+}
+// Arma el pedido a la IA. En Claude Sonnet 5.5 se desactiva el razonamiento previo
+// (thinking "between_tools") y se fija el esfuerzo, como indica la documentación oficial
+// para conversaciones que deben responder rápido.
+function armarPedido(model, system, messages, max_tokens) {
+  const pedido = { model, max_tokens, system, messages };
+  if (model === 'claude-sonnet-5-5') {
+    const esfuerzo = String(process.env.VERDE_ESFUERZO || 'medium').trim().toLowerCase();
+    pedido.thinking = { type: 'between_tools' };
+    pedido.output_config = { effort: ESFUERZOS_VALIDOS.includes(esfuerzo) ? esfuerzo : 'medium' };
+  }
+  return pedido;
+}
 async function callClaude(system, messages, v) {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error('Falta la clave ANTHROPIC_API_KEY (configurala en el archivo .env).');
-  const model = (v.tecnico && v.tecnico.modelo) || 'claude-sonnet-4-5';
+  const model = resolverModelo(v);
   const max_tokens = (v.tecnico && v.tecnico.maxTokens) || 1000;
+  const pedido = armarPedido(model, system, messages, max_tokens);
 
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-api-key': key,
-      'anthropic-version': '2023-06-01'
-    },
-    body: JSON.stringify({ model, max_tokens, system, messages })
-  });
+  const ctrl = new AbortController();
+  const limite = setTimeout(() => ctrl.abort(), 60000);
+  let resp;
+  try {
+    resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': process.env.ANTHROPIC_VERSION || '2023-06-01'
+      },
+      body: JSON.stringify(pedido),
+      signal: ctrl.signal
+    });
+  } finally {
+    clearTimeout(limite);
+  }
 
   if (!resp.ok) {
     const detail = await resp.text();
@@ -124,7 +233,8 @@ async function callClaude(system, messages, v) {
   }
   const data = await resp.json();
   const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
-  return text || '…';
+  if (!text) throw new Error('La IA no devolvió texto (motivo: ' + (data.stop_reason || 'desconocido') + ').');
+  return text;
 }
 
 /* ---------- obtener la respuesta del bot para un mensaje ---------- */
@@ -199,34 +309,53 @@ function productBlock(query) {
   return b;
 }
 
-async function getReply(from, body) {
+/* ---------- contexto del momento: fecha y hora de Montevideo ---------- */
+function bloqueContexto() {
+  const ahora = new Date();
+  const zona = 'America/Montevideo';
+  const fecha = new Intl.DateTimeFormat('es-UY', { timeZone: zona, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(ahora);
+  const hora = new Intl.DateTimeFormat('es-UY', { timeZone: zona, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(ahora);
+  return '\n\n== CONTEXTO ACTUAL ==\n' +
+    'Hoy es ' + fecha + ' y son las ' + hora + ' en Montevideo. Usá este dato si el cliente pregunta por horarios o si el local está abierto ahora.\n' +
+    'Si en la conversación aparece un texto marcado con "[Asesor humano]", lo escribió una persona del equipo de la tienda: tenelo en cuenta, no lo contradigas y no repitas esa marca.';
+}
+
+/* ---------- obtener la respuesta del bot para un mensaje ---------- */
+// Devuelve el texto a enviar, o null si Verde no debe responder (apagado o conversación en pausa).
+function getReply(from, body) {
+  return enCola(String(from), () => responder(String(from), String(body == null ? '' : body)));
+}
+async function responder(from, body) {
   const v = getVerde();
   const fr = v.frases || {};
 
-  // Si el bot está apagado, no responde: deriva a un humano.
-  if (v.encendido === false) {
-    return fr.derivacion || 'En este momento no estamos atendiendo por este medio. Te conecto con un asesor.';
-  }
+  // Apagado: silencio total (no se envía nada al cliente).
+  if (v.encendido === false) return null;
 
-  const memN = (v.tecnico && v.tecnico.memoria) || 20;
+  // 1) se guarda el mensaje del cliente antes de consultar a la IA
+  registrarMensaje(from, 'user', body);
+
+  // 2) se arma el pedido con el historial guardado
   const convs = loadConversations();
   const hist = Array.isArray(convs[from]) ? convs[from] : [];
-  hist.push({ role: 'user', content: String(body || '') });
-  const trimmed = hist.slice(-memN);
-
-  const system = buildSystemPrompt(v) + productBlock(String(body || ''));
+  const system = buildSystemPrompt(v) + bloqueContexto() + productBlock(body);
   let reply;
   try {
-    reply = await callClaude(system, trimmed, v);
+    reply = await callClaude(system, paraLaIA(hist, memoriaDe(v)), v);
   } catch (e) {
     console.error('Error al consultar la IA:', e.message);
     return fr.error || 'Disculpá, tuve un problema técnico. Ahora mismo te conecto con uno de nuestros asesores 🙌';
   }
 
-  trimmed.push({ role: 'assistant', content: reply });
-  convs[from] = trimmed.slice(-memN);
-  saveConversations(convs);
+  // 3) si mientras pensaba una persona del equipo tomó la conversación, no se responde
+  if (estaPausado(from)) return null;
+
+  // 4) se guarda la respuesta de Verde
+  registrarMensaje(from, 'assistant', reply);
   return reply;
 }
 
-module.exports = { buildSystemPrompt, getReply, getVerde, callClaude, findProducts, productBlock, resetConversation };
+module.exports = {
+  buildSystemPrompt, getReply, getVerde, callClaude, findProducts, productBlock, resetConversation,
+  registrarMensaje, pausar, estaPausado, resolverModelo, armarPedido, paraLaIA, MODELO_PREDETERMINADO
+};
