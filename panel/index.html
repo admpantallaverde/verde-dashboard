@@ -753,6 +753,67 @@ body:has(.overlay.drawer.show) .toasts{right:auto;left:20px}
   .chat-l1 .tag-apagado{order:10}
   body:has(.overlay.drawer.show) .toasts{left:12px;right:12px;top:12px;bottom:auto;max-width:none}
 }
+/* ===================== 1.3.3: vista dividida para atender chats ===================== */
+.split{display:flex;height:calc(100vh - 190px);min-height:520px;background:var(--surface);border:1px solid var(--border-soft);border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(11,20,26,.08)}
+.split-lista{flex:0 0 420px;min-width:0;display:flex;flex-direction:column;border-right:1px solid var(--border-soft)}
+.split-lista .chat-list{flex:1 1 auto;min-height:0;overflow:auto}
+.split-lista .busq-fila{padding:10px 12px}
+.split-filtros{display:flex;flex-direction:column;gap:10px;padding:12px;border-bottom:1px solid var(--border-soft)}
+.split-lista .chip-f{min-height:32px;padding:0 11px;font-size:12.5px}
+.split-lista .chat-row{gap:12px;padding:10px 14px}
+.split-lista .chat-av{width:46px;height:46px;font-size:15px}
+.split-chat{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;background:var(--surface)}
+.split-vacio{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:40px;text-align:center;background:var(--surface-2)}
+.split-vacio .sv-ic{width:72px;height:72px;border-radius:50%;background:#e7f6ef;color:#008069;display:grid;place-items:center}
+.split-vacio .sv-ic svg{width:32px;height:32px}
+.split-vacio b{font-family:'Bricolage Grotesque';font-size:18px}
+.split-vacio span{font-size:13.5px;color:var(--muted);max-width:360px}
+.chat-row.sel,.chat-row.clic.sel:hover{background:#f0f2f5;box-shadow:inset 3px 0 0 #008069}
+.chat-l3{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.chat-l3 .estado,.chat-l3 .tag-apagado{font-size:11px;padding:1px 8px}
+.adj-prev{display:inline-flex;align-items:center;gap:5px;min-width:0;max-width:100%;vertical-align:bottom}
+.adj-prev svg{width:14px;height:14px;flex:none}
+.adj-prev span{overflow:hidden;text-overflow:ellipsis}
+.burbuja .adj-tit{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600}
+.burbuja .adj-tit svg{width:16px;height:16px;flex:none;color:#54656f}
+.burbuja .adj-nota{font-size:12px;color:#54656f}
+/* La conversación como parte de la página */
+.conv-pane{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+.conv-cab{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--border-soft);flex-wrap:wrap}
+.conv-cab .conv-av{width:42px;height:42px;font-size:14px}
+.conv-cab-tx{flex:1 1 220px;min-width:0;display:flex;flex-direction:column;gap:3px}
+.conv-cab-tx h3{font-family:'Bricolage Grotesque';font-size:17px;font-weight:800;letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conv-estados{display:flex;gap:6px;flex-wrap:wrap}
+.conv-volver{display:none;flex:none;width:44px;height:44px;border-radius:50%;place-items:center;color:var(--text)}
+.conv-volver:hover{background:var(--surface-2)}
+.conv-volver svg{width:20px;height:20px}
+.conv-marcar{flex:none}
+.conv-pane .conv-control{margin:12px 18px 0}
+.conv-pane .conv-mensajes{margin:12px 18px 0}
+/* Con un chat abierto, los avisos emergentes van arriba para no tapar el campo de respuesta */
+body:has(.split.abierta) .toasts{top:20px;bottom:auto}
+/* Pantallas medianas y celular: la lista ocupa todo el ancho y el chat se abre a pantalla completa */
+@media(max-width:1179px){
+  .split{display:block;height:auto;min-height:0}
+  .split-lista{border-right:none}
+  .split-lista .chat-list{overflow:visible}
+  .split-chat{display:none}
+  .split.abierta .split-chat{display:flex;position:fixed;inset:0;z-index:45}
+  .split .split-vacio{display:none}
+  .conv-volver{display:inline-grid}
+  body:has(.split.abierta){overflow:hidden}
+}
+@media(max-width:600px){
+  .chat-l1{flex-wrap:nowrap}
+  .chat-l1 .chat-nom{flex:0 1 auto;min-width:0}
+  .chat-l1 .chat-num{display:none}   /* en el celular el número se ve al abrir el chat */
+  .chat-l1 .chat-hora{flex:none}
+  .conv-cab{padding:8px 10px;gap:8px}
+  .conv-pane .conv-control{margin:10px 12px 0}
+  .conv-pane .conv-mensajes{margin:10px 12px 0}
+  body:has(.split.abierta) .toasts{left:12px;right:12px;top:12px;bottom:auto;max-width:none}
+}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -1192,9 +1253,10 @@ body:has(.overlay.drawer.show) .toasts{right:auto;left:20px}
       </div>
     </div>
 
-    <!-- ===== VISTA: CHATS POR RESPONDER ===== -->
+    <!-- ===== VISTA: CHATS POR RESPONDER (vista dividida) ===== -->
     <div class="view" id="view-chats">
-      <div class="panel" style="margin-bottom:0">
+      <div class="split" id="splitChats">
+        <div class="split-lista">
         <div class="chat-head">
           <h3>Esperando respuesta</h3>
           <span class="cnt-verde cero" id="chatsCnt">0</span>
@@ -1206,19 +1268,47 @@ body:has(.overlay.drawer.show) .toasts{right:auto;left:20px}
           <span class="busq-info oculto" id="pendInfo" aria-live="polite"></span>
         </div>
         <ul class="chat-list" id="chatsLista"></ul>
+        </div>
+        <div class="split-chat" id="chatsDerecha">
+          <div class="split-vacio"><span class="sv-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"/><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"/></svg></span><b>Seleccionar un chat</b><span>Elegir un chat de la lista para ver la conversación, responder o marcarlo como atendido.</span></div>
+        <div class="conv-pane oculto" id="convPane" role="region" aria-labelledby="convTitulo">
+          <div class="conv-cab">
+            <button class="conv-volver" type="button" onclick="cerrarConversacion()" aria-label="Volver a la lista de chats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
+            <span class="chat-av conv-av" id="convAvatar" aria-hidden="true"></span>
+            <div class="conv-cab-tx"><h3 id="convTitulo">Conversación</h3><div class="conv-estados" id="convEstados"></div></div>
+            <button class="pill-btn conv-marcar oculto" type="button" id="convMarcar" data-id="" onclick="marcarDesdeConversacion()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Marcar atendido</button>
+          </div>
+          <div class="conv-control oculto" id="convControl"></div>
+          <div class="conv-mensajes" id="convMensajes" aria-live="polite"></div>
+          <div class="conv-composer">
+      <div class="conv-aviso ambar oculto" id="convNoResp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="txt" id="convNoRespTx"></span></div>
+      <div class="fila">
+        <textarea id="convTexto" rows="1" placeholder="Escribir un mensaje…" aria-label="Mensaje para el cliente" maxlength="3900" onkeydown="teclaComposer(event)" oninput="ajustarAlto(this)"></textarea>
+        <button class="btn-enviar" type="button" id="convEnviar" aria-label="Enviar el mensaje" onclick="enviarRespuesta()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+      </div>
+      <span class="conv-error oculto" id="convError" role="alert"></span>
+      <span class="conv-pista" id="convPista"></span>
+    </div>
+        </div>
+        </div>
       </div>
       <div class="nota-clara"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Cuando una persona del equipo responde desde este panel, desde el celular o desde WhatsApp Web, el chat pasa solo a «Chats respondidos». Si se atendió por una llamada o en el local, usar «Marcar atendido» e indicar el motivo. En rojo, las esperas de más de 5 minutos.</span></div>
     </div>
 
-    <!-- ===== VISTA: CONVERSACIONES ===== -->
+    <!-- ===== VISTA: CONVERSACIONES (vista dividida) ===== -->
     <div class="view" id="view-conversaciones">
-      <div class="panel" style="margin-bottom:0">
-        <div style="display:flex;flex-direction:column;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border-soft)">
+      <div class="split" id="splitConv">
+        <div class="split-lista">
+          <div class="split-filtros">
           <label class="buscador" style="flex:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="search" id="convBuscar" placeholder="Buscar por nombre, número o mensaje" aria-label="Buscar en conversaciones" oninput="buscarConversaciones()"></label>
           <div class="chips-filtro" role="group" aria-label="Filtrar por estado" id="convChips"></div>
+          </div>
+          <ul class="chat-list" id="convLista"></ul>
+          <div class="lista-info oculto" id="convInfo"></div>
         </div>
-        <ul class="chat-list" id="convLista"></ul>
-        <div class="lista-info oculto" id="convInfo"></div>
+        <div class="split-chat" id="convDerecha">
+          <div class="split-vacio"><span class="sv-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"/><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"/></svg></span><b>Seleccionar un chat</b><span>Elegir un chat de la lista para ver la conversación, responder o apagar a Verde en ese chat.</span></div>
+        </div>
       </div>
       <div class="nota-clara"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Verde se pausa solo en un chat cuando una persona del equipo escribe desde el WhatsApp de la tienda o desde este panel, y vuelve a responder 12 horas después del último mensaje de esa persona. Con el interruptor de cada chat se puede apagar sin límite de tiempo y volver a encender.</span></div>
     </div>
@@ -1350,27 +1440,6 @@ body:has(.overlay.drawer.show) .toasts{right:auto;left:20px}
   <div class="drawer-panel">
     <div class="drawer-head"><div><h3>Cerebro de Verde <span class="faint" style="font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500">(vista previa en vivo)</span></h3><p>Lo que recibe el bot. Se actualiza mientras se edita.</p></div><button class="x-btn" type="button" onclick="close_('cerebroOverlay')" aria-label="Cerrar el cerebro de Verde"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
     <div class="drawer-body"><pre id="v_preview" class="prompt-preview"></pre></div>
-  </div>
-</div>
-
-<div class="overlay drawer" id="convOverlay">
-  <div class="drawer-panel claro conv-panel" role="dialog" aria-modal="true" aria-labelledby="convTitulo">
-    <div class="drawer-head">
-      <div style="display:flex;flex-direction:column;gap:6px;min-width:0"><h3 id="convTitulo">Conversación</h3><div id="convEstados" style="display:flex;gap:6px;flex-wrap:wrap"></div></div>
-      <button class="x-btn" type="button" onclick="cerrarConversacion()" aria-label="Cerrar la conversación"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-    </div>
-    <div class="conv-control oculto" id="convControl"></div>
-    <div class="conv-sub">Últimos mensajes</div>
-    <div class="conv-mensajes" id="convMensajes" aria-live="polite"></div>
-    <div class="conv-composer">
-      <div class="conv-aviso ambar oculto" id="convNoResp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="txt" id="convNoRespTx"></span></div>
-      <div class="fila">
-        <textarea id="convTexto" rows="1" placeholder="Escribir un mensaje…" aria-label="Mensaje para el cliente" maxlength="3900" onkeydown="teclaComposer(event)" oninput="ajustarAlto(this)"></textarea>
-        <button class="btn-enviar" type="button" id="convEnviar" aria-label="Enviar el mensaje" onclick="enviarRespuesta()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
-      </div>
-      <span class="conv-error oculto" id="convError" role="alert"></span>
-      <span class="conv-pista" id="convPista"></span>
-    </div>
   </div>
 </div>
 
@@ -1889,6 +1958,7 @@ function go(view){
   _doGo(view);
 }
 function _doGo(view){
+  if(CONV.clave&&!_abriendoConv)cerrarConversacion();   // al cambiar de pantalla se cierra la conversación abierta
   currentView=view;
   document.querySelectorAll('.tree-leaf,.side-link').forEach(l=>l.classList.remove('active'));
   const hoja=document.getElementById('leaf-'+view)||document.getElementById('leaf-'+(VISTA_PADRE[view]||''));
@@ -3551,7 +3621,7 @@ async function actualizarContador(pintar){
 const MOTIVOS_PANEL=[['llamada','Por llamada'],['local','En el local'],['no_necesita','Ya no necesita atención'],['otro','Otro motivo']];
 let _atId=null,_atMotivo=null;
 function abrirAtendido(id){
-  const c=CHATS_PEND.find(x=>x.id===id);if(!c)return;
+  const c=CHATS_PEND.find(x=>x.id===id)||(CONV.datos&&CONV.datos.pendienteId===id?{nombre:CONV.datos.nombre,numero:CONV.datos.numero}:null);if(!c)return;
   _atId=id;_atMotivo=null;
   document.getElementById('atCliente').textContent=(c.nombre?c.nombre+' · ':'')+(c.numero?'+'+c.numero:'Cliente sin número visible');
   document.getElementById('atDetalle').value='';
@@ -3576,6 +3646,7 @@ async function confirmarAtendido(){
   close_('atOverlay');
   toast('Chat marcado como atendido','Pasó a «Chats respondidos».','success');
   actualizarContador(true);
+  if(CONV.clave)refrescarConversacion(false);
 }
 
 /* ---------- chats respondidos ---------- */
@@ -3620,7 +3691,7 @@ function renderRespondidos(){
     return '<li class="chat-row clic'+(c.volvioAEscribir?' alerta':'')+'" tabindex="0" role="button" data-id="'+escH(c.id)+'" onclick="abrirDetalle(this.dataset.id)" onkeydown="if(event.key===\'Enter\')abrirDetalle(this.dataset.id)">'
       +'<span class="chat-av" aria-hidden="true">'+av+'</span><div class="chat-main">'
       +'<div class="chat-l1"><span class="chat-nom">'+escH(nombre)+'</span>'+(c.nombre&&c.numero?'<span class="chat-num">+'+escH(c.numero)+'</span>':'')+'<span class="chat-hora">'+escH(horaCorta(c.cerradoEn))+'</span></div>'
-      +'<div class="chat-l2"><span class="chat-msg">'+escH(c.ultimoMensaje||'')+'</span></div>'
+      +'<div class="chat-l2"><span class="chat-msg">'+vistaPrevia(c.ultimoMensaje||'',null)+'</span></div>'
       +'<div class="chat-l3">'+pildoraEstado(c)+det.map(x=>'<span>'+x+'</span>').join('<span aria-hidden="true" style="color:#aebac1">·</span>')+'</div>'
       +'</div></li>';
   }).join('');
@@ -3795,14 +3866,57 @@ function updateBot(){
   if(st)st.textContent=lateral;
 }
 
-/* ===================== 1.3.2: buscador, Conversaciones, interruptor de Verde y respuesta desde el panel ===================== */
+/* ===================== 1.3.2 y 1.3.3: buscador, Conversaciones con vista dividida, interruptor de Verde y respuesta desde el panel ===================== */
 const IC132={
   power:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>',
   responder:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>',
   reloj:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
   info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
-  mensajes:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"/><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"/></svg>'
+  mensajes:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"/><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"/></svg>',
+  imagen:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
+  video:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>',
+  audio:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>',
+  documento:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+  adjunto:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>'
 };
+
+/* ---------- archivos que envía el cliente (imagen, audio, video, documento…) ---------- */
+// El servidor los guarda como «[El cliente envió una imagen: leyenda]»; el panel los muestra como un aviso prolijo.
+const RX_ADJ_CLIENTE=/^\[El cliente envió (una imagen|un documento|un audio|un video|una ubicación|un contacto)(?:: ([\s\S]*))?\]$/;
+const RX_ADJ_EQUIPO=/^\[envió (.+)\]$/;
+const NOMBRE_ADJ={'una imagen':'Imagen','un documento':'Documento','un audio':'Audio','un video':'Video','una ubicación':'Ubicación','un contacto':'Contacto'};
+function parsearAdjunto(texto){
+  const t=String(texto==null?'':texto).trim();
+  let m=t.match(RX_ADJ_CLIENTE);
+  if(m)return{desc:m[1],nombre:NOMBRE_ADJ[m[1]]||'Archivo',leyenda:(m[2]||'').trim()};
+  m=t.match(RX_ADJ_EQUIPO);
+  if(m){const d=m[1];return{desc:d,nombre:NOMBRE_ADJ[d]||(d.replace(/^(un|una)\s+/,'').replace(/^./,x=>x.toUpperCase())),leyenda:''};}
+  return null;
+}
+function iconoAdjunto(desc){
+  if(desc==='una imagen')return IC132.imagen;
+  if(desc==='un video')return IC132.video;
+  if(desc==='un audio')return IC132.audio;
+  if(desc==='un documento')return IC132.documento;
+  return IC132.adjunto;
+}
+// Vista previa para las listas: «Imagen: «leyenda»» con su ícono, o el texto con la búsqueda resaltada.
+function vistaPrevia(texto,b){
+  const a=parsearAdjunto(texto);
+  if(!a)return resaltar(texto,b);
+  return '<span class="adj-prev">'+iconoAdjunto(a.desc)+'<span>'+escH(a.nombre)+(a.leyenda?': «'+resaltar(a.leyenda,b)+'»':'')+'</span></span>';
+}
+// Texto plano (para el recorrido de una atención).
+function textoPlano(texto){
+  const a=parsearAdjunto(texto);
+  if(!a)return String(texto==null?'':texto);
+  return (String(texto).trim().startsWith('[El cliente')?'El cliente envió ':'Envió ')+a.desc+(a.leyenda?': «'+a.leyenda+'»':'')+' (se ve en el WhatsApp de la tienda)';
+}
+function htmlAdjuntoBurbuja(a,deCliente){
+  return '<span class="adj-tit">'+iconoAdjunto(a.desc)+escH((deCliente?'El cliente envió ':'Envió ')+a.desc)+'</span>'
+    +(a.leyenda?'<span class="txt">«'+escH(a.leyenda)+'»</span>':'')
+    +'<span class="adj-nota">Se ve en el WhatsApp de la tienda.</span>';
+}
 
 /* ---------- búsqueda: nombre, número en cualquier formato y mensajes ---------- */
 function normalizarTexto(s){return String(s==null?'':s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
@@ -3870,15 +3984,13 @@ function renderChats(){
     const nombre=c.nombre||(c.numero?'+'+c.numero:'Cliente sin número visible');
     const av=c.nombre?escH(iniciales(c.nombre)):SVG131.persona;
     const mostrar=msg||c.ultimoMensaje||'';
-    return '<li class="chat-row"><span class="chat-av" aria-hidden="true">'+av+'</span>'
+    return '<li class="chat-row clic'+(c.clave&&c.clave===CONV.clave?' sel':'')+'" tabindex="0" role="button" data-clave="'+escH(c.clave||'')+'" aria-label="Abrir el chat de '+escH(nombre)+'" onclick="abrirConversacion(this.dataset.clave)" onkeydown="if(event.key===\'Enter\')abrirConversacion(this.dataset.clave)">'
+      +'<span class="chat-av" aria-hidden="true">'+av+'</span>'
       +'<div class="chat-main"><div class="chat-l1"><span class="chat-nom">'+escH(nombre)+'</span>'
       +(c.nombre&&c.numero?'<span class="chat-num">+'+escH(c.numero)+'</span>':'')
-      +(c.apagado?'<span class="tag-apagado">'+IC132.power+'Verde apagado en este chat</span>':'')
       +'<span class="chat-hora'+(roja?' roja':'')+'">'+escH(tiempoEspera(min))+'</span></div>'
-      +'<div class="chat-l2"><span class="chat-msg">'+resaltar(mostrar,b)+'</span>'+(roja?'<span class="punto-rojo" aria-hidden="true"></span>':'')+'</div></div>'
-      +'<div class="chat-acciones">'
-      +(c.clave?'<button class="pill-btn prim" type="button" data-clave="'+escH(c.clave)+'" onclick="abrirConversacion(this.dataset.clave)" aria-label="Responder a '+escH(nombre)+'">'+IC132.responder+' Responder</button>':'')
-      +'<button class="pill-btn" type="button" data-id="'+escH(c.id)+'" onclick="abrirAtendido(this.dataset.id)" aria-label="Marcar como atendido el chat de '+escH(nombre)+'">'+SVG131.check+' Marcar atendido</button>'
+      +'<div class="chat-l2"><span class="chat-msg">'+vistaPrevia(mostrar,b)+'</span>'+(roja?'<span class="punto-rojo" aria-hidden="true"></span>':'')+'</div>'
+      +(c.apagado?'<div class="chat-l3"><span class="tag-apagado">'+IC132.power+'Verde apagado en este chat</span></div>':'')
       +'</div></li>';
   }).join('');
 }
@@ -3928,10 +4040,11 @@ function renderConversaciones(){
     const nombre=c.nombre||(c.numero?'+'+c.numero:'Cliente sin número visible');
     const av=c.nombre?escH(iniciales(c.nombre)):SVG131.persona;
     const m=c.coincidencia||c.ultimo;
-    return '<li class="chat-row clic" tabindex="0" role="button" data-clave="'+escH(c.clave)+'" onclick="abrirConversacion(this.dataset.clave)" onkeydown="if(event.key===\'Enter\')abrirConversacion(this.dataset.clave)">'
+    return '<li class="chat-row clic'+(c.clave===CONV.clave?' sel':'')+'" tabindex="0" role="button" data-clave="'+escH(c.clave)+'" aria-label="Abrir el chat de '+escH(nombre)+'" onclick="abrirConversacion(this.dataset.clave)" onkeydown="if(event.key===\'Enter\')abrirConversacion(this.dataset.clave)">'
       +'<span class="chat-av" aria-hidden="true">'+av+'</span><div class="chat-main">'
       +'<div class="chat-l1"><span class="chat-nom">'+escH(nombre)+'</span>'+(c.nombre&&c.numero?'<span class="chat-num">+'+escH(c.numero)+'</span>':'')+'<span class="chat-hora">'+escH(horaCorta(c.ultimoEn))+'</span></div>'
-      +'<div class="chat-l2"><span class="chat-msg">'+prefijoMensaje(m)+(m?(c.coincidencia?resaltar(m.texto,b):escH(m.texto)):'')+'</span><span class="estados">'+pillsConversacion(c)+'</span></div>'
+      +'<div class="chat-l2"><span class="chat-msg">'+prefijoMensaje(m)+(m?vistaPrevia(m.texto,c.coincidencia?b:null):'')+'</span></div>'
+      +'<div class="chat-l3">'+pillsConversacion(c)+'</div>'
       +'</div></li>';
   }).join('');
 }
@@ -4011,27 +4124,62 @@ async function reanudarVerde(btn){
   refrescarListas();
 }
 
-/* ---------- conversación abierta: mensajes, interruptor y respuesta desde el panel ---------- */
-let CONV={clave:null,datos:null,timer:null};
-function convAbierta(){return document.getElementById('convOverlay').classList.contains('show');}
+/* ---------- conversación abierta: vista dividida (computadora) o pantalla completa (celular) ---------- */
+let CONV={clave:null,datos:null,timer:null,vista:null};
+let _abriendoConv=false;
+const BORRADORES={};
+function convAbierta(){return !!CONV.clave;}
+function contenedorChat(vista){return document.getElementById(vista==='chats'?'chatsDerecha':'convDerecha');}
+function splitDe(vista){return document.getElementById(vista==='chats'?'splitChats':'splitConv');}
+function marcarSeleccion(){
+  document.querySelectorAll('#chatsLista .chat-row, #convLista .chat-row').forEach(li=>li.classList.toggle('sel',!!CONV.clave&&li.dataset.clave===CONV.clave));
+}
+function guardarBorrador(){
+  if(!CONV.clave)return;
+  const v=document.getElementById('convTexto').value;
+  if(v.trim())BORRADORES[CONV.clave]=v;else delete BORRADORES[CONV.clave];
+}
 async function abrirConversacion(clave){
   if(!clave)return;
-  CONV.clave=clave;CONV.datos=null;
+  if(currentView!=='chats'&&currentView!=='conversaciones'){_abriendoConv=true;_doGo('conversaciones');_abriendoConv=false;}
+  guardarBorrador();
+  const vista=currentView;
+  const pane=document.getElementById('convPane');
+  const cont=contenedorChat(vista);
+  if(pane.parentNode!==cont)cont.appendChild(pane);
+  ['splitChats','splitConv'].forEach(id=>document.getElementById(id).classList.remove('abierta'));
+  splitDe(vista).classList.add('abierta');
+  cont.querySelector('.split-vacio').classList.add('oculto');
+  pane.classList.remove('oculto');
+  CONV.clave=clave;CONV.datos=null;CONV.vista=vista;
+  marcarSeleccion();
   document.getElementById('convTitulo').textContent='Conversación';
+  document.getElementById('convAvatar').innerHTML=SVG131.persona;
   document.getElementById('convEstados').innerHTML='';
+  document.getElementById('convMarcar').classList.add('oculto');
   const ctl=document.getElementById('convControl');ctl.className='conv-control oculto';ctl.innerHTML='';
   document.getElementById('convMensajes').innerHTML='<div class="conv-vacio">Cargando la conversación…</div>';
-  const ta=document.getElementById('convTexto');ta.value='';ajustarAlto(ta);
+  const ta=document.getElementById('convTexto');ta.value=BORRADORES[clave]||'';ajustarAlto(ta);
   document.getElementById('convError').classList.add('oculto');
-  show('convOverlay');
   await refrescarConversacion(true);
   clearInterval(CONV.timer);
   CONV.timer=setInterval(()=>{
-    if(!convAbierta()){clearInterval(CONV.timer);CONV.timer=null;CONV.clave=null;return;}
+    if(!CONV.clave){clearInterval(CONV.timer);CONV.timer=null;return;}
     if(!document.hidden)refrescarConversacion(false);
   },5000);
+  if(CONV.clave===clave&&!ta.disabled&&window.matchMedia&&window.matchMedia('(pointer: fine)').matches)ta.focus();
 }
-function cerrarConversacion(){close_('convOverlay');clearInterval(CONV.timer);CONV.timer=null;CONV.clave=null;}
+function cerrarConversacion(){
+  guardarBorrador();
+  clearInterval(CONV.timer);CONV.timer=null;
+  document.getElementById('convPane').classList.add('oculto');
+  ['splitChats','splitConv'].forEach(id=>{const sp=document.getElementById(id);sp.classList.remove('abierta');const v=sp.querySelector('.split-vacio');if(v)v.classList.remove('oculto');});
+  CONV.clave=null;CONV.datos=null;CONV.vista=null;
+  marcarSeleccion();
+}
+function marcarDesdeConversacion(){const id=document.getElementById('convMarcar').dataset.id;if(id)abrirAtendido(id);}
+// Escape cierra la conversación abierta (si no hay una ventana encima).
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&CONV.clave&&!document.querySelector('.overlay.show'))cerrarConversacion();},true);
 async function refrescarConversacion(primera){
   const clave=CONV.clave;if(!clave)return;
   const r=await api('/api/conversaciones/'+encodeURIComponent(clave));
@@ -4047,16 +4195,19 @@ function renderMensajes(ms){
   return ms.map(m=>{
     const hora='<span class="hora">'+escH(horaCorta(m.en))+'</span>';
     if(m.tipo==='sistema')return '<div class="linea-sis">'+escH(horaCorta(m.en))+' · '+escH(m.texto)+'</div>';
-    if(m.tipo==='cliente')return '<div class="burbuja cli"><span class="txt">'+escH(m.texto)+'</span>'+hora+'</div>';
+    const adj=parsearAdjunto(m.texto);
+    if(m.tipo==='cliente')return '<div class="burbuja cli">'+(adj?htmlAdjuntoBurbuja(adj,true):'<span class="txt">'+escH(m.texto)+'</span>')+hora+'</div>';
     if(m.tipo==='verde')return '<div class="burbuja ver"><span class="quien">Verde</span><span class="txt">'+escH(m.texto)+'</span>'+hora+'</div>';
     const quien=(m.autor?m.autor+' (equipo)':'Equipo')+(m.origen==='panel'?' · desde el panel':(m.firma?'':' · sin firma'));
-    return '<div class="burbuja equ"><span class="quien">'+escH(quien)+'</span><span class="txt">'+escH(m.texto)+'</span>'+hora+'</div>';
+    return '<div class="burbuja equ"><span class="quien">'+escH(quien)+'</span>'+(adj?htmlAdjuntoBurbuja(adj,false):'<span class="txt">'+escH(m.texto)+'</span>')+hora+'</div>';
   }).join('');
 }
 function pintarConversacion(c,primera){
   const anterior=CONV.datos;CONV.datos=c;
   document.getElementById('convTitulo').textContent=c.nombre?(c.nombre+(c.numero?' · +'+c.numero:'')):(c.numero?'+'+c.numero:'Cliente sin número visible');
   document.getElementById('convEstados').innerHTML=pillsConversacion(c);
+  document.getElementById('convAvatar').innerHTML=c.nombre?escH(iniciales(c.nombre)):SVG131.persona;
+  const bm=document.getElementById('convMarcar');bm.classList.toggle('oculto',!c.pendienteId);bm.dataset.id=c.pendienteId||'';
   const ctl=document.getElementById('convControl');
   ctl.className='conv-control'+(c.apagado?' off':'');
   ctl.innerHTML=htmlControlVerde(c);
@@ -4099,7 +4250,7 @@ async function enviarRespuesta(){
   const r=await api('/api/conversaciones/'+encodeURIComponent(CONV.clave)+'/responder',{method:'POST',body:{texto}});
   btn.disabled=false;ta.disabled=false;
   if(!r.ok){err.textContent=r.json.error||'No se pudo enviar el mensaje.';err.classList.remove('oculto');if(r.json&&r.status===409)refrescarConversacion(false);return;}
-  ta.value='';ajustarAlto(ta);err.classList.add('oculto');
+  ta.value='';ajustarAlto(ta);err.classList.add('oculto');delete BORRADORES[CONV.clave];
   pintarConversacion(r.json.conversacion,true);
   refrescarListas();
   if(!ta.disabled)ta.focus();
@@ -4121,7 +4272,7 @@ async function abrirDetalle(id){
     const extra=ev.tipo==='whatsapp'?(desdePanel?' · '+escH(ev.firma||'Acceso general'):(ev.firma?' · firma: '+escH(ev.firma):' · sin firma')):'';
     return '<li class="paso-r'+clase+'"><div class="pr-linea"><span class="pr-punto"></span><span class="pr-palo"></span></div>'
       +'<div class="pr-cuerpo"><div class="pr-quien"><b>'+escH(horaCorta(ev.en))+'</b><span>'+escH(quien)+extra+'</span></div>'
-      +'<div class="pr-txt">'+escH(ev.texto)+'</div></div></li>';
+      +'<div class="pr-txt">'+escH(textoPlano(ev.texto))+'</div></div></li>';
   }).join('');
   document.getElementById('detIrPend').classList.toggle('oculto',!(c.volvioAEscribir||c.estado==='pendiente'));
   document.getElementById('detAbrirConv').classList.toggle('oculto',!c.clave);
@@ -4138,11 +4289,10 @@ function pintarControlDetalle(conv){
   ctl.className='conv-control det'+(conv.apagado?' off':'');
   ctl.innerHTML=htmlControlVerde(conv);
 }
-function abrirConvDesdeDetalle(){const clave=DET.clave;if(!clave)return;close_('detOverlay');abrirConversacion(clave);}
+function abrirConvDesdeDetalle(){const clave=DET.clave;if(!clave)return;close_('detOverlay');_abriendoConv=true;_doGo('conversaciones');_abriendoConv=false;abrirConversacion(clave);}
 
 // La lista de «Conversaciones» se actualiza sola cada 15 segundos mientras está a la vista.
-setInterval(()=>{if(_appIniciada&&currentView==='conversaciones'&&!document.hidden&&!convAbierta())cargarConversaciones();},15000);
-
+setInterval(()=>{if(_appIniciada&&currentView==='conversaciones'&&!document.hidden)cargarConversaciones();},15000);
 /* ---------- init ---------- */
 (async()=>{
   await iniciarSesion();

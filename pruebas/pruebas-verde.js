@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.3.2';
+const VERSION_ESPERADA = '1.3.3';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -564,6 +564,14 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(borradasC >= 1 && (lc.lista || []).length >= 1 && lc.lista.every(x => x.apagado), 'se borran los chats sin movimiento, salvo los que tienen a Verde apagado');
   const permisosC = (fs.statSync(path.join(__dirname, 'data', 'conversaciones-panel.json')).mode & 0o777).toString(8);
   verificar(permisosC === '600', 'el archivo de conversaciones es privado');
+
+  mostrar('41) La conversación abierta permite «Marcar atendido»');
+  dc = await json(await api('/api/conversaciones/' + encodeURIComponent('wa:59871000009')));
+  const pend41 = (await json(await api('/api/chats/pendientes'))).lista.find(x => x.numero === '59871000009');
+  verificar(pend41 && dc.pendienteId === pend41.id, 'un chat por responder trae la identificación de su atención');
+  rr = await api('/api/chats/' + dc.pendienteId + '/atendido', 'POST', { motivo: 'llamada' });
+  dc = await json(await api('/api/conversaciones/' + encodeURIComponent('wa:59871000009')));
+  verificar(rr.status === 200 && dc.pendienteId === null && dc.pendiente === false, 'después de marcarlo, la conversación ya no figura por responder');
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }

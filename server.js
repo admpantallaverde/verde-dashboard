@@ -29,7 +29,7 @@ const usuarios = require('./usuarios.js');
 const atencion = require('./atencion.js');
 const conversaciones = require('./conversaciones.js');
 
-const VERSION = '1.3.2';
+const VERSION = '1.3.3';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -639,6 +639,7 @@ function conDatosDelPanel(d, req) {
   d.verdeGeneral = bot.getVerde().encendido !== false;
   d.firmaUsuario = req.usuario ? (req.usuario.firma || '') : '';
   d.d360 = d360Configurado();
+  d.pendienteId = atencion.pendienteId(d.clave);   // para «Marcar atendido» desde la conversación abierta
   return d;
 }
 app.get('/api/conversaciones', requiere(['admin', 'asesor']), (req, res) => {
