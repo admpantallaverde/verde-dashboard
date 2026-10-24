@@ -11,12 +11,16 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.2.0';
+const VERSION_ESPERADA = '1.2.1';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
 for (const k of ['log', 'warn', 'error']) console[k] = (...a) => registro.push(a.map(String).join(' '));
-const mostrar = t => process.stdout.write(t + '\n');
+// Resultado compacto: se guarda todo y se muestra solo si algo falla (o con --detalle).
+const DETALLE = process.argv.includes('--detalle');
+const lineasGuardadas = [];
+const mostrar = t => { if (DETALLE) process.stdout.write(t + '\n'); else lineasGuardadas.push(t); };
+const final = t => process.stdout.write(t + '\n');
 
 const llamadasIA = [];
 const envios360 = [];
@@ -207,8 +211,8 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(recibida.url === 'https://waba-sandbox.360dialog.io/v1/configs/webhook' && recibida.clave === 'clave-360-de-prueba' && recibida.webhook === 'https://chat.pantallaverde.com/webhook/360/secreto123abc', 'registra la dirección correcta en 360dialog');
   verificar(salida.status === 0 && /Listo/.test(salida.stdout) && !/secreto123abc/.test(salida.stdout + salida.stderr), 'no muestra la clave secreta en pantalla');
 
-  mostrar('');
-  mostrar('Pruebas OK: ' + ok + ' · con fallas: ' + mal);
-  if (mal) { mostrar('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => mostrar(l)); }
+  if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
+  if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }
+  final('Pruebas OK: ' + ok + ' · con fallas: ' + mal);
   process.exit(mal ? 1 : 0);
-})().catch(err => { mostrar('✘ FALLÓ: la prueba se interrumpió: ' + err.message); mostrar('Pruebas OK: ' + ok + ' · con fallas: ' + (mal + 1)); process.exit(1); });
+})().catch(err => { lineasGuardadas.forEach(l => final(l)); final('✘ FALLÓ: la prueba se interrumpió: ' + err.message); final('Pruebas OK: ' + ok + ' · con fallas: ' + (mal + 1)); process.exit(1); });

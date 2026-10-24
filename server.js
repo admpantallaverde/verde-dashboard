@@ -22,7 +22,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const bot = require('./bot.js');
 
-const VERSION = '1.2.0';
+const VERSION = '1.2.1';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).

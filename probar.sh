@@ -2,6 +2,7 @@
 # probar.sh — Corre las pruebas automáticas de Verde en una carpeta temporal.
 # No toca los datos reales, no usa las claves reales y no sale a internet.
 # Uso (en el servidor):  cd /root/verde-dashboard && bash probar.sh
+# Para ver cada prueba una por una:  bash probar.sh --detalle
 set -u
 ORIGEN="$(cd "$(dirname "$0")" && pwd)"
 PROD="${VERDE_PROD:-/root/verde-comportamiento}"
@@ -37,4 +38,4 @@ FIN
 echo "Probando Verde en una carpeta temporal (no toca nada real)..."
 cd "$TMP" && env -u ANTHROPIC_API_KEY -u PORT -u HOST -u D360_API_KEY -u D360_MESSAGES_URL -u D360_WEBHOOK_SECRET \
   -u VERDE_ESFUERZO -u VERDE_PAUSA_HORAS -u ANTHROPIC_VERSION -u PUBLIC_URL -u D360_CONFIG_URL \
-  node pruebas-verde.js
+  node pruebas-verde.js "$@"
