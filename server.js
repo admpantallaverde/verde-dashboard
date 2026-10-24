@@ -11,6 +11,10 @@
  *   4. Permite PROBAR el bot desde el dashboard sin WhatsApp (/api/simulate).
  *   5. Si una persona del equipo responde desde el celular, Verde se pausa
  *      con ese cliente (12 horas por defecto).
+ *   6. Cuando Verde deriva un chat, lo deja en «Chats por responder», se calla
+ *      con ese cliente y avisa a los celulares del equipo. Guarda el historial
+ *      de cómo se atendió cada chat (3 meses) para la supervisión.
+ *   7. Usuarios propios para el panel (se activa con VERDE_LOGIN=activo en .env).
  *
  * Las claves (IA y WhatsApp) viven en el archivo .env, NUNCA en la pantalla.
  */
@@ -21,8 +25,10 @@ const express = require('express');
 const fs = require('fs');
 const crypto = require('crypto');
 const bot = require('./bot.js');
+const usuarios = require('./usuarios.js');
+const atencion = require('./atencion.js');
 
-const VERSION = '1.2.1';
+const VERSION = '1.3.0';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -45,7 +51,8 @@ function soloDigitos(s) { return String(s || '').replace(/\D/g, ''); }
 function esNumeroInterno(from) {
   const f = soloDigitos(from);
   if (!f) return false;
-  return NUMEROS_INTERNOS.some(n => {
+  // También son internos los celulares del equipo que reciben los avisos.
+  return NUMEROS_INTERNOS.concat(leerAvisos().numeros).some(n => {
     const d = soloDigitos(n);
     return d && (f === d || f.endsWith(d) || d.endsWith(f));
   });
@@ -66,8 +73,108 @@ app.use(express.static(path.join(__dirname, 'public'), {
   }
 }));
 
+/* ============================================================
+   USUARIOS Y PERMISOS
+   El ingreso con usuario propio se activa con VERDE_LOGIN=activo en .env.
+   Mientras no está activo, el panel funciona como siempre (protegido por Nginx).
+   ============================================================ */
+const COOKIE = 'verde_sesion';
+function loginActivo() { return String(process.env.VERDE_LOGIN || '').trim().toLowerCase() === 'activo'; }
+function leerCookie(req) {
+  for (const parte of String(req.headers.cookie || '').split(';')) {
+    const i = parte.indexOf('=');
+    if (i > -1 && parte.slice(0, i).trim() === COOKIE) {
+      try { return decodeURIComponent(parte.slice(i + 1).trim()); } catch (e) { return null; }
+    }
+  }
+  return null;
+}
+function ponerCookie(res, token) {
+  res.setHeader('Set-Cookie', COOKIE + '=' + token + '; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=' + (7 * 24 * 3600));
+}
+function borrarCookie(res) {
+  res.setHeader('Set-Cookie', COOKIE + '=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0');
+}
+function ipDe(req) { return String(req.headers['x-real-ip'] || (req.socket && req.socket.remoteAddress) || ''); }
+function responderError(res, e) {
+  if (e && e.publico) return res.status(e.codigo || 400).json({ error: e.message });
+  console.error('Error inesperado:', e);
+  res.status(500).json({ error: 'Ocurrió un error inesperado.' });
+}
+
+app.use('/api', (req, res, next) => {
+  // Los cambios solo se aceptan desde el propio panel (protección contra pedidos de otros sitios).
+  if (req.method !== 'GET' && req.method !== 'HEAD' && req.headers.origin) {
+    let host = '';
+    try { host = new URL(req.headers.origin).host; } catch (e) { host = ''; }
+    if (host !== req.headers.host) return res.status(403).json({ error: 'Origen no permitido.' });
+  }
+  const token = leerCookie(req);
+  req.usuario = token ? usuarios.validarSesion(token) : null;
+  next();
+});
+// Exige sesión (y rol) solo cuando el ingreso con usuario propio está activo.
+function requiere(roles) {
+  return (req, res, next) => {
+    if (!loginActivo()) return next();
+    if (!req.usuario) return res.status(401).json({ error: 'La sesión no está iniciada o venció. Ingresar de nuevo.', sesion: false });
+    if (req.usuario.debeCambiar) return res.status(403).json({ error: 'Antes de seguir hay que cambiar la contraseña temporal.', debeCambiar: true });
+    if (roles && !roles.includes(req.usuario.rol)) return res.status(403).json({ error: 'Este usuario no tiene permiso para esta sección.' });
+    next();
+  };
+}
+
+app.post('/api/login', (req, res) => {
+  const b = req.body || {};
+  const r = usuarios.ingresar(b.usuario, b.clave, ipDe(req));
+  if (!r.ok) {
+    const bloqueado = r.motivo === 'bloqueado';
+    return res.status(bloqueado ? 429 : 401).json({ error: bloqueado ? 'Demasiados intentos fallidos. Probar de nuevo en 15 minutos.' : 'Usuario o contraseña incorrectos.' });
+  }
+  ponerCookie(res, r.token);
+  res.json({ ok: true, usuario: r.usuario });
+});
+app.post('/api/logout', (req, res) => {
+  const token = leerCookie(req);
+  if (token) usuarios.cerrarSesion(token);
+  borrarCookie(res);
+  res.json({ ok: true });
+});
+app.get('/api/sesion', (req, res) => {
+  res.json({ loginActivo: loginActivo(), usuario: req.usuario || null, hayUsuarios: usuarios.hayUsuarios() });
+});
+app.post('/api/clave', (req, res) => {
+  if (!req.usuario) return res.status(401).json({ error: 'La sesión no está iniciada o venció. Ingresar de nuevo.', sesion: false });
+  try {
+    const b = req.body || {};
+    res.json({ ok: true, usuario: usuarios.cambiarClave(req.usuario.id, b.actual, b.nueva) });
+  } catch (e) { responderError(res, e); }
+});
+
+/* ---------- Usuarios (solo administradores) ---------- */
+app.get('/api/usuarios', requiere(['admin']), (req, res) => res.json({ usuarios: usuarios.listar() }));
+app.post('/api/usuarios', requiere(['admin']), (req, res) => {
+  try {
+    const r = usuarios.crear(req.body || {});
+    res.json({ ok: true, usuario: r.usuario, claveTemporal: r.claveTemporal });
+  } catch (e) { responderError(res, e); }
+});
+app.put('/api/usuarios/:id', requiere(['admin']), (req, res) => {
+  try {
+    const b = req.body || {};
+    res.json({ ok: true, usuario: usuarios.actualizar(req.params.id, { nombre: b.nombre, rol: b.rol, firma: b.firma, activo: b.activo }) });
+  } catch (e) { responderError(res, e); }
+});
+app.post('/api/usuarios/:id/restablecer', requiere(['admin']), (req, res) => {
+  try { res.json({ ok: true, claveTemporal: usuarios.restablecerClave(req.params.id) }); }
+  catch (e) { responderError(res, e); }
+});
+
+/* ---------- IA disponibles para elegir en el panel ---------- */
+app.get('/api/modelos', requiere(['admin']), (req, res) => res.json({ modelos: bot.listarModelos() }));
+
 /* ---------- API de configuración (Paso 1) ---------- */
-app.get('/api/state', (req, res) => {
+app.get('/api/state', requiere(['admin']), (req, res) => {
   try {
     if (!fs.existsSync(STATE_FILE)) return res.json({ state: null });
     const raw = fs.readFileSync(STATE_FILE, 'utf8');
@@ -78,7 +185,7 @@ app.get('/api/state', (req, res) => {
   }
 });
 
-app.put('/api/state', (req, res) => {
+app.put('/api/state', requiere(['admin']), (req, res) => {
   try {
     const state = req.body && req.body.state;
     if (typeof state === 'undefined') return res.status(400).json({ error: 'Falta el campo "state".' });
@@ -98,18 +205,26 @@ app.get('/api/health', (req, res) => {
     version: VERSION,
     ia: !!process.env.ANTHROPIC_API_KEY,          // ¿hay clave de IA cargada?
     bot: (bot.getVerde().encendido !== false),    // ¿el bot está encendido?
-    wa360: d360Configurado()                      // ¿están los datos de 360dialog en .env?
+    wa360: d360Configurado(),                     // ¿están los datos de 360dialog en .env?
+    login: loginActivo()                          // ¿está activo el ingreso con usuario propio?
   });
 });
 
 /* ---------- Probar el bot desde el dashboard (sin WhatsApp) ---------- */
-app.post('/api/simulate', async (req, res) => {
+app.post('/api/simulate', requiere(['admin']), async (req, res) => {
   try {
     const message = (req.body && req.body.message || '').toString();
     const from = (req.body && req.body.from || 'simulador').toString();
+    const modelo = (req.body && req.body.modelo || '').toString().trim();
     if (!message.trim()) return res.status(400).json({ error: 'Escribí un mensaje.' });
-    const reply = await bot.getReply('sim:' + from, message);
-    res.json({ reply: reply || '(Verde está apagado y no enviaría ninguna respuesta.)' });
+    if (modelo && !bot.modeloPermitido(modelo)) return res.status(400).json({ error: 'Esa IA no está disponible.' });
+    const r = await bot.responderCliente('sim:' + from, message, { modelo: modelo || undefined });
+    if (!r) return res.json({ reply: '(Verde está apagado y no enviaría ninguna respuesta.)', derivaria: false });
+    res.json({
+      reply: r.texto + (r.derivar ? '\n\n(Este chat pasaría a «Chats por responder».)' : ''),
+      derivaria: !!r.derivar,
+      modelo: modelo || null
+    });
   } catch (err) {
     console.error('Error en /api/simulate:', err);
     res.status(500).json({ error: 'No se pudo generar la respuesta.' });
@@ -117,7 +232,7 @@ app.post('/api/simulate', async (req, res) => {
 });
 
 /* ---------- Reiniciar la charla del simulador (borra su memoria) ---------- */
-app.post('/api/simulate/reset', (req, res) => {
+app.post('/api/simulate/reset', requiere(['admin']), (req, res) => {
   try {
     const from = (req.body && req.body.from || 'simulador').toString();
     bot.resetConversation('sim:' + from);
@@ -228,12 +343,26 @@ function interpretar(msg) {
   return { clase: 'ignorar', tipo: tipo || 'desconocido' };
 }
 
-async function enviarWhatsApp(destino, texto) {
-  const cuerpo = destino.to
+function baseDestino(destino) {
+  return destino.to
     ? { messaging_product: 'whatsapp', recipient_type: 'individual', to: destino.to }
     : { messaging_product: 'whatsapp', recipient: destino.recipient };
+}
+function enviarWhatsApp(destino, texto) {
+  const cuerpo = baseDestino(destino);
   cuerpo.type = 'text';
   cuerpo.text = { body: String(texto).slice(0, 4096) };
+  return enviar360(cuerpo);
+}
+// Plantilla aprobada por Meta (necesaria para avisar fuera de la ventana de 24 horas).
+function limpiarParametro(t) { return String(t == null ? '' : t).replace(/[\r\n\t]+/g, ' ').replace(/ {2,}/g, ' ').trim().slice(0, 200) || '-'; }
+function enviarPlantilla(destino, nombre, idioma, parametros) {
+  const cuerpo = baseDestino(destino);
+  cuerpo.type = 'template';
+  cuerpo.template = { name: nombre, language: { code: idioma || 'es' }, components: [{ type: 'body', parameters: parametros.map(t => ({ type: 'text', text: limpiarParametro(t) })) }] };
+  return enviar360(cuerpo);
+}
+async function enviar360(cuerpo) {
   const ctrl = new AbortController();
   const limite = setTimeout(() => ctrl.abort(), 20000);
   try {
@@ -262,8 +391,55 @@ async function enviarWhatsApp(destino, texto) {
   }
 }
 
+/* ---------- Avisos a los celulares del equipo ---------- */
+const AVISOS_FILE = path.join(DATA_DIR, 'avisos.json');
+function leerAvisos() {
+  try {
+    const d = JSON.parse(fs.readFileSync(AVISOS_FILE, 'utf8'));
+    return { numeros: Array.isArray(d.numeros) ? d.numeros.map(soloDigitos).filter(Boolean) : [], plantilla: d.plantilla || '', idioma: d.idioma || 'es' };
+  } catch (e) {
+    return { numeros: [], plantilla: '', idioma: 'es' };
+  }
+}
+function guardarAvisos(datos) {
+  const numeros = [];
+  for (const n of (Array.isArray(datos.numeros) ? datos.numeros : [])) {
+    const d = soloDigitos(n);
+    if (!d) continue;
+    if (d.length < 8 || d.length > 15) { const e = new Error('El número «' + n + '» no es válido: debe incluir el código de país (por ejemplo, +598 9X XXX XXX).'); e.publico = true; throw e; }
+    if (!numeros.includes(d)) numeros.push(d);
+  }
+  if (numeros.length > 10) { const e = new Error('Se pueden cargar hasta 10 números.'); e.publico = true; throw e; }
+  const plantilla = String(datos.plantilla || '').trim();
+  if (plantilla && !/^[a-z0-9_]{1,512}$/.test(plantilla)) { const e = new Error('El nombre de la plantilla solo admite minúsculas, números y guion bajo.'); e.publico = true; throw e; }
+  const idioma = String(datos.idioma || 'es').trim();
+  if (!/^[a-z]{2}(_[A-Z]{2})?$/.test(idioma)) { const e = new Error('El idioma de la plantilla no es válido (por ejemplo: es).'); e.publico = true; throw e; }
+  const cfg = { numeros, plantilla, idioma };
+  const tmp = AVISOS_FILE + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(cfg, null, 2), 'utf8');
+  fs.renameSync(tmp, AVISOS_FILE);
+  return cfg;
+}
+async function avisarEquipo(a, motivo) {
+  const cfg = leerAvisos();
+  if (!cfg.numeros.length || !d360Configurado()) return;
+  const cliente = ((a.nombre ? a.nombre + ' ' : '') + (a.numero ? '(+' + a.numero + ')' : '(sin número visible)')).trim();
+  const pedido = a.ultimoMensaje || '(sin texto)';
+  let enviados = 0;
+  for (const num of cfg.numeros) {
+    const ok = cfg.plantilla
+      ? await enviarPlantilla({ to: num }, cfg.plantilla, cfg.idioma, [cliente, pedido])
+      : await enviarWhatsApp({ to: num }, 'Chat por responder' + (motivo ? ' (' + motivo + ')' : '') + '\nCliente: ' + cliente + '\nPidió: «' + pedido + '»\nResponder desde el WhatsApp de la tienda.');
+    if (ok) enviados++;
+  }
+  atencion.anotarAvisos(a.id, enviados === cfg.numeros.length
+    ? 'Aviso enviado a ' + enviados + (enviados === 1 ? ' celular' : ' celulares') + ' del equipo.'
+    : 'Aviso enviado a ' + enviados + ' de ' + cfg.numeros.length + ' celulares del equipo: revisar los números o la plantilla.');
+  console.log('360 avisos: ' + enviados + ' de ' + cfg.numeros.length + ' enviados');
+}
+
 // Mensaje de un cliente
-async function manejarEntrante(msg) {
+async function manejarEntrante(msg, nombres) {
   if (!msg || yaProcesados.tiene(msg.id)) return;
   yaProcesados.agregar(msg.id);
   const numero = msg.from ? String(msg.from) : '';
@@ -272,6 +448,7 @@ async function manejarEntrante(msg) {
   const clave = 'wa:' + (numero || usuario);
   const destino = numero ? { to: numero } : { recipient: usuario };
   const quien = numero ? '+' + numero : 'cliente sin número visible';
+  const nombre = (nombres && (nombres[numero] || nombres[usuario])) || '';
 
   if (numero && esNumeroInterno(numero)) { console.log('360 << número interno', quien, '→ sin respuesta'); return; }
 
@@ -282,29 +459,55 @@ async function manejarEntrante(msg) {
   const v = bot.getVerde();
   if (v.encendido === false) { console.log('360 << de', quien, '→ Verde apagado, sin respuesta'); return; }
 
-  if (bot.estaPausado(clave)) {
+  // 1) El chat ya espera a una persona del equipo: Verde no responde y el mensaje se suma a «Por responder».
+  if (atencion.tienePendiente(clave)) {
     bot.registrarMensaje(clave, 'user', textoCliente);
-    console.log('360 << de', quien, '→ conversación en pausa (la atiende una persona del equipo)');
+    atencion.mensajeCliente({ clave, destino, numero, nombre, texto: textoCliente, enPausa: bot.estaPausado(clave) });
+    console.log('360 << de', quien, '→ espera a una persona del equipo (Verde no responde)');
     return;
   }
 
+  // 2) Conversación en pausa: la atiende una persona del equipo, o se marcó como atendida.
+  if (bot.estaPausado(clave)) {
+    bot.registrarMensaje(clave, 'user', textoCliente);
+    const r = atencion.mensajeCliente({ clave, destino, numero, nombre, texto: textoCliente, enPausa: true });
+    if (r && r.estado === 'reabierta') {
+      console.log('360 << de', quien, '→ volvió a escribir después de «Marcar atendido»: regresa a «Por responder»');
+      await avisarEquipo(r.atencion, 'volvió a escribir');
+    } else {
+      console.log('360 << de', quien, '→ conversación en pausa (la atiende una persona del equipo)');
+    }
+    return;
+  }
+
+  // 3) Archivos: Verde no los interpreta; agradece y deriva a una persona.
   if (info.clase === 'adjunto') {
-    // Igual que con Twilio: Verde no interpreta archivos; agradece y deriva a una persona.
     const fr = v.frases || {};
     const resp = fr.adjunto || '¡Gracias! 🙌 Recibí tu archivo. En un momento un asesor lo revisa y te confirma todo. Si querés, dejame por acá cualquier dato que quieras sumar.';
     bot.registrarMensaje(clave, 'user', textoCliente);
     const ok = await enviarWhatsApp(destino, resp);
     if (ok) bot.registrarMensaje(clave, 'assistant', resp);
-    console.log('360 << adjunto de', quien, '→', ok ? 'derivado a una persona' : 'NO se pudo responder');
+    const d = atencion.derivar({ clave, destino, numero, nombre, mensajeCliente: textoCliente, respuestaVerde: ok ? resp : null, motivo: 'El cliente envió ' + info.desc + ': lo revisa una persona del equipo.' });
+    console.log('360 << adjunto de', quien, '→', ok ? 'derivado a una persona' : 'NO se pudo responder', '· pasa a «Chats por responder»');
+    await avisarEquipo(d.atencion);
     return;
   }
 
+  // 4) Texto: responde Verde y, si deriva, el chat pasa a «Chats por responder».
   if (!textoCliente.trim()) return;
   console.log('360 << de', quien, ':', textoCliente.slice(0, 200));
-  const respuesta = await bot.getReply(clave, textoCliente);
-  if (!respuesta) { console.log('360 >> sin respuesta (Verde apagado o conversación en pausa)'); return; }
-  const ok = await enviarWhatsApp(destino, respuesta);
-  console.log('360 >>', ok ? 'enviado' : 'NO enviado', ':', respuesta.slice(0, 200));
+  const r = await bot.responderCliente(clave, textoCliente);
+  if (!r) { console.log('360 >> sin respuesta (Verde apagado o conversación en pausa)'); return; }
+  const ok = await enviarWhatsApp(destino, r.texto);
+  console.log('360 >>', ok ? 'enviado' : 'NO enviado', ':', r.texto.slice(0, 200));
+  if (r.derivar) {
+    const d = atencion.derivar({
+      clave, destino, numero, nombre, mensajeCliente: textoCliente, respuestaVerde: ok ? r.texto : null,
+      motivo: r.error ? 'Verde tuvo un problema técnico y lo derivó a una persona del equipo.' : 'Verde lo derivó a una persona del equipo.'
+    });
+    console.log('360 → derivado: pasa a «Chats por responder»');
+    await avisarEquipo(d.atencion);
+  }
 }
 
 // Mensaje que alguien del equipo envió desde la app del celular (coexistencia)
@@ -318,7 +521,11 @@ function manejarEco(eco) {
   const texto = info.clase === 'texto' ? info.texto : '[envió ' + (info.desc || 'un mensaje sin texto') + ']';
   const hasta = bot.pausar(clave, PAUSA_HORAS);
   bot.registrarMensaje(clave, 'assistant', '[Asesor humano] ' + texto);
-  console.log('360 eco: una persona del equipo respondió desde el celular → Verde en pausa con ese cliente hasta', new Date(hasta).toLocaleString('es-UY', { timeZone: 'America/Montevideo' }));
+  const firma = info.clase === 'texto' ? usuarios.detectarFirma(info.texto) : null;
+  const a = atencion.respuestaEquipo({ clave, texto, firma });
+  console.log('360 eco: una persona del equipo respondió desde el celular' + (firma ? ' (firma: ' + firma.nombre + ')' : ' (sin firma)') +
+    (a && a.estado === 'respondido' ? ' · el chat pasa a «Chats respondidos»' : '') +
+    ' → Verde en pausa con ese cliente hasta', new Date(hasta).toLocaleString('es-UY', { timeZone: 'America/Montevideo' }));
 }
 
 // Mensajes de un mismo cliente: uno a la vez y en orden
@@ -345,9 +552,14 @@ async function procesarAviso360(body) {
       for (const s of (valor.statuses || [])) {
         if (s && s.status === 'failed') console.error('360: un mensaje no se pudo entregar:', JSON.stringify(s.errors || s).slice(0, 300));
       }
+      const nombres = {};
+      for (const c of (valor.contacts || [])) {
+        const id = c && (c.wa_id || c.user_id);
+        if (id && c.profile && c.profile.name) nombres[String(id)] = String(c.profile.name).slice(0, 80);
+      }
       for (const m of (valor.messages || [])) {
         const clave = 'wa:' + (m && (m.from || m.from_user_id) || 'desconocido');
-        await enColaCliente(clave, () => manejarEntrante(m));
+        await enColaCliente(clave, () => manejarEntrante(m, nombres));
       }
     } else if (campo === 'smb_message_echoes') {
       for (const eco of (valor.message_echoes || [])) manejarEco(eco);
@@ -356,6 +568,46 @@ async function procesarAviso360(body) {
     }
   }
 }
+
+/* ============================================================
+   CHATS POR RESPONDER Y CHATS RESPONDIDOS (para el panel)
+   ============================================================ */
+app.get('/api/chats/pendientes', requiere(['admin', 'asesor']), (req, res) => {
+  const lista = atencion.pendientes();
+  res.json({ total: lista.length, lista });
+});
+app.get('/api/chats/respondidos', requiere(['admin', 'asesor']), (req, res) => {
+  res.json(atencion.respondidos({ buscar: req.query.buscar, periodo: req.query.periodo, filtro: req.query.filtro }));
+});
+app.get('/api/chats/:id', requiere(['admin', 'asesor']), (req, res) => {
+  const d = atencion.detalle(req.params.id);
+  if (!d) return res.status(404).json({ error: 'El chat no existe.' });
+  res.json(d);
+});
+app.post('/api/chats/:id/atendido', requiere(['admin', 'asesor']), (req, res) => {
+  try {
+    const b = req.body || {};
+    const u = req.usuario;
+    const a = atencion.marcarAtendido(req.params.id, { motivo: b.motivo, detalle: b.detalle, usuarioId: u ? u.id : null, usuarioNombre: u ? u.nombre : 'Acceso general' });
+    bot.pausar(a.clave, PAUSA_HORAS);   // Verde sigue en silencio; si el cliente vuelve a escribir, regresa a «Por responder»
+    res.json({ ok: true, chat: atencion.detalle(a.id) });
+  } catch (e) { responderError(res, e); }
+});
+app.get('/api/avisos', requiere(['admin']), (req, res) => res.json(leerAvisos()));
+app.put('/api/avisos', requiere(['admin']), (req, res) => {
+  try { res.json({ ok: true, avisos: guardarAvisos(req.body || {}) }); }
+  catch (e) { responderError(res, e); }
+});
+
+/* ---------- Borrado automático del historial (3 meses) ---------- */
+function purgarHistorial() {
+  try {
+    const n = atencion.purgar();
+    if (n) console.log('Historial: se borraron ' + n + ' chats de más de 3 meses.');
+  } catch (e) { console.error('No se pudo limpiar el historial:', e.message); }
+}
+purgarHistorial();
+setInterval(purgarHistorial, 6 * 3600 * 1000).unref();
 
 app.post('/webhook/360/:clave', (req, res) => {
   if (!d360Configurado() || !claveWebhookValida(req.params.clave)) return res.sendStatus(404);
@@ -371,5 +623,6 @@ app.listen(PORT, HOST, () => {
   console.log('  Webhook 360dialog:  ' + (d360Configurado() ? 'configurado' : 'pendiente (faltan datos en .env)'));
   console.log('  Clave de IA cargada: ' + (process.env.ANTHROPIC_API_KEY ? 'SÍ' : 'NO (configurá .env)'));
   console.log('  Pausa cuando responde una persona del equipo: ' + PAUSA_HORAS + ' horas');
+  console.log('  Ingreso con usuario propio: ' + (loginActivo() ? 'ACTIVO' : 'inactivo (el panel lo protege Nginx)'));
   console.log('====================================================');
 });

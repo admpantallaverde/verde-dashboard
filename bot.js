@@ -29,6 +29,18 @@ const MODELOS_REEMPLAZO = {
   'claude-sonnet-4-20250514': 'claude-sonnet-5-5'
 };
 const ESFUERZOS_VALIDOS = ['low', 'medium', 'high'];
+// IA que se pueden elegir en el panel, con los ajustes que indica la documentación oficial
+// para responder rápido en un chat:
+//  - Sonnet 5.5: sin razonamiento previo (between_tools) y esfuerzo medio.
+//  - Opus 5.5 y Fable 5.1: su razonamiento no se puede apagar; se usa el esfuerzo más bajo
+//    y un margen de tokens para que el razonamiento no corte la respuesta.
+const MODELOS = [
+  { id: 'claude-sonnet-5-5', nombre: 'Claude Sonnet 5.5', thinking: { type: 'between_tools' }, esfuerzo: 'medium', tokensMinimos: 0 },
+  { id: 'claude-opus-5-5', nombre: 'Claude Opus 5.5', thinking: null, esfuerzo: 'low', tokensMinimos: 4000 },
+  { id: 'claude-fable-5-1', nombre: 'Claude Fable 5.1', thinking: null, esfuerzo: 'low', tokensMinimos: 4000 }
+];
+function listarModelos() { return MODELOS.map(m => ({ id: m.id, nombre: m.nombre })); }
+function modeloPermitido(id) { return MODELOS.some(m => m.id === id); }
 
 /* ---------- leer configuración guardada por el dashboard ---------- */
 function readState() {
@@ -195,17 +207,22 @@ function resolverModelo(v) {
 // para conversaciones que deben responder rápido.
 function armarPedido(model, system, messages, max_tokens) {
   const pedido = { model, max_tokens, system, messages };
+  const conf = MODELOS.find(m => m.id === model);
+  if (!conf) return pedido;   // otro modelo: pedido básico de siempre
+  if (conf.thinking) pedido.thinking = conf.thinking;
+  let esfuerzo = conf.esfuerzo;
   if (model === 'claude-sonnet-5-5') {
-    const esfuerzo = String(process.env.VERDE_ESFUERZO || 'medium').trim().toLowerCase();
-    pedido.thinking = { type: 'between_tools' };
-    pedido.output_config = { effort: ESFUERZOS_VALIDOS.includes(esfuerzo) ? esfuerzo : 'medium' };
+    const e = String(process.env.VERDE_ESFUERZO || '').trim().toLowerCase();
+    if (ESFUERZOS_VALIDOS.includes(e)) esfuerzo = e;
   }
+  pedido.output_config = { effort: esfuerzo };
+  pedido.max_tokens = Math.max(max_tokens, conf.tokensMinimos);
   return pedido;
 }
-async function callClaude(system, messages, v) {
+async function callClaude(system, messages, v, modeloPuntual) {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error('Falta la clave ANTHROPIC_API_KEY (configurala en el archivo .env).');
-  const model = resolverModelo(v);
+  const model = modeloPuntual && modeloPermitido(modeloPuntual) ? modeloPuntual : resolverModelo(v);
   const max_tokens = (v.tecnico && v.tecnico.maxTokens) || 1000;
   const pedido = armarPedido(model, system, messages, max_tokens);
 
@@ -317,15 +334,31 @@ function bloqueContexto() {
   const hora = new Intl.DateTimeFormat('es-UY', { timeZone: zona, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(ahora);
   return '\n\n== CONTEXTO ACTUAL ==\n' +
     'Hoy es ' + fecha + ' y son las ' + hora + ' en Montevideo. Usá este dato si el cliente pregunta por horarios o si el local está abierto ahora.\n' +
-    'Si en la conversación aparece un texto marcado con "[Asesor humano]", lo escribió una persona del equipo de la tienda: tenelo en cuenta, no lo contradigas y no repitas esa marca.';
+    'Si en la conversación aparece un texto marcado con "[Asesor humano]", lo escribió una persona del equipo de la tienda: tenelo en cuenta, no lo contradigas y no repitas esa marca.\n' +
+    'Cuando derives la conversación a una persona del equipo (por ejemplo, porque el cliente pide un precio, quiere hablar con una persona o consulta por una reparación en curso), escribí al final de tu mensaje, en una línea aparte, la marca [DERIVAR]. El sistema la quita antes de enviar: el cliente no la ve. No la uses en ningún otro caso.';
 }
 
 /* ---------- obtener la respuesta del bot para un mensaje ---------- */
-// Devuelve el texto a enviar, o null si Verde no debe responder (apagado o conversación en pausa).
-function getReply(from, body) {
-  return enCola(String(from), () => responder(String(from), String(body == null ? '' : body)));
+const MARCA_DERIVAR = /\[\s*DERIVAR\s*\]/i;
+const MARCA_DERIVAR_TODAS = /\[\s*DERIVAR\s*\]/gi;
+// Quita la marca [DERIVAR] del texto e indica si estaba.
+function separarDerivacion(texto) {
+  const derivar = MARCA_DERIVAR.test(texto);
+  const limpio = String(texto).replace(MARCA_DERIVAR_TODAS, '').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  return { texto: limpio, derivar };
 }
-async function responder(from, body) {
+
+// Devuelve { texto, derivar, error } o null si Verde no debe responder (apagado o conversación en pausa).
+// opciones.modelo: probar otra IA puntualmente (solo desde el simulador).
+function responderCliente(from, body, opciones) {
+  return enCola(String(from), () => responder(String(from), String(body == null ? '' : body), opciones || {}));
+}
+// Compatibilidad: solo el texto.
+async function getReply(from, body) {
+  const r = await responderCliente(from, body);
+  return r ? r.texto : null;
+}
+async function responder(from, body, opciones) {
   const v = getVerde();
   const fr = v.frases || {};
 
@@ -339,23 +372,27 @@ async function responder(from, body) {
   const convs = loadConversations();
   const hist = Array.isArray(convs[from]) ? convs[from] : [];
   const system = buildSystemPrompt(v) + bloqueContexto() + productBlock(body);
-  let reply;
+  let crudo;
   try {
-    reply = await callClaude(system, paraLaIA(hist, memoriaDe(v)), v);
+    crudo = await callClaude(system, paraLaIA(hist, memoriaDe(v)), v, opciones.modelo);
   } catch (e) {
     console.error('Error al consultar la IA:', e.message);
-    return fr.error || 'Disculpá, tuve un problema técnico. Ahora mismo te conecto con uno de nuestros asesores 🙌';
+    // La frase de error deriva a un asesor: el chat pasa a «Chats por responder».
+    return { texto: fr.error || 'Disculpá, tuve un problema técnico. Ahora mismo te conecto con uno de nuestros asesores 🙌', derivar: true, error: true };
   }
+  const sep = separarDerivacion(crudo);
+  const reply = sep.texto || fr.derivacion || 'Te paso con un asesor para que te ayude. 🙌';
 
   // 3) si mientras pensaba una persona del equipo tomó la conversación, no se responde
   if (estaPausado(from)) return null;
 
-  // 4) se guarda la respuesta de Verde
+  // 4) se guarda la respuesta de Verde (sin la marca)
   registrarMensaje(from, 'assistant', reply);
-  return reply;
+  return { texto: reply, derivar: sep.derivar, error: false };
 }
 
 module.exports = {
   buildSystemPrompt, getReply, getVerde, callClaude, findProducts, productBlock, resetConversation,
-  registrarMensaje, pausar, estaPausado, resolverModelo, armarPedido, paraLaIA, MODELO_PREDETERMINADO
+  registrarMensaje, pausar, estaPausado, resolverModelo, armarPedido, paraLaIA, MODELO_PREDETERMINADO,
+  responderCliente, separarDerivacion, listarModelos, modeloPermitido
 };

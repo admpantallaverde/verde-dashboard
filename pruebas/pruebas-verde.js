@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.2.1';
+const VERSION_ESPERADA = '1.3.0';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -36,6 +36,10 @@ global.fetch = async (url, opts = {}) => {
     await new Promise(r => setTimeout(r, 150));
     if (modoIA === 'error400') return new Response('{"error":"bad request"}', { status: 400 });
     if (modoIA === 'vacio') return new Response(JSON.stringify({ content: [], stop_reason: 'refusal' }), { status: 200 });
+    const ultimo = (JSON.parse(opts.body).messages || []).slice(-1)[0] || {};
+    if (/precio exacto/i.test(String(ultimo.content || ''))) {
+      return new Response(JSON.stringify({ content: [{ type: 'text', text: 'Te paso con un asesor para confirmarte el precio.\n[DERIVAR]' }], stop_reason: 'end_turn' }), { status: 200 });
+    }
     contadorIA++;
     return new Response(JSON.stringify({ content: [{ type: 'text', text: 'Respuesta de Verde ' + contadorIA }], stop_reason: 'end_turn' }), { status: 200 });
   }
@@ -68,7 +72,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   mostrar('1) Estado del servidor');
   const h = await (await realFetch(BASE + '/api/health')).json();
   verificar(h.version === VERSION_ESPERADA, 'versión ' + VERSION_ESPERADA);
-  verificar(h.ok && h.ia && h.bot && h.wa360, 'responde ok, IA, bot encendido y 360dialog configurado');
+  verificar(h.ok && h.ia && h.bot && h.wa360 && h.login === false, 'responde ok, IA, bot encendido, 360dialog configurado e ingreso propio inactivo');
 
   mostrar('2) Modelo de IA y ajustes oficiales');
   let r = await simular('hola', 'dashboard');
@@ -175,10 +179,10 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   mostrar('13) Fallas de la IA');
   modoIA = 'vacio';
   r = await simular('hola', 'p2');
-  verificar(r.reply === 'Error técnico, te paso con un asesor.', 'si la IA no devuelve texto, se usa la frase de error del panel');
+  verificar(r.reply.startsWith('Error técnico, te paso con un asesor.') && r.derivaria === true, 'si la IA no devuelve texto, se usa la frase de error del panel y se deriva');
   modoIA = 'error400';
   r = await simular('hola', 'p3');
-  verificar(r.reply === 'Error técnico, te paso con un asesor.', 'si la IA rechaza el pedido, se usa la frase de error del panel');
+  verificar(r.reply.startsWith('Error técnico, te paso con un asesor.') && r.derivaria === true, 'si la IA rechaza el pedido, se usa la frase de error del panel y se deriva');
   modoIA = 'ok';
 
   mostrar('14) Memoria larga');
@@ -210,6 +214,221 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   const recibida = leer('../config-recibida.json');
   verificar(recibida.url === 'https://waba-sandbox.360dialog.io/v1/configs/webhook' && recibida.clave === 'clave-360-de-prueba' && recibida.webhook === 'https://chat.pantallaverde.com/webhook/360/secreto123abc', 'registra la dirección correcta en 360dialog');
   verificar(salida.status === 0 && /Listo/.test(salida.stdout) && !/secreto123abc/.test(salida.stdout + salida.stderr), 'no muestra la clave secreta en pantalla');
+
+
+  // ===================== 1.3.0 =====================
+  const api = (ruta, metodo, cuerpo, cookie, extra) => realFetch(BASE + ruta, {
+    method: metodo || 'GET',
+    headers: Object.assign({ 'Content-Type': 'application/json' }, cookie ? { Cookie: cookie } : {}, extra || {}),
+    body: cuerpo ? JSON.stringify(cuerpo) : undefined
+  });
+  const json = async r => { try { return await r.json(); } catch (e) { return {}; } };
+  const avisoDe = (numero, nombre, texto, id) => ({ entry: [{ changes: [{ field: 'messages', value: { contacts: nombre ? [{ wa_id: numero, profile: { name: nombre } }] : [], messages: [{ id, from: numero, type: 'text', text: { body: texto } }] } }] }] });
+  const eco = (cliente, texto, id) => aviso([{ id, from: '59893319060', to: cliente, type: 'text', text: { body: texto } }], 'smb_message_echoes');
+  const atencionMod = require('./atencion.js');
+  const usuariosMod = require('./usuarios.js');
+
+  mostrar('18) Verde deriva: el chat pasa a «Chats por responder» y avisa al equipo');
+  let rr = await api('/api/avisos', 'PUT', { numeros: ['+598 99 000 101', '59899000102'] });
+  verificar(rr.status === 200 && (await json(rr)).avisos.numeros.length === 2, 'se guardan los 2 celulares que reciben avisos');
+  let antes = envios360.length;
+  await post360(avisoDe('59870000001', 'Lucía Fernández', 'quiero el precio exacto del cambio de pantalla', 'd1'));
+  await espera(700);
+  let nuevos = envios360.slice(antes);
+  const alCliente = nuevos.find(x => x.body.to === '59870000001');
+  const avisos = nuevos.filter(x => ['59899000101', '59899000102'].includes(x.body.to));
+  verificar(alCliente && !/DERIVAR/.test(alCliente.body.text.body) && /asesor/.test(alCliente.body.text.body), 'el cliente recibe la respuesta sin la marca interna');
+  verificar(avisos.length === 2 && avisos.every(x => /Chat por responder/.test(x.body.text.body) && /Lucía Fernández/.test(x.body.text.body)), 'llega el aviso a los 2 celulares del equipo, con el nombre del cliente');
+  let pend = await json(await api('/api/chats/pendientes'));
+  let luciaP = pend.lista.find(x => x.numero === '59870000001');
+  verificar(luciaP && luciaP.nombre === 'Lucía Fernández' && /precio exacto/.test(luciaP.ultimoMensaje) && pend.total === pend.lista.length, 'el chat aparece en «Chats por responder»');
+  antes = envios360.length;
+  await post360(avisoDe('59870000001', 'Lucía Fernández', 'hola? sigo esperando', 'd2'));
+  await espera(500);
+  pend = await json(await api('/api/chats/pendientes'));
+  luciaP = pend.lista.find(x => x.numero === '59870000001');
+  verificar(envios360.length === antes && luciaP && /sigo esperando/.test(luciaP.ultimoMensaje), 'mientras espera, Verde no responde y se actualiza el último mensaje');
+  antes = envios360.length;
+  await post360(avisoDe('59899000101', '', 'ok, lo veo', 'd3'));
+  await espera(400);
+  verificar(envios360.length === antes, 'los celulares que reciben avisos son internos: Verde no les responde');
+
+  mostrar('19) Una persona del equipo responde con su firma');
+  rr = await api('/api/usuarios', 'POST', { nombre: 'Carla Méndez', usuario: 'carla', rol: 'asesor', firma: '— Carla' });
+  const carlaAlta = await json(rr);
+  verificar(rr.status === 200 && /^[A-Za-z0-9]{12}$/.test(carlaAlta.claveTemporal || ''), 'se crea un usuario con contraseña temporal');
+  await post360(eco('59870000001', 'Hola Lucía, ya te paso el precio.\n— Carla', 'e1'));
+  await espera(300);
+  pend = await json(await api('/api/chats/pendientes'));
+  let resp = await json(await api('/api/chats/respondidos?periodo=hoy'));
+  const lucia = resp.lista.find(x => x.nombre === 'Lucía Fernández');
+  verificar(!pend.lista.some(x => x.numero === '59870000001') && lucia && lucia.cierre.tipo === 'whatsapp' && lucia.cierre.usuarioNombre === 'Carla Méndez' && lucia.cierre.firma === true, 'el chat pasa solo a «Chats respondidos» y se identifica a Carla por su firma');
+
+  mostrar('20) Respuesta sin firma');
+  await post360(avisoDe('59870000002', 'Martín Silva', 'necesito el precio exacto de la batería', 'd4'));
+  await espera(600);
+  await post360(eco('59870000002', 'Hola Martín, te confirmo en un rato', 'e2'));
+  await espera(300);
+  resp = await json(await api('/api/chats/respondidos'));
+  const martin = resp.lista.find(x => x.nombre === 'Martín Silva');
+  verificar(martin && martin.cierre.tipo === 'whatsapp' && martin.cierre.firma === false && !martin.cierre.usuarioNombre, 'queda registrado como respondido sin firma');
+
+  mostrar('21) «Marcar atendido» con motivo obligatorio');
+  await post360(avisoDe('59870000003', '', 'precio exacto de la reparación?', 'd5'));
+  await espera(600);
+  pend = await json(await api('/api/chats/pendientes'));
+  const idTres = (pend.lista.find(x => x.numero === '59870000003') || {}).id;
+  rr = await api('/api/chats/' + idTres + '/atendido', 'POST', {});
+  verificar(rr.status === 400 && /cómo se atendió/.test((await json(rr)).error), 'sin motivo no se puede marcar');
+  rr = await api('/api/chats/' + idTres + '/atendido', 'POST', { motivo: 'otro' });
+  verificar(rr.status === 400 && /detalle/.test((await json(rr)).error), 'con «Otro motivo» el detalle es obligatorio');
+  rr = await api('/api/chats/' + idTres + '/atendido', 'POST', { motivo: 'llamada' });
+  const marcado = await json(rr);
+  verificar(rr.status === 200 && marcado.chat.estado === 'atendido' && marcado.chat.cierre.motivoTexto === 'Atendido por llamada' && marcado.chat.cierre.usuarioNombre === 'Acceso general', 'se marca con el motivo y queda registrado quién (sin ingreso propio: acceso general)');
+  rr = await api('/api/chats/' + idTres + '/atendido', 'POST', { motivo: 'llamada' });
+  verificar(rr.status === 409, 'no se puede marcar dos veces');
+
+  mostrar('22) El cliente vuelve a escribir después de «Marcar atendido»');
+  antes = envios360.length;
+  await post360(avisoDe('59870000003', '', 'hola? nadie me llamó', 'd6'));
+  await espera(600);
+  pend = await json(await api('/api/chats/pendientes'));
+  const reab = pend.lista.find(x => x.numero === '59870000003');
+  const avisosReab = envios360.slice(antes).filter(x => ['59899000101', '59899000102'].includes(x.body.to));
+  verificar(reab && reab.reabiertaDe === idTres && avisosReab.length === 2 && avisosReab.every(x => /volvió a escribir/.test(x.body.text.body)), 'el chat regresa solo a «Por responder» y se avisa de nuevo');
+  verificar(envios360.slice(antes).every(x => x.body.to !== '59870000003'), 'Verde sigue sin responderle al cliente');
+  resp = await json(await api('/api/chats/respondidos?filtro=volvio'));
+  verificar(resp.lista.length === 1 && resp.lista[0].id === idTres && resp.lista[0].volvioAEscribir, 'en «Chats respondidos» queda señalado como «Volvió a escribir»');
+
+  mostrar('23) Historial: buscador, filtros y período');
+  resp = await json(await api('/api/chats/respondidos?periodo=7'));
+  verificar(resp.totales.todos === 3 && resp.totales.whatsapp === 2 && resp.totales.manual === 1 && resp.totales.volvio === 1, 'los contadores de los filtros son correctos');
+  resp = await json(await api('/api/chats/respondidos?buscar=CARLA'));
+  verificar(resp.lista.length === 1 && resp.lista[0].nombre === 'Lucía Fernández', 'el buscador encuentra por asesor');
+  resp = await json(await api('/api/chats/respondidos?buscar=lucia'));
+  verificar(resp.lista.length === 1, 'el buscador ignora tildes y mayúsculas');
+  resp = await json(await api('/api/chats/respondidos?filtro=manual'));
+  verificar(resp.lista.length === 1 && resp.lista[0].cierre.tipo === 'manual', 'el filtro «Marcados a mano» funciona');
+
+  mostrar('24) Detalle de una atención');
+  const det = await json(await api('/api/chats/' + idTres));
+  const tipos = (det.eventos || []).map(e => e.tipo);
+  verificar(['cliente', 'verde', 'derivado', 'aviso', 'manual', 'reapertura'].every(t => tipos.includes(t)), 'el recorrido muestra cliente, Verde, derivación, aviso, marcado y reapertura');
+  rr = await api('/api/chats/noexiste');
+  verificar(rr.status === 404, 'un chat inexistente devuelve «no existe»');
+
+  mostrar('25) Avisos con plantilla de Meta');
+  rr = await api('/api/avisos', 'PUT', { numeros: ['59899000101'], plantilla: 'chat_por_responder', idioma: 'es' });
+  verificar(rr.status === 200, 'se guarda el nombre de la plantilla');
+  antes = envios360.length;
+  await post360(avisoDe('59870000004', 'Sofía\nRodríguez', 'precio exacto\nde una funda', 'd7'));
+  await espera(600);
+  const plant = envios360.slice(antes).find(x => x.body.to === '59899000101');
+  const params = plant && plant.body.template && plant.body.template.components[0].parameters.map(x => x.text);
+  verificar(plant && plant.body.type === 'template' && plant.body.template.name === 'chat_por_responder' && params.length === 2 && params.every(t => !/\n/.test(t)), 'el aviso sale como plantilla, con datos sin saltos de línea');
+  rr = await api('/api/avisos', 'PUT', { numeros: ['123'] });
+  verificar(rr.status === 400, 'un número inválido se rechaza');
+  rr = await api('/api/avisos', 'PUT', { numeros: [], plantilla: 'Plantilla Mal' });
+  verificar(rr.status === 400, 'un nombre de plantilla inválido se rechaza');
+
+  mostrar('26) Archivos: derivan y avisan');
+  await api('/api/avisos', 'PUT', { numeros: ['59899000102'] });
+  antes = envios360.length;
+  await post360(aviso([{ id: 'd8', from: '59870000005', type: 'image', image: {} }]));
+  await espera(600);
+  pend = await json(await api('/api/chats/pendientes'));
+  verificar(pend.lista.some(x => x.numero === '59870000005') && envios360.slice(antes).some(x => x.body.to === '59899000102'), 'una imagen pasa a «Chats por responder» con aviso al equipo');
+
+  mostrar('27) Borrado automático a los 3 meses');
+  const pendAntes = (await json(await api('/api/chats/pendientes'))).total;
+  atencionMod._usarReloj(() => Date.now() + 91 * 86400000);
+  const borradas = atencionMod.purgar();
+  atencionMod._usarReloj(null);
+  verificar(borradas === 3 && (await json(await api('/api/chats/respondidos?periodo=90'))).totales.todos === 0, 'a los 3 meses se borran los chats cerrados');
+  verificar((await json(await api('/api/chats/pendientes'))).total === pendAntes, 'los chats que siguen esperando no se borran');
+
+  mostrar('28) Ingreso con usuario propio');
+  process.env.VERDE_LOGIN = 'activo';
+  rr = await api('/api/state');
+  verificar(rr.status === 401, 'sin sesión, el panel no entrega la configuración');
+  rr = await realFetch(BASE + '/api/health');
+  verificar(rr.status === 200 && (await json(rr)).login === true, 'el estado del servidor sigue disponible para controles');
+  const jefe = usuariosMod.crear({ nombre: 'Jefe Prueba', usuario: 'jefe', rol: 'admin', firma: '' });
+  rr = await api('/api/login', 'POST', { usuario: 'jefe', clave: 'equivocada' });
+  verificar(rr.status === 401 && /incorrectos/.test((await json(rr)).error), 'una contraseña equivocada se rechaza');
+  rr = await api('/api/login', 'POST', { usuario: 'JEFE', clave: jefe.claveTemporal });
+  const galletaJefe = (rr.headers.get('set-cookie') || '').split(';')[0];
+  const cab = rr.headers.get('set-cookie') || '';
+  verificar(rr.status === 200 && /HttpOnly/.test(cab) && /Secure/.test(cab) && /SameSite=Strict/.test(cab), 'ingresa y recibe una sesión protegida (HttpOnly, Secure, SameSite)');
+  rr = await api('/api/state', 'GET', null, galletaJefe);
+  verificar(rr.status === 403 && (await json(rr)).debeCambiar === true, 'con contraseña temporal, primero debe cambiarla');
+  rr = await api('/api/clave', 'POST', { actual: jefe.claveTemporal, nueva: 'corta' }, galletaJefe);
+  verificar(rr.status === 400, 'una contraseña nueva demasiado corta se rechaza');
+  rr = await api('/api/clave', 'POST', { actual: jefe.claveTemporal, nueva: 'ClaveNueva2026' }, galletaJefe);
+  verificar(rr.status === 200, 'cambia su contraseña');
+  rr = await api('/api/state', 'GET', null, galletaJefe);
+  verificar(rr.status === 200, 'con la contraseña propia, el administrador accede a la configuración');
+  rr = await api('/api/usuarios/' + carlaAlta.usuario.id + '/restablecer', 'POST', {}, galletaJefe);
+  const claveCarla = (await json(rr)).claveTemporal;
+  rr = await api('/api/login', 'POST', { usuario: 'carla', clave: claveCarla });
+  const galletaCarla = (rr.headers.get('set-cookie') || '').split(';')[0];
+  await api('/api/clave', 'POST', { actual: claveCarla, nueva: 'CarlaSegura2026' }, galletaCarla);
+  rr = await api('/api/usuarios', 'GET', null, galletaCarla);
+  verificar(rr.status === 403, 'un asesor no puede administrar usuarios');
+  rr = await api('/api/state', 'GET', null, galletaCarla);
+  verificar(rr.status === 403, 'un asesor no puede ver ni cambiar la configuración de Verde');
+  await post360(avisoDe('59870000006', 'Diego Pérez', 'precio exacto del cargador', 'd9'));
+  await espera(600);
+  pend = await json(await api('/api/chats/pendientes', 'GET', null, galletaCarla));
+  const idSeis = (pend.lista || []).find(x => x.numero === '59870000006').id;
+  rr = await api('/api/chats/' + idSeis + '/atendido', 'POST', { motivo: 'local' }, galletaCarla);
+  verificar(rr.status === 200 && (await json(rr)).chat.cierre.usuarioNombre === 'Carla Méndez', 'el asesor marca un chat y queda registrado con su nombre');
+  rr = await api('/api/logout', 'POST', {}, galletaCarla, { Origin: 'https://sitio-ajeno.com' });
+  verificar(rr.status === 403, 'se rechazan pedidos que vienen de otro sitio');
+  await api('/api/logout', 'POST', {}, galletaCarla);
+  rr = await api('/api/chats/pendientes', 'GET', null, galletaCarla);
+  verificar(rr.status === 401, 'después de «Cerrar sesión» la sesión ya no sirve');
+  for (let i = 0; i < 5; i++) await api('/api/login', 'POST', { usuario: 'intruso', clave: 'x' + i });
+  rr = await api('/api/login', 'POST', { usuario: 'intruso', clave: 'otra' });
+  verificar(rr.status === 429, 'después de 5 intentos fallidos el ingreso se bloquea');
+  usuariosMod._usarReloj(() => Date.now() + 9 * 3600 * 1000);
+  rr = await api('/api/state', 'GET', null, galletaJefe);
+  usuariosMod._usarReloj(null);
+  verificar(rr.status === 401, 'la sesión vence tras 8 horas sin uso');
+  rr = await api('/api/login', 'POST', { usuario: 'jefe', clave: 'ClaveNueva2026' });
+  const galleta2 = (rr.headers.get('set-cookie') || '').split(';')[0];
+  rr = await api('/api/usuarios/' + jefe.usuario.id, 'PUT', { activo: false }, galleta2);
+  verificar(rr.status === 400 && /administrador activo/.test((await json(rr)).error), 'no se puede desactivar al único administrador');
+  const archivoU = fs.readFileSync(path.join(__dirname, 'data', 'usuarios.json'), 'utf8');
+  const permisos = (fs.statSync(path.join(__dirname, 'data', 'usuarios.json')).mode & 0o777).toString(8);
+  verificar(!archivoU.includes('ClaveNueva2026') && !archivoU.includes(jefe.claveTemporal) && permisos === '600', 'las contraseñas se guardan cifradas y el archivo es privado');
+  process.env.VERDE_LOGIN = '';
+
+  mostrar('29) Elegir otra IA');
+  const mods = await json(await api('/api/modelos'));
+  verificar(mods.modelos && mods.modelos.map(m => m.id).join(',') === 'claude-sonnet-5-5,claude-opus-5-5,claude-fable-5-1', 'están las 3 IA para elegir');
+  r = await json(await api('/api/simulate', 'POST', { message: 'hola', from: 'opus', modelo: 'claude-opus-5-5' }));
+  let pedIA = llamadasIA[llamadasIA.length - 1].body;
+  verificar(pedIA.model === 'claude-opus-5-5' && !pedIA.thinking && pedIA.output_config.effort === 'low' && pedIA.max_tokens >= 4000, 'Opus 5.5 va con esfuerzo bajo y margen de tokens');
+  r = await json(await api('/api/simulate', 'POST', { message: 'hola', from: 'fable', modelo: 'claude-fable-5-1' }));
+  pedIA = llamadasIA[llamadasIA.length - 1].body;
+  verificar(pedIA.model === 'claude-fable-5-1' && !pedIA.thinking && pedIA.output_config.effort === 'low' && pedIA.max_tokens >= 4000, 'Fable 5.1 va con esfuerzo bajo y margen de tokens');
+  rr = await api('/api/simulate', 'POST', { message: 'hola', modelo: 'gpt-cualquiera' });
+  verificar(rr.status === 400, 'una IA que no está en la lista se rechaza');
+
+  mostrar('30) El simulador muestra si derivaría');
+  r = await json(await api('/api/simulate', 'POST', { message: 'quiero el precio exacto', from: 'deriva' }));
+  verificar(r.derivaria === true && /pasaría a «Chats por responder»/.test(r.reply) && !/DERIVAR/.test(r.reply), 'avisa que el chat pasaría a «Chats por responder», sin mostrar la marca');
+  pend = await json(await api('/api/chats/pendientes'));
+  verificar(!pend.lista.some(x => /precio exacto"?$/.test(x.ultimoMensaje) && !x.numero), 'las pruebas del simulador no generan chats por responder');
+
+  mostrar('31) Herramienta de usuarios desde la terminal');
+  let cli = spawnSync(process.execPath, ['usuarios-cli.js', 'crear-admin', 'dueno', 'Dueño Prueba'], { cwd: __dirname, encoding: 'utf8' });
+  verificar(cli.status === 0 && /Administrador creado: dueno/.test(cli.stdout) && /Contraseña temporal/.test(cli.stdout), 'crea el administrador y muestra su contraseña temporal una vez');
+  cli = spawnSync(process.execPath, ['usuarios-cli.js', 'restablecer', 'noexiste'], { cwd: __dirname, encoding: 'utf8' });
+  verificar(cli.status === 1 && /No existe el usuario/.test(cli.stdout), 'avisa si el usuario no existe');
+  cli = spawnSync(process.execPath, ['usuarios-cli.js', 'listar'], { cwd: __dirname, encoding: 'utf8' });
+  verificar(cli.status === 0 && /dueno/.test(cli.stdout) && /carla/.test(cli.stdout), 'lista los usuarios');
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }
