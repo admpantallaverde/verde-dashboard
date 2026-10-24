@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.3.3';
+const VERSION_ESPERADA = '1.3.4';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];

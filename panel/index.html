@@ -2,6 +2,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Agentes IA · Panel de Control</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function(){
+  var d=document.documentElement,t=null,m=null;
+  try{t=localStorage.getItem('verde_tema');m=localStorage.getItem('verde_menu');}catch(e){}
+  if(t!=='claro'&&t!=='oscuro'){t=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches)?'claro':'oscuro';}
+  d.setAttribute('data-tema',t);
+  if(m==='corto')d.setAttribute('data-menu','corto');
+})();
+</script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
@@ -91,7 +100,7 @@ input,select{font-family:inherit;font-size:14px}
 }
 .tree-leaf:hover{background:var(--surface-2);color:var(--text)}
 .tree-leaf.active{background:var(--surface-3);color:var(--text);font-weight:600}
-.tree-leaf.active .ic{color:var(--accent)}
+.tree-leaf.active .ic{color:var(--accent-text)}
 .tree-leaf .ic,.tree-sub .ic{width:16px;height:16px;flex:none}
 .leaf-children{display:flex;flex-direction:column;gap:2px;margin:2px 0 2px 16px;padding-left:9px;border-left:1px solid var(--border)}
 
@@ -199,7 +208,7 @@ input,select{font-family:inherit;font-size:14px}
 .qa .qq{font-size:13px;font-weight:600;margin-bottom:8px;display:flex;gap:8px}
 .qa .qq svg{width:15px;height:15px;color:var(--blue);flex:none;margin-top:2px}
 .qa .qa-ans{font-size:12.5px;color:var(--muted);line-height:1.5;display:flex;gap:8px}
-.qa .qa-ans svg{width:15px;height:15px;color:var(--accent);flex:none;margin-top:2px}
+.qa .qa-ans svg{width:15px;height:15px;color:var(--accent-text);flex:none;margin-top:2px}
 .prev-wrap mark{background:rgba(201,242,77,.28);color:var(--text);border-radius:3px;padding:0 2px}
 .prev-empty{padding:34px 16px;text-align:center;color:var(--faint);font-size:13px}
 .demo-tag{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--amber);background:rgba(244,193,82,.12);border:1px solid rgba(244,193,82,.3);padding:3px 9px;border-radius:30px;vertical-align:middle}
@@ -344,7 +353,7 @@ tbody tr:hover{background:var(--surface-2)}
 /* recursos enviables */
 .rtype{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:30px;border:1px solid var(--border)}
 .rtype svg{width:13px;height:13px}
-.rtype.pdf{color:var(--red)} .rtype.image{color:var(--blue)} .rtype.link{color:var(--accent)} .rtype.text{color:var(--green)}
+.rtype.pdf{color:var(--red)} .rtype.image{color:var(--blue)} .rtype.link{color:var(--accent-text)} .rtype.text{color:var(--green)}
 .trigs{display:flex;gap:5px;flex-wrap:wrap;max-width:340px}
 .trig{font-size:10.5px;color:var(--muted);background:var(--surface-3);padding:2px 8px;border-radius:20px}
 .switch{width:38px;height:21px;border-radius:20px;background:var(--surface-3);border:1px solid var(--border);position:relative;cursor:pointer;transition:.18s;flex:none}
@@ -352,7 +361,7 @@ tbody tr:hover{background:var(--surface-2)}
 .switch::after{content:"";position:absolute;top:1.5px;left:2px;width:15px;height:15px;border-radius:50%;background:var(--muted);transition:.18s}
 .switch.on::after{background:var(--accent-ink);transform:translateX(17px)}
 .bubble{display:flex;gap:10px;align-items:flex-start}
-.bubble .bot-av{width:30px;height:30px;border-radius:9px;background:var(--surface-3);display:grid;place-items:center;flex:none;color:var(--accent)}
+.bubble .bot-av{width:30px;height:30px;border-radius:9px;background:var(--surface-3);display:grid;place-items:center;flex:none;color:var(--accent-text)}
 .bubble .bot-av svg{width:16px;height:16px}
 .bmsg{background:var(--surface-2);border:1px solid var(--border);border-radius:4px 13px 13px 13px;padding:11px 14px;font-size:13px;line-height:1.45;max-width:100%}
 .bmsg .battach{display:flex;align-items:center;gap:10px;margin-top:10px;background:var(--surface-3);border:1px solid var(--border);border-radius:10px;padding:10px 12px;text-decoration:none;color:var(--text)}
@@ -400,7 +409,7 @@ tbody tr:hover{background:var(--surface-2)}
 .verde-forms{display:flex;flex-direction:column;gap:20px}
 .sec-let{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:7px;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:800;margin-right:8px}
 .prompt-preview{font-family:'IBM Plex Mono';font-size:11.5px;line-height:1.6;color:var(--muted);white-space:pre-wrap;word-break:break-word;max-height:62vh;overflow:auto;margin:0}
-.prompt-preview b,.prompt-preview .ph-title{color:var(--accent);font-weight:600}
+.prompt-preview b,.prompt-preview .ph-title{color:var(--accent-text);font-weight:600}
 .tagbox{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:8px 10px;min-height:42px;cursor:text}
 .tagbox:focus-within{border-color:var(--accent)}
 .tagbox input{flex:1;min-width:110px;background:none;border:none;outline:none;color:var(--text);font-size:13px;padding:3px 0}
@@ -479,7 +488,7 @@ tbody tr:hover{background:var(--surface-2)}
 .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),#9fd400);border-radius:20px;transition:width .3s}
 
 .note{display:flex;gap:10px;background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:13px 15px;font-size:12.5px;color:var(--muted);margin-top:6px}
-.note svg{width:17px;height:17px;flex:none;color:var(--accent);margin-top:1px}
+.note svg{width:17px;height:17px;flex:none;color:var(--accent-text);margin-top:1px}
 
 .view{display:none}
 .view.show{display:block;animation:fade .25s}
@@ -529,8 +538,6 @@ tbody tr:hover{background:var(--surface-2)}
 .drawer-body{flex:1;overflow:auto;padding:16px 18px}
 .drawer-foot{display:flex;justify-content:flex-end;gap:10px;padding:14px 18px;border-top:1px solid var(--border-soft);background:var(--surface-2)}
 .drawer-panel .prompt-preview{max-height:none}
-/* Paneles con fondo claro (detalle de un chat, marcar atendido, avisos) */
-.claro{--text:#111b21;--muted:#54656f;--faint:#667781;--surface:#ffffff;--surface-2:#f7f8fa;--surface-3:#eef1f3;--border:#d1d7db;--border-soft:#e9edef;--accent:#008069;--accent-ink:#ffffff;color:#111b21}
 /* Selector de IA (sección H) */
 .ia-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:16px}
 .ia-card{display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:12px;background:var(--surface-2);border:2px solid var(--border);cursor:pointer;text-align:left;color:var(--text);transition:border-color .15s}
@@ -547,10 +554,6 @@ tbody tr:hover{background:var(--surface-2)}
 .ia-tag.rec{background:var(--accent);color:var(--accent-ink)}
 .ia-tag.mas{color:#9dbcff;background:rgba(107,155,255,.12);border:1px solid rgba(107,155,255,.35)}
 .ia-tag.max{color:var(--amber);background:rgba(244,193,82,.12);border:1px solid rgba(244,193,82,.35)}
-/* ===== Pantallas de chats: fondo claro, estilo lista de chats ===== */
-.app.modo-claro .main{background:#f0f2f5;min-height:100vh;--text:#111b21;--muted:#54656f;--faint:#667781;--surface:#ffffff;--surface-2:#f7f8fa;--surface-3:#eef1f3;--border:#d1d7db;--border-soft:#e9edef;--accent:#008069;--accent-ink:#ffffff;color:#111b21}
-.app.modo-claro .main .badge{background:#fff}
-.app.modo-claro .main .panel{box-shadow:0 1px 2px rgba(11,20,26,.08)}
 .chat-head{display:flex;align-items:center;gap:10px;padding:10px 12px 10px 18px;border-bottom:1px solid var(--border-soft);flex-wrap:wrap}
 .chat-head h3{font-size:16px;font-weight:700}
 .cnt-verde{min-width:22px;height:22px;padding:0 7px;border-radius:11px;background:#25d366;color:#0b0c10;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
@@ -814,6 +817,252 @@ body:has(.split.abierta) .toasts{top:20px;bottom:auto}
   body:has(.split.abierta) .toasts{left:12px;right:12px;top:12px;bottom:auto;max-width:none}
 }
 
+/* ===================== 1.3.4: modo claro y oscuro, menú achicable y chat compacto ===================== */
+/* --- Colores del modo oscuro (predeterminado). Las pantallas de chats usan la paleta de WhatsApp en modo oscuro. --- */
+:root{
+  color-scheme:dark;
+  --accent-text:#c9f24d;
+  --accent-borde:#c9f24d;
+  --wa-fondo:#0b0c10;--wa-panel:#111b21;--wa-panel-2:#202c33;--wa-input:#202c33;--wa-input-2:#2a3942;--wa-sel:#2a3942;--wa-hover:#1a252c;
+  --wa-borde:#222d34;--wa-borde-2:#3b4a54;--wa-texto:#e9edef;--wa-texto-2:#aebac1;--wa-texto-3:#8696a0;
+  --wa-acento:#00a884;--wa-acento-hover:#06cf9c;--wa-acento-texto:#00a884;--wa-acento-ink:#111b21;
+  --wa-chat:#0b141a;--wa-b-cli:#202c33;--wa-b-ver:#005c4b;--wa-b-ver-quien:#7fe3c4;--wa-b-equ:#1d3a5c;--wa-b-equ-quien:#9dbcff;--wa-b-hora:#8fa4ad;--wa-fecha:#182229;--wa-sombra:rgba(0,0,0,.28);
+  --wa-avatar:#6a7175;--wa-avatar-tx:#e9edef;
+  --wa-ok-bg:#103529;--wa-ok-tx:#7fe3c4;--wa-man-bg:#3a2e12;--wa-man-tx:#f4c152;--wa-mal-bg:#3b1f22;--wa-mal-tx:#f4a9a3;
+  --wa-per-bg:#16304f;--wa-per-tx:#9dbcff;--wa-apa-bg:#2a3942;--wa-apa-tx:#aebac1;
+  --wa-rojo:#f15c6d;--wa-mark-bg:#6b5a00;--wa-mark-tx:#fff1a8;
+  --wa-roja-bg:#3b1f22;--wa-roja-tx:#f4a9a3;--wa-roja-borde:#5c2b2f;
+  --wa-ambar-bg:#3a2e12;--wa-ambar-tx:#f4c152;--wa-ambar-borde:#5c4813;
+  --wa-gris-bg:#1a252c;--wa-gris-tx:#aebac1;--wa-gris-borde:#2a3942;
+}
+/* --- Colores del modo claro: todo el panel --- */
+:root[data-tema="claro"]{
+  color-scheme:light;
+  --bg:#f0f2f5;--surface:#ffffff;--surface-2:#f7f8fa;--surface-3:#eef1f3;--border:#d1d7db;--border-soft:#e9edef;
+  --text:#111b21;--muted:#54656f;--faint:#667781;--accent-text:#4d7c0f;--accent-borde:#5a8f00;
+  --blue:#2f6fe0;--green:#0f8a5f;--amber:#a16207;--red:#d93636;
+  --wa-fondo:#f0f2f5;--wa-panel:#ffffff;--wa-panel-2:#f7f8fa;--wa-input:#f0f2f5;--wa-input-2:#ffffff;--wa-sel:#f0f2f5;--wa-hover:#f7f8fa;
+  --wa-borde:#e9edef;--wa-borde-2:#d1d7db;--wa-texto:#111b21;--wa-texto-2:#3b4a54;--wa-texto-3:#667781;
+  --wa-acento:#008069;--wa-acento-hover:#00705c;--wa-acento-texto:#00704a;--wa-acento-ink:#ffffff;
+  --wa-chat:#efeae2;--wa-b-cli:#ffffff;--wa-b-ver:#d9fdd3;--wa-b-ver-quien:#00704a;--wa-b-equ:#e3eefc;--wa-b-equ-quien:#1a4fa3;--wa-b-hora:#667781;--wa-fecha:#ffffff;--wa-sombra:rgba(11,20,26,.13);
+  --wa-avatar:#dfe5e7;--wa-avatar-tx:#54656f;
+  --wa-ok-bg:#e7f6ef;--wa-ok-tx:#00704a;--wa-man-bg:#fff4d6;--wa-man-tx:#7a4f00;--wa-mal-bg:#fbd5d1;--wa-mal-tx:#a50e0e;
+  --wa-per-bg:#e3eefc;--wa-per-tx:#1a4fa3;--wa-apa-bg:#e9edef;--wa-apa-tx:#3b4a54;
+  --wa-rojo:#c5221f;--wa-mark-bg:#fff1a8;--wa-mark-tx:#111b21;
+  --wa-roja-bg:#fdecea;--wa-roja-tx:#a50e0e;--wa-roja-borde:#f3b8b2;
+  --wa-ambar-bg:#fff4d6;--wa-ambar-tx:#7a4f00;--wa-ambar-borde:#f2d48a;
+  --wa-gris-bg:#eef1f3;--wa-gris-tx:#3b4a54;--wa-gris-borde:#e0e4e7;
+}
+/* Ajustes puntuales del panel original en modo claro */
+:root[data-tema="claro"] .search input:focus,:root[data-tema="claro"] .fdrop:focus,:root[data-tema="claro"] .field textarea:focus,:root[data-tema="claro"] .field input:focus,:root[data-tema="claro"] .field select:focus,:root[data-tema="claro"] .sim-input input:focus,:root[data-tema="claro"] .tagbox:focus-within,:root[data-tema="claro"] .vrow .vemoji:focus,:root[data-tema="claro"] .vrow .vtext:focus,:root[data-tema="claro"] .pcard textarea:focus,:root[data-tema="claro"] .pcard .pex:focus,:root[data-tema="claro"] .objrow input:focus,:root[data-tema="claro"] .objrow textarea:focus,:root[data-tema="claro"] .regrow .rtext:focus{border-color:var(--accent-borde)}
+:root[data-tema="claro"] .pcard .ptitle:focus{border-bottom-color:var(--accent-borde)}
+:root[data-tema="claro"] .btn-danger{color:#ffffff}
+:root[data-tema="claro"] .form-err,:root[data-tema="claro"] .filebox .fd.err{color:#b42318}
+:root[data-tema="claro"] .ritem .ri-ic,:root[data-tema="claro"] .types-mini .tm,:root[data-tema="claro"] .chip-tag button{background:rgba(11,20,26,.05)}
+:root[data-tema="claro"] .side-link.active,:root[data-tema="claro"] .tree-leaf.active{background:#e7f6ef;color:#00704a}
+:root[data-tema="claro"] .side-link.active svg{color:#00704a}
+:root[data-tema="claro"] .ia-card.sel{border-color:#7fb800;background:#f6fbe9}
+:root[data-tema="claro"] .ia-tag.mas{color:#1a4fa3}
+:root[data-tema="claro"] .panel,:root[data-tema="claro"] .power-card,:root[data-tema="claro"] .stat{box-shadow:0 1px 2px rgba(11,20,26,.06)}
+:root[data-tema="claro"] .toast{box-shadow:0 10px 30px rgba(11,20,26,.18)}
+
+/* --- Pantallas de chats: siguen el modo elegido --- */
+.app.vista-chat .main{background:var(--wa-fondo);min-height:100vh;color:var(--wa-texto)}
+.app.vista-chat .main .panel{box-shadow:0 1px 2px var(--wa-sombra)}
+.cnt-verde.cero{background:var(--wa-apa-bg);color:var(--wa-apa-tx)}
+.chat-row.alerta{background:var(--wa-roja-bg)}
+.chat-row.clic:hover{background:var(--wa-hover)}
+.chat-row.sel,.chat-row.clic.sel:hover{background:var(--wa-sel);box-shadow:inset 3px 0 0 var(--wa-acento)}
+.chat-av{background:var(--wa-avatar);color:var(--wa-avatar-tx)}
+.chat-hora.roja{color:var(--wa-rojo)}
+.punto-rojo{background:var(--wa-rojo)}
+.estado.ok{background:var(--wa-ok-bg);color:var(--wa-ok-tx)}
+.estado.man{background:var(--wa-man-bg);color:var(--wa-man-tx)}
+.estado.mal{background:var(--wa-mal-bg);color:var(--wa-mal-tx)}
+.estado.per{background:var(--wa-per-bg);color:var(--wa-per-tx)}
+.estado.apa{background:var(--wa-apa-bg);color:var(--wa-apa-tx)}
+.tag-apagado{background:var(--wa-apa-bg);color:var(--wa-apa-tx)}
+.sin-firma{color:var(--wa-mal-tx)}
+.pref-v{color:var(--wa-ok-tx)}
+.pref-c{color:var(--wa-texto-3)}
+.pref-e{color:var(--wa-per-tx)}
+.chip-f{border-color:var(--wa-borde-2);background:var(--wa-panel);color:var(--wa-texto-2)}
+.chip-f.sel{background:var(--wa-ok-bg);color:var(--wa-ok-tx);border-color:transparent}
+.chip-f.rojo{color:var(--wa-mal-tx);border-color:var(--wa-roja-borde)}
+.buscador{background:var(--wa-input)}
+.buscador svg,.buscador .limpiar{color:var(--wa-texto-3)}
+.buscador input{color:var(--wa-texto)}
+.buscador .limpiar:hover{background:var(--wa-sel)}
+mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
+.vacio-chats .vc-ic,.split-vacio .sv-ic{background:var(--wa-ok-bg);color:var(--wa-acento-texto)}
+.paso-r .pr-punto{background:var(--wa-texto-3)}
+.paso-r.alerta .pr-txt{background:var(--wa-roja-bg);border-color:var(--wa-roja-borde)}
+.paso-r.alerta .pr-punto{background:var(--wa-mal-tx)}
+.paso-r.verde .pr-punto{background:var(--wa-acento)}
+.paso-r.ambar .pr-punto{background:var(--wa-man-tx)}
+.pill-btn{color:var(--wa-acento-texto)}
+.pill-btn.prim{background:var(--wa-acento);color:var(--wa-acento-ink);border-color:var(--wa-acento)}
+.pill-btn.prim:hover{background:var(--wa-acento-hover)}
+.nota-clara svg{color:var(--wa-acento-texto)}
+.opcion-m.sel{border-color:var(--wa-acento);background:rgba(0,168,132,.08)}
+.opcion-m input{accent-color:var(--wa-acento)}
+.sw .pista{background:var(--wa-texto-3)}
+.sw[aria-checked="true"] .pista{background:var(--wa-acento)}
+.sw .sw-tx{color:var(--wa-texto-2)}
+.sw[aria-checked="true"] .sw-tx{color:var(--wa-acento-texto)}
+.conv-aviso.ambar{background:var(--wa-ambar-bg);color:var(--wa-ambar-tx)}
+.conv-aviso.rojo{background:var(--wa-roja-bg);color:var(--wa-roja-tx)}
+.conv-aviso.gris{background:var(--wa-gris-bg);color:var(--wa-gris-tx)}
+.conv-aviso .btn-mini{background:var(--wa-panel);border-color:var(--wa-ambar-borde);color:var(--wa-ambar-tx)}
+.conv-mensajes{background:var(--wa-chat)}
+.burbuja{color:var(--wa-texto);box-shadow:0 1px 1px var(--wa-sombra)}
+.burbuja .hora{color:var(--wa-b-hora)}
+.burbuja.cli{background:var(--wa-b-cli)}
+.burbuja.ver{background:var(--wa-b-ver)}
+.burbuja.ver .quien{color:var(--wa-b-ver-quien)}
+.burbuja.equ{background:var(--wa-b-equ)}
+.burbuja.equ .quien{color:var(--wa-b-equ-quien)}
+.burbuja .adj-tit svg,.burbuja .adj-nota{color:var(--wa-texto-2)}
+.linea-sis{background:var(--wa-ambar-bg);color:var(--wa-ambar-tx)}
+.conv-vacio{color:var(--wa-texto-3)}
+.conv-composer textarea{background:var(--wa-input-2);color:var(--wa-texto)}
+.conv-composer textarea:focus{border-color:var(--wa-acento)}
+.conv-composer textarea:disabled{background:var(--wa-sel);color:var(--wa-texto-3)}
+.btn-enviar{background:var(--wa-acento);color:var(--wa-acento-ink)}
+.btn-enviar:hover{background:var(--wa-acento-hover)}
+.btn-enviar:disabled{background:var(--wa-texto-3)}
+.conv-error{color:var(--wa-mal-tx)}
+.conf-lista svg{color:var(--wa-texto-2)}
+.split{background:var(--wa-panel);border-color:var(--wa-borde)}
+.split-lista{border-right-color:var(--wa-borde)}
+.split-vacio{background:var(--wa-panel-2)}
+.conv-cab{background:var(--wa-panel-2);border-bottom-color:var(--wa-borde)}
+
+/* --- Vista dividida compacta: sin encabezado de página, todo el alto para el chat --- */
+.app.vista-split .main{padding:12px}
+.app.vista-split .topbar{display:none}
+.app.vista-split .split{height:calc(100vh - 24px);min-height:480px;margin:0}
+.lista-tit,.chat-head .lista-tit{margin:0;font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;letter-spacing:-.4px;color:var(--wa-texto)}
+.split-lista .chat-head{padding:12px 8px 8px 16px;border-bottom:none;gap:8px}
+.split-lista .busq-fila{padding:0 12px 8px;border-bottom:1px solid var(--wa-borde)}
+.split-lista .split-filtros{padding:0 12px 10px;border-bottom:1px solid var(--wa-borde)}
+.split-lista .split-filtros .busq-fila{padding:0 0 8px;border-bottom:none}
+.ic-btn{width:40px;height:40px;border-radius:50%;display:inline-grid;place-items:center;flex:none;background:none;border:none;color:var(--wa-texto-2);cursor:pointer}
+.ic-btn:hover{background:var(--wa-hover)}
+.ic-btn:focus-visible{outline:2px solid var(--wa-acento);outline-offset:1px}
+.ic-btn svg{width:18px;height:18px}
+.split-vacio p{max-width:420px;margin:0;color:var(--wa-texto-3);font-size:13.5px;line-height:1.55}
+.split-vacio .sv-nota{display:flex;gap:10px;align-items:flex-start;text-align:left;max-width:440px;margin-top:6px;padding:12px 14px;border-radius:12px;background:var(--wa-panel);border:1px solid var(--wa-borde);color:var(--wa-texto-2);font-size:12.5px;line-height:1.55}
+.split-vacio .sv-nota span{max-width:none;font-size:inherit;color:inherit}
+.split-vacio .sv-nota svg{width:16px;height:16px;flex:none;margin-top:2px;color:var(--wa-acento-texto)}
+@media(min-width:1180px){.app.vista-split .nota-clara{display:none}}
+
+/* Encabezado compacto de la conversación */
+.conv-cab{min-height:60px;padding:8px 16px;gap:12px;flex-wrap:nowrap}
+.conv-cab .conv-av{width:40px;height:40px;font-size:14px}
+.conv-cab-tx{flex:1 1 auto;min-width:0;gap:1px}
+.conv-cab-tx h3{display:flex;align-items:baseline;gap:8px;min-width:0;margin:0;font-family:inherit;font-size:15.5px;font-weight:700;letter-spacing:0;color:var(--wa-texto)}
+.conv-cab-tx h3 .c-nom{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.conv-cab-tx h3 .c-num{flex:none;font-size:12.5px;font-weight:400;color:var(--wa-texto-3);white-space:nowrap}
+.conv-cab .conv-estados .estado{font-size:11px;padding:0 8px}
+.sw.sw-mini{flex:none;min-height:40px;padding:0 12px 0 10px;gap:8px;border-radius:20px;border:1px solid var(--wa-borde-2);background:transparent;font-size:13px;font-weight:700}
+.sw.sw-mini .pista{width:36px;height:20px;border-radius:10px}
+.sw.sw-mini .bola{width:16px;height:16px;top:2px;left:2px}
+.sw.sw-mini[aria-checked="true"] .bola{left:18px}
+.conv-cab .pill-btn{min-height:40px;border-color:var(--wa-borde-2);background:transparent}
+
+/* Franja de estado: un renglón, solo cuando hace falta */
+.conv-franja{display:flex;align-items:center;gap:8px;padding:6px 16px;font-size:12.5px;line-height:1.4;border-bottom:1px solid transparent}
+.conv-franja.oculto{display:none}
+.conv-franja>svg{width:15px;height:15px;flex:none}
+.conv-franja .txt{flex:1 1 auto;min-width:0}
+.conv-franja .tx-corto{display:none}
+.conv-franja.roja{background:var(--wa-roja-bg);color:var(--wa-roja-tx);border-bottom-color:var(--wa-roja-borde)}
+.conv-franja.ambar{background:var(--wa-ambar-bg);color:var(--wa-ambar-tx);border-bottom-color:var(--wa-ambar-borde)}
+.conv-franja.gris{background:var(--wa-gris-bg);color:var(--wa-gris-tx);border-bottom-color:var(--wa-gris-borde)}
+.conv-franja .btn-mini{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 12px;border-radius:17px;border:1px solid currentColor;background:var(--wa-panel);color:inherit;font:inherit;font-weight:700;cursor:pointer}
+.conv-franja .btn-mini svg{width:14px;height:14px}
+.conv-franja .franja-marcar{display:none}
+
+/* Mensajes de borde a borde, como en WhatsApp Web */
+.conv-pane .conv-mensajes{margin:0;border-radius:0;padding:18px 56px;gap:6px}
+.conv-pane .burbuja{max-width:65%}
+.burbuja.cli{border-radius:0 8px 8px 8px}
+.burbuja.ver,.burbuja.equ{border-radius:8px 0 8px 8px}
+.fecha-sep{align-self:center;margin:6px 0 2px;padding:3px 10px;border-radius:8px;background:var(--wa-fecha);color:var(--wa-texto-3);font-size:12px;font-weight:600;box-shadow:0 1px 1px var(--wa-sombra)}
+
+/* Campo de respuesta compacto */
+.conv-pane .conv-composer{margin:0;padding:10px 16px;gap:6px;background:var(--wa-panel-2);border-top:none}
+.conv-pane .conv-composer textarea{min-height:44px;border:1px solid transparent;border-radius:22px;padding:11px 16px;font-size:14.5px}
+.conv-pane .btn-enviar{width:44px;height:44px}
+.conv-pane .conv-pista{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+@media(max-width:600px){
+  .conv-pane .conv-mensajes{padding:12px 10px}
+  .conv-pane .burbuja{max-width:85%}
+  .conv-cab{padding:6px 10px 6px 6px;gap:8px;min-height:56px}
+  .conv-cab .conv-estados,.conv-cab .conv-marcar{display:none}
+  .conv-cab .conv-av{width:36px;height:36px}
+  .conv-cab-tx h3{flex-direction:column;align-items:flex-start;gap:0;font-size:15px}
+  .conv-cab-tx h3 .c-nom{max-width:100%}
+  .sw.sw-mini{border:none;padding:0 4px;min-height:44px}
+  .conv-franja{padding:6px 10px}
+  .conv-franja .franja-marcar{display:inline-flex}
+  .conv-franja .tx-largo{display:none}
+  .conv-franja .tx-corto{display:inline}
+  .conv-pane .conv-composer{padding:8px 10px}
+}
+
+/* --- Selector de modo claro y oscuro --- */
+.tema-seg{display:flex;padding:3px;border-radius:10px;background:var(--surface-3);margin-top:10px}
+.tema-seg button{flex:1 1 0;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;border-radius:8px;border:none;background:none;color:var(--muted);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+.tema-seg button svg{width:15px;height:15px}
+.tema-seg button[aria-pressed="true"]{background:var(--surface);color:var(--text);font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.18)}
+.tema-seg button:focus-visible,.tema-corto:focus-visible,.conex-corta:focus-visible,.menu-toggle:focus-visible{outline:2px solid var(--accent-borde);outline-offset:2px}
+.sw:focus-visible{outline-color:var(--wa-acento)}
+.tema-corto,.conex-corta{display:none;position:relative;width:44px;height:40px;border-radius:10px;place-items:center;border:none;background:none;color:var(--muted);cursor:pointer}
+.tema-corto:hover,.conex-corta:hover{background:var(--surface-3);color:var(--text)}
+.tema-corto svg,.conex-corta svg{width:19px;height:19px}
+.tema-corto .ic-sol{color:var(--amber)}
+:root[data-tema="claro"] .tema-corto .ic-sol,:root:not([data-tema="claro"]) .tema-corto .ic-luna{display:none}
+.conex-corta .punto{position:absolute;top:8px;right:9px;width:8px;height:8px;border-radius:50%;background:var(--amber)}
+.conex-corta.ok .punto{background:#25d366}
+.conex-corta.mal .punto{background:var(--red)}
+.su-salir-ic{display:none}
+
+/* --- Menú achicable (solo en la computadora) --- */
+.menu-toggle{margin-left:auto;flex:none;width:34px;height:34px;border-radius:9px;border:1px solid var(--border);background:none;color:var(--muted);display:inline-grid;place-items:center;cursor:pointer}
+.menu-toggle:hover{background:var(--surface-3);color:var(--text)}
+.menu-toggle svg{width:17px;height:17px}
+.menu-toggle .ic-abrir{display:none}
+.tip-menu{position:fixed;z-index:95;transform:translateY(-50%);background:var(--text);color:var(--bg);font-size:12px;font-weight:600;padding:5px 10px;border-radius:7px;white-space:nowrap;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+@media(max-width:880px){.menu-toggle{display:none}}
+@media(min-width:881px){
+  :root[data-menu="corto"] .app{grid-template-columns:72px minmax(0,1fr)}
+  :root[data-menu="corto"] .side{padding:14px 10px;align-items:center;gap:4px}
+  :root[data-menu="corto"] .brand{flex-direction:column;gap:8px;padding:0 0 8px}
+  :root[data-menu="corto"] .brand>div:not(.logo){display:none}
+  :root[data-menu="corto"] .menu-toggle{margin:0;border-color:transparent}
+  :root[data-menu="corto"] .menu-toggle .ic-cerrar{display:none}
+  :root[data-menu="corto"] .menu-toggle .ic-abrir{display:block}
+  :root[data-menu="corto"] .side-top,:root[data-menu="corto"] #navAdmin,:root[data-menu="corto"] #navSistema{display:flex;flex-direction:column;align-items:center;gap:2px;width:100%}
+  :root[data-menu="corto"] #navAdmin.oculto,:root[data-menu="corto"] #navSistema.oculto{display:none}
+  :root[data-menu="corto"] .nav-label{font-size:0;padding:0;margin:8px auto;width:32px;height:1px;background:var(--border)}
+  :root[data-menu="corto"] .tree-parent,:root[data-menu="corto"] .tree-sub{display:none}
+  :root[data-menu="corto"] .tree-children,:root[data-menu="corto"] .leaf-children{display:flex!important;flex-direction:column;align-items:center;gap:2px;margin:0;padding:0;border:none;width:100%}
+  :root[data-menu="corto"] .side-link,:root[data-menu="corto"] .tree-leaf{position:relative;font-size:0;width:48px;height:44px;min-height:44px;padding:0;margin:0;justify-content:center;gap:0;flex:none}
+  :root[data-menu="corto"] .side-link svg{width:21px;height:21px}
+  :root[data-menu="corto"] .tree-leaf .ic{width:19px;height:19px}
+  :root[data-menu="corto"] .side-count{position:absolute;top:3px;right:2px;margin:0;font-size:10.5px;min-width:17px;height:17px;padding:0 4px}
+  :root[data-menu="corto"] .side-foot{width:100%;display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:10px}
+  :root[data-menu="corto"] .bot-card,:root[data-menu="corto"] .tema-seg{display:none}
+  :root[data-menu="corto"] .tema-corto,:root[data-menu="corto"] .conex-corta{display:inline-grid}
+  :root[data-menu="corto"] .side-user{flex-direction:column;gap:6px;padding:0;margin:0}
+  :root[data-menu="corto"] .side-user .su-tx{display:none}
+  :root[data-menu="corto"] #suSalir{font-size:0;width:44px;height:40px;min-height:40px;padding:0;justify-content:center;border-color:transparent;background:none}
+  :root[data-menu="corto"] #suSalir .su-salir-ic{display:block;width:18px;height:18px}
+}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -829,6 +1078,7 @@ body:has(.split.abierta) .toasts{top:20px;bottom:auto}
         <h1>Nexus IA</h1>
         <span>Panel de control</span>
       </div>
+      <button type="button" class="menu-toggle" id="btnMenu" onclick="alternarMenu()" aria-label="Achicar el menú" aria-expanded="true" data-tip="Achicar el menú"><svg class="ic-cerrar" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><polyline points="16 15 13 12 16 9"/></svg><svg class="ic-abrir" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><polyline points="14 9 17 12 14 15"/></svg></button>
     </div>
 
     <div class="side-top">
@@ -891,10 +1141,16 @@ body:has(.split.abierta) .toasts{top:20px;bottom:auto}
         </div>
         <button class="link-btn" onclick="openConn()">Ver estado de conexión</button>
       </div>
+      <button type="button" class="conex-corta" id="conexCorta" onclick="openConn()" aria-label="Estado de conexión" data-tip="Estado de conexión"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span class="punto" aria-hidden="true"></span></button>
+      <div class="tema-seg" role="group" aria-label="Modo del panel">
+        <button type="button" id="temaClaro" aria-pressed="false" onclick="ponerTema('claro')"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>Claro</button>
+        <button type="button" id="temaOscuro" aria-pressed="true" onclick="ponerTema('oscuro')"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>Oscuro</button>
+      </div>
+      <button type="button" class="tema-corto" id="temaCorto" onclick="alternarTema()" aria-label="Pasar a modo claro" data-tip="Modo claro"><svg class="ic-sol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg><svg class="ic-luna" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
       <div class="side-user" id="sideUser">
         <span class="su-av" id="suAv">AG</span>
         <div class="su-tx"><b id="suNombre">Acceso general</b><span id="suRol">Ingreso con usuario propio inactivo</span></div>
-        <button class="btn btn-ghost oculto" type="button" id="suSalir" onclick="cerrarSesion()">Cerrar sesión</button>
+        <button class="btn btn-ghost oculto" type="button" id="suSalir" onclick="cerrarSesion()" data-tip="Cerrar sesión"><svg class="su-salir-ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Cerrar sesión</button>
       </div>
     </div>
   </aside>
@@ -1258,10 +1514,10 @@ body:has(.split.abierta) .toasts{top:20px;bottom:auto}
       <div class="split" id="splitChats">
         <div class="split-lista">
         <div class="chat-head">
-          <h3>Esperando respuesta</h3>
+          <h3 class="lista-tit">Chats por responder</h3>
           <span class="cnt-verde cero" id="chatsCnt">0</span>
           <button class="ic-btn" type="button" style="margin-left:auto" aria-label="Actualizar la lista" onclick="actualizarContador(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
-          <button class="pill-btn" type="button" id="btnAvisos" onclick="go('avisos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> Avisos</button>
+          <button class="ic-btn" type="button" id="btnAvisos" onclick="go('avisos')" aria-label="Avisos a celulares del equipo" title="Avisos a celulares del equipo"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
         </div>
         <div class="busq-fila">
           <div class="buscador"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="search" id="pendBuscar" placeholder="Buscar por nombre, número o mensaje" aria-label="Buscar en chats por responder" oninput="buscarPendientes()"><button type="button" class="limpiar oculto" id="pendLimpiar" aria-label="Borrar la búsqueda" onclick="limpiarBusquedaPend()"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
@@ -1270,15 +1526,15 @@ body:has(.split.abierta) .toasts{top:20px;bottom:auto}
         <ul class="chat-list" id="chatsLista"></ul>
         </div>
         <div class="split-chat" id="chatsDerecha">
-          <div class="split-vacio"><span class="sv-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"/><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"/></svg></span><b>Seleccionar un chat</b><span>Elegir un chat de la lista para ver la conversación, responder o marcarlo como atendido.</span></div>
+          <div class="split-vacio"><span class="sv-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"/><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"/></svg></span><b>Seleccionar un chat</b><p>Clientes que Verde derivó a un asesor. Mientras esperan, Verde no les responde. Elegir un chat de la lista para ver la conversación, responder o marcarlo como atendido.</p><div class="sv-nota"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Cuando una persona del equipo responde desde este panel, desde el celular o desde WhatsApp Web, el chat pasa solo a «Chats respondidos». Si se atendió por una llamada o en el local, usar «Marcar atendido» e indicar el motivo. En rojo, las esperas de más de 5 minutos.</span></div></div>
         <div class="conv-pane oculto" id="convPane" role="region" aria-labelledby="convTitulo">
           <div class="conv-cab">
             <button class="conv-volver" type="button" onclick="cerrarConversacion()" aria-label="Volver a la lista de chats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
             <span class="chat-av conv-av" id="convAvatar" aria-hidden="true"></span>
-            <div class="conv-cab-tx"><h3 id="convTitulo">Conversación</h3><div class="conv-estados" id="convEstados"></div></div>
+            <div class="conv-cab-tx"><h3 id="convTitulo"><span class="c-nom" id="convNombre">Conversación</span><span class="c-num" id="convNumero"></span></h3><div class="conv-estados" id="convEstados"></div></div><button type="button" class="sw sw-mini" id="convSwitch" role="switch" aria-checked="true" aria-label="Verde en este chat" data-clave="" onclick="tocarInterruptor(this)"><span class="pista" aria-hidden="true"><span class="bola"></span></span><span class="sw-tx">Verde</span></button>
             <button class="pill-btn conv-marcar oculto" type="button" id="convMarcar" data-id="" onclick="marcarDesdeConversacion()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Marcar atendido</button>
           </div>
-          <div class="conv-control oculto" id="convControl"></div>
+          <div class="conv-franja oculto" id="convFranja" role="status"></div>
           <div class="conv-mensajes" id="convMensajes" aria-live="polite"></div>
           <div class="conv-composer">
       <div class="conv-aviso ambar oculto" id="convNoResp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="txt" id="convNoRespTx"></span></div>
@@ -1299,6 +1555,7 @@ body:has(.split.abierta) .toasts{top:20px;bottom:auto}
     <div class="view" id="view-conversaciones">
       <div class="split" id="splitConv">
         <div class="split-lista">
+          <div class="chat-head"><h3 class="lista-tit">Conversaciones</h3></div>
           <div class="split-filtros">
           <label class="buscador" style="flex:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="search" id="convBuscar" placeholder="Buscar por nombre, número o mensaje" aria-label="Buscar en conversaciones" oninput="buscarConversaciones()"></label>
           <div class="chips-filtro" role="group" aria-label="Filtrar por estado" id="convChips"></div>
@@ -1307,7 +1564,7 @@ body:has(.split.abierta) .toasts{top:20px;bottom:auto}
           <div class="lista-info oculto" id="convInfo"></div>
         </div>
         <div class="split-chat" id="convDerecha">
-          <div class="split-vacio"><span class="sv-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"/><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"/></svg></span><b>Seleccionar un chat</b><span>Elegir un chat de la lista para ver la conversación, responder o apagar a Verde en ese chat.</span></div>
+          <div class="split-vacio"><span class="sv-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"/><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"/></svg></span><b>Seleccionar un chat</b><p>Todos los chats que atiende Verde. Elegir un chat de la lista para ver la conversación, responder o apagar a Verde en ese chat.</p><div class="sv-nota"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Verde se pausa solo en un chat cuando una persona del equipo escribe desde el WhatsApp de la tienda o desde este panel, y vuelve a responder 12 horas después del último mensaje de esa persona. Con el interruptor «Verde» de cada chat se puede apagar sin límite de tiempo y volver a encender.</span></div></div>
         </div>
       </div>
       <div class="nota-clara"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Verde se pausa solo en un chat cuando una persona del equipo escribe desde el WhatsApp de la tienda o desde este panel, y vuelve a responder 12 horas después del último mensaje de esa persona. Con el interruptor de cada chat se puede apagar sin límite de tiempo y volver a encender.</span></div>
@@ -1983,7 +2240,7 @@ function _doGo(view){
   const crumb=document.getElementById('crumb');
   if(meta[2])crumb.innerHTML=meta[2];
   else{crumb.innerHTML=CRUMB_ORIGINAL;document.getElementById('crumbLeaf').textContent=meta[0];}
-  document.getElementById('app').classList.toggle('modo-claro',VISTAS_CLARAS.includes(view));
+  document.getElementById('app').classList.toggle('vista-chat',VISTAS_CLARAS.includes(view));document.getElementById('app').classList.toggle('vista-split',view==='chats'||view==='conversaciones');
   document.getElementById('btnCerebro').classList.toggle('oculto',view!=='verde');
   if(view==='chats')actualizarContador(true);
   if(view==='respondidos')cargarRespondidos();
@@ -3745,8 +4002,8 @@ function pintarUsuarios(){
   if(!USUARIOS.length){tb.innerHTML='<tr><td colspan="7"><div class="empty"><p>Todavía no hay usuarios. Crear el primero con «Nuevo usuario».</p></div></td></tr>';return;}
   tb.innerHTML=USUARIOS.map(u=>{
     const rol=u.rol==='admin'
-      ?'<span class="pill" style="background:rgba(201,242,77,.12);color:var(--accent)">Administrador</span>'
-      :'<span class="pill" style="background:rgba(107,155,255,.12);color:#9dbcff">Asesor</span>';
+      ?'<span class="pill" style="background:rgba(201,242,77,.14);color:var(--accent-text)">Administrador</span>'
+      :'<span class="pill" style="background:rgba(107,155,255,.14);color:var(--blue)">Asesor</span>';
     const est=u.activo?'<span class="pill ok"><span class="d"></span>Activo</span>':'<span class="pill off"><span class="d"></span>Inactivo</span>';
     const acc='<button class="btn btn-ghost" type="button" data-id="'+escH(u.id)+'" onclick="abrirUsuario(this.dataset.id)">Editar</button> '
       +'<button class="btn btn-ghost" type="button" data-id="'+escH(u.id)+'" onclick="restablecerUsuario(this.dataset.id)">Restablecer contraseña</button> '
@@ -4153,11 +4410,11 @@ async function abrirConversacion(clave){
   pane.classList.remove('oculto');
   CONV.clave=clave;CONV.datos=null;CONV.vista=vista;
   marcarSeleccion();
-  document.getElementById('convTitulo').textContent='Conversación';
+  document.getElementById('convNombre').textContent='Conversación';document.getElementById('convNumero').textContent='';
   document.getElementById('convAvatar').innerHTML=SVG131.persona;
   document.getElementById('convEstados').innerHTML='';
   document.getElementById('convMarcar').classList.add('oculto');
-  const ctl=document.getElementById('convControl');ctl.className='conv-control oculto';ctl.innerHTML='';
+  const fr=document.getElementById('convFranja');fr.className='conv-franja oculto';fr.innerHTML='';
   document.getElementById('convMensajes').innerHTML='<div class="conv-vacio">Cargando la conversación…</div>';
   const ta=document.getElementById('convTexto');ta.value=BORRADORES[clave]||'';ajustarAlto(ta);
   document.getElementById('convError').classList.add('oculto');
@@ -4189,52 +4446,6 @@ async function refrescarConversacion(primera){
     return;
   }
   pintarConversacion(r.json,primera);
-}
-function renderMensajes(ms){
-  if(!ms||!ms.length)return '<div class="conv-vacio">Todavía no hay mensajes registrados en este chat.</div>';
-  return ms.map(m=>{
-    const hora='<span class="hora">'+escH(horaCorta(m.en))+'</span>';
-    if(m.tipo==='sistema')return '<div class="linea-sis">'+escH(horaCorta(m.en))+' · '+escH(m.texto)+'</div>';
-    const adj=parsearAdjunto(m.texto);
-    if(m.tipo==='cliente')return '<div class="burbuja cli">'+(adj?htmlAdjuntoBurbuja(adj,true):'<span class="txt">'+escH(m.texto)+'</span>')+hora+'</div>';
-    if(m.tipo==='verde')return '<div class="burbuja ver"><span class="quien">Verde</span><span class="txt">'+escH(m.texto)+'</span>'+hora+'</div>';
-    const quien=(m.autor?m.autor+' (equipo)':'Equipo')+(m.origen==='panel'?' · desde el panel':(m.firma?'':' · sin firma'));
-    return '<div class="burbuja equ"><span class="quien">'+escH(quien)+'</span>'+(adj?htmlAdjuntoBurbuja(adj,false):'<span class="txt">'+escH(m.texto)+'</span>')+hora+'</div>';
-  }).join('');
-}
-function pintarConversacion(c,primera){
-  const anterior=CONV.datos;CONV.datos=c;
-  document.getElementById('convTitulo').textContent=c.nombre?(c.nombre+(c.numero?' · +'+c.numero:'')):(c.numero?'+'+c.numero:'Cliente sin número visible');
-  document.getElementById('convEstados').innerHTML=pillsConversacion(c);
-  document.getElementById('convAvatar').innerHTML=c.nombre?escH(iniciales(c.nombre)):SVG131.persona;
-  const bm=document.getElementById('convMarcar');bm.classList.toggle('oculto',!c.pendienteId);bm.dataset.id=c.pendienteId||'';
-  const ctl=document.getElementById('convControl');
-  ctl.className='conv-control'+(c.apagado?' off':'');
-  ctl.innerHTML=htmlControlVerde(c);
-  const box=document.getElementById('convMensajes');
-  const ms=c.mensajes||[];
-  const ultimo=ms.length?ms[ms.length-1].en:0;
-  const cambio=primera||!anterior||(anterior.mensajes||[]).length!==ms.length||((anterior.mensajes||[]).slice(-1)[0]||{}).en!==ultimo;
-  if(cambio){
-    const cerca=box.scrollHeight-box.scrollTop-box.clientHeight<80;
-    box.innerHTML=renderMensajes(ms);
-    if(primera||cerca)box.scrollTop=box.scrollHeight;
-  }
-  // campo para responder
-  const ta=document.getElementById('convTexto'),btn=document.getElementById('convEnviar');
-  const noResp=document.getElementById('convNoResp');
-  const puede=!!c.puedeResponder&&c.d360!==false;
-  const motivo=c.d360===false?'La conexión con WhatsApp (360dialog) no está configurada en el servidor.':c.motivoNoResponder;
-  noResp.classList.toggle('oculto',puede);
-  document.getElementById('convNoRespTx').textContent=puede?'':(motivo||'');
-  ta.disabled=!puede;btn.disabled=!puede;
-  ta.placeholder=puede?'Escribir un mensaje…':'No se puede responder desde el panel';
-  ta.setAttribute('aria-label','Mensaje para '+(c.nombre||(c.numero?'+'+c.numero:'el cliente')));
-  const firma=String(c.firmaUsuario||'').trim();
-  let pista=firma?'Sale desde el WhatsApp de la tienda con la firma «'+firma+'».':'Sale desde el WhatsApp de la tienda sin firma'+(SESION.usuario?' (este usuario no tiene una firma configurada).':'.');
-  if(!c.apagado)pista+=' Al enviar, Verde queda en pausa en este chat.';
-  document.getElementById('convPista').textContent=pista;
-  document.getElementById('convPista').classList.toggle('oculto',!puede);
 }
 function ajustarAlto(ta){ta.style.height='auto';ta.style.height=Math.min(ta.scrollHeight||48,140)+'px';}
 function teclaComposer(e){
@@ -4297,4 +4508,195 @@ setInterval(()=>{if(_appIniciada&&currentView==='conversaciones'&&!document.hidd
 (async()=>{
   await iniciarSesion();
 })();
+
+/* ===================== 1.3.4: modo claro y oscuro, menú achicable y chat compacto ===================== */
+
+/* ---------- Modo claro y oscuro ---------- */
+function temaActual(){return document.documentElement.getAttribute('data-tema')==='claro'?'claro':'oscuro';}
+function ponerTema(t){
+  document.documentElement.setAttribute('data-tema',t==='claro'?'claro':'oscuro');
+  try{localStorage.setItem('verde_tema',temaActual());}catch(e){}
+  pintarTema();
+}
+function alternarTema(){ponerTema(temaActual()==='claro'?'oscuro':'claro');}
+function pintarTema(){
+  const t=temaActual();
+  const c=document.getElementById('temaClaro'),o=document.getElementById('temaOscuro'),k=document.getElementById('temaCorto');
+  if(c)c.setAttribute('aria-pressed',String(t==='claro'));
+  if(o)o.setAttribute('aria-pressed',String(t==='oscuro'));
+  if(k){k.setAttribute('aria-label',t==='claro'?'Pasar a modo oscuro':'Pasar a modo claro');k.dataset.tip=t==='claro'?'Modo oscuro':'Modo claro';}
+}
+// Mientras nadie elija un modo en este equipo, el panel sigue la configuración de la computadora o del celular.
+try{
+  const mq=window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)');
+  if(mq&&mq.addEventListener)mq.addEventListener('change',e=>{
+    let elegido=null;try{elegido=localStorage.getItem('verde_tema');}catch(_){}
+    if(elegido!=='claro'&&elegido!=='oscuro'){document.documentElement.setAttribute('data-tema',e.matches?'claro':'oscuro');pintarTema();}
+  });
+}catch(e){}
+
+/* ---------- Menú achicable ---------- */
+function menuCorto(){return document.documentElement.getAttribute('data-menu')==='corto';}
+function alternarMenu(){
+  const corto=!menuCorto();
+  if(corto)document.documentElement.setAttribute('data-menu','corto');else document.documentElement.removeAttribute('data-menu');
+  try{localStorage.setItem('verde_menu',corto?'corto':'completo');}catch(e){}
+  pintarMenu();ocultarTip();
+}
+function pintarMenu(){
+  const b=document.getElementById('btnMenu');if(!b)return;
+  const corto=menuCorto();
+  b.setAttribute('aria-expanded',String(!corto));
+  b.setAttribute('aria-label',corto?'Abrir el menú completo':'Achicar el menú');
+  b.dataset.tip=corto?'Abrir el menú completo':'Achicar el menú';
+}
+// Nombre emergente de cada ícono cuando el menú está achicado
+const tipMenu=document.createElement('div');
+tipMenu.className='tip-menu oculto';tipMenu.setAttribute('role','tooltip');tipMenu.id='tipMenu';
+document.body.appendChild(tipMenu);
+function mostrarTip(el){
+  if(!menuCorto()||!el||!el.dataset.tip||(window.matchMedia&&window.matchMedia('(max-width: 880px)').matches))return;
+  const r=el.getBoundingClientRect();
+  tipMenu.textContent=el.dataset.tip;
+  tipMenu.style.top=Math.round(r.top+r.height/2)+'px';
+  tipMenu.style.left=Math.round(r.right+10)+'px';
+  tipMenu.classList.remove('oculto');
+}
+function ocultarTip(){tipMenu.classList.add('oculto');}
+(function(){
+  const side=document.querySelector('.side');if(!side)return;
+  side.querySelectorAll('.side-link,.tree-leaf').forEach(b=>{if(!b.dataset.tip)b.dataset.tip=b.textContent.replace(/\s+/g,' ').replace(/\s*\d+\s*$/,'').trim();});
+  side.addEventListener('mouseover',e=>{const el=e.target.closest('[data-tip]');if(el&&side.contains(el))mostrarTip(el);});
+  side.addEventListener('mouseout',e=>{const el=e.target.closest('[data-tip]');if(el&&!el.contains(e.relatedTarget))ocultarTip();});
+  side.addEventListener('focusin',e=>{const el=e.target.closest('[data-tip]');if(el)mostrarTip(el);});
+  side.addEventListener('focusout',ocultarTip);
+  side.addEventListener('scroll',ocultarTip,{passive:true});
+  side.addEventListener('click',ocultarTip);
+})();
+
+// Conexión y usuario también en el menú achicado
+const _updateBot133=updateBot;
+updateBot=function(){
+  _updateBot133();
+  const cc=document.getElementById('conexCorta');if(!cc)return;
+  const t=((document.getElementById('botStatusText')||{}).textContent||'Verificando…').trim();
+  cc.dataset.tip='Conexión: '+t;
+  cc.setAttribute('aria-label','Estado de conexión: '+t);
+  cc.classList.toggle('mal',/sin conexión|apagado/i.test(t));
+  cc.classList.toggle('ok',/conectado/i.test(t)&&!/sin conexión/i.test(t));
+};
+const _pintarUsuario133=pintarUsuario;
+pintarUsuario=function(){
+  _pintarUsuario133();
+  const u=SESION.usuario,av=document.getElementById('suAv');
+  if(av)av.dataset.tip=u?(u.nombre+(u.rolNombre?' · '+u.rolNombre:'')):'Acceso general';
+};
+
+/* ---------- Conversación abierta: encabezado compacto, franja de estado y fechas ---------- */
+const _fmtDia134=new Intl.DateTimeFormat('es-UY',{timeZone:'America/Montevideo',year:'numeric',month:'2-digit',day:'2-digit'});
+const _fmtHora134=new Intl.DateTimeFormat('es-UY',{timeZone:'America/Montevideo',hour:'2-digit',minute:'2-digit',hour12:false});
+function diaClave(ms){return _fmtDia134.format(new Date(ms));}
+function horaSola(ms){return ms?_fmtHora134.format(new Date(ms)):'';}
+function etiquetaDia(ms){
+  const d=diaClave(ms);
+  if(d===diaClave(Date.now()))return 'Hoy';
+  if(d===diaClave(Date.now()-864e5))return 'Ayer';
+  return d;
+}
+const IC134={
+  reloj:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+  info:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+  apagado:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>',
+  check:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+};
+function renderMensajes(ms){
+  if(!ms||!ms.length)return '<div class="conv-vacio">Todavía no hay mensajes registrados en este chat.</div>';
+  let dia='';
+  return ms.map(m=>{
+    let sep='';
+    if(m.en){const d=diaClave(m.en);if(d!==dia){dia=d;sep='<div class="fecha-sep">'+escH(etiquetaDia(m.en))+'</div>';}}
+    const hora='<span class="hora">'+escH(horaSola(m.en))+'</span>';
+    if(m.tipo==='sistema')return sep+'<div class="linea-sis">'+escH(horaSola(m.en))+' · '+escH(m.texto)+'</div>';
+    const adj=parsearAdjunto(m.texto);
+    if(m.tipo==='cliente')return sep+'<div class="burbuja cli">'+(adj?htmlAdjuntoBurbuja(adj,true):'<span class="txt">'+escH(m.texto)+'</span>')+hora+'</div>';
+    if(m.tipo==='verde')return sep+'<div class="burbuja ver"><span class="quien">Verde</span><span class="txt">'+escH(m.texto)+'</span>'+hora+'</div>';
+    const quien=(m.autor?m.autor+' (equipo)':'Equipo')+(m.origen==='panel'?' · desde el panel':(m.firma?'':' · sin firma'));
+    return sep+'<div class="burbuja equ"><span class="quien">'+escH(quien)+'</span>'+(adj?htmlAdjuntoBurbuja(adj,false):'<span class="txt">'+escH(m.texto)+'</span>')+hora+'</div>';
+  }).join('');
+}
+function pintarSwitch(c){
+  const s=document.getElementById('convSwitch');if(!s)return;
+  const on=!c.apagado;
+  s.setAttribute('aria-checked',String(on));
+  s.dataset.clave=c.clave;
+  s.setAttribute('aria-label',on?'Verde en este chat: encendido':'Verde en este chat: apagado');
+  s.title=on?'Verde responde en este chat. Tocar para apagarlo.':'Verde está apagado en este chat. Tocar para volver a encenderlo.';
+}
+function pintarFranja(c){
+  const f=document.getElementById('convFranja');if(!f)return;
+  let clase='',ic=IC134.reloj,txt='',corto='',boton='';
+  if(c.pendiente){
+    clase='roja';
+    txt='Espera a una persona del equipo: Verde no responde mientras el chat está en «Chats por responder».';
+    corto='Por responder: espera a una persona del equipo.';
+    if(c.pendienteId)boton='<button type="button" class="btn-mini franja-marcar" onclick="marcarDesdeConversacion()">'+IC134.check+'Marcar atendido</button>';
+  }else if(c.apagado){
+    const info=c.apagadoInfo||{};
+    clase='gris';ic=IC134.apagado;
+    txt='Verde apagado en este chat desde '+minuscula1(horaCorta(info.en))+' por '+(info.porNombre||'Acceso general')+'. Si el cliente escribe y nadie responde en 5 minutos, pasa a «Chats por responder».';
+    corto='Verde apagado en este chat desde '+minuscula1(horaCorta(info.en))+'.';
+  }else if(c.pausaHasta){
+    clase='ambar';
+    txt='En pausa hasta '+hastaTexto(c.pausaHasta)+' porque una persona del equipo atendió este chat.';
+    corto='En pausa hasta '+hastaTexto(c.pausaHasta)+'.';
+    boton='<button type="button" class="btn-mini" data-clave="'+escH(c.clave)+'" onclick="reanudarVerde(this)">Reanudar ahora</button>';
+  }else if(c.verdeGeneral===false){
+    clase='gris';ic=IC134.info;
+    txt='Verde está apagado para todos los chats desde «Comportamiento del bot».';
+    corto='Verde está apagado para todos los chats.';
+  }
+  f.className='conv-franja '+(clase||'oculto');
+  f.innerHTML=clase?ic+'<span class="txt"><span class="tx-largo">'+escH(txt)+'</span><span class="tx-corto">'+escH(corto)+'</span></span>'+boton:'';
+}
+function pintarConversacion(c,primera){
+  const anterior=CONV.datos;CONV.datos=c;
+  document.getElementById('convNombre').textContent=c.nombre||(c.numero?'+'+c.numero:'Cliente sin número visible');
+  document.getElementById('convNumero').textContent=c.nombre&&c.numero?'+'+c.numero:'';
+  document.getElementById('convEstados').innerHTML=pillsConversacion(c);
+  document.getElementById('convAvatar').innerHTML=c.nombre?escH(iniciales(c.nombre)):SVG131.persona;
+  const bm=document.getElementById('convMarcar');bm.classList.toggle('oculto',!c.pendienteId);bm.dataset.id=c.pendienteId||'';
+  pintarSwitch(c);
+  pintarFranja(c);
+  const box=document.getElementById('convMensajes');
+  const ms=c.mensajes||[];
+  const ultimo=ms.length?ms[ms.length-1].en:0;
+  const cambio=primera||!anterior||(anterior.mensajes||[]).length!==ms.length||((anterior.mensajes||[]).slice(-1)[0]||{}).en!==ultimo;
+  if(cambio){
+    const cerca=box.scrollHeight-box.scrollTop-box.clientHeight<80;
+    box.innerHTML=renderMensajes(ms);
+    if(primera||cerca)box.scrollTop=box.scrollHeight;
+  }
+  // campo para responder: la firma va dentro del campo, sin renglones extra
+  const ta=document.getElementById('convTexto'),btn=document.getElementById('convEnviar');
+  const noResp=document.getElementById('convNoResp');
+  const puede=!!c.puedeResponder&&c.d360!==false;
+  const motivo=c.d360===false?'La conexión con WhatsApp (360dialog) no está configurada en el servidor.':c.motivoNoResponder;
+  noResp.classList.toggle('oculto',puede);
+  document.getElementById('convNoRespTx').textContent=puede?'':(motivo||'');
+  ta.disabled=!puede;btn.disabled=!puede;
+  const firma=String(c.firmaUsuario||'').trim();
+  const chico=!!(window.matchMedia&&window.matchMedia('(max-width: 600px)').matches);
+  ta.placeholder=!puede?'No se puede responder desde el panel'
+    :chico?'Mensaje · '+(firma?'firma «'+firma+'»':'sin firma')
+    :'Escribir un mensaje · '+(firma?'sale con la firma «'+firma+'»':'sale sin firma');
+  ta.setAttribute('aria-label','Mensaje para '+(c.nombre||(c.numero?'+'+c.numero:'el cliente')));
+  let pista=firma?'Sale desde el WhatsApp de la tienda con la firma «'+firma+'».':'Sale desde el WhatsApp de la tienda sin firma'+(SESION.usuario?' (este usuario no tiene una firma configurada).':'.');
+  if(!c.apagado)pista+=' Al enviar, Verde queda en pausa en este chat.';
+  const p=document.getElementById('convPista');p.textContent=puede?pista:'';
+  ta.setAttribute('aria-describedby','convPista');
+  ta.title=puede?pista:'';
+}
+
+pintarTema();pintarMenu();
+
 </script>
