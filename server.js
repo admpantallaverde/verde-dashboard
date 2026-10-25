@@ -25,11 +25,12 @@ const express = require('express');
 const fs = require('fs');
 const crypto = require('crypto');
 const bot = require('./bot.js');
+const consumo = require('./consumo');
 const usuarios = require('./usuarios.js');
 const atencion = require('./atencion.js');
 const conversaciones = require('./conversaciones.js');
 
-const VERSION = '1.3.5';
+const VERSION = '1.3.6';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -173,6 +174,20 @@ app.post('/api/usuarios/:id/restablecer', requiere(['admin']), (req, res) => {
 
 /* ---------- IA disponibles para elegir en el panel ---------- */
 app.get('/api/modelos', requiere(['admin']), (req, res) => res.json({ modelos: bot.listarModelos() }));
+
+/* ---------- Consumo de la IA: costo estimado por período (solo administradores) ---------- */
+app.get('/api/consumo-ia', requiere(['admin']), (req, res) => {
+  try {
+    const q = req.query || {};
+    const texto = v => (v === undefined || v === null || v === '') ? undefined : String(v);
+    const r = consumo.resumen({ mes: texto(q.mes), desde: texto(q.desde), hasta: texto(q.hasta) });
+    if (r.error) return res.status(400).json({ error: r.error });
+    const id = bot.modeloEnUso();
+    const precio = consumo.PRECIOS[id];
+    r.modeloActual = { id, nombre: precio ? precio.nombre : id, entrada: precio ? precio.entrada : null, salida: precio ? precio.salida : null };
+    res.json(r);
+  } catch (e) { responderError(res, e); }
+});
 
 /* ---------- API de configuración (Paso 1) ---------- */
 app.get('/api/state', requiere(['admin']), (req, res) => {

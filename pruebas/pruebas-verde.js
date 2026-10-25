@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.3.5';
+const VERSION_ESPERADA = '1.3.6';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -35,13 +35,13 @@ global.fetch = async (url, opts = {}) => {
     llamadasIA.push({ body: JSON.parse(opts.body), headers: opts.headers });
     await new Promise(r => setTimeout(r, 150));
     if (modoIA === 'error400') return new Response('{"error":"bad request"}', { status: 400 });
-    if (modoIA === 'vacio') return new Response(JSON.stringify({ content: [], stop_reason: 'refusal' }), { status: 200 });
+    if (modoIA === 'vacio') return new Response(JSON.stringify({ content: [], stop_reason: 'refusal', usage: { input_tokens: 1000, output_tokens: 0 } }), { status: 200 });
     const ultimo = (JSON.parse(opts.body).messages || []).slice(-1)[0] || {};
     if (/precio exacto/i.test(String(ultimo.content || ''))) {
-      return new Response(JSON.stringify({ content: [{ type: 'text', text: 'Te paso con un asesor para confirmarte el precio.\n[DERIVAR]' }], stop_reason: 'end_turn' }), { status: 200 });
+      return new Response(JSON.stringify({ content: [{ type: 'text', text: 'Te paso con un asesor para confirmarte el precio.\n[DERIVAR]' }], stop_reason: 'end_turn', usage: { input_tokens: 1000, output_tokens: 100 } }), { status: 200 });
     }
     contadorIA++;
-    return new Response(JSON.stringify({ content: [{ type: 'text', text: 'Respuesta de Verde ' + contadorIA }], stop_reason: 'end_turn' }), { status: 200 });
+    return new Response(JSON.stringify({ content: [{ type: 'text', text: 'Respuesta de Verde ' + contadorIA }], stop_reason: 'end_turn', usage: { input_tokens: 1000, output_tokens: 100 } }), { status: 200 });
   }
   if (url.includes('360dialog.io')) {
     contadorEnvio++;
@@ -377,6 +377,10 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(rr.status === 403, 'un asesor no puede administrar usuarios');
   rr = await api('/api/state', 'GET', null, galletaCarla);
   verificar(rr.status === 403, 'un asesor no puede ver ni cambiar la configuración de Verde');
+  rr = await api('/api/consumo-ia', 'GET', null, galletaCarla);
+  verificar(rr.status === 403, 'un asesor no puede ver el consumo de IA');
+  rr = await api('/api/consumo-ia', 'GET', null, galletaJefe);
+  verificar(rr.status === 200, 'el administrador sí ve el consumo de IA');
   await post360(avisoDe('59870000006', 'Diego Pérez', 'precio exacto del cargador', 'd9'));
   await espera(600);
   pend = await json(await api('/api/chats/pendientes', 'GET', null, galletaCarla));
@@ -662,6 +666,60 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   const pend46 = (await json(await api('/api/chats/pendientes'))).lista.map(x => x.numero);
   verificar(!pend46.includes('59872000003'), 'después de «Devolver a Verde» el resguardo ya no deriva ese chat');
   verificar(!pend46.includes('59872000004'), 'si una persona del equipo responde dentro de los 5 minutos, el chat no se deriva');
+
+
+  mostrar('47) Consumo de IA: cada consulta queda registrada con su costo');
+  const consumoMod = require('./consumo.js');
+  const consumoIA = async (q) => json(await api('/api/consumo-ia' + (q || ''), 'GET'));
+  let c0 = await consumoIA();
+  verificar(c0.total && c0.total.consultas > 0 && c0.tipo === 'mes' && c0.desde.endsWith('-01') && c0.hasta === c0.hoy, 'por defecto muestra el mes en curso, hasta hoy');
+  const precioPorConsulta = (1000 * c0.modeloActual.entrada + 100 * c0.modeloActual.salida) / 1e6;
+  await post360(avisoDe('59872000010', 'Consumo Prueba', 'hola, ¿abren hoy?', 'cs1'));
+  await espera(500);
+  await post360(avisoDe('59872000010', 'Consumo Prueba', '¿y mañana?', 'cs2'));
+  await espera(500);
+  await api('/api/simulate', 'POST', { message: 'hola desde el simulador', from: 'consumo' });
+  let c1 = await consumoIA();
+  verificar(c1.total.consultas - c0.total.consultas === 3, 'cada consulta a la IA queda registrada (dos por WhatsApp y una de prueba)');
+  verificar(Math.abs((c1.total.costo - c0.total.costo) - 3 * precioPorConsulta) < 1e-9, 'el costo se calcula con el precio del modelo en uso (1.000 tokens de entrada y 100 de salida por consulta)');
+  verificar(c1.porOrigen.whatsapp.consultas - c0.porOrigen.whatsapp.consultas === 2 && c1.porOrigen.pruebas.consultas - c0.porOrigen.pruebas.consultas === 1, 'separa las consultas de WhatsApp de las pruebas en el panel');
+  verificar(c1.modeloActual.id === 'claude-sonnet-5-5' && c1.modeloActual.entrada === 2 && c1.modeloActual.salida === 10 && c1.modelos.some(m => m.id === 'claude-sonnet-5-5'), 'informa el modelo en uso con su precio oficial');
+  verificar(c1.dias.length >= 1 && c1.dias[0].fecha === c1.hoy && Math.abs(c1.dias.reduce((a, d) => a + d.costo, 0) - c1.total.costo) < 1e-6, 'el detalle por día suma el total del período');
+  verificar(Math.abs(c1.promedio - c1.total.costo / c1.total.consultas) < 1e-6, 'calcula el costo promedio por consulta');
+  modoIA = 'vacio';
+  await api('/api/simulate', 'POST', { message: 'consulta que vuelve vacía', from: 'consumo2' });
+  modoIA = 'error400';
+  await api('/api/simulate', 'POST', { message: 'consulta con error', from: 'consumo3' });
+  modoIA = 'ok';
+  let c2 = await consumoIA();
+  verificar(c2.total.consultas - c1.total.consultas === 1, 'se registra la consulta que Anthropic cobra aunque vuelva sin texto, y no la que da error');
+
+  mostrar('48) Consumo de IA: filtros de período');
+  let rc = await api('/api/consumo-ia?desde=2020-01-01&hasta=2020-01-31', 'GET');
+  let cr = await json(rc);
+  verificar(rc.status === 200 && cr.tipo === 'rango' && cr.total.consultas === 0 && cr.dias.length === 0 && cr.total.costo === 0, 'un rango sin datos devuelve cero');
+  cr = await consumoIA('?desde=' + c2.hoy + '&hasta=' + c2.hoy);
+  verificar(cr.total.consultas === c2.dias[0].consultas && cr.dias.length === 1, 'un rango de un solo día devuelve ese día');
+  cr = await consumoIA('?mes=' + c2.hoy.slice(0, 7));
+  verificar(cr.tipo === 'mes' && cr.total.consultas === c2.total.consultas, 'filtrar por el mes en curso coincide con la vista por defecto');
+  verificar(cr.meses[0] === c2.hoy.slice(0, 7), 'la lista de meses empieza por el mes en curso');
+  consumoMod._usarReloj(() => Date.parse('2026-10-01T02:30:00Z'));   // 23:30 del 30/09/2026 en Montevideo
+  consumoMod.registrar({ modelo: 'claude-sonnet-5-5', origen: 'whatsapp', usage: { input_tokens: 500000, output_tokens: 0 } });
+  consumoMod._usarReloj(null);
+  cr = await consumoIA('?mes=2026-09');
+  verificar(cr.dias.some(x => x.fecha === '2026-09-30' && x.costo === 1) && cr.hasta === '2026-09-30', 'el día se calcula en hora de Montevideo (23:30 del 30/09 cuenta en septiembre) y un mes cerrado se muestra completo');
+  verificar((await consumoIA()).meses.includes('2026-09'), 'los meses con datos aparecen en la lista para filtrar');
+  consumoMod.registrar({ modelo: 'modelo-sin-precio', origen: 'pruebas', usage: { input_tokens: 10, output_tokens: 10 } });
+  cr = await consumoIA();
+  verificar(cr.total.sinPrecio === 1 && cr.modelos.some(m => m.id === 'modelo-sin-precio' && m.costo === 0), 'una consulta de un modelo sin precio registrado se cuenta y se señala, sin inventar un costo');
+  rc = await api('/api/consumo-ia?desde=2026-13-01&hasta=2026-12-31', 'GET');
+  verificar(rc.status === 400, 'rechaza una fecha inválida');
+  rc = await api('/api/consumo-ia?desde=2026-10-10&hasta=2026-10-01', 'GET');
+  verificar(rc.status === 400, 'rechaza un rango con inicio posterior al fin');
+  rc = await api('/api/consumo-ia?desde=2020-01-01&hasta=2026-12-31', 'GET');
+  verificar(rc.status === 400, 'rechaza rangos de más de 400 días');
+  rc = await api('/api/consumo-ia?mes=2026-13', 'GET');
+  verificar(rc.status === 400, 'rechaza un mes inválido');
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }

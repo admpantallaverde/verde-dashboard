@@ -1086,6 +1086,47 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
   .sw .sw-corto{display:inline}
 }
 
+/* ===================== 1.3.6: Consumo de IA ===================== */
+.cons-filtro{padding:14px 18px}
+.cons-fila{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.cons-campo{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--muted)}
+.cons-campo select,.cons-campo input{min-height:42px;box-sizing:border-box;padding:0 12px;border-radius:9px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font:inherit;font-size:14px;font-weight:500}
+.cons-campo select{min-width:260px}
+.cons-campo input{min-width:150px}
+.cons-campo select:focus,.cons-campo input:focus{outline:none;border-color:var(--accent-borde)}
+.cons-rango{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.cons-rango .btn{min-height:42px}
+.cons-texto{margin-left:auto;align-self:center;font-size:12.5px;color:var(--muted)}
+.cons-err{margin-top:10px;font-size:13px;color:var(--red)}
+.cons-err:empty{display:none;margin:0}
+#view-consumo .stat .v{font-variant-numeric:tabular-nums}
+.cons-scroll{overflow-x:auto}
+.cons-tabla{width:100%;min-width:420px}
+.cons-tabla .num{text-align:right;font-variant-numeric:tabular-nums;padding-right:24px}
+.cons-costo{display:flex;align-items:center;gap:10px}
+.cons-barra{flex:1 1 auto;min-width:60px;height:8px;border-radius:4px;background:var(--surface-3);overflow:hidden}
+.cons-barra span{display:block;height:100%;border-radius:4px;background:var(--green)}
+.cons-costo b{min-width:84px;text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+#view-consumo .empty p+p{margin-top:4px;font-size:12.5px}
+.cons-tabla .f-corta{display:none}
+@media(max-width:600px){
+  .cons-campo,.cons-campo select,.cons-campo input{width:100%;min-width:0}
+  .cons-rango{width:100%}
+  .cons-rango .cons-campo{flex:1 1 40%}
+  .cons-rango .btn{flex:1 1 100%}
+  .cons-texto{margin-left:0}
+  .cons-tabla{min-width:0}
+  .cons-tabla th,.cons-tabla td{padding-left:8px;padding-right:8px}
+  .cons-tabla th:first-child,.cons-tabla td:first-child{padding-left:14px;white-space:nowrap}
+  .cons-tabla th:last-child,.cons-tabla td:last-child{padding-right:14px}
+  .cons-tabla .num{padding-right:8px}
+  .cons-tabla .f-larga{display:none}
+  .cons-tabla .f-corta{display:inline}
+  .cons-barra{min-width:24px}
+  .cons-costo{gap:8px}
+  .cons-costo b{min-width:0;white-space:nowrap}
+}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -1150,6 +1191,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
     <div id="navSistema">
       <div class="nav-label">Sistema</div>
       <button class="tree-leaf" id="leaf-usuarios" onclick="go('usuarios')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Usuarios</button>
+      <button class="tree-leaf" id="leaf-consumo" onclick="go('consumo')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Consumo de IA</button>
     </div>
     <div class="side-foot">
       <div class="bot-card">
@@ -1664,6 +1706,33 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
         <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span><b>Administrador:</b> acceso a todo el panel, incluidos la configuración de Verde, los usuarios y la supervisión. <b>Asesor:</b> atiende los chats por responder y consulta el historial; no puede cambiar la configuración.</span></div>
         <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Los usuarios no se eliminan: se desactivan, para que el historial siga mostrando quién atendió cada chat. Las contraseñas se guardan cifradas y nadie puede verlas.</span></div>
       </div>
+    </div>
+    <!-- ===== VIEW: CONSUMO DE IA (1.3.6) ===== -->
+    <div class="view" id="view-consumo">
+      <div class="panel cons-filtro">
+        <div class="cons-fila">
+          <label class="cons-campo" for="consPeriodo">Período<select id="consPeriodo" onchange="cambiarPeriodoConsumo()"><option value="mes:">Mes en curso</option><option value="rango">Rango personalizado</option></select></label>
+          <div class="cons-rango oculto" id="consRango">
+            <label class="cons-campo" for="consDesde">Desde<input type="date" id="consDesde"></label>
+            <label class="cons-campo" for="consHasta">Hasta<input type="date" id="consHasta"></label>
+            <button class="btn btn-primary" type="button" id="consAplicar" onclick="aplicarRangoConsumo()">Aplicar</button>
+          </div>
+          <span class="cons-texto" id="consTexto" aria-live="polite"></span>
+        </div>
+        <div class="cons-err" id="consErr" role="alert"></div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="k">Costo estimado</div><div class="v" id="consCosto">—</div><div class="s" id="consCostoSub">—</div></div>
+        <div class="stat"><div class="k">Consultas a la IA</div><div class="v" id="consConsultas">—</div><div class="s" id="consOrigen">—</div></div>
+        <div class="stat"><div class="k">Costo promedio por consulta</div><div class="v" id="consPromedio">—</div><div class="s">Promedio del período</div></div>
+        <div class="stat"><div class="k">Modelo en uso</div><div class="v" id="consModelo" style="font-size:22px">—</div><div class="s" id="consPrecio">—</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div><h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Detalle por día</h3><p>Costo estimado de cada día del período, del más reciente al más antiguo.</p></div></div>
+        <div id="consDetalle"></div>
+      </div>
+      <div class="note oculto" id="consSinPrecio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span id="consSinPrecioTx"></span></div>
+      <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span><b>Cómo se calcula.</b> Cada consulta a la IA informa cuánto texto procesó (tokens de entrada y de salida). Verde multiplica esas cantidades por el precio publicado por Anthropic para el modelo usado, vigente al momento de la consulta. Es un valor estimado, en dólares estadounidenses y sin impuestos; el monto facturado se consulta en platform.claude.com, en «Cost». Incluye las pruebas hechas en «Probar a Verde».</span></div>
     </div>
   </main>
 </div>
@@ -2255,7 +2324,8 @@ function _doGo(view){
     respondidos:['Chats respondidos','Historial de los chats que Verde derivó y cómo se atendió cada uno, para supervisar la atención.','<b>Atención</b> › Chats respondidos'],
     avisos:['Avisos a celulares del equipo','Cada vez que un chat entra a «Chats por responder», estos números reciben un aviso por WhatsApp. Verde nunca les responde como a un cliente.','<b>Atención</b> › <b>Chats por responder</b> › Avisos'],
     conversaciones:['Conversaciones','Todos los chats que atiende Verde. Desde aquí se puede responder a un cliente o apagar a Verde en un chat puntual.','<b>Atención</b> › Conversaciones'],
-    usuarios:['Usuarios','Personas que pueden entrar al panel. Cada acción queda registrada con su usuario.','<b>Sistema</b> › Usuarios']
+    usuarios:['Usuarios','Personas que pueden entrar al panel. Cada acción queda registrada con su usuario.','<b>Sistema</b> › Usuarios'],
+    consumo:['Consumo de IA','Costo estimado de las consultas a la IA de Verde. Solo lo ven los administradores.','<b>Sistema</b> › Consumo de IA']
   }[view];
   if(view==='verde')renderVerde();
   document.getElementById('viewTitle').textContent=meta[0];
@@ -2269,6 +2339,7 @@ function _doGo(view){
   if(view==='respondidos')cargarRespondidos();
   if(view==='avisos')cargarAvisos();
   if(view==='usuarios')cargarUsuarios();
+  if(view==='consumo')cargarConsumo();
   if(view==='conversaciones')cargarConversaciones();
 }
 
@@ -4762,5 +4833,111 @@ function pintarSinResponder(c){
     if(cerca)box.scrollTop=box.scrollHeight;
   }
 }
+
+
+/* ===================== 1.3.6: Consumo de IA (solo administradores) ===================== */
+const CONSUMO={filtro:{tipo:'mes',mes:null},datos:null};
+const _cons2=new Intl.NumberFormat('es-UY',{minimumFractionDigits:2,maximumFractionDigits:2});
+const _cons4=new Intl.NumberFormat('es-UY',{minimumFractionDigits:4,maximumFractionDigits:4});
+const _consEnt=new Intl.NumberFormat('es-UY',{maximumFractionDigits:2});
+const MESES_ES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const DIAS_ES=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const IC136={grafico:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'};
+// Montos en dólares: 2 decimales; si el monto es menor a un centavo, 4 decimales para no mostrar «0,00».
+function usdTexto(n){n=Number(n)||0;return 'US$ '+((n>0&&n<0.01)?_cons4:_cons2).format(n);}
+function partesFecha(f){const p=String(f).split('-').map(Number);return{y:p[0],m:p[1],d:p[2]};}
+function fechaDMA(f){const x=partesFecha(f);return String(x.d).padStart(2,'0')+'/'+String(x.m).padStart(2,'0')+'/'+x.y;}
+function fechaCorta(f){const x=partesFecha(f);return DIAS_ES[new Date(Date.UTC(x.y,x.m-1,x.d)).getUTCDay()]+' '+fechaDMA(f);}
+function fechaCortaSinAnio(f){const x=partesFecha(f);return DIAS_ES[new Date(Date.UTC(x.y,x.m-1,x.d)).getUTCDay()]+' '+String(x.d).padStart(2,'0')+'/'+String(x.m).padStart(2,'0');}
+function etiquetaMes(mes,enCurso){
+  const x=partesFecha(mes+'-01');const t=MESES_ES[x.m-1]+' de '+x.y;
+  return enCurso?'Mes en curso ('+t+')':t.charAt(0).toUpperCase()+t.slice(1);
+}
+function textoPeriodo(desde,hasta){
+  const a=partesFecha(desde),b=partesFecha(hasta);
+  if(desde===hasta)return 'El '+a.d+' de '+MESES_ES[a.m-1]+' de '+a.y;
+  if(a.y===b.y&&a.m===b.m)return 'Del '+a.d+' al '+b.d+' de '+MESES_ES[b.m-1]+' de '+b.y;
+  if(a.y===b.y)return 'Del '+a.d+' de '+MESES_ES[a.m-1]+' al '+b.d+' de '+MESES_ES[b.m-1]+' de '+b.y;
+  return 'Del '+a.d+' de '+MESES_ES[a.m-1]+' de '+a.y+' al '+b.d+' de '+MESES_ES[b.m-1]+' de '+b.y;
+}
+function errorConsumo(t){document.getElementById('consErr').textContent=t||'';}
+async function cargarConsumo(){
+  const f=CONSUMO.filtro;
+  const q=f.tipo==='rango'?('?desde='+encodeURIComponent(f.desde)+'&hasta='+encodeURIComponent(f.hasta)):(f.mes?'?mes='+encodeURIComponent(f.mes):'');
+  const det=document.getElementById('consDetalle');
+  errorConsumo('');
+  det.setAttribute('aria-busy','true');
+  if(!CONSUMO.datos)det.innerHTML='<div class="empty"><p>Cargando el consumo…</p></div>';
+  const r=await api('/api/consumo-ia'+q);
+  det.removeAttribute('aria-busy');
+  if(!r.ok){
+    errorConsumo(r.status===403?'Solo los administradores pueden ver el consumo de IA.':(r.json.error||'No se pudo cargar el consumo de IA.'));
+    if(!CONSUMO.datos)det.innerHTML='<div class="empty"><p>No hay datos para mostrar.</p></div>';
+    return;
+  }
+  CONSUMO.datos=r.json;
+  pintarConsumo(r.json);
+}
+function pintarConsumo(c){
+  const actual=c.hoy.slice(0,7);
+  // selector de período: meses con datos (el primero, el mes en curso) y rango personalizado
+  const sel=document.getElementById('consPeriodo');
+  const valor=CONSUMO.filtro.tipo==='rango'?'rango':('mes:'+(CONSUMO.filtro.mes||actual));
+  sel.innerHTML=c.meses.map(m=>'<option value="mes:'+escH(m)+'">'+escH(etiquetaMes(m,m===actual))+'</option>').join('')+'<option value="rango">Rango personalizado</option>';
+  if([...sel.options].some(o=>o.value===valor))sel.value=valor;
+  document.getElementById('consRango').classList.toggle('oculto',CONSUMO.filtro.tipo!=='rango');
+  document.getElementById('consTexto').textContent=textoPeriodo(c.desde,c.hasta);
+  // indicadores
+  document.getElementById('consCosto').textContent=usdTexto(c.total.costo);
+  const mesDato=c.desde.slice(0,7);
+  document.getElementById('consCostoSub').textContent=c.tipo==='mes'?(etiquetaMes(mesDato,false)+(mesDato===actual?', hasta hoy':'')):textoPeriodo(c.desde,c.hasta);
+  document.getElementById('consConsultas').textContent=_consEnt.format(c.total.consultas);
+  const w=((c.porOrigen||{}).whatsapp||{}).consultas||0,pr=((c.porOrigen||{}).pruebas||{}).consultas||0;
+  document.getElementById('consOrigen').textContent='WhatsApp: '+_consEnt.format(w)+' · Pruebas en el panel: '+_consEnt.format(pr);
+  document.getElementById('consPromedio').textContent=c.total.consultas?'US$ '+_cons4.format(c.promedio):'—';
+  const m=c.modeloActual||{};
+  const mv=document.getElementById('consModelo');
+  mv.textContent=String(m.nombre||m.id||'—').replace(/^Claude /,'');mv.title=m.nombre||'';
+  document.getElementById('consPrecio').textContent=m.entrada!=null?('US$ '+_consEnt.format(m.entrada)+' / US$ '+_consEnt.format(m.salida)+' por millón de tokens'):'Sin precio registrado para este modelo';
+  // consultas de modelos sin precio registrado
+  const sp=document.getElementById('consSinPrecio'),n=c.total.sinPrecio||0;
+  sp.classList.toggle('oculto',!n);
+  document.getElementById('consSinPrecioTx').textContent=n===1?'1 consulta de un modelo sin precio registrado no suma costo.':n+' consultas de modelos sin precio registrado no suman costo.';
+  // detalle por día
+  const det=document.getElementById('consDetalle');
+  if(!c.dias.length){
+    det.innerHTML='<div class="empty">'+IC136.grafico+'<p><b>Todavía no hay consumo registrado en este período.</b></p><p>'+escH(c.inicio?'El primer registro es del '+fechaDMA(c.inicio)+'.':'El registro empieza a contar desde la instalación de la versión 1.3.6.')+'</p></div>';
+    return;
+  }
+  const max=Math.max(...c.dias.map(x=>x.costo))||1;
+  det.innerHTML='<div class="cons-scroll"><table class="cons-tabla"><thead><tr><th scope="col">Fecha</th><th scope="col" class="num">Consultas</th><th scope="col">Costo estimado (USD)</th></tr></thead><tbody>'+
+    c.dias.map(x=>'<tr><td><span class="f-larga">'+escH(fechaCorta(x.fecha))+'</span><span class="f-corta">'+escH(fechaCortaSinAnio(x.fecha))+'</span></td><td class="num">'+_consEnt.format(x.consultas)+'</td><td><span class="cons-costo"><span class="cons-barra" aria-hidden="true"><span style="width:'+(x.costo>0?Math.max(2,Math.round(x.costo/max*100)):0)+'%"></span></span><b>'+escH(usdTexto(x.costo))+'</b></span></td></tr>').join('')+
+    '</tbody></table></div>';
+}
+function cambiarPeriodoConsumo(){
+  const v=document.getElementById('consPeriodo').value;
+  errorConsumo('');
+  if(v==='rango'){
+    const hoy=(CONSUMO.datos&&CONSUMO.datos.hoy)||new Date().toISOString().slice(0,10);
+    const de=document.getElementById('consDesde'),ha=document.getElementById('consHasta');
+    if(!de.value)de.value=hoy.slice(0,8)+'01';
+    if(!ha.value)ha.value=hoy;
+    de.max=hoy;ha.max=hoy;
+    document.getElementById('consRango').classList.remove('oculto');
+    de.focus();
+    return;
+  }
+  CONSUMO.filtro={tipo:'mes',mes:v.slice(4)};
+  document.getElementById('consRango').classList.add('oculto');
+  cargarConsumo();
+}
+function aplicarRangoConsumo(){
+  const de=document.getElementById('consDesde').value,ha=document.getElementById('consHasta').value;
+  if(!de||!ha){errorConsumo('Completar las dos fechas del rango.');return;}
+  if(de>ha){errorConsumo('La fecha de inicio no puede ser posterior a la fecha de fin.');return;}
+  CONSUMO.filtro={tipo:'rango',desde:de,hasta:ha};
+  cargarConsumo();
+}
+['consDesde','consHasta'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();aplicarRangoConsumo();}});});
 
 </script>

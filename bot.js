@@ -11,6 +11,7 @@
  */
 
 const fs = require('fs');
+const consumo = require('./consumo');
 const path = require('path');
 
 const DATA_DIR = path.join(__dirname, 'data');
@@ -241,7 +242,8 @@ function armarPedido(model, system, messages, max_tokens) {
   pedido.max_tokens = Math.max(max_tokens, conf.tokensMinimos);
   return pedido;
 }
-async function callClaude(system, messages, v, modeloPuntual) {
+// «origen»: 'whatsapp' (clientes) o 'pruebas' (simulador del panel), para el consumo de IA.
+async function callClaude(system, messages, v, modeloPuntual, origen) {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error('Falta la clave ANTHROPIC_API_KEY (configurala en el archivo .env).');
   const model = modeloPuntual && modeloPermitido(modeloPuntual) ? modeloPuntual : resolverModelo(v);
@@ -271,6 +273,9 @@ async function callClaude(system, messages, v, modeloPuntual) {
     throw new Error('La IA respondió con error ' + resp.status + ': ' + detail.slice(0, 300));
   }
   const data = await resp.json();
+  // Anthropic cobra la consulta aunque la respuesta venga vacía: se registra antes de validar el texto.
+  try { consumo.registrar({ modelo: model, origen: origen || 'whatsapp', usage: data.usage }); }
+  catch (e) { console.error('No se pudo registrar el consumo de la IA:', e.message); }
   const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
   if (!text) throw new Error('La IA no devolvió texto (motivo: ' + (data.stop_reason || 'desconocido') + ').');
   return text;
@@ -396,7 +401,7 @@ async function responder(from, body, opciones) {
   const system = buildSystemPrompt(v) + bloqueContexto() + productBlock(body);
   let crudo;
   try {
-    crudo = await callClaude(system, paraLaIA(hist, memoriaDe(v)), v, opciones.modelo);
+    crudo = await callClaude(system, paraLaIA(hist, memoriaDe(v)), v, opciones.modelo, String(from).startsWith('sim:') ? 'pruebas' : 'whatsapp');
   } catch (e) {
     console.error('Error al consultar la IA:', e.message);
     // La frase de error deriva a un asesor: el chat pasa a «Chats por responder».
@@ -433,7 +438,7 @@ async function responderUltima(from, opciones) {
   const system = buildSystemPrompt(v) + bloqueContexto() + productBlock(String(ultimo.content || ''));
   let crudo;
   try {
-    crudo = await callClaude(system, paraLaIA(hist, memoriaDe(v)), v);
+    crudo = await callClaude(system, paraLaIA(hist, memoriaDe(v)), v, undefined, 'whatsapp');
   } catch (e) {
     console.error('Error al consultar la IA:', e.message);
     if (noDebeResponder(from, opciones)) return null;
@@ -446,7 +451,11 @@ async function responderUltima(from, opciones) {
   return { texto: reply, derivar: sep.derivar, error: false };
 }
 
+// Modelo que usa Verde hoy (con los reemplazos de modelos retirados ya aplicados).
+function modeloEnUso() { return resolverModelo(getVerde()); }
+
 module.exports = {
+  modeloEnUso,
   responderPendiente,
   buildSystemPrompt, getReply, getVerde, callClaude, findProducts, productBlock, resetConversation,
   registrarMensaje, pausar, estaPausado, quitarPausa, pausasVigentes, resolverModelo, armarPedido, paraLaIA, MODELO_PREDETERMINADO,
