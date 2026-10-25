@@ -29,7 +29,14 @@ const REGLAS_FIJAS = [
   'No informa precios de repuestos ni de reparaciones: deriva a una persona del equipo.'
 ];
 
-const LINEA_RECOMENDADA = 'Soy Verde, el asistente virtual de Pantalla Verde. Esta conversación se guarda por 3 meses. Más información: ' + URL_PRIVACIDAD;
+// 1.4.6: {nombre} y {empresa} se reemplazan por lo configurado en «Identidad del bot» al enviar.
+const LINEA_RECOMENDADA = 'Soy {nombre}, el asistente virtual de {empresa}. Esta conversación se guarda por 3 meses. Más información: ' + URL_PRIVACIDAD;
+const LINEA_ANTERIOR = 'Soy Verde, el asistente virtual de Pantalla Verde. Esta conversación se guarda por 3 meses. Más información: ' + URL_PRIVACIDAD;
+function completarLinea(linea, v) {
+  const nombre = (v && String(v.nombre || '').trim()) || 'Verde';
+  const empresa = (v && String(v.empresa || '').trim()) || (EMPRESA && EMPRESA.nombre) || 'Pantalla Verde';
+  return String(linea || '').replace(/\{nombre\}/gi, nombre).replace(/\{empresa\}/gi, empresa);
+}
 
 function error(msg) { const e = new Error(msg); e.publico = true; e.codigo = 400; return e; }
 function limpiar(t) { return String(t == null ? '' : t).replace(/\s+/g, ' ').trim(); }
@@ -39,7 +46,8 @@ function leerReglas() {
   let d = null;
   try { d = JSON.parse(fs.readFileSync(ARCHIVO_REGLAS, 'utf8')); } catch (e) { d = null; }
   const reglas = d && Array.isArray(d.reglas) && d.reglas.length ? d.reglas.map(String) : REGLAS_FIJAS.slice();
-  const linea = d && typeof d.linea === 'string' && d.linea ? d.linea : LINEA_RECOMENDADA;
+  // La línea guardada con la versión anterior (sin comodines) se considera la recomendada.
+  const linea = d && typeof d.linea === 'string' && d.linea && d.linea !== LINEA_ANTERIOR ? d.linea : LINEA_RECOMENDADA;
   const recomendadas = reglas.length === REGLAS_FIJAS.length && reglas.every((r, i) => r === REGLAS_FIJAS[i]) && linea === LINEA_RECOMENDADA;
   const sinEnlace = !linea.toLowerCase().includes(URL_PRIVACIDAD.toLowerCase());
   return { reglas, linea, recomendadas, sinEnlace, modificadoEn: (d && d.modificadoEn) || null, modificadoPor: (d && d.modificadoPor) || null };
@@ -78,11 +86,11 @@ function bloquePrompt() {
     + leerReglas().reglas.map((r, i) => (i + 1) + '. ' + r).join('\n');
 }
 
-function lineaInicial() { return leerReglas().linea; }
+function lineaInicial(v) { return completarLinea(leerReglas().linea, v); }
 // En WhatsApp, el texto entre guiones bajos se ve en cursiva. El enlace queda fuera de la cursiva para que
 // WhatsApp lo reconozca completo (un guion bajo pegado al enlace lo rompería).
-function lineaInicialWhatsApp() {
-  const linea = lineaInicial();
+function lineaInicialWhatsApp(v) {
+  const linea = lineaInicial(v);
   const i = linea.toLowerCase().indexOf(URL_PRIVACIDAD.toLowerCase());
   if (i < 0) return '_' + linea + '_';
   const antes = linea.slice(0, i).trim(), despues = linea.slice(i + URL_PRIVACIDAD.length);
@@ -178,6 +186,6 @@ ${cuerpo}
 module.exports = {
   REGLAS_FIJAS, LINEA_RECOMENDADA, MAX_REGLAS, EMPRESA, URL_PRIVACIDAD,
   leerReglas, guardarReglas, restaurarReglas,
-  bloquePrompt, lineaInicial, lineaInicialWhatsApp,
+  bloquePrompt, lineaInicial, lineaInicialWhatsApp, completarLinea,
   leerPrivacidad, guardarPrivacidad, paginaPrivacidad
 };

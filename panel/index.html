@@ -1372,6 +1372,11 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 .ficha-pie .acciones{display:flex;gap:8px}
 @media(max-width:600px){.ficha-fila{grid-template-columns:1fr;gap:2px}.ficha-fila span:first-child{font-size:12px}}
 
+/* ===================== 1.4.6: vista previa de la presentación ===================== */
+.fijas-vista{display:flex;gap:8px;align-items:flex-start;margin-top:8px;padding:10px 12px;border-radius:10px;background:var(--accent-suave,rgba(159,212,0,.12));border:1px solid var(--accent-borde);font-size:13px;line-height:1.4}
+.fijas-vista b{flex:none;color:var(--text)}
+.fijas-vista span{font-style:italic;color:var(--muted);word-break:break-word}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -1781,7 +1786,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
             <div class="fijas-cuerpo">
               <div class="fijas-edit" id="vFijasLista"></div>
               <button class="btn btn-ghost fijas-agregar" type="button" id="fijasAgregar" onclick="agregarReglaFija()">+ Agregar regla</button>
-              <div class="fijas-pres"><label for="vFijasLinea"><b>Presentación en la primera respuesta</b></label><span>En la primera respuesta de cada conversación, Verde agrega esta línea al final:</span><textarea id="vFijasLinea" rows="2" maxlength="300" oninput="revisarEnlaceFijas()"></textarea><span class="faint" id="vFijasAyuda">Se recomienda incluir el enlace a la página de privacidad.</span><div class="av-aviso oculto" id="vFijasAviso"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span id="vFijasAvisoTx"></span></div></div>
+              <div class="fijas-pres"><label for="vFijasLinea"><b>Presentación en la primera respuesta</b></label><span>En la primera respuesta de cada conversación, Verde agrega esta línea al final. <b>{nombre}</b> y <b>{empresa}</b> se reemplazan por lo configurado en «A · Identidad del bot».</span><textarea id="vFijasLinea" rows="2" maxlength="300" oninput="revisarEnlaceFijas();actualizarVistaFijas()"></textarea><div class="fijas-vista" id="vFijasVista"><b>Así la verá el cliente:</b><span id="vFijasVistaTx"></span></div><span class="faint" id="vFijasAyuda">Se recomienda incluir el enlace a la página de privacidad.</span><div class="av-aviso oculto" id="vFijasAviso"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span id="vFijasAvisoTx"></span></div></div>
               <div class="cons-err" id="fijasErr" role="alert"></div>
             </div>
             <div class="fijas-pie"><span id="fijasMod">—</span><span id="fijasEstado">—</span></div>
@@ -1837,7 +1842,9 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
               <div class="campos-grid">
               <div class="field"><label>Largo máximo de respuesta (tokens)</label><input type="number" id="v_tokens" min="100" max="8000" step="50"></div>
               <div class="field"><label>Memoria de conversación (cantidad de mensajes)</label><input type="number" id="v_memoria" min="2" max="100"></div>
+              <div class="field"><label for="v_espera">Tiempo de espera antes de responder (segundos)</label><input type="number" id="v_espera" min="0" max="60" step="1"></div>
               </div>
+              <div class="note" style="margin-top:12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span><b>Cómo funciona la espera:</b> Verde cuenta ese tiempo desde el último mensaje del cliente. Si el cliente sigue escribiendo, vuelve a contar y al final responde a todo junto, en un solo mensaje. Con <b>0</b> responde de inmediato. Máximo 60 segundos. No se aplica en «Probar a Verde», que responde al instante.</span></div>
             </div>
           </div>
 
@@ -3769,7 +3776,7 @@ function defaultVerde(){
       derivacion:'Ahora mismo te conecto con uno de nuestros asesores, un momento por favor 🙌',
       error:'Disculpá, tuve un problema técnico. Ahora mismo te conecto con uno de nuestros asesores 🙌'
     },
-    tecnico:{modelo:'claude-sonnet-5-5',maxTokens:1000,memoria:20},
+    tecnico:{modelo:'claude-sonnet-5-5',maxTokens:1000,memoria:20,espera:0},
     encendido:true
   };
 }
@@ -3797,6 +3804,7 @@ function renderVerde(){
   document.getElementById('v_modelo').value=modeloUI(tc.modelo||'');pintarSelectorIA();
   document.getElementById('v_tokens').value=tc.maxTokens||1000;
   document.getElementById('v_memoria').value=tc.memoria||20;
+  document.getElementById('v_espera').value=parseInt(tc.espera,10)||0;
   vRasgos=(v.rasgos||[]).slice();
   vVentajas=(v.ventajas||[]).map(x=>Object.assign({},x));
   vPasos=(v.pasos||[]).map(x=>Object.assign({},x));
@@ -4014,7 +4022,9 @@ function saveVerde(section){
     const mem=parseInt(document.getElementById('v_memoria').value,10);
     if(isNaN(tk)||tk<100||tk>8000){showVerdeErr('El largo de respuesta debe estar entre 100 y 8000 tokens.');flashField('v_tokens');return;}
     if(isNaN(mem)||mem<2||mem>100){showVerdeErr('La memoria debe estar entre 2 y 100 mensajes.');flashField('v_memoria');return;}
-    v.tecnico={modelo,maxTokens:tk,memoria:mem};
+    const esp=parseInt(document.getElementById('v_espera').value,10);
+    if(isNaN(esp)||esp<0||esp>60){showVerdeErr('El tiempo de espera debe estar entre 0 y 60 segundos.');flashField('v_espera');return;}
+    v.tecnico={modelo,maxTokens:tk,memoria:mem,espera:esp};
     persist();toast('Parámetros guardados','Modelo: '+modelo,'success');
   }
 }
@@ -4033,7 +4043,7 @@ function snapVerde(src){
       reglas:vReglas.map(r=>(r||'').trim()).filter(Boolean),
       frases:{bienvenida:(g('v_fBien').value||'').trim(),derivacion:(g('v_fDeriv').value||'').trim(),error:(g('v_fError').value||'').trim(),adjunto:(g('v_fAdjunto').value||'').trim()},
       garantia:normGarantia(Object.assign({},vGarantia,{requisitos:(g('v_gReq')||{}).value||'',condiciones:(g('v_gCond')||{}).value||''})),
-      tecnico:{modelo:(g('v_modelo').value||'').trim(),maxTokens:parseInt(g('v_tokens').value,10)||0,memoria:parseInt(g('v_memoria').value,10)||0}
+      tecnico:{modelo:(g('v_modelo').value||'').trim(),maxTokens:parseInt(g('v_tokens').value,10)||0,memoria:parseInt(g('v_memoria').value,10)||0,espera:parseInt(g('v_espera').value,10)||0}
     });
   }
   const v=DB.verde||{},fr=v.frases||{},tc=v.tecnico||{};
@@ -4048,7 +4058,7 @@ function snapVerde(src){
     reglas:(v.reglas||[]).map(r=>(r||'').trim()).filter(Boolean),
     frases:{bienvenida:(fr.bienvenida||'').trim(),derivacion:(fr.derivacion||'').trim(),error:(fr.error||'').trim(),adjunto:instruccionesArchivoUI(fr)},
     garantia:normGarantia(v.garantia),
-    tecnico:{modelo:modeloUI((tc.modelo||'').trim()),maxTokens:tc.maxTokens||0,memoria:tc.memoria||0}
+    tecnico:{modelo:modeloUI((tc.modelo||'').trim()),maxTokens:tc.maxTokens||0,memoria:tc.memoria||0,espera:parseInt(tc.espera,10)||0}
   });
 }
 function verdeHasUnsaved(){
@@ -5486,7 +5496,7 @@ function fechaHoraTexto(ms){const p=Object.fromEntries(_fmtFechaHora138.formatTo
 function pintarReglasFijas(c){
   FIJAS.reglas=(c.reglas||[]).slice();FIJAS.enlace=c.enlace||FIJAS.enlace;FIJAS.max=c.maxReglas||10;
   renderReglasFijas();
-  document.getElementById('vFijasLinea').value=c.lineaInicial||'';
+  document.getElementById('vFijasLinea').value=c.lineaInicial||'';actualizarVistaFijas();
   document.getElementById('vFijasAyuda').textContent='Se recomienda incluir el enlace '+FIJAS.enlace+'.';revisarEnlaceFijas();
   document.getElementById('fijasMod').textContent=c.modificadoEn?('Última modificación: '+fechaHoraTexto(c.modificadoEn)+', por '+(c.modificadoPor||'—')+'.'):'Sin modificaciones: rigen las reglas recomendadas.';
   document.getElementById('fijasEstado').textContent='Texto recomendado del sistema: '+(c.recomendadas?'sin cambios':'con cambios');
@@ -5723,5 +5733,21 @@ async function copiarFicha(){
   try{await navigator.clipboard.writeText(texto);toast('Ficha copiada','Se puede pegar en cualquier lugar.','success');}
   catch(e){toast('No se pudo copiar','Seleccionar el texto de la ficha y copiarlo con Ctrl + C.','error');}
 }
+
+
+/* ===================== 1.4.6: presentación con {nombre} y {empresa} ===================== */
+function completarLineaUI(linea){
+  const v=(DB&&DB.verde)||{};
+  const campo=id=>{const el=document.getElementById(id);return el&&el.value!=null?el.value.trim():'';};
+  const nombre=campo('v_nombre')||(v.nombre||'').trim()||'Verde';
+  const empresa=campo('v_empresa')||(v.empresa||'').trim()||'Pantalla Verde';
+  return String(linea||'').replace(/\{nombre\}/gi,nombre).replace(/\{empresa\}/gi,empresa);
+}
+function actualizarVistaFijas(){
+  const tx=document.getElementById('vFijasVistaTx');if(!tx)return;
+  const linea=(document.getElementById('vFijasLinea').value||'').trim();
+  tx.textContent=linea?completarLineaUI(linea):'(sin línea de presentación)';
+}
+['v_nombre','v_empresa'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',actualizarVistaFijas);});
 
 </script>

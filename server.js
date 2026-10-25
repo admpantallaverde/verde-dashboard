@@ -33,7 +33,7 @@ const usuarios = require('./usuarios.js');
 const atencion = require('./atencion.js');
 const conversaciones = require('./conversaciones.js');
 
-const VERSION = '1.4.5';
+const VERSION = '1.4.6';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -241,7 +241,7 @@ app.post('/api/simulate', requiere(['admin']), async (req, res) => {
     const r = await bot.responderCliente('sim:' + from, message, { modelo: modelo || undefined });
     if (!r) return res.json({ reply: '(Verde está apagado y no enviaría ninguna respuesta.)', derivaria: false });
     res.json({
-      reply: r.texto + (primera ? '\n\n' + cumplimiento.lineaInicial() : '') + (r.reclamo ? '\n\n(Ficha del reclamo que vería el asesor: ' + Object.entries(r.reclamo).map(([k, v]) => k + ': ' + v).join(' · ') + ')' : '') + ((r.derivar || r.reclamo) ? '\n\n(Este chat pasaría a «Chats por responder».)' : ''),
+      reply: r.texto + (primera ? '\n\n' + cumplimiento.lineaInicial(bot.getVerde()) : '') + (r.reclamo ? '\n\n(Ficha del reclamo que vería el asesor: ' + Object.entries(r.reclamo).map(([k, v]) => k + ': ' + v).join(' · ') + ')' : '') + ((r.derivar || r.reclamo) ? '\n\n(Este chat pasaría a «Chats por responder».)' : ''),
       derivaria: !!r.derivar,
       modelo: modelo || null
     });
@@ -515,7 +515,7 @@ async function avisarEquipo(a, motivo) {
 function conPresentacion(clave, texto) {
   const d = conversaciones.detalle(clave, contexto());
   const hubo = !!(d && (d.mensajes || []).some(m => m.tipo === 'verde' || m.tipo === 'equipo'));
-  return hubo ? texto : texto + '\n\n' + cumplimiento.lineaInicialWhatsApp();
+  return hubo ? texto : texto + '\n\n' + cumplimiento.lineaInicialWhatsApp(bot.getVerde());
 }
 
 // Mensaje de un cliente
@@ -595,6 +595,48 @@ async function manejarEntrante(msg, nombres) {
   // 4) Verde responde (texto o archivo) y, si deriva, el chat pasa a «Chats por responder» con Verde en espera.
   if (!textoCliente.trim()) { if (avisoArchivo) await avisarEquipo(avisoArchivo); return; }
   console.log('360 << de', quien, ':', textoCliente.slice(0, 200));
+  const turno = { clave, destino, numero, nombre, quien, textoCliente, avisoArchivo, yaAnotado, yaDerivado, estadoChat };
+  // 1.4.6: con «Tiempo de espera antes de responder», Verde espera por si el cliente sigue escribiendo y responde todo junto.
+  if (esperaSegundos() > 0) { encolarEspera(turno); return; }
+  await responderTurno(turno);
+}
+
+/* ---------- 1.4.6: espera antes de responder (se configura en «Comportamiento del bot › H») ---------- */
+const ESPERA_MAX_SEG = 60;         // tope del campo del panel
+const ESPERA_TOPE_MS = 90000;      // si el cliente no para de escribir, Verde responde igual a los 90 segundos
+const esperas = new Map();         // clave → { turnos, timer, inicio }
+function esperaSegundos() {
+  const t = (bot.getVerde().tecnico || {});
+  const n = parseInt(t.espera, 10);
+  return Number.isFinite(n) ? Math.min(Math.max(n, 0), ESPERA_MAX_SEG) : 0;
+}
+function encolarEspera(turno) {
+  const e = esperas.get(turno.clave) || { turnos: [], timer: null, inicio: Date.now() };
+  e.turnos.push(turno);
+  if (e.timer) clearTimeout(e.timer);
+  const restante = Math.max(0, Math.min(esperaSegundos() * 1000, ESPERA_TOPE_MS - (Date.now() - e.inicio)));
+  e.timer = setTimeout(() => {
+    esperas.delete(turno.clave);
+    responderAgrupado(e.turnos).catch(err => console.error('No se pudo responder el grupo de mensajes:', err.message));
+  }, restante);
+  esperas.set(turno.clave, e);
+  console.log('360 ⏱ espera de', esperaSegundos(), 's por si el cliente sigue escribiendo (' + e.turnos.length + ' mensaje' + (e.turnos.length === 1 ? '' : 's') + ' en espera)');
+}
+async function responderAgrupado(turnos) {
+  if (!turnos.length) return;
+  const ultimo = turnos[turnos.length - 1];
+  const sinAnotar = turnos.filter(t => !t.yaAnotado).map(t => t.textoCliente);
+  const agrupado = Object.assign({}, ultimo, {
+    textoCliente: turnos.map(t => t.textoCliente).join('\n'),
+    avisoArchivo: turnos.map(t => t.avisoArchivo).find(Boolean) || null,
+    yaAnotado: sinAnotar.length === 0,
+    textoSinAnotar: sinAnotar.join('\n')
+  });
+  if (turnos.length > 1) console.log('360 ⏱ espera cumplida:', turnos.length, 'mensajes de', ultimo.quien, 'se responden juntos');
+  await responderTurno(agrupado);
+}
+async function responderTurno(turno) {
+  const { clave, destino, numero, nombre, textoCliente, avisoArchivo, yaAnotado, yaDerivado, estadoChat } = turno;
   // Si mientras la IA prepara la respuesta alguien apaga a Verde en este chat, la respuesta se descarta.
   const r = await bot.responderCliente(clave, textoCliente, { puedeResponder: () => !conversaciones.estaApagado(clave), atencion: estadoChat });
   if (!r) {
@@ -610,7 +652,7 @@ async function manejarEntrante(msg, nombres) {
   const reclamo = r.reclamo || null;
   if ((r.derivar || reclamo) && !yaDerivado) {
     const d = atencion.derivar({
-      clave, destino, numero, nombre, mensajeCliente: yaAnotado ? null : textoCliente, respuestaVerde: ok ? r.texto : null,
+      clave, destino, numero, nombre, mensajeCliente: yaAnotado ? null : (turno.textoSinAnotar || textoCliente), respuestaVerde: ok ? r.texto : null,
       motivo: r.error ? 'Verde tuvo un problema técnico y lo derivó a una persona del equipo.' : (reclamo ? 'Reclamo de garantía: Verde juntó los datos para el asesor.' : 'Verde lo derivó a una persona del equipo.')
     });
     if (reclamo) atencion.guardarReclamo(clave, reclamo);
@@ -721,7 +763,7 @@ app.put('/api/avisos', requiere(['admin']), (req, res) => {
 const fmtHoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Montevideo', year: 'numeric', month: '2-digit', day: '2-digit' });
 function datosCumplimiento() {
   const r = cumplimiento.leerReglas();
-  return { reglas: r.reglas, lineaInicial: r.linea, recomendadas: r.recomendadas, sinEnlace: r.sinEnlace, modificadoEn: r.modificadoEn, modificadoPor: r.modificadoPor,
+  return { reglas: r.reglas, lineaInicial: r.linea, lineaVista: cumplimiento.completarLinea(r.linea, bot.getVerde()), recomendadas: r.recomendadas, sinEnlace: r.sinEnlace, modificadoEn: r.modificadoEn, modificadoPor: r.modificadoPor,
     maxReglas: cumplimiento.MAX_REGLAS, url: 'https://' + cumplimiento.URL_PRIVACIDAD, enlace: cumplimiento.URL_PRIVACIDAD, privacidad: cumplimiento.leerPrivacidad() };
 }
 app.get('/api/cumplimiento', requiere(['admin']), (req, res) => res.json(datosCumplimiento()));

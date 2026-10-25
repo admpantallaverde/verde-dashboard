@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.4.5';
+const VERSION_ESPERADA = '1.4.6';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -878,7 +878,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(env54 && env54.body.text.body.endsWith('\n\n_Hola, soy Verde, el asistente virtual. Privacidad:_ chat.pantallaverde.com/privacidad (3 meses).'), 'la primera respuesta usa la presentación nueva, con el enlace fuera de la cursiva');
   rr = await api('/api/reglas-fijas/restaurar', 'POST', {});
   cf = await json(rr);
-  verificar(rr.status === 200 && cf.recomendadas === true && cf.reglas.length === 4 && /^Soy Verde/.test(cf.lineaInicial) && cf.modificadoPor === 'Acceso general', 'restaurar vuelve a las reglas recomendadas y deja constancia de quién lo hizo');
+  verificar(rr.status === 200 && cf.recomendadas === true && cf.reglas.length === 4 && /^Soy \{nombre\}, el asistente virtual de \{empresa\}/.test(cf.lineaInicial) && /^Soy Verde, el asistente virtual de Pantalla Verde/.test(cf.lineaVista) && cf.modificadoPor === 'Acceso general', 'restaurar vuelve a las reglas recomendadas (con los comodines) y deja constancia de quién lo hizo');
 
   mostrar('55) Centro de ayuda: manual y guías según el rol');
   const ay55 = await json(await api('/api/ayuda', 'GET'));
@@ -1134,6 +1134,55 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(promptR.includes('REQUISITOS INDISPENSABLES (sin ellos no hay garantía): Solo con factura electrónica.') && !promptR.includes('Presentar la orden de trabajo') && promptR.includes('30 días corridos desde la entrega'), 'los requisitos cargados reemplazan a los precargados sin tocar la cobertura');
   const sim60 = await json(await api('/api/simulate', 'POST', { message: 'quiero la garantía de la pantalla', from: 'garantia-sim' }));
   verificar(/\(Ficha del reclamo que vería el asesor: boleta: 4582/.test(sim60.reply) && !/\[RECLAMO\]/.test(sim60.reply), 'en «Probar a Verde» se ve la ficha que armaría Verde');
+
+
+  mostrar('61) Presentación con el nombre del bot: {nombre} y {empresa}');
+  const estado61 = await json(await api('/api/state'));
+  const guardarEstado61 = async st => { const r = await api('/api/state', 'PUT', { state: st }); if (r.status !== 200) throw new Error('No se pudo guardar el estado de prueba'); };
+  await api('/api/reglas-fijas', 'PUT', { reglas: ['Regla de prueba'], linea: 'Soy Verde, el asistente virtual de Pantalla Verde. Esta conversación se guarda por 3 meses. Más información: chat.pantallaverde.com/privacidad' });
+  let rf61 = await json(await api('/api/cumplimiento'));
+  verificar(rf61.lineaInicial.includes('{nombre}') && rf61.lineaInicial.includes('{empresa}'), 'la línea guardada con la versión anterior (con «Verde» escrito) pasa a usar los comodines');
+  const st61 = JSON.parse(JSON.stringify(estado61));
+  st61.verde = Object.assign({}, st61.verde, { nombre: 'ManzanaVerde IA', empresa: 'Pantalla Verde' });
+  await guardarEstado61(st61);
+  rf61 = await json(await api('/api/cumplimiento'));
+  verificar(/^Soy ManzanaVerde IA, el asistente virtual de Pantalla Verde\./.test(rf61.lineaVista) && !/\{nombre\}/.test(rf61.lineaVista), 'el panel recibe cómo la verá el cliente, con el nombre configurado');
+  let antes61 = envios360.length;
+  await post360(aviso([{ id: 'pr61-1', from: '59879000061', type: 'text', text: { body: 'hola' } }]));
+  await espera(600);
+  const env61 = envios360.slice(antes61).find(x => x.body.to === '59879000061');
+  verificar(env61 && /Soy ManzanaVerde IA, el asistente virtual de Pantalla Verde\./.test(env61.body.text.body) && !/\{nombre\}|\{empresa\}/.test(env61.body.text.body), 'la primera respuesta en WhatsApp se presenta con el nombre configurado, sin comodines');
+  await api('/api/reglas-fijas', 'PUT', { reglas: ['Regla de prueba'], linea: 'Hola, soy {nombre}. Más información: chat.pantallaverde.com/privacidad' });
+  antes61 = envios360.length;
+  await post360(aviso([{ id: 'pr61-2', from: '59879000062', type: 'text', text: { body: 'hola' } }]));
+  await espera(600);
+  const env61b = envios360.slice(antes61).find(x => x.body.to === '59879000062');
+  verificar(env61b && /Hola, soy ManzanaVerde IA\./.test(env61b.body.text.body), 'una línea propia con {nombre} también sigue al nombre configurado');
+  await api('/api/reglas-fijas/restaurar', 'POST', {});   // vuelve a las reglas recomendadas
+  await guardarEstado61(estado61);
+
+  mostrar('62) Tiempo de espera antes de responder: agrupa lo que el cliente sigue escribiendo');
+  const st62 = JSON.parse(JSON.stringify(estado61));
+  st62.verde = Object.assign({}, st62.verde, { tecnico: Object.assign({}, (st62.verde || {}).tecnico || {}, { espera: 2 }) });
+  await guardarEstado61(st62);
+  let antes62 = envios360.length;
+  const ia62 = llamadasIA.length;
+  await post360(aviso([{ id: 'es62-1', from: '59879000063', type: 'text', text: { body: 'hola, tengo un iPhone 13' } }]));
+  await espera(300);
+  await post360(aviso([{ id: 'es62-2', from: '59879000063', type: 'text', text: { body: 'se le rompió la pantalla' } }]));
+  await espera(700);
+  verificar(!envios360.slice(antes62).some(x => x.body.to === '59879000063') && llamadasIA.length === ia62, 'mientras corre la espera, Verde no responde ni consulta a la IA');
+  await espera(2300);
+  const env62 = envios360.slice(antes62).filter(x => x.body.to === '59879000063');
+  const ult62 = llamadasIA.length > ia62 ? (llamadasIA[llamadasIA.length - 1].body.messages || []).slice(-1)[0] : null;
+  verificar(env62.length === 1 && llamadasIA.length === ia62 + 1 && ult62 && /hola, tengo un iPhone 13\nse le rompió la pantalla/.test(String(ult62.content)), 'cumplida la espera, Verde responde una sola vez a los dos mensajes juntos');
+  const det62 = await json(await api('/api/conversaciones/' + encodeURIComponent('wa:59879000063'), 'GET'));
+  verificar(det62.mensajes.filter(m => m.tipo === 'cliente').length === 2 && det62.mensajes.filter(m => m.tipo === 'verde').length === 1, 'en el panel quedan los dos mensajes del cliente y una respuesta');
+  await guardarEstado61(estado61);
+  antes62 = envios360.length;
+  await post360(aviso([{ id: 'es62-3', from: '59879000064', type: 'text', text: { body: 'hola' } }]));
+  await espera(600);
+  verificar(envios360.slice(antes62).some(x => x.body.to === '59879000064'), 'con la espera en 0, Verde vuelve a responder de inmediato');
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }
