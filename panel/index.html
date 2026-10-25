@@ -1332,6 +1332,46 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 .app{position:relative}
 .cuenta{position:absolute}
 
+/* ===================== 1.4.4: Reclamos y garantía ===================== */
+:root{--wa-gar-bg:#fef3c7;--wa-gar-tx:#92400e;--wa-gar-borde:#f3dca0}
+:root[data-tema="oscuro"]{--wa-gar-bg:rgba(245,158,11,.16);--wa-gar-tx:#fcd34d;--wa-gar-borde:rgba(245,158,11,.35)}
+.estado.gar{background:var(--wa-gar-bg);color:var(--wa-gar-tx)}
+.tag-garantia{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:20px;white-space:nowrap;background:var(--wa-gar-bg);color:var(--wa-gar-tx)}
+.tag-garantia svg{width:12px;height:12px}
+.conv-franja.garantia{background:var(--wa-gar-bg);color:var(--wa-gar-tx);border-bottom-color:var(--wa-gar-borde)}
+.conv-franja .franja-botones{display:flex;gap:8px;flex:none;flex-wrap:wrap}
+/* Sección I */
+.g-acciones{display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:none}
+.g-estado{font-size:13px;font-weight:600;color:var(--text)}
+.sw-mini{position:relative;width:40px;height:22px;border-radius:11px;border:1px solid var(--border);background:var(--surface-3);padding:0;cursor:pointer;flex:none}
+.sw-mini-bola{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .18s}
+.sw-mini[aria-checked="true"]{background:#00a884;border-color:#00a884}
+.sw-mini[aria-checked="true"] .sw-mini-bola{left:20px;background:#fff}
+.sw-mini:focus-visible{outline:2px solid var(--accent-borde);outline-offset:2px}
+.g-lista{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.g-fila{display:flex;gap:8px;align-items:center}
+.g-fila input{flex:1 1 auto;min-width:0;padding:9px 12px;border-radius:9px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font:inherit;font-size:13.5px}
+.g-fila input:focus,.g-tabla textarea:focus,#v_gCond:focus{outline:none;border-color:var(--accent-borde)}
+.g-tabla{width:100%;min-width:640px;border-collapse:collapse;font-size:13px}
+.g-tabla th{text-align:left;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--faint);padding:0 6px 8px;font-weight:600}
+.g-tabla td{padding:4px 6px;vertical-align:top}
+.g-tabla td:first-child{width:180px}
+.g-tabla td:last-child{width:44px}
+.g-tabla textarea{width:100%;box-sizing:border-box;min-height:52px;resize:vertical;padding:8px 10px;border-radius:9px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font:inherit;font-size:13px;line-height:1.4}
+#v_gCond{width:100%;box-sizing:border-box}
+#secGarantia .panel-head{flex-wrap:wrap}
+/* Ficha del reclamo */
+.ficha-modal{max-width:560px}
+.ficha-sub{display:block;margin:4px 0 12px;font-size:12.5px;color:var(--muted)}
+.ficha-tabla{display:flex;flex-direction:column}
+.ficha-fila{display:grid;grid-template-columns:170px 1fr;gap:12px;padding:9px 0;border-bottom:1px solid var(--border-soft);font-size:13.5px}
+.ficha-fila span:first-child{color:var(--muted)}
+.ficha-fila b{font-weight:500;color:var(--text);word-break:break-word}
+.ficha-pie{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 22px 20px}
+.ficha-pie .faint{font-size:12px}
+.ficha-pie .acciones{display:flex;gap:8px}
+@media(max-width:600px){.ficha-fila{grid-template-columns:1fr;gap:2px}.ficha-fila span:first-child{font-size:12px}}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -1800,6 +1840,20 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
               </div>
             </div>
           </div>
+
+          <!-- Sección I: Reclamos y garantía (1.4.4) -->
+          <div class="panel" id="secGarantia">
+            <div class="panel-head">
+              <div><h3><span class="sec-let">I</span> Reclamos y garantía</h3><p>Qué datos junta Verde cuando un cliente reclama por algo que compró o reparó, y qué sugerencias da según el síntoma.</p></div>
+              <div class="g-acciones"><button type="button" class="sw-mini" id="v_gActivo" role="switch" aria-checked="true" aria-label="Protocolo de garantía activo" onclick="alternarGarantia()"><span class="sw-mini-bola"></span></button><span class="g-estado" id="v_gEstado">Protocolo activo</span><button class="btn btn-primary" type="button" onclick="saveVerde('garantia')">Guardar</button></div>
+            </div>
+            <div style="padding:16px 20px">
+              <div class="field"><label for="v_gCond">Plazos y condiciones generales de la garantía (lo que Verde puede informar)</label><textarea id="v_gCond" rows="3" maxlength="1200" placeholder="Por ejemplo: «Las reparaciones tienen X meses de garantía sobre el repuesto instalado. No cubre golpes, humedad ni daños posteriores. Es necesario presentar la boleta.»" oninput="buildVerdePrompt()"></textarea><span class="faint fr-ayuda">Verde informa estas condiciones si el cliente pregunta. Nunca afirma que la garantía corresponde: eso lo decide el asesor con la ficha.</span></div>
+              <div class="field"><label>Datos que Verde debe juntar antes de pasar el reclamo</label><div class="g-lista" id="v_gDatos"></div><button class="btn btn-ghost" type="button" onclick="agregarDatoGarantia()">+ Agregar dato</button></div>
+              <div class="field" style="margin-bottom:0"><label>Sugerencias por síntoma</label><div class="cons-scroll"><table class="g-tabla"><thead><tr><th scope="col">Síntoma</th><th scope="col">Qué preguntar</th><th scope="col">Qué sugerir</th><th scope="col" aria-label="Acciones"></th></tr></thead><tbody id="v_gSintomas"></tbody></table></div><button class="btn btn-ghost" type="button" style="margin-top:10px" onclick="agregarSintomaGarantia()">+ Agregar síntoma</button></div>
+              <div class="note" style="margin-top:14px"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span><b>Reglas fijas del protocolo (no editables):</b> Verde nunca afirma que la garantía corresponde ni que se va a dar; explica que primero se necesita el contexto completo para evaluarla. No le menciona al cliente nada sobre buena o mala fe. Al terminar, arma la ficha y pasa el reclamo a un asesor, que decide y cierra.</span></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -2005,6 +2059,13 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 <div class="visor oculto" id="visorImg" role="dialog" aria-modal="true" aria-labelledby="visorTit" onclick="if(event.target===this)cerrarVisor()">
   <div class="visor-cab"><div><b id="visorTit">Imagen</b><span id="visorSub"></span></div><div class="visor-acc"><a class="visor-btn" id="visorGuardar" href="#" download><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span class="vb-tx">Guardar en la computadora</span></a><button type="button" class="visor-btn" id="visorCerrar" onclick="cerrarVisor()" aria-label="Cerrar el visor"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div></div>
   <div class="visor-img" onclick="if(event.target===this)cerrarVisor()"><img id="visorFoto" alt=""></div>
+</div>
+<div class="overlay" id="fichaOverlay">
+  <div class="modal ficha-modal" role="dialog" aria-modal="true" aria-labelledby="fichaTitulo">
+    <div class="modal-head"><div><h3 id="fichaTitulo" style="margin:0;display:flex;align-items:center;gap:8px"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Ficha del reclamo</h3><span class="ficha-sub">Datos juntados por Verde a partir de lo que declaró <b id="fichaCliente"></b>. La decisión es del asesor.</span></div><button class="x-btn" id="fichaCerrar" type="button" onclick="cerrarFicha()" aria-label="Cerrar la ficha"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <div class="modal-body"><div class="ficha-tabla" id="fichaCuerpo"></div></div>
+    <div class="ficha-pie"><span class="faint" id="fichaFecha"></span><span class="acciones"><button class="btn btn-ghost" type="button" onclick="copiarFicha()">Copiar ficha</button><button class="btn btn-primary" type="button" onclick="cerrarFicha()">Cerrar</button></span></div>
+  </div>
 </div>
 <div class="toasts" id="toasts"></div>
 
@@ -3730,6 +3791,7 @@ function renderVerde(){
   document.getElementById('v_fDeriv').value=fr.derivacion||'';
   document.getElementById('v_fError').value=fr.error||'';
   document.getElementById('v_fAdjunto').value=instruccionesArchivoUI(fr);
+  vGarantia=garantiaUI(v.garantia);renderGarantia();
   const tc=v.tecnico||{};
   document.getElementById('v_modelo').value=modeloUI(tc.modelo||'');pintarSelectorIA();
   document.getElementById('v_tokens').value=tc.maxTokens||1000;
@@ -3937,6 +3999,12 @@ function saveVerde(section){
     if(!bien){showVerdeErr('El mensaje de bienvenida no puede quedar vacío.');flashField('v_fBien');return;}
     v.frases={bienvenida:bien,derivacion:document.getElementById('v_fDeriv').value.trim(),error:document.getElementById('v_fError').value.trim(),adjunto:document.getElementById('v_fAdjunto').value.trim()};
     persist();toast('Frases guardadas','Los mensajes clave quedaron actualizados.','success');
+  }else if(section==='garantia'){
+    const g=normGarantia(Object.assign({},vGarantia,{condiciones:document.getElementById('v_gCond').value}));
+    if(!g.datos.length){showVerdeErr('Agregar al menos un dato para juntar.');return;}
+    if(vGarantia.sintomas.some(s=>!(s.sintoma||'').trim()&&((s.preguntar||'').trim()||(s.sugerir||'').trim()))){showVerdeErr('Cada síntoma necesita un nombre.');return;}
+    v.garantia=g;vGarantia=garantiaUI(g);renderGarantia();
+    persist();toast('Reclamos y garantía guardados','Verde ya sigue este protocolo.','success');
   }else if(section==='tecnico'){
     const modelo=document.getElementById('v_modelo').value.trim();
     if(!modelo){showVerdeErr('Indicar el identificador del modelo de IA.');flashField('v_modelo');return;}
@@ -3963,6 +4031,7 @@ function snapVerde(src){
       objeciones:vObjeciones.filter(o=>(o.obj||'').trim()&&(o.resp||'').trim()).map(o=>({obj:o.obj.trim(),resp:o.resp.trim()})),
       reglas:vReglas.map(r=>(r||'').trim()).filter(Boolean),
       frases:{bienvenida:(g('v_fBien').value||'').trim(),derivacion:(g('v_fDeriv').value||'').trim(),error:(g('v_fError').value||'').trim(),adjunto:(g('v_fAdjunto').value||'').trim()},
+      garantia:normGarantia(Object.assign({},vGarantia,{condiciones:(g('v_gCond')||{}).value||''})),
       tecnico:{modelo:(g('v_modelo').value||'').trim(),maxTokens:parseInt(g('v_tokens').value,10)||0,memoria:parseInt(g('v_memoria').value,10)||0}
     });
   }
@@ -3977,6 +4046,7 @@ function snapVerde(src){
     objeciones:(v.objeciones||[]).map(o=>({obj:(o.obj||'').trim(),resp:(o.resp||'').trim()})),
     reglas:(v.reglas||[]).map(r=>(r||'').trim()).filter(Boolean),
     frases:{bienvenida:(fr.bienvenida||'').trim(),derivacion:(fr.derivacion||'').trim(),error:(fr.error||'').trim(),adjunto:instruccionesArchivoUI(fr)},
+    garantia:normGarantia(v.garantia),
     tecnico:{modelo:modeloUI((tc.modelo||'').trim()),maxTokens:tc.maxTokens||0,memoria:tc.memoria||0}
   });
 }
@@ -4017,6 +4087,7 @@ function buildVerdePrompt(){
     `Si hay un error técnico: "${esc(fError)}"\n`+
     `Cuando el cliente envía un archivo (llega como «[El cliente envió …]»): ${esc(((document.getElementById('v_fAdjunto')||{}).value||'').trim()||ADJUNTO_POR_DEFECTO_UI)}\n`+
     `No es posible ver el contenido de los archivos: nunca describir ni opinar sobre lo que muestran.`;
+  if(vGarantia.activo){const ng=normGarantia(Object.assign({},vGarantia,{condiciones:(document.getElementById('v_gCond')||{}).value||''}));p+='\n\n'+H('RECLAMOS Y GARANTÍA')+'\nDatos a juntar:\n'+ng.datos.map((d,i)=>(i+1)+'. '+esc(d)).join('\n')+'\nSíntomas:\n'+(ng.sintomas.map(s=>'- '+esc(s.sintoma)+': preguntar '+esc(s.preguntar)+' Sugerir: '+esc(s.sugerir)).join('\n')||'—')+'\nCondiciones: '+esc(ng.condiciones||'(sin cargar: el asesor las confirma)')+'\nRegla fija: nunca afirmar que la garantía corresponde; la evalúa el asesor con la ficha.';}
   pre.innerHTML=p;
 }
 
@@ -4288,7 +4359,7 @@ async function cargarRespondidos(){
 }
 function pildoraEstado(c){
   const ci=c.cierre||{};
-  if(c.estado==='pendiente')return c.revision?'<span class="estado rev">Archivo para revisar</span>':'<span class="estado mal">Por responder</span>';
+  if(c.estado==='pendiente')return c.reclamo?'<span class="estado gar">Reclamo de garantía</span>':c.revision?'<span class="estado rev">Archivo para revisar</span>':'<span class="estado mal">Por responder</span>';
   if(c.volvioAEscribir)return '<span class="estado mal">Volvió a escribir</span>';
   if(ci.tipo==='whatsapp')return '<span class="estado ok">Respondido por WhatsApp</span>';
   return '<span class="estado man">Marcado a mano</span>';
@@ -4621,7 +4692,7 @@ function renderChats(){
       +(c.nombre&&c.numero?'<span class="chat-num">+'+escH(c.numero)+'</span>':'')
       +'<span class="chat-hora'+(roja?' roja':'')+'">'+escH(tiempoEspera(min))+'</span></div>'
       +'<div class="chat-l2"><span class="chat-msg">'+vistaPrevia(mostrar,b)+'</span>'+(roja?'<span class="punto-rojo" aria-hidden="true"></span>':'')+'</div>'
-      +(c.apagado||c.revision||c.verdeActivo?'<div class="chat-l3">'+(c.revision?'<span class="tag-rev">'+IC142.rev+'Archivo para revisar</span>':'')+(c.verdeActivo?'<span class="tag-verde">Verde atendiendo</span>':'')+(c.apagado?'<span class="tag-apagado">'+IC132.power+'Verde apagado en este chat</span>':'')+'</div>':'')
+      +(c.apagado||c.revision||c.verdeActivo||c.reclamo?'<div class="chat-l3">'+(c.reclamo?'<span class="tag-garantia">'+IC144.escudo+'Reclamo de garantía</span>':'')+(c.revision&&!c.reclamo?'<span class="tag-rev">'+IC142.rev+'Archivo para revisar</span>':'')+(c.verdeActivo?'<span class="tag-verde">Verde atendiendo</span>':'')+(c.apagado?'<span class="tag-apagado">'+IC132.power+'Verde apagado en este chat</span>':'')+'</div>':'')
       +'</div></li>';
   }).join('');
 }
@@ -4640,7 +4711,8 @@ async function cargarConversaciones(){
 function pillsConversacion(c){
   const p=[];
   if(c.apagado)p.push('<span class="estado apa">Verde apagado</span>');
-  if(c.pendiente&&c.revision)p.push('<span class="estado rev">Archivo para revisar</span>');
+  if(c.pendiente&&c.reclamo)p.push('<span class="estado gar">Reclamo de garantía</span>');
+  else if(c.pendiente&&c.revision)p.push('<span class="estado rev">Archivo para revisar</span>');
   else if(c.pendiente)p.push('<span class="estado mal">Por responder</span>');
   if(!p.length||(c.pendiente&&c.verde))p.push(c.persona?'<span class="estado per">Atiende una persona</span>':'<span class="estado ok">Verde atendiendo</span>');
   return p.join('');
@@ -5025,7 +5097,12 @@ function pintarSwitch(c){
 function pintarFranja(c){
   const f=document.getElementById('convFranja');if(!f)return;
   let clase='',ic=IC134.reloj,txt='',corto='',boton='';
-  if(c.pendiente&&c.revision){
+  if(c.pendiente&&c.reclamo){
+    clase='garantia';ic=IC144.escudo;
+    txt='Reclamo de garantía: Verde juntó los datos y el asesor decide. Verde sigue conversando hasta que alguien responda.';
+    corto='Reclamo de garantía: ver la ficha.';
+    boton='<span class="franja-botones"><button type="button" class="btn-mini" onclick="verFicha()">'+IC144.escudo+'Ver ficha</button>'+(c.pendienteId?'<button type="button" class="btn-mini franja-marcar" onclick="marcarDesdeConversacion()">'+IC134.check+'Marcar atendido</button>':'')+'</span>';
+  }else if(c.pendiente&&c.revision){
     clase='azul';
     txt='Hay un archivo para revisar: Verde sigue conversando con el cliente. Al responder desde el panel, Verde hace su pausa de 12 horas.';
     corto='Archivo para revisar: Verde sigue conversando.';
@@ -5585,5 +5662,62 @@ const ADJUNTO_POR_DEFECTO_UI='Agradecer el archivo y avisar que un asesor lo va 
 const ADJUNTO_VIEJO_UI='¡Gracias! 🙌 Recibí tu archivo. En un momento un asesor lo revisa y te confirma todo. Si querés, dejame por acá cualquier dato que quieras sumar.';
 function instruccionesArchivoUI(fr){const t=String((fr&&fr.adjunto)||'').trim();return t&&t!==ADJUNTO_VIEJO_UI?t:ADJUNTO_POR_DEFECTO_UI;}
 const IC142={rev:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'};
+
+
+/* ===================== 1.4.4: Reclamos y garantía ===================== */
+// Mismos valores precargados que usa el servidor (bot.js).
+const GARANTIA_DATOS_UI=['Qué producto, repuesto o servicio se compró o reparó, y cuándo','Número de la boleta de garantía (y una foto si la tiene)','Si el reclamo es por lo mismo que se vendió o reparó, o por otra cosa','Qué falla exactamente, desde cuándo y en qué momento aparece','Si el equipo se golpeó o se mojó','Si ya reinició el equipo','Fotos o videos que muestren la falla'];
+const GARANTIA_SINTOMAS_UI=[
+  {sintoma:'El touch no responde',preguntar:'Si el equipo se golpeó o se mojó después del cambio. Desde cuándo y si falla siempre o a veces.',sugerir:'Reinicio forzado, con las instrucciones según el equipo (iPhone o Android). Si sigue, pedir un video corto.'},
+  {sintoma:'No carga o carga lento',preguntar:'Si lo carga en el auto. Qué cargador y qué cable usa.',sugerir:'Pedir una foto del cargador y del cable, o que los traiga para revisarlos junto con el equipo.'}
+];
+let vGarantia={activo:true,condiciones:'',datos:[],sintomas:[]};
+function garantiaUI(g){
+  g=g||{};
+  return {activo:g.activo!==false,condiciones:String(g.condiciones||'').trim(),
+    datos:(Array.isArray(g.datos)&&g.datos.length)?g.datos.map(x=>String(x||'')):GARANTIA_DATOS_UI.slice(),
+    sintomas:(Array.isArray(g.sintomas)&&g.sintomas.length)?g.sintomas.map(s=>({sintoma:String(s.sintoma||''),preguntar:String(s.preguntar||''),sugerir:String(s.sugerir||'')})):GARANTIA_SINTOMAS_UI.map(s=>Object.assign({},s))};
+}
+function normGarantia(g){
+  const x=garantiaUI(g);
+  return {activo:x.activo,condiciones:x.condiciones,datos:x.datos.map(d=>d.trim()).filter(Boolean),sintomas:x.sintomas.filter(s=>(s.sintoma||'').trim()).map(s=>({sintoma:s.sintoma.trim(),preguntar:(s.preguntar||'').trim(),sugerir:(s.sugerir||'').trim()}))};
+}
+const IC144={escudo:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'};
+function renderGarantia(){
+  const sw=document.getElementById('v_gActivo');if(!sw)return;
+  sw.setAttribute('aria-checked',String(vGarantia.activo));
+  document.getElementById('v_gEstado').textContent=vGarantia.activo?'Protocolo activo':'Protocolo desactivado';
+  document.getElementById('v_gCond').value=vGarantia.condiciones||'';
+  document.getElementById('v_gDatos').innerHTML=vGarantia.datos.map((d,i)=>'<div class="g-fila"><span class="fijas-num">'+(i+1)+'</span><input type="text" maxlength="200" value="'+escH(d)+'" aria-label="Dato '+(i+1)+'" oninput="vGarantia.datos['+i+']=this.value;buildVerdePrompt()"><button type="button" class="fijas-quitar" aria-label="Quitar el dato '+(i+1)+'" onclick="quitarDatoGarantia('+i+')">'+IC138.tacho+'</button></div>').join('')||'<span class="faint">Sin datos cargados: agregar al menos uno.</span>';
+  document.getElementById('v_gSintomas').innerHTML=vGarantia.sintomas.map((s,i)=>'<tr><td><textarea maxlength="120" aria-label="Síntoma '+(i+1)+'" oninput="vGarantia.sintomas['+i+'].sintoma=this.value;buildVerdePrompt()">'+escH(s.sintoma)+'</textarea></td><td><textarea maxlength="400" aria-label="Qué preguntar" oninput="vGarantia.sintomas['+i+'].preguntar=this.value;buildVerdePrompt()">'+escH(s.preguntar)+'</textarea></td><td><textarea maxlength="400" aria-label="Qué sugerir" oninput="vGarantia.sintomas['+i+'].sugerir=this.value;buildVerdePrompt()">'+escH(s.sugerir)+'</textarea></td><td><button type="button" class="fijas-quitar" aria-label="Quitar este síntoma" onclick="quitarSintomaGarantia('+i+')">'+IC138.tacho+'</button></td></tr>').join('')||'<tr><td colspan="4" class="faint" style="padding:10px 6px">Sin síntomas cargados.</td></tr>';
+}
+function alternarGarantia(){vGarantia.activo=!vGarantia.activo;renderGarantia();buildVerdePrompt();}
+function agregarDatoGarantia(){vGarantia.datos.push('');renderGarantia();const c=document.querySelectorAll('#v_gDatos input');if(c.length)c[c.length-1].focus();}
+function quitarDatoGarantia(i){vGarantia.datos.splice(i,1);renderGarantia();buildVerdePrompt();}
+function agregarSintomaGarantia(){vGarantia.sintomas.push({sintoma:'',preguntar:'',sugerir:''});renderGarantia();const c=document.querySelectorAll('#v_gSintomas textarea');if(c.length)c[c.length-3].focus();}
+function quitarSintomaGarantia(i){vGarantia.sintomas.splice(i,1);renderGarantia();buildVerdePrompt();}
+// Ficha del reclamo (la arma Verde; decide el asesor)
+const FICHA_CAMPOS=[['boleta','Boleta'],['producto','Qué se vendió o reparó'],['mismo','Reclamo por lo mismo'],['falla','Falla'],['desde','Desde cuándo'],['momento','En qué momento'],['golpes','Golpes o humedad'],['reinicio','Reinicio'],['sugerencias','Sugerencias dadas'],['notas','Notas']];
+function filasFicha(r){
+  const f=FICHA_CAMPOS.filter(([k])=>r[k]).map(([k,et])=>[et,r[k]]);
+  f.push(['Pruebas',(r.pruebas||0)===1?'1 archivo recibido (ver en el chat)':(r.pruebas||0)+' archivos recibidos (ver en el chat)']);
+  return f;
+}
+function verFicha(){
+  const c=CONV.datos;if(!c||!c.reclamo)return;
+  const r=c.reclamo;
+  document.getElementById('fichaCliente').textContent=c.nombre||(c.numero?'+'+c.numero:'Cliente sin número visible');
+  document.getElementById('fichaCuerpo').innerHTML=filasFicha(r).map(([et,v])=>'<div class="ficha-fila"><span>'+escH(et)+'</span><b>'+escH(v)+'</b></div>').join('');
+  document.getElementById('fichaFecha').textContent=r.actualizado?'Actualizada el '+fechaHoraTexto(r.actualizado):'';
+  show('fichaOverlay');
+  setTimeout(()=>document.getElementById('fichaCerrar').focus(),60);
+}
+function cerrarFicha(){close_('fichaOverlay');}
+async function copiarFicha(){
+  const c=CONV.datos;if(!c||!c.reclamo)return;
+  const texto='Ficha del reclamo · '+(c.nombre||'')+(c.numero?' (+'+c.numero+')':'')+'\n'+filasFicha(c.reclamo).map(([et,v])=>et+': '+v).join('\n');
+  try{await navigator.clipboard.writeText(texto);toast('Ficha copiada','Se puede pegar en cualquier lugar.','success');}
+  catch(e){toast('No se pudo copiar','Seleccionar el texto de la ficha y copiarlo con Ctrl + C.','error');}
+}
 
 </script>

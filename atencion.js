@@ -74,7 +74,7 @@ function resumen(a, ahora) {
     id: a.id, clave: a.clave, nombre: a.nombre, numero: a.numero, estado: a.estado, creadoEn: a.creadoEn,
     ultimoMensaje: a.ultimoMensaje, ultimoMensajeEn: a.ultimoMensajeEn, cerradoEn: a.cerradoEn,
     esperaMin: Math.max(0, Math.floor(((a.cerradoEn || ahora) - a.creadoEn) / 60000)),
-    cierre: a.cierre, volvioAEscribir: !!a.volvioAEscribir, reabiertaDe: a.reabiertaDe || null, revision: !!a.revision
+    cierre: a.cierre, volvioAEscribir: !!a.volvioAEscribir, reabiertaDe: a.reabiertaDe || null, revision: !!a.revision, reclamo: !!a.reclamo
   };
 }
 
@@ -178,6 +178,25 @@ function anotarAvisos(id, texto) {
 }
 
 /* ---------- consultas para «Conversaciones» ---------- */
+/* ---------- 1.4.4: ficha del reclamo de garantía (la arma Verde; decide el asesor) ---------- */
+function guardarReclamo(clave, ficha) {
+  if (!ficha || typeof ficha !== 'object') return null;
+  const d = cargar();
+  const a = pendienteDe(d, clave);
+  if (!a) return null;
+  const nueva = Object.assign({}, a.reclamo || {}, ficha, { actualizado: reloj() });
+  if (!a.reclamo) nueva.creado = reloj();
+  a.reclamo = nueva;
+  evento(a, 'reclamo', a.reclamo.creado === nueva.actualizado ? 'Verde armó la ficha del reclamo de garantía.' : 'Verde actualizó la ficha del reclamo de garantía.');
+  guardar(d);
+  return a;
+}
+// Ficha del chat: la de la atención pendiente o, si no hay, la de la última atención.
+function reclamoDe(clave) {
+  const d = cargar();
+  const a = pendienteDe(d, clave) || ultimaDe(d, clave);
+  return a && a.reclamo ? Object.assign({}, a.reclamo, { atencionId: a.id, estado: a.estado, creadoEn: a.creadoEn }) : null;
+}
 function clavesPendientes() { return new Set(cargar().lista.filter(x => x.estado === 'pendiente').map(x => x.clave)); }
 function clavesRevision() { return new Set(cargar().lista.filter(x => x.estado === 'pendiente' && x.revision).map(x => x.clave)); }
 function ultimaPorClave(clave) { return ultimaDe(cargar(), clave); }
@@ -240,7 +259,7 @@ function purgar(dias) {
 }
 
 module.exports = {
-  esperaPersona, pendienteRevision, clavesRevision,
+  esperaPersona, pendienteRevision, clavesRevision, guardarReclamo, reclamoDe,
   MOTIVOS, RETENCION_DIAS, tienePendiente, pendienteId, derivar, mensajeCliente, respuestaEquipo, marcarAtendido,
   anotarAvisos, pendientes, respondidos, detalle, purgar, clavesPendientes, ultimaPorClave, _usarReloj
 };

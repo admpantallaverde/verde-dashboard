@@ -33,7 +33,7 @@ const usuarios = require('./usuarios.js');
 const atencion = require('./atencion.js');
 const conversaciones = require('./conversaciones.js');
 
-const VERSION = '1.4.3';
+const VERSION = '1.4.4';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -241,7 +241,7 @@ app.post('/api/simulate', requiere(['admin']), async (req, res) => {
     const r = await bot.responderCliente('sim:' + from, message, { modelo: modelo || undefined });
     if (!r) return res.json({ reply: '(Verde está apagado y no enviaría ninguna respuesta.)', derivaria: false });
     res.json({
-      reply: r.texto + (primera ? '\n\n' + cumplimiento.lineaInicial() : '') + (r.derivar ? '\n\n(Este chat pasaría a «Chats por responder».)' : ''),
+      reply: r.texto + (primera ? '\n\n' + cumplimiento.lineaInicial() : '') + (r.reclamo ? '\n\n(Ficha del reclamo que vería el asesor: ' + Object.entries(r.reclamo).map(([k, v]) => k + ': ' + v).join(' · ') + ')' : '') + ((r.derivar || r.reclamo) ? '\n\n(Este chat pasaría a «Chats por responder».)' : ''),
       derivaria: !!r.derivar,
       modelo: modelo || null
     });
@@ -475,6 +475,7 @@ function estadoAvisos() {
 }
 // Motivo del aviso. Nunca incluye el contenido del mensaje del cliente, para proteger su privacidad.
 function motivoAviso(a, motivo) {
+  if (motivo === 'reclamo de garantía') return 'Reclamo de garantía: Verde juntó los datos para el asesor';
   if (motivo === 'volvió a escribir') return 'El cliente volvió a escribir';
   if (motivo === 'Verde en pausa en ese chat') return 'Verde estaba en pausa y el cliente esperó 5 minutos';
   if (motivo === 'Verde apagado en ese chat') return 'Verde está apagado en ese chat y el cliente esperó 5 minutos';
@@ -605,17 +606,20 @@ async function manejarEntrante(msg, nombres) {
   const ok = await enviarWhatsApp(destino, enviado);
   if (ok) conversaciones.registrar({ clave, tipo: 'verde', texto: enviado });
   console.log('360 >>', ok ? 'enviado' : 'NO enviado', ':', enviado.slice(0, 200));
-  if (r.derivar && !yaDerivado) {
+  // 1.4.4: una ficha de reclamo también deriva (aunque la IA no agregue la marca de derivación).
+  const reclamo = r.reclamo || null;
+  if ((r.derivar || reclamo) && !yaDerivado) {
     const d = atencion.derivar({
       clave, destino, numero, nombre, mensajeCliente: yaAnotado ? null : textoCliente, respuestaVerde: ok ? r.texto : null,
-      motivo: r.error ? 'Verde tuvo un problema técnico y lo derivó a una persona del equipo.' : 'Verde lo derivó a una persona del equipo.'
+      motivo: r.error ? 'Verde tuvo un problema técnico y lo derivó a una persona del equipo.' : (reclamo ? 'Reclamo de garantía: Verde juntó los datos para el asesor.' : 'Verde lo derivó a una persona del equipo.')
     });
-    console.log('360 → derivado: pasa a «Chats por responder» (Verde sigue conversando)');
-    await avisarEquipo(d.atencion);
-  } else if (avisoArchivo) {
-    await avisarEquipo(avisoArchivo);
-  } else if (r.derivar) {
-    console.log('360 → el chat ya estaba derivado: Verde sigue conversando sin repetir el aviso');
+    if (reclamo) atencion.guardarReclamo(clave, reclamo);
+    console.log('360 → derivado: pasa a «Chats por responder» (Verde sigue conversando)' + (reclamo ? ' · con ficha de reclamo de garantía' : ''));
+    await avisarEquipo(d.atencion, reclamo ? 'reclamo de garantía' : undefined);
+  } else {
+    if (reclamo && atencion.guardarReclamo(clave, reclamo)) console.log('360 → ficha del reclamo de garantía actualizada');
+    if (avisoArchivo) await avisarEquipo(avisoArchivo);
+    else if (r.derivar) console.log('360 → el chat ya estaba derivado: Verde sigue conversando sin repetir el aviso');
   }
 }
 
@@ -825,6 +829,9 @@ function conDatosDelPanel(d, req) {
   d.firmaUsuario = req.usuario ? (req.usuario.firma || '') : '';
   d.d360 = d360Configurado();
   d.pendienteId = atencion.pendienteId(d.clave);   // para «Marcar atendido» desde la conversación abierta
+  // 1.4.4: ficha del reclamo de garantía, con la cantidad de archivos que mandó el cliente desde que empezó la atención.
+  const rec = atencion.reclamoDe(d.clave);
+  d.reclamo = rec ? Object.assign(rec, { pruebas: (d.mensajes || []).filter(m => m.tipo === 'cliente' && m.archivo && m.en >= (rec.creadoEn || 0) - 3600000).length }) : null;
   // 1.4.0: estado de cada archivo recibido (sin descargar, guardado, vencido…), con una sola lectura del índice.
   const indice = archivos.leerIndice();
   const ctxArchivos = { sandbox: archivos.esSandbox(process.env.D360_MESSAGES_URL) };
@@ -904,11 +911,14 @@ async function responderConsultaPendiente(clave) {
   console.log('360 >> (chat devuelto a Verde)', ok ? 'enviado' : 'NO enviado', ':', enviado.slice(0, 200));
   if (!ok) return sin('WhatsApp no aceptó la respuesta de Verde. Si el cliente vuelve a escribir, Verde le responde.');
   conversaciones.registrar({ clave, tipo: 'verde', texto: enviado });
-  if (r.derivar && !yaDerivado) {
+  if ((r.derivar || r.reclamo) && !yaDerivado) {
     const a = atencion.derivar({ clave, destino: d.destino, numero: d.numero, nombre: d.nombre, mensajeCliente: pend ? null : ultimo.texto, respuestaVerde: r.texto,
-      motivo: r.error ? 'Verde tuvo un problema técnico y lo derivó a una persona del equipo.' : 'Verde lo derivó a una persona del equipo.' });
+      motivo: r.error ? 'Verde tuvo un problema técnico y lo derivó a una persona del equipo.' : (r.reclamo ? 'Reclamo de garantía: Verde juntó los datos para el asesor.' : 'Verde lo derivó a una persona del equipo.') });
+    if (r.reclamo) atencion.guardarReclamo(clave, r.reclamo);
     console.log('360 → derivado: pasa a «Chats por responder»');
-    await avisarEquipo(a.atencion);
+    await avisarEquipo(a.atencion, r.reclamo ? 'reclamo de garantía' : undefined);
+  } else if (r.reclamo) {
+    atencion.guardarReclamo(clave, r.reclamo);
   }
   return { respondio: true, derivo: !!r.derivar, motivo: '' };
 }

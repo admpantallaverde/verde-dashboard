@@ -77,8 +77,66 @@ function notaAtencion(estado) {
   return '';
 }
 
-// Prompt completo: la configuración del panel más las reglas fijas del sistema (1.3.7), siempre al final.
-function buildSystemPrompt(v) { return buildSystemPromptBase(v) + cumplimiento.bloquePrompt(); }
+// 1.4.4: protocolo de reclamos y garantía (se configura en «Comportamiento del bot › I»).
+const GARANTIA_DATOS_DEFECTO = [
+  'Qué producto, repuesto o servicio se compró o reparó, y cuándo',
+  'Número de la boleta de garantía (y una foto si la tiene)',
+  'Si el reclamo es por lo mismo que se vendió o reparó, o por otra cosa',
+  'Qué falla exactamente, desde cuándo y en qué momento aparece',
+  'Si el equipo se golpeó o se mojó',
+  'Si ya reinició el equipo',
+  'Fotos o videos que muestren la falla'
+];
+const GARANTIA_SINTOMAS_DEFECTO = [
+  { sintoma: 'El touch no responde', preguntar: 'Si el equipo se golpeó o se mojó después del cambio. Desde cuándo y si falla siempre o a veces.', sugerir: 'Reinicio forzado, con las instrucciones según el equipo (iPhone o Android). Si sigue, pedir un video corto.' },
+  { sintoma: 'No carga o carga lento', preguntar: 'Si lo carga en el auto. Qué cargador y qué cable usa.', sugerir: 'Pedir una foto del cargador y del cable, o que los traiga para revisarlos junto con el equipo.' }
+];
+function garantiaDe(v) {
+  const g = (v && v.garantia) || {};
+  return {
+    activo: g.activo !== false,
+    condiciones: String(g.condiciones || '').trim(),
+    datos: Array.isArray(g.datos) && g.datos.length ? g.datos.map(x => String(x || '').trim()).filter(Boolean) : GARANTIA_DATOS_DEFECTO.slice(),
+    sintomas: Array.isArray(g.sintomas) && g.sintomas.length ? g.sintomas.filter(s => s && String(s.sintoma || '').trim()) : GARANTIA_SINTOMAS_DEFECTO.map(s => Object.assign({}, s))
+  };
+}
+function bloqueGarantia(v) {
+  const g = garantiaDe(v);
+  if (!g.activo) return '';
+  const datos = g.datos.map((d, i) => '   ' + (i + 1) + '. ' + d).join('\n') || '   —';
+  const sintomas = g.sintomas.map(s => '   - ' + s.sintoma + ': preguntar ' + (s.preguntar || '—') + ' Sugerir: ' + (s.sugerir || '—')).join('\n') || '   —';
+  return '\n\n== RECLAMOS Y GARANTÍA ==\n'
+    + 'Cuando el cliente plantea una falla de algo que compró o reparó en la tienda, o pide garantía, seguir este protocolo:\n'
+    + '1. Mostrar empatía y explicar que, para evaluarlo, hace falta juntar algunos datos y que después lo revisa un asesor.\n'
+    + '2. Juntar estos datos, de a una o dos preguntas por mensaje:\n' + datos + '\n'
+    + '3. Según el síntoma, preguntar y sugerir lo indicado:\n' + sintomas + '\n'
+    + '4. Condiciones generales que se pueden informar si el cliente pregunta: ' + (g.condiciones || 'no hay condiciones cargadas; indicar que el asesor las confirma') + '\n'
+    + '5. REGLAS FIJAS DEL PROTOCOLO: nunca afirmar ni dar a entender que la garantía corresponde o que se va a dar; decir que se evalúa con la información reunida y que el asesor confirma cómo seguir. No mencionar nada sobre buena o mala fe del cliente. No prometer plazos de resolución.\n'
+    + '6. Cuando tengas los datos suficientes (o el cliente no pueda aportar más), cerrar con un resumen breve para el cliente y agregar al final del mensaje, en una línea aparte y sin texto adicional en esa línea, la ficha en este formato exacto:\n'
+    + '[RECLAMO]{"boleta":"","producto":"","mismo":"sí|no|no sabe","falla":"","desde":"","momento":"","golpes":"","reinicio":"","sugerencias":"","notas":""}\n'
+    + '   junto con [DERIVAR]. Si después el cliente aporta datos nuevos del reclamo, repetir la línea [RECLAMO] actualizada.';
+}
+// La ficha del reclamo viaja al final de la respuesta como [RECLAMO]{…}: se guarda en la atención y se quita del mensaje.
+const CAMPOS_RECLAMO = ['boleta', 'producto', 'mismo', 'falla', 'desde', 'momento', 'golpes', 'reinicio', 'sugerencias', 'notas'];
+function separarReclamo(texto) {
+  const t = String(texto == null ? '' : texto);
+  const m = /\[RECLAMO\]\s*(\{[^{}]*\})/.exec(t);
+  if (!m) return { texto: t, ficha: null };
+  let ficha = null;
+  try {
+    const j = JSON.parse(m[1]);
+    if (j && typeof j === 'object') {
+      ficha = {};
+      for (const k of CAMPOS_RECLAMO) { const val = j[k]; if (val != null && String(val).trim()) ficha[k] = String(val).replace(/\s+/g, ' ').trim().slice(0, 300); }
+      if (!Object.keys(ficha).length) ficha = null;
+    }
+  } catch (e) { ficha = null; }
+  const limpio = t.replace(/\[RECLAMO\]\s*\{[^{}]*\}/g, '').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  return { texto: limpio, ficha };
+}
+
+// Prompt completo: la configuración del panel, el protocolo de garantía y las reglas fijas del sistema (1.3.7), siempre al final.
+function buildSystemPrompt(v) { return buildSystemPromptBase(v) + bloqueGarantia(v) + cumplimiento.bloquePrompt(); }
 function buildSystemPromptBase(v) {
   v = v || {};
   const trato = { vos: 'Tratá al cliente de "vos" (rioplatense)', 'tú': 'Tratá al cliente de "tú"', usted: 'Tratá al cliente de "usted" (formal)' }[v.trato || 'vos'];
@@ -429,16 +487,17 @@ async function responder(from, body, opciones) {
     if (noDebeResponder(from, opciones)) return null;
     return { texto: fr.error || 'Disculpá, tuve un problema técnico. Ahora mismo te conecto con uno de nuestros asesores 🙌', derivar: true, error: true };
   }
-  const sep = separarDerivacion(crudo);
+  const rec = separarReclamo(crudo);
+  const sep = separarDerivacion(rec.texto);
   const reply = sep.texto || fr.derivacion || 'Te paso con un asesor para que te ayude. 🙌';
 
   // 3) si mientras pensaba una persona del equipo tomó la conversación, o alguien apagó a Verde
   //    en este chat, no se responde
   if (noDebeResponder(from, opciones)) return null;
 
-  // 4) se guarda la respuesta de Verde (sin la marca)
+  // 4) se guarda la respuesta de Verde (sin las marcas)
   registrarMensaje(from, 'assistant', reply);
-  return { texto: reply, derivar: sep.derivar, error: false };
+  return { texto: reply, derivar: sep.derivar, error: false, reclamo: rec.ficha };
 }
 
 // «Devolver a Verde» desde el panel: Verde responde la última consulta del cliente que quedó sin
@@ -465,11 +524,12 @@ async function responderUltima(from, opciones) {
     if (noDebeResponder(from, opciones)) return null;
     return { texto: fr.error || 'Disculpá, tuve un problema técnico. Ahora mismo te conecto con uno de nuestros asesores 🙌', derivar: true, error: true };
   }
-  const sep = separarDerivacion(crudo);
+  const rec = separarReclamo(crudo);
+  const sep = separarDerivacion(rec.texto);
   const reply = sep.texto || fr.derivacion || 'Te paso con un asesor para que te ayude. 🙌';
   if (noDebeResponder(from, opciones)) return null;
   registrarMensaje(from, 'assistant', reply);
-  return { texto: reply, derivar: sep.derivar, error: false };
+  return { texto: reply, derivar: sep.derivar, error: false, reclamo: rec.ficha };
 }
 
 // ¿Verde ya le respondió algo a este cliente? (se usa para la presentación en el simulador)
@@ -483,6 +543,7 @@ function modeloEnUso() { return resolverModelo(getVerde()); }
 
 module.exports = {
   ADJUNTO_POR_DEFECTO, instruccionesArchivo, notaAtencion,
+  GARANTIA_DATOS_DEFECTO, GARANTIA_SINTOMAS_DEFECTO, garantiaDe, bloqueGarantia, separarReclamo,
   tieneRespuestas,
   modeloEnUso,
   responderPendiente,

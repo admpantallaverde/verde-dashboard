@@ -76,7 +76,7 @@ const ARTICULOS = [
     id: 'comportamiento', grupo: 'manual', soloAdmin: true, titulo: 'Comportamiento del bot',
     resumen: 'Cómo se configura lo que dice y hace Verde, las reglas fijas y la página de privacidad.',
     bloques: [
-      { tipo: 'p', texto: 'En «Agentes IA › Comportamiento del bot» se configura a Verde sin tocar código: identidad (A), personalidad y tono (B), ventajas (C), pasos de venta (D), objeciones (E), reglas de oro (F), frases clave (G), que incluye las indicaciones para cuando el cliente envía un archivo, y parámetros técnicos, como el modelo de inteligencia artificial (H). Cada sección se guarda con su botón «Guardar».' },
+      { tipo: 'p', texto: 'En «Agentes IA › Comportamiento del bot» se configura a Verde sin tocar código: identidad (A), personalidad y tono (B), ventajas (C), pasos de venta (D), objeciones (E), reglas de oro (F), frases clave (G), que incluye las indicaciones para cuando el cliente envía un archivo, parámetros técnicos, como el modelo de inteligencia artificial (H), y reclamos y garantía (I): las condiciones que Verde puede informar, los datos que debe juntar y las sugerencias por síntoma. Cada sección se guarda con su botón «Guardar».' },
       { tipo: 'h', texto: 'Reglas fijas del sistema' },
       { tipo: 'p', texto: 'Se aplican siempre, antes que las reglas de oro, y protegen el cumplimiento de las políticas de WhatsApp y de la Ley N.º 18.331. Se pueden editar con cuidado: queda registrado quién las cambió, y el botón «Restaurar las reglas recomendadas» vuelve al texto original. Se recomienda que la línea de presentación de la primera respuesta incluya el enlace a la página de privacidad; si falta, el panel lo avisa.' },
       { tipo: 'h', texto: 'Otras funciones' },
@@ -104,6 +104,16 @@ const ARTICULOS = [
       ] },
       { tipo: 'p', texto: 'Si alguien olvida su contraseña, un administrador usa «Restablecer contraseña» en «Sistema › Usuarios». Los usuarios no se eliminan: se desactivan, para conservar el historial de quién atendió cada chat.' },
       { tipo: 'nota', texto: 'La firma se agrega al final de los mensajes enviados desde el panel, para que el cliente sepa quién le respondió.' }
+    ]
+  },
+  {
+    id: 'garantia', grupo: 'manual', soloAdmin: false, titulo: 'Reclamos de garantía',
+    resumen: 'Qué hace Verde cuando un cliente reclama por algo que compró o reparó, y qué le llega al asesor.',
+    bloques: [
+      { tipo: 'p', texto: 'Cuando un cliente plantea una falla de algo que compró o reparó en la tienda, Verde sigue el protocolo de garantía: junta los datos necesarios (boleta, qué se vendió o reparó, qué falla y desde cuándo, si reinició el equipo, fotos o videos) y da sugerencias según el síntoma, como el reinicio forzado. Nunca afirma que la garantía corresponde: explica que se evalúa con la información reunida y que un asesor confirma cómo seguir.' },
+      { tipo: 'h', texto: 'Qué ve el equipo' },
+      { tipo: 'p', texto: 'El chat aparece en «Chats por responder» con la etiqueta «Reclamo de garantía». Dentro del chat, el botón «Ver ficha» abre la ficha del reclamo con todos los datos ordenados, y se puede copiar. La ficha es un resumen de lo que el cliente declaró: la decisión sobre la garantía es del asesor, que revisa las fotos o videos en el chat y cierra el caso.' },
+      { tipo: 'nota', texto: 'Las condiciones generales que Verde puede informar, los datos que junta y las sugerencias por síntoma se configuran en «Comportamiento del bot › I · Reclamos y garantía» (solo administradores).' }
     ]
   },
   {

@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.4.3';
+const VERSION_ESPERADA = '1.4.4';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -40,7 +40,12 @@ global.fetch = async (url, opts = {}) => {
       return new Response(JSON.stringify({ content: [{ type: 'text', text: '{"respuesta":"Para devolver un chat a Verde, usar el botón «Devolver a Verde» del encabezado.","fuentes":["conversaciones","portafolio"]}' }], stop_reason: 'end_turn', usage: { input_tokens: 3000, output_tokens: 80 } }), { status: 200 });
     }
     const ultimo = (JSON.parse(opts.body).messages || []).slice(-1)[0] || {};
-    if (/precio exacto/i.test(String(ultimo.content || ''))) {
+    const ult = String(ultimo.content || '');
+    const respuestaIA = t => new Response(JSON.stringify({ content: [{ type: 'text', text: t }], stop_reason: 'end_turn', usage: { input_tokens: 1000, output_tokens: 100 } }), { status: 200 });
+    if (/garantía/i.test(ult)) return respuestaIA('Lamento el inconveniente 🙏 ¿Tenés la boleta de garantía?\n[RECLAMO]{"boleta":"4582","producto":"Cambio de pantalla hace 2 semanas","mismo":"sí","falla":"El touch no responde a veces","desde":"ayer","reinicio":"forzado hecho"}\n[DERIVAR]');
+    if (/actualizar ficha/i.test(ult)) return respuestaIA('Anotado, gracias.\n[RECLAMO]{"golpes":"no","notas":"video recibido"}');
+    if (/ficha rota/i.test(ult)) return respuestaIA('Te paso con un asesor.\n[RECLAMO]{boleta: 1}\n[DERIVAR]');
+    if (/precio exacto/i.test(ult)) {
       return new Response(JSON.stringify({ content: [{ type: 'text', text: 'Te paso con un asesor para confirmarte el precio.\n[DERIVAR]' }], stop_reason: 'end_turn', usage: { input_tokens: 1000, output_tokens: 100 } }), { status: 200 });
     }
     contadorIA++;
@@ -412,7 +417,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(rr.status === 401, 'sin sesión no se puede ver ningún archivo');
   rr = await api('/api/ayuda', 'GET', null, galletaCarla);
   const ayC = await json(rr);
-  verificar(rr.status === 200 && ayC.rol === 'asesor' && !ayC.articulos.some(a => a.soloAdmin) && ayC.articulos.map(a => a.id).join(',') === 'chats-por-responder,conversaciones,chats-respondidos,apariencia', 'un asesor ve solo los 4 temas para atender los chats');
+  verificar(rr.status === 200 && ayC.rol === 'asesor' && !ayC.articulos.some(a => a.soloAdmin) && ayC.articulos.map(a => a.id).join(',') === 'chats-por-responder,conversaciones,chats-respondidos,garantia,apariencia', 'un asesor ve solo los 5 temas para atender los chats');
   rr = await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Cómo devuelvo un chat a Verde?' }, galletaCarla);
   const pC = await json(rr);
   const sysC = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system);
@@ -877,7 +882,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
 
   mostrar('55) Centro de ayuda: manual y guías según el rol');
   const ay55 = await json(await api('/api/ayuda', 'GET'));
-  verificar(ay55.rol === 'admin' && ay55.articulos.filter(a => a.grupo === 'manual').length === 8 && ay55.articulos.filter(a => a.grupo === 'meta').length === 6 && ay55.revisionMeta === '2026-10-24', 'el administrador ve los 8 temas del manual y las 6 guías de Meta');
+  verificar(ay55.rol === 'admin' && ay55.articulos.filter(a => a.grupo === 'manual').length === 9 && ay55.articulos.filter(a => a.grupo === 'meta').length === 6 && ay55.revisionMeta === '2026-10-24', 'el administrador ve los 9 temas del manual y las 6 guías de Meta');
   verificar(ay55.articulos.every(a => a.titulo && a.resumen && a.bloques && a.bloques.length), 'cada tema tiene título, resumen y contenido');
 
   mostrar('56) Asistente de ayuda');
@@ -1083,6 +1088,47 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   rr = await api('/api/conversaciones/' + encodeURIComponent('wa:59877000003') + '/reanudar', 'POST', {});
   const rj59 = await json(rr);
   verificar(rr.status === 200 && rj59.verde && rj59.verde.respondio === true && llamadasIA.length === antesIA59 + 1, '«Devolver a Verde» con un archivo como última consulta: Verde responde enseguida');
+
+
+  mostrar('60) Reclamos y garantía: protocolo, ficha y aviso al asesor');
+  await api('/api/avisos', 'PUT', { numeros: ['59899000102'] });
+  const aviso60 = desde => envios360.slice(desde).filter(x => x.body.to === '59899000102');
+  let antes60 = envios360.length;
+  await post360(aviso([{ id: 'ga60-1', from: '59879000001', type: 'text', text: { body: 'hola, me cambiaron la pantalla hace 2 semanas y quiero la garantía porque el touch no anda' } }]));
+  await espera(600);
+  const sys60 = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system);
+  verificar(sys60.includes('== RECLAMOS Y GARANTÍA ==') && sys60.includes('El touch no responde') && sys60.includes('Número de la boleta de garantía') && sys60.includes('nunca afirmar ni dar a entender que la garantía corresponde'), 'Verde recibe el protocolo: datos a juntar, síntomas y la regla de no prometer la garantía');
+  const env60 = envios360.slice(antes60).find(x => x.body.to === '59879000001');
+  verificar(env60 && /¿Tenés la boleta de garantía\?/.test(env60.body.text.body) && !/RECLAMO|\{|\}|DERIVAR/.test(env60.body.text.body), 'el cliente recibe la respuesta sin la ficha ni las marcas internas');
+  let p60 = (await json(await api('/api/chats/pendientes'))).lista.find(x => x.numero === '59879000001');
+  verificar(p60 && p60.reclamo === true && p60.verdeActivo === true, 'el chat pasa a «Chats por responder» marcado como reclamo de garantía, con Verde activo');
+  verificar(aviso60(antes60).length === 1 && /Reclamo de garantía: Verde juntó los datos para el asesor/.test(aviso60(antes60)[0].body.text.body), 'el aviso al equipo dice que es un reclamo de garantía');
+  let det60 = await json(await api('/api/conversaciones/' + encodeURIComponent('wa:59879000001'), 'GET'));
+  verificar(det60.reclamo && det60.reclamo.boleta === '4582' && det60.reclamo.mismo === 'sí' && det60.reclamo.pruebas === 0 && det60.reclamo.estado === 'pendiente', 'la conversación trae la ficha del reclamo que armó Verde');
+  await post360(aviso([{ id: 'ga60-2', from: '59879000001', type: 'video', video: { id: 'med-ga-1', mime_type: 'video/mp4' } }]));
+  await espera(500);
+  det60 = await json(await api('/api/conversaciones/' + encodeURIComponent('wa:59879000001'), 'GET'));
+  verificar(det60.reclamo.pruebas === 1, 'la ficha cuenta los archivos que mandó el cliente como pruebas');
+  antes60 = envios360.length;
+  await post360(aviso([{ id: 'ga60-3', from: '59879000001', type: 'text', text: { body: 'actualizar ficha: no se golpeó' } }]));
+  await espera(500);
+  det60 = await json(await api('/api/conversaciones/' + encodeURIComponent('wa:59879000001'), 'GET'));
+  verificar(det60.reclamo.boleta === '4582' && det60.reclamo.golpes === 'no' && det60.reclamo.notas === 'video recibido' && aviso60(antes60).length === 0 && envios360.slice(antes60).some(x => x.body.to === '59879000001'), 'si el cliente aporta más datos, la ficha se actualiza sin perder lo anterior ni repetir el aviso');
+  const at60 = await json(await api('/api/chats/' + p60.id));
+  const ev60 = (at60.eventos || (at60.atencion && at60.atencion.eventos) || []).filter(x => x.tipo === 'reclamo');
+  verificar((at60.reclamo || (at60.atencion && at60.atencion.reclamo)) && ev60.length === 2, 'el detalle de la atención conserva la ficha y el recorrido');
+  antes60 = envios360.length;
+  await post360(aviso([{ id: 'ga60-4', from: '59879000002', type: 'text', text: { body: 'ficha rota' } }]));
+  await espera(500);
+  const p60b = (await json(await api('/api/chats/pendientes'))).lista.find(x => x.numero === '59879000002');
+  const env60b = envios360.slice(antes60).find(x => x.body.to === '59879000002');
+  verificar(p60b && p60b.reclamo === false && env60b && !/RECLAMO|\{/.test(env60b.body.text.body), 'si la ficha llega mal formada, se ignora sin romper nada: el chat se deriva igual y el cliente no ve la marca');
+  const botG = require('./bot.js');
+  verificar(!botG.buildSystemPrompt({ garantia: { activo: false } }).includes('== RECLAMOS Y GARANTÍA =='), 'con el protocolo desactivado, el bloque no entra al prompt');
+  const promptG = botG.buildSystemPrompt({ garantia: { condiciones: 'Las reparaciones tienen 90 días de garantía.', sintomas: [{ sintoma: 'La batería dura poco', preguntar: 'Cuántas horas dura.', sugerir: 'Revisar apps en segundo plano.' }] } });
+  verificar(promptG.includes('Las reparaciones tienen 90 días de garantía.') && promptG.includes('La batería dura poco') && promptG.includes('Número de la boleta de garantía'), 'las condiciones y los síntomas configurados entran al prompt, con los datos a juntar por defecto');
+  const sim60 = await json(await api('/api/simulate', 'POST', { message: 'quiero la garantía de la pantalla', from: 'garantia-sim' }));
+  verificar(/\(Ficha del reclamo que vería el asesor: boleta: 4582/.test(sim60.reply) && !/\[RECLAMO\]/.test(sim60.reply), 'en «Probar a Verde» se ve la ficha que armaría Verde');
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }
