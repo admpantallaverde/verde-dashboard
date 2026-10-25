@@ -61,6 +61,14 @@ function getVerde() {
 }
 
 /* ---------- armar el system prompt desde la configuración ---------- */
+// 1.4.2: indicaciones para cuando el cliente envía un archivo (se configuran en «Comportamiento del bot › G»).
+const ADJUNTO_POR_DEFECTO = 'Agradecer el archivo y avisar que un asesor lo va a revisar. Seguir la conversación con normalidad. Si el cliente consulta por una reparación y faltan fotos, pedir la del frente con la pantalla encendida y la de la parte trasera del equipo.';
+const ADJUNTO_VIEJO = '¡Gracias! 🙌 Recibí tu archivo. En un momento un asesor lo revisa y te confirma todo. Si querés, dejame por acá cualquier dato que quieras sumar.';
+function instruccionesArchivo(fr) {
+  const t = String((fr && fr.adjunto) || '').trim();
+  return t && t !== ADJUNTO_VIEJO ? t : ADJUNTO_POR_DEFECTO;
+}
+
 // Prompt completo: la configuración del panel más las reglas fijas del sistema (1.3.7), siempre al final.
 function buildSystemPrompt(v) { return buildSystemPromptBase(v) + cumplimiento.bloquePrompt(); }
 function buildSystemPromptBase(v) {
@@ -101,7 +109,9 @@ ${reglas}
 == FRASES CLAVE ==
 Bienvenida: "${fr.bienvenida || ''}"
 Al derivar a un humano: "${fr.derivacion || ''}"
-Si hay un error técnico: "${fr.error || ''}"`;
+Si hay un error técnico: "${fr.error || ''}"
+Cuando el cliente envía un archivo (llega como «[El cliente envió …]»): ${instruccionesArchivo(fr)}
+No es posible ver el contenido de los archivos: nunca describir ni opinar sobre lo que muestran.`;
 }
 
 /* ---------- lectura y escritura segura de archivos JSON ---------- */
@@ -464,6 +474,7 @@ function tieneRespuestas(from) {
 function modeloEnUso() { return resolverModelo(getVerde()); }
 
 module.exports = {
+  ADJUNTO_POR_DEFECTO, instruccionesArchivo,
   tieneRespuestas,
   modeloEnUso,
   responderPendiente,

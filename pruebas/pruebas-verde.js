@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.4.1';
+const VERSION_ESPERADA = '1.4.2';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -162,7 +162,8 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   await post360(aviso([{ id: 'm6', from: '59833333333', type: 'image', image: { caption: 'comprobante' } }]));
   await espera(400);
   e = envios360[envios360.length - 1];
-  verificar(envios360.length === antes2 + 1 && e.body.text.body.startsWith('Gracias, recibí tu archivo. Un asesor lo revisa.\n\n_Soy Verde, el asistente virtual') && llamadasIA.length === antesIA2, 'una imagen recibe la frase de adjunto del panel, sin consultar a la IA (con la presentación, por ser la primera)');
+  const ped9 = llamadasIA[llamadasIA.length - 1];
+  verificar(envios360.length === antes2 + 1 && /^Respuesta de Verde \d+\n\n_Soy Verde, el asistente virtual/.test(e.body.text.body) && llamadasIA.length === antesIA2 + 1 && /\[El cliente envió una imagen: comprobante\]/.test(JSON.stringify(ped9.body.messages.slice(-1))), 'una imagen: Verde responde con la IA (sabe que llegó una imagen) y sigue la conversación');
   antes2 = envios360.length;
   await post360(aviso([{ id: 'm7', from: '59833333333', type: 'sticker', sticker: {} }]));
   await espera(300);
@@ -997,6 +998,47 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   process.env.D360_MESSAGES_URL = urlPrevia57;
   verificar(arch57.estado({ id: 'a'.repeat(24), tipo: 'image', mime: 'image/jpeg', recibido: Date.now() - 8 * 86400000 }).estado === 'antiguo', 'pasados 7 días sin descargar, el archivo se marca como posiblemente eliminado');
   verificar(arch57.limpiar(Date.now() + 91 * 86400000) >= 1 && !arch57.paraServir(a57.id), 'a los 3 meses los archivos guardados se borran solos');
+
+
+  mostrar('58) Archivos: Verde sigue conversando y el chat queda «Archivo para revisar»');
+  const botMod = require('./bot.js');
+  await api('/api/avisos', 'PUT', { numeros: ['59899000102'] });
+  let antes58 = envios360.length, antesIA58 = llamadasIA.length;
+  await post360(aviso([{ id: 'rv1', from: '59876000001', type: 'image', image: { id: 'med-rv-1', mime_type: 'image/jpeg', caption: 'Pantalla rota' } }]));
+  await espera(500);
+  const env58 = envios360.slice(antes58);
+  const sys58 = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system);
+  verificar(llamadasIA.length === antesIA58 + 1 && env58.some(x => x.body.to === '59876000001' && /^Respuesta de Verde/.test(x.body.text.body)), 'al llegar una foto, Verde responde con la IA en lugar de una frase fija');
+  verificar(sys58.includes('Cuando el cliente envía un archivo') && sys58.includes(botMod.instruccionesArchivo((botMod.getVerde() || {}).frases)) && sys58.includes('No es posible ver el contenido de los archivos'), 'Verde recibe las indicaciones para archivos y sabe que no puede ver su contenido');
+  let pend58 = (await json(await api('/api/chats/pendientes'))).lista.find(x => x.numero === '59876000001');
+  verificar(pend58 && pend58.revision === true, 'el chat queda en «Chats por responder» marcado como «Archivo para revisar»');
+  verificar(env58.filter(x => x.body.to === '59899000102').length === 1, 'se avisa al equipo una vez');
+  antes58 = envios360.length; antesIA58 = llamadasIA.length;
+  await post360(aviso([{ id: 'rv2', from: '59876000001', type: 'text', text: { body: 'Es un Samsung A54, se me cayó' } }]));
+  await espera(500);
+  pend58 = (await json(await api('/api/chats/pendientes'))).lista.find(x => x.numero === '59876000001');
+  verificar(llamadasIA.length === antesIA58 + 1 && envios360.slice(antes58).some(x => x.body.to === '59876000001'), 'Verde sigue conversando: responde el mensaje siguiente');
+  verificar(pend58 && pend58.revision && pend58.ultimoMensaje === 'Es un Samsung A54, se me cayó', 'el chat sigue para revisar y el asesor ve el último mensaje');
+  antes58 = envios360.length;
+  await post360(aviso([{ id: 'rv3', from: '59876000001', type: 'image', image: { id: 'med-rv-2', mime_type: 'image/jpeg' } }]));
+  await espera(500);
+  verificar(!envios360.slice(antes58).some(x => x.body.to === '59899000102') && envios360.slice(antes58).some(x => x.body.to === '59876000001'), 'otro archivo en el mismo chat: Verde responde y no se repite el aviso al equipo');
+  const det58 = await json(await api('/api/conversaciones/' + encodeURIComponent('wa:59876000001'), 'GET'));
+  verificar(det58.pendiente && det58.revision && det58.verde, 'la conversación figura por responder y con Verde atendiendo a la vez');
+  const listaV58 = JSON.stringify(await json(await api('/api/conversaciones?estado=verde', 'GET'))), listaP58 = JSON.stringify(await json(await api('/api/conversaciones?estado=pendiente', 'GET')));
+  verificar(listaV58.includes('59876000001') && listaP58.includes('59876000001'), 'aparece en los filtros «Verde atendiendo» y «Por responder»');
+  await post360(aviso([{ id: 'rv4', from: '59876000001', type: 'text', text: { body: 'cuál es el precio exacto del cambio de pantalla?' } }]));
+  await espera(500);
+  pend58 = (await json(await api('/api/chats/pendientes'))).lista.find(x => x.numero === '59876000001');
+  verificar(pend58 && pend58.revision === false, 'si el cliente pide un precio, Verde deriva y el chat pasa a esperar a una persona');
+  const at58 = await json(await api('/api/chats/' + pend58.id));
+  const evs58 = (at58.eventos || (at58.atencion && at58.atencion.eventos) || []).filter(x => x.tipo === 'cliente' && /precio exacto del cambio de pantalla/.test(x.texto));
+  verificar(evs58.length === 1, 'el mensaje del cliente queda anotado una sola vez');
+  antesIA58 = llamadasIA.length;
+  await post360(aviso([{ id: 'rv5', from: '59876000001', type: 'text', text: { body: 'hola?' } }]));
+  await espera(400);
+  verificar(llamadasIA.length === antesIA58, 'a partir de ahí Verde espera a la persona del equipo, como siempre');
+  verificar(botMod.buildSystemPrompt({ frases: { adjunto: 'Pedir la foto del IMEI.' } }).includes('Pedir la foto del IMEI.') && !botMod.buildSystemPrompt({ frases: { adjunto: 'Pedir la foto del IMEI.' } }).includes(botMod.ADJUNTO_POR_DEFECTO), 'las indicaciones configuradas en el panel reemplazan a las sugeridas');
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }

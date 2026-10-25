@@ -33,7 +33,7 @@ const usuarios = require('./usuarios.js');
 const atencion = require('./atencion.js');
 const conversaciones = require('./conversaciones.js');
 
-const VERSION = '1.4.1';
+const VERSION = '1.4.2';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -545,7 +545,8 @@ async function manejarEntrante(msg, nombres) {
   if (v.encendido === false) { console.log('360 << de', quien, '→ Verde apagado, sin respuesta'); return; }
 
   // 1) El chat ya espera a una persona del equipo: Verde no responde y el mensaje se suma a «Por responder».
-  if (atencion.tienePendiente(clave)) {
+  //    (1.4.2: un archivo para revisar no cuenta como espera: Verde sigue conversando.)
+  if (atencion.esperaPersona(clave)) {
     bot.registrarMensaje(clave, 'user', textoCliente);
     atencion.mensajeCliente({ clave, destino, numero, nombre, texto: textoCliente, enPausa: bot.estaPausado(clave) });
     console.log('360 << de', quien, '→ espera a una persona del equipo (Verde no responde)');
@@ -575,22 +576,23 @@ async function manejarEntrante(msg, nombres) {
     return;
   }
 
-  // 3) Archivos: Verde no los interpreta; agradece y deriva a una persona.
+  // 3) Archivos (1.4.2): Verde no ve su contenido, pero sigue conversando. El chat queda en «Chats por responder»
+  //    con la marca «Archivo para revisar» para que una persona lo revise; el aviso al equipo sale solo la primera vez.
+  const enRevision = atencion.tienePendiente(clave);   // acá solo puede ser un archivo para revisar (la espera ya se atendió en el paso 1)
   if (info.clase === 'adjunto') {
-    const fr = v.frases || {};
-    const resp = fr.adjunto || '¡Gracias! 🙌 Recibí tu archivo. En un momento un asesor lo revisa y te confirma todo. Si querés, dejame por acá cualquier dato que quieras sumar.';
-    bot.registrarMensaje(clave, 'user', textoCliente);
-    const enviado = conPresentacion(clave, resp);
-    const ok = await enviarWhatsApp(destino, enviado);
-    if (ok) bot.registrarMensaje(clave, 'assistant', resp);
-    if (ok) conversaciones.registrar({ clave, tipo: 'verde', texto: enviado });
-    const d = atencion.derivar({ clave, destino, numero, nombre, mensajeCliente: textoCliente, respuestaVerde: ok ? resp : null, motivo: 'El cliente envió ' + info.desc + ': lo revisa una persona del equipo.' });
-    console.log('360 << adjunto de', quien, '→', ok ? 'derivado a una persona' : 'NO se pudo responder', '· pasa a «Chats por responder»');
-    await avisarEquipo(d.atencion);
-    return;
+    if (enRevision) {
+      atencion.mensajeCliente({ clave, destino, numero, nombre, texto: textoCliente });
+    } else {
+      const d = atencion.derivar({ clave, destino, numero, nombre, mensajeCliente: textoCliente, revision: true, motivo: 'El cliente envió ' + info.desc + ': hay un archivo para revisar. Verde sigue conversando.' });
+      console.log('360 << archivo de', quien, '→ «Archivo para revisar» en «Chats por responder» (Verde sigue conversando)');
+      await avisarEquipo(d.atencion);
+    }
+  } else if (enRevision) {
+    atencion.mensajeCliente({ clave, destino, numero, nombre, texto: textoCliente });   // el asesor ve el último mensaje
   }
+  const yaAnotado = enRevision || info.clase === 'adjunto';
 
-  // 4) Texto: responde Verde y, si deriva, el chat pasa a «Chats por responder».
+  // 4) Verde responde (texto o archivo) y, si deriva, el chat pasa a «Chats por responder» con Verde en espera.
   if (!textoCliente.trim()) return;
   console.log('360 << de', quien, ':', textoCliente.slice(0, 200));
   // Si mientras la IA prepara la respuesta alguien apaga a Verde en este chat, la respuesta se descarta.
@@ -602,7 +604,7 @@ async function manejarEntrante(msg, nombres) {
   console.log('360 >>', ok ? 'enviado' : 'NO enviado', ':', enviado.slice(0, 200));
   if (r.derivar) {
     const d = atencion.derivar({
-      clave, destino, numero, nombre, mensajeCliente: textoCliente, respuestaVerde: ok ? r.texto : null,
+      clave, destino, numero, nombre, mensajeCliente: yaAnotado ? null : textoCliente, respuestaVerde: ok ? r.texto : null,
       motivo: r.error ? 'Verde tuvo un problema técnico y lo derivó a una persona del equipo.' : 'Verde lo derivó a una persona del equipo.'
     });
     console.log('360 → derivado: pasa a «Chats por responder»');
@@ -792,7 +794,7 @@ app.get('/privacidad', (req, res) => {
 /* ============================================================
    CONVERSACIONES: todos los chats, interruptor de Verde por chat y respuesta desde el panel
    ============================================================ */
-function contexto() { return { pendientes: atencion.clavesPendientes(), pausas: bot.pausasVigentes() }; }
+function contexto() { return { pendientes: atencion.clavesPendientes(), revision: atencion.clavesRevision(), pausas: bot.pausasVigentes() }; }
 function quienEs(req) { return req.usuario ? req.usuario.nombre : 'Acceso general'; }
 function claveDeRuta(req) {
   const clave = String(req.params.clave || '');

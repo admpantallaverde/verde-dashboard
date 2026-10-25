@@ -16,6 +16,7 @@ const ARTICULOS = [
     resumen: 'Clientes que esperan a una persona del equipo: cómo responderlos y cómo marcarlos como atendidos.',
     bloques: [
       { tipo: 'p', texto: 'Cuando Verde deriva un chat a una persona del equipo (por ejemplo, porque el cliente pide un precio exacto), el chat aparece en «Chats por responder». Mientras está ahí, Verde no le responde a ese cliente.' },
+      { tipo: 'p', texto: 'Hay una excepción: cuando el cliente envía un archivo, el chat aparece con la etiqueta «Archivo para revisar» y Verde sigue conversando mientras una persona revisa el archivo. Si en esa conversación el cliente pide un precio, Verde deriva y deja de responder, como siempre.' },
       { tipo: 'p', texto: 'Los tiempos de espera de más de 5 minutos se muestran en rojo. El número junto a «Chats por responder» en el menú indica cuántos chats esperan.' },
       { tipo: 'h', texto: 'Cómo atender un chat' },
       { tipo: 'pasos', items: [
@@ -42,6 +43,7 @@ const ARTICULOS = [
       { tipo: 'h', texto: 'Apagar a Verde en un chat' },
       { tipo: 'p', texto: 'El interruptor «Verde» apaga a Verde en ese chat sin límite de tiempo, hasta que se vuelva a encender. Con Verde apagado rige el mismo resguardo de 5 minutos.' },
       { tipo: 'h', texto: 'Fotos, audios y documentos del cliente' },
+      { tipo: 'p', texto: 'Cuando llega un archivo, Verde sigue conversando: agradece, avisa que un asesor lo va a revisar y, si hace falta, pide más fotos o datos, según las indicaciones de «Comportamiento del bot › G». Verde no puede ver el contenido del archivo. El chat queda en «Chats por responder» con la etiqueta «Archivo para revisar».' },
       { tipo: 'p', texto: 'Los archivos que manda el cliente aparecen en el chat como una tarjeta con el botón «Descargar». Nada se guarda automáticamente: el archivo se baja de WhatsApp recién al tocar «Descargar», y desde ese momento se ve en el panel durante 3 meses. Las fotos se abren en grande al tocarlas; los audios y los videos se reproducen en el chat; los PDF se abren con «Abrir». Cualquier archivo se puede guardar en la computadora.' },
       { tipo: 'p', texto: 'WhatsApp conserva los archivos alrededor de 7 días: conviene descargarlos antes. Pasado ese plazo puede que ya no estén disponibles, y habría que pedirle al cliente que los reenvíe. Los archivos que llegaron antes de esta función se ven solo en el WhatsApp de la tienda.' },
       { tipo: 'nota', texto: 'Desde el panel solo se puede responder dentro de las 24 horas desde el último mensaje del cliente: es una regla de WhatsApp.' }
@@ -74,7 +76,7 @@ const ARTICULOS = [
     id: 'comportamiento', grupo: 'manual', soloAdmin: true, titulo: 'Comportamiento del bot',
     resumen: 'Cómo se configura lo que dice y hace Verde, las reglas fijas y la página de privacidad.',
     bloques: [
-      { tipo: 'p', texto: 'En «Agentes IA › Comportamiento del bot» se configura a Verde sin tocar código: identidad (A), personalidad y tono (B), ventajas (C), pasos de venta (D), objeciones (E), reglas de oro (F), frases clave (G) y parámetros técnicos, como el modelo de inteligencia artificial (H). Cada sección se guarda con su botón «Guardar».' },
+      { tipo: 'p', texto: 'En «Agentes IA › Comportamiento del bot» se configura a Verde sin tocar código: identidad (A), personalidad y tono (B), ventajas (C), pasos de venta (D), objeciones (E), reglas de oro (F), frases clave (G), que incluye las indicaciones para cuando el cliente envía un archivo, y parámetros técnicos, como el modelo de inteligencia artificial (H). Cada sección se guarda con su botón «Guardar».' },
       { tipo: 'h', texto: 'Reglas fijas del sistema' },
       { tipo: 'p', texto: 'Se aplican siempre, antes que las reglas de oro, y protegen el cumplimiento de las políticas de WhatsApp y de la Ley N.º 18.331. Se pueden editar con cuidado: queda registrado quién las cambió, y el botón «Restaurar las reglas recomendadas» vuelve al texto original. Se recomienda que la línea de presentación de la primera respuesta incluya el enlace a la página de privacidad; si falta, el panel lo avisa.' },
       { tipo: 'h', texto: 'Otras funciones' },

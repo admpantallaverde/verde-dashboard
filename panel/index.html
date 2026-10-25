@@ -1316,6 +1316,22 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 .visor-img img{max-width:100%;max-height:100%;object-fit:contain;border-radius:4px}
 @media(max-width:600px){.visor-cab{padding:12px}.visor-btn .vb-tx{display:none}.visor-img{padding:0 8px 12px}}
 
+/* ===================== 1.4.2: archivo para revisar (Verde sigue conversando) ===================== */
+:root{--wa-azul-bg:#e3eefc;--wa-azul-tx:#1a4fa3;--wa-azul-borde:#c4d8f6}
+:root[data-tema="oscuro"]{--wa-azul-bg:rgba(83,140,255,.14);--wa-azul-tx:#9cc0ff;--wa-azul-borde:rgba(83,140,255,.32)}
+.conv-franja.azul{background:var(--wa-azul-bg);color:var(--wa-azul-tx);border-bottom-color:var(--wa-azul-borde)}
+.estado.rev{background:var(--wa-azul-bg);color:var(--wa-azul-tx)}
+.tag-rev,.tag-verde{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:20px;white-space:nowrap}
+.tag-rev{background:var(--wa-azul-bg);color:var(--wa-azul-tx)}
+.tag-rev svg{width:12px;height:12px}
+.tag-verde{background:var(--wa-ok-bg);color:var(--wa-ok-tx)}
+.chat-l3{display:flex;gap:6px;flex-wrap:wrap}
+#v_fAdjunto{width:100%;box-sizing:border-box}
+.fr-ayuda{display:block;margin-top:6px;font-size:12px;line-height:1.45}
+/* Corrección de la 1.3.9: la barra de modo y perfil se mueve con la página (fija, tapaba botones al desplazarse) */
+.app{position:relative}
+.cuenta{position:absolute}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -1763,6 +1779,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
               <div class="field"><label>Mensaje de bienvenida</label><textarea id="v_fBien" rows="2" oninput="buildVerdePrompt()" placeholder="Primer saludo del bot…"></textarea></div>
               <div class="field"><label>Mensaje al derivar a un humano</label><textarea id="v_fDeriv" rows="2" oninput="buildVerdePrompt()" placeholder="Cuando pasa a un asesor…"></textarea></div>
               <div class="field" style="margin-bottom:0"><label>Mensaje de error técnico</label><textarea id="v_fError" rows="2" oninput="buildVerdePrompt()" placeholder="Si el bot falla…"></textarea></div>
+              <div class="field" style="grid-column:1 / -1;margin-bottom:0"><label for="v_fAdjunto">Cuando el cliente envía un archivo</label><textarea id="v_fAdjunto" rows="3" maxlength="800" oninput="buildVerdePrompt()"></textarea><span class="faint fr-ayuda">Son indicaciones para Verde, no un mensaje fijo: Verde responde con sus palabras siguiendo estas indicaciones. El chat queda en «Chats por responder» con la etiqueta «Archivo para revisar» y Verde sigue conversando. Verde no puede ver el contenido de los archivos.</span></div>
             </div>
           </div>
 
@@ -3712,6 +3729,7 @@ function renderVerde(){
   document.getElementById('v_fBien').value=fr.bienvenida||'';
   document.getElementById('v_fDeriv').value=fr.derivacion||'';
   document.getElementById('v_fError').value=fr.error||'';
+  document.getElementById('v_fAdjunto').value=instruccionesArchivoUI(fr);
   const tc=v.tecnico||{};
   document.getElementById('v_modelo').value=modeloUI(tc.modelo||'');pintarSelectorIA();
   document.getElementById('v_tokens').value=tc.maxTokens||1000;
@@ -3917,7 +3935,7 @@ function saveVerde(section){
   }else if(section==='frases'){
     const bien=document.getElementById('v_fBien').value.trim();
     if(!bien){showVerdeErr('El mensaje de bienvenida no puede quedar vacío.');flashField('v_fBien');return;}
-    v.frases={bienvenida:bien,derivacion:document.getElementById('v_fDeriv').value.trim(),error:document.getElementById('v_fError').value.trim()};
+    v.frases={bienvenida:bien,derivacion:document.getElementById('v_fDeriv').value.trim(),error:document.getElementById('v_fError').value.trim(),adjunto:document.getElementById('v_fAdjunto').value.trim()};
     persist();toast('Frases guardadas','Los mensajes clave quedaron actualizados.','success');
   }else if(section==='tecnico'){
     const modelo=document.getElementById('v_modelo').value.trim();
@@ -3944,7 +3962,7 @@ function snapVerde(src){
       pasos:vPasos.filter(x=>(x.titulo||'').trim()).map(x=>({titulo:x.titulo.trim(),desc:(x.desc||'').trim(),ejemplo:(x.ejemplo||'').trim(),activo:x.activo!==false})),
       objeciones:vObjeciones.filter(o=>(o.obj||'').trim()&&(o.resp||'').trim()).map(o=>({obj:o.obj.trim(),resp:o.resp.trim()})),
       reglas:vReglas.map(r=>(r||'').trim()).filter(Boolean),
-      frases:{bienvenida:(g('v_fBien').value||'').trim(),derivacion:(g('v_fDeriv').value||'').trim(),error:(g('v_fError').value||'').trim()},
+      frases:{bienvenida:(g('v_fBien').value||'').trim(),derivacion:(g('v_fDeriv').value||'').trim(),error:(g('v_fError').value||'').trim(),adjunto:(g('v_fAdjunto').value||'').trim()},
       tecnico:{modelo:(g('v_modelo').value||'').trim(),maxTokens:parseInt(g('v_tokens').value,10)||0,memoria:parseInt(g('v_memoria').value,10)||0}
     });
   }
@@ -3958,7 +3976,7 @@ function snapVerde(src){
     pasos:(v.pasos||[]).map(x=>({titulo:(x.titulo||'').trim(),desc:(x.desc||'').trim(),ejemplo:(x.ejemplo||'').trim(),activo:x.activo!==false})),
     objeciones:(v.objeciones||[]).map(o=>({obj:(o.obj||'').trim(),resp:(o.resp||'').trim()})),
     reglas:(v.reglas||[]).map(r=>(r||'').trim()).filter(Boolean),
-    frases:{bienvenida:(fr.bienvenida||'').trim(),derivacion:(fr.derivacion||'').trim(),error:(fr.error||'').trim()},
+    frases:{bienvenida:(fr.bienvenida||'').trim(),derivacion:(fr.derivacion||'').trim(),error:(fr.error||'').trim(),adjunto:instruccionesArchivoUI(fr)},
     tecnico:{modelo:modeloUI((tc.modelo||'').trim()),maxTokens:tc.maxTokens||0,memoria:tc.memoria||0}
   });
 }
@@ -3996,7 +4014,9 @@ function buildVerdePrompt(){
   p+=H('FRASES CLAVE')+'\n'+
     `Bienvenida: "${esc(fBien)}"\n`+
     `Al derivar a un humano: "${esc(fDeriv)}"\n`+
-    `Si hay un error técnico: "${esc(fError)}"`;
+    `Si hay un error técnico: "${esc(fError)}"\n`+
+    `Cuando el cliente envía un archivo (llega como «[El cliente envió …]»): ${esc(((document.getElementById('v_fAdjunto')||{}).value||'').trim()||ADJUNTO_POR_DEFECTO_UI)}\n`+
+    `No es posible ver el contenido de los archivos: nunca describir ni opinar sobre lo que muestran.`;
   pre.innerHTML=p;
 }
 
@@ -4268,7 +4288,7 @@ async function cargarRespondidos(){
 }
 function pildoraEstado(c){
   const ci=c.cierre||{};
-  if(c.estado==='pendiente')return '<span class="estado mal">Por responder</span>';
+  if(c.estado==='pendiente')return c.revision?'<span class="estado rev">Archivo para revisar</span>':'<span class="estado mal">Por responder</span>';
   if(c.volvioAEscribir)return '<span class="estado mal">Volvió a escribir</span>';
   if(ci.tipo==='whatsapp')return '<span class="estado ok">Respondido por WhatsApp</span>';
   return '<span class="estado man">Marcado a mano</span>';
@@ -4601,7 +4621,7 @@ function renderChats(){
       +(c.nombre&&c.numero?'<span class="chat-num">+'+escH(c.numero)+'</span>':'')
       +'<span class="chat-hora'+(roja?' roja':'')+'">'+escH(tiempoEspera(min))+'</span></div>'
       +'<div class="chat-l2"><span class="chat-msg">'+vistaPrevia(mostrar,b)+'</span>'+(roja?'<span class="punto-rojo" aria-hidden="true"></span>':'')+'</div>'
-      +(c.apagado?'<div class="chat-l3"><span class="tag-apagado">'+IC132.power+'Verde apagado en este chat</span></div>':'')
+      +(c.apagado||c.revision?'<div class="chat-l3">'+(c.revision?'<span class="tag-rev">'+IC142.rev+'Archivo para revisar</span>'+(c.apagado?'':'<span class="tag-verde">Verde atendiendo</span>'):'')+(c.apagado?'<span class="tag-apagado">'+IC132.power+'Verde apagado en este chat</span>':'')+'</div>':'')
       +'</div></li>';
   }).join('');
 }
@@ -4620,8 +4640,9 @@ async function cargarConversaciones(){
 function pillsConversacion(c){
   const p=[];
   if(c.apagado)p.push('<span class="estado apa">Verde apagado</span>');
-  if(c.pendiente)p.push('<span class="estado mal">Por responder</span>');
-  if(!p.length)p.push(c.persona?'<span class="estado per">Atiende una persona</span>':'<span class="estado ok">Verde atendiendo</span>');
+  if(c.pendiente&&c.revision)p.push('<span class="estado rev">Archivo para revisar</span>');
+  else if(c.pendiente)p.push('<span class="estado mal">Por responder</span>');
+  if(!p.length||(c.revision&&!c.apagado))p.push(c.persona?'<span class="estado per">Atiende una persona</span>':'<span class="estado ok">Verde atendiendo</span>');
   return p.join('');
 }
 function prefijoMensaje(m){
@@ -5004,7 +5025,12 @@ function pintarSwitch(c){
 function pintarFranja(c){
   const f=document.getElementById('convFranja');if(!f)return;
   let clase='',ic=IC134.reloj,txt='',corto='',boton='';
-  if(c.pendiente){
+  if(c.pendiente&&c.revision){
+    clase='azul';
+    txt='Hay un archivo para revisar: Verde sigue conversando con el cliente. Al responder desde el panel, Verde hace su pausa de 12 horas.';
+    corto='Archivo para revisar: Verde sigue conversando.';
+    if(c.pendienteId)boton='<button type="button" class="btn-mini franja-marcar" onclick="marcarDesdeConversacion()">'+IC134.check+'Marcar atendido</button>';
+  }else if(c.pendiente){
     clase='roja';
     txt='Espera a una persona del equipo: Verde no responde mientras el chat está en «Chats por responder».';
     corto='Por responder: espera a una persona del equipo.';
@@ -5551,5 +5577,13 @@ function cerrarVisor(){
   if(_focoVisor&&_focoVisor.focus)_focoVisor.focus();
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('visorImg').classList.contains('oculto'))cerrarVisor();});
+
+
+/* ===================== 1.4.2: archivo para revisar ===================== */
+// Indicaciones sugeridas para cuando el cliente envía un archivo (las mismas que usa el servidor en bot.js).
+const ADJUNTO_POR_DEFECTO_UI='Agradecer el archivo y avisar que un asesor lo va a revisar. Seguir la conversación con normalidad. Si el cliente consulta por una reparación y faltan fotos, pedir la del frente con la pantalla encendida y la de la parte trasera del equipo.';
+const ADJUNTO_VIEJO_UI='¡Gracias! 🙌 Recibí tu archivo. En un momento un asesor lo revisa y te confirma todo. Si querés, dejame por acá cualquier dato que quieras sumar.';
+function instruccionesArchivoUI(fr){const t=String((fr&&fr.adjunto)||'').trim();return t&&t!==ADJUNTO_VIEJO_UI?t:ADJUNTO_POR_DEFECTO_UI;}
+const IC142={rev:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'};
 
 </script>

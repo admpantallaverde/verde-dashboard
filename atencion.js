@@ -63,7 +63,8 @@ function nueva(datos) {
   return {
     id: nuevaId(), clave: datos.clave, destino: datos.destino || null, numero: datos.numero || '', nombre: datos.nombre || '',
     estado: 'pendiente', creadoEn: reloj(), ultimoMensaje: '', ultimoMensajeEn: reloj(), cerradoEn: null, cierre: null,
-    volvioAEscribir: false, reabiertaDe: datos.reabiertaDe || null, eventos: []
+    volvioAEscribir: false, reabiertaDe: datos.reabiertaDe || null, eventos: [],
+    revision: !!datos.revision   // 1.4.2: archivo para revisar; Verde sigue conversando mientras tanto
   };
 }
 function anotarMensaje(a, texto) { evento(a, 'cliente', texto); a.ultimoMensaje = corto(texto, 500); a.ultimoMensajeEn = reloj(); }
@@ -73,13 +74,16 @@ function resumen(a, ahora) {
     id: a.id, clave: a.clave, nombre: a.nombre, numero: a.numero, estado: a.estado, creadoEn: a.creadoEn,
     ultimoMensaje: a.ultimoMensaje, ultimoMensajeEn: a.ultimoMensajeEn, cerradoEn: a.cerradoEn,
     esperaMin: Math.max(0, Math.floor(((a.cerradoEn || ahora) - a.creadoEn) / 60000)),
-    cierre: a.cierre, volvioAEscribir: !!a.volvioAEscribir, reabiertaDe: a.reabiertaDe || null
+    cierre: a.cierre, volvioAEscribir: !!a.volvioAEscribir, reabiertaDe: a.reabiertaDe || null, revision: !!a.revision
   };
 }
 
 /* ---------- consultas rápidas ---------- */
 function tienePendiente(clave) { return !!pendienteDe(cargar(), clave); }
 function pendienteId(clave) { const p = pendienteDe(cargar(), clave); return p ? p.id : null; }
+// 1.4.2: el chat espera a una persona y Verde no responde (no incluye los archivos para revisar, donde Verde sigue).
+function esperaPersona(clave) { const p = pendienteDe(cargar(), clave); return !!p && !p.revision; }
+function pendienteRevision(clave) { const p = pendienteDe(cargar(), clave); return !!(p && p.revision); }
 
 /* ---------- Verde derivó al cliente ---------- */
 function derivar(datos) {
@@ -87,6 +91,7 @@ function derivar(datos) {
   let a = pendienteDe(d, datos.clave);
   let esNueva = false;
   if (!a) { a = nueva(datos); d.lista.push(a); esNueva = true; }
+  else if (!datos.revision) a.revision = false;   // una derivación (por ejemplo, por un precio) convierte la revisión en espera
   if (datos.nombre && !a.nombre) a.nombre = corto(datos.nombre, 80);
   if (datos.mensajeCliente) anotarMensaje(a, datos.mensajeCliente);
   if (datos.respuestaVerde) evento(a, 'verde', datos.respuestaVerde);
@@ -174,6 +179,7 @@ function anotarAvisos(id, texto) {
 
 /* ---------- consultas para «Conversaciones» ---------- */
 function clavesPendientes() { return new Set(cargar().lista.filter(x => x.estado === 'pendiente').map(x => x.clave)); }
+function clavesRevision() { return new Set(cargar().lista.filter(x => x.estado === 'pendiente' && x.revision).map(x => x.clave)); }
 function ultimaPorClave(clave) { return ultimaDe(cargar(), clave); }
 
 /* ---------- listas para el panel ---------- */
@@ -234,6 +240,7 @@ function purgar(dias) {
 }
 
 module.exports = {
+  esperaPersona, pendienteRevision, clavesRevision,
   MOTIVOS, RETENCION_DIAS, tienePendiente, pendienteId, derivar, mensajeCliente, respuestaEquipo, marcarAtendido,
   anotarAvisos, pendientes, respondidos, detalle, purgar, clavesPendientes, ultimaPorClave, _usarReloj
 };

@@ -202,12 +202,14 @@ function sembrarDesdeAtencion(a) {
 // ctx: { pendientes: Set de claves con chat por responder, pausas: { clave: hastaMs } }
 function estadoDe(c, ctx, ahora) {
   const pendiente = !!(ctx && ctx.pendientes && ctx.pendientes.has(c.clave));
+  // 1.4.2: un archivo para revisar deja el chat por responder, pero Verde sigue conversando.
+  const revision = pendiente && !!(ctx && ctx.revision && ctx.revision.has(c.clave));
   const hasta = ctx && ctx.pausas ? Number(ctx.pausas[c.clave]) || 0 : 0;
   const pausaHasta = hasta > ahora ? hasta : null;
   const apagado = !!c.apagado;
   const persona = !pendiente && !apagado && !!pausaHasta;
-  const verde = !pendiente && !apagado && !persona;
-  return { pendiente, apagado, persona, verde, pausaHasta };
+  const verde = !apagado && !persona && (!pendiente || (revision && !pausaHasta));
+  return { pendiente, revision, apagado, persona, verde, pausaHasta };
 }
 const FILTROS = {
   todas: () => true,
