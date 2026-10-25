@@ -27,11 +27,12 @@ const crypto = require('crypto');
 const bot = require('./bot.js');
 const consumo = require('./consumo');
 const cumplimiento = require('./cumplimiento');
+const ayuda = require('./ayuda');
 const usuarios = require('./usuarios.js');
 const atencion = require('./atencion.js');
 const conversaciones = require('./conversaciones.js');
 
-const VERSION = '1.3.7';
+const VERSION = '1.3.8';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -702,8 +703,80 @@ app.put('/api/avisos', requiere(['admin']), (req, res) => {
 
 /* ---------- Cumplimiento (1.3.7): reglas fijas y datos de la página de privacidad ---------- */
 const fmtHoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Montevideo', year: 'numeric', month: '2-digit', day: '2-digit' });
-app.get('/api/cumplimiento', requiere(['admin']), (req, res) => {
-  res.json({ reglas: cumplimiento.REGLAS_FIJAS, lineaInicial: cumplimiento.lineaInicial(), url: 'https://' + cumplimiento.URL_PRIVACIDAD, privacidad: cumplimiento.leerPrivacidad() });
+function datosCumplimiento() {
+  const r = cumplimiento.leerReglas();
+  return { reglas: r.reglas, lineaInicial: r.linea, recomendadas: r.recomendadas, modificadoEn: r.modificadoEn, modificadoPor: r.modificadoPor,
+    maxReglas: cumplimiento.MAX_REGLAS, url: 'https://' + cumplimiento.URL_PRIVACIDAD, enlace: cumplimiento.URL_PRIVACIDAD, privacidad: cumplimiento.leerPrivacidad() };
+}
+app.get('/api/cumplimiento', requiere(['admin']), (req, res) => res.json(datosCumplimiento()));
+// Reglas fijas del sistema: editables por un administrador, con registro de quién las cambió (1.3.8).
+app.put('/api/reglas-fijas', requiere(['admin']), (req, res) => {
+  try {
+    cumplimiento.guardarReglas(req.body || {}, quienEs(req));
+    console.log('Panel: ' + quienEs(req) + ' modificó las reglas fijas del sistema');
+    res.json(Object.assign({ ok: true }, datosCumplimiento()));
+  } catch (e) { responderError(res, e); }
+});
+app.post('/api/reglas-fijas/restaurar', requiere(['admin']), (req, res) => {
+  try {
+    cumplimiento.restaurarReglas(quienEs(req));
+    console.log('Panel: ' + quienEs(req) + ' restauró las reglas fijas recomendadas');
+    res.json(Object.assign({ ok: true }, datosCumplimiento()));
+  } catch (e) { responderError(res, e); }
+});
+
+/* ---------- Centro de ayuda (1.3.8): manual, guías de Meta y asistente ---------- */
+function rolDe(req) { return req.usuario ? req.usuario.rol : 'admin'; }
+function configAyuda() {
+  const v = bot.getVerde();
+  const avisos = leerAvisos();
+  const priv = cumplimiento.leerPrivacidad();
+  const precio = consumo.PRECIOS[bot.modeloEnUso()];
+  return {
+    'Versión del sistema': VERSION,
+    'Verde': v.encendido === false ? 'apagado para todos los chats' : 'encendido',
+    'Modelo de IA de Verde': precio ? precio.nombre : bot.modeloEnUso(),
+    'Pausa después de que responde una persona': PAUSA_HORAS + ' horas',
+    'Resguardo si nadie responde': '5 minutos',
+    'Ventana para responder desde el panel': '24 horas desde el último mensaje del cliente',
+    'Ingreso con usuario propio': loginActivo() ? 'activo' : 'inactivo (acceso general)',
+    'Conexión con WhatsApp': d360Configurado() ? (/sandbox/i.test(process.env.D360_MESSAGES_URL || '') ? 'conectada en modo de prueba (sandbox de 360dialog)' : 'conectada (360dialog)') : 'sin configurar',
+    'Celulares que reciben avisos': String(avisos.numeros.length),
+    'Plantilla de avisos': avisos.plantilla ? avisos.plantilla + ' (' + avisos.idioma + ')' : 'sin configurar',
+    'Correo de contacto de privacidad': priv.correo ? 'cargado' : 'sin cargar',
+    'Base inscripta ante la URCDP': priv.urcdp ? 'sí' : 'no',
+    'Reglas fijas del sistema': cumplimiento.leerReglas().recomendadas ? 'las recomendadas' : 'modificadas por un administrador'
+  };
+}
+const preguntasAyuda = new Map();   // límite de preguntas por usuario y por hora (protege el costo)
+function limiteAyuda() { return Number(process.env.VERDE_AYUDA_LIMITE_HORA) > 0 ? Number(process.env.VERDE_AYUDA_LIMITE_HORA) : 30; }
+app.get('/api/ayuda', requiere(['admin', 'asesor']), (req, res) => {
+  res.json({ rol: rolDe(req), revisionMeta: ayuda.REVISION_META, articulos: ayuda.articulosPara(rolDe(req)) });
+});
+app.post('/api/ayuda/preguntar', requiere(['admin', 'asesor']), async (req, res) => {
+  try {
+    const rol = rolDe(req);
+    const pregunta = String((req.body && req.body.pregunta) || '').replace(/\s+/g, ' ').trim();
+    if (pregunta.length < 3) return res.status(400).json({ error: 'Escribir una pregunta.' });
+    if (pregunta.length > 500) return res.status(400).json({ error: 'La pregunta puede tener hasta 500 caracteres.' });
+    const clave = req.usuario ? req.usuario.id : 'general';
+    const hace1h = Date.now() - 3600000;
+    const previas = (preguntasAyuda.get(clave) || []).filter(t => t > hace1h);
+    if (previas.length >= limiteAyuda()) return res.status(429).json({ error: 'Se alcanzó el límite de ' + limiteAyuda() + ' preguntas por hora. Intentar más tarde.' });
+    previas.push(Date.now());
+    preguntasAyuda.set(clave, previas);
+    const historial = (Array.isArray(req.body.historial) ? req.body.historial : []).slice(-3);
+    const mensajes = [];
+    for (const h of historial) {
+      const p = String((h && h.pregunta) || '').trim().slice(0, 500), r = String((h && h.respuesta) || '').trim().slice(0, 2500);
+      if (p && r) mensajes.push({ role: 'user', content: p }, { role: 'assistant', content: JSON.stringify({ respuesta: r, fuentes: [] }) });
+    }
+    mensajes.push({ role: 'user', content: pregunta });
+    let crudo;
+    try { crudo = await bot.callClaude(ayuda.instrucciones(rol, configAyuda()), mensajes, bot.getVerde(), 'claude-sonnet-5-5', 'ayuda'); }
+    catch (e) { console.error('Centro de ayuda: la IA no respondió:', e.message); return res.status(502).json({ error: 'El asistente no está disponible en este momento. Intentar de nuevo en unos minutos.' }); }
+    res.json(ayuda.interpretar(crudo, rol));
+  } catch (e) { responderError(res, e); }
 });
 app.put('/api/privacidad', requiere(['admin']), (req, res) => {
   try { res.json({ ok: true, privacidad: cumplimiento.guardarPrivacidad(req.body || {}, fmtHoy.format(new Date())) }); }

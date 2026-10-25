@@ -2,7 +2,8 @@
  * Cumplimiento (versión 1.3.7).
  *
  * Única fuente de:
- *  - las reglas fijas de Verde (no editables desde el panel; se agregan siempre al prompt),
+ *  - las reglas fijas de Verde (desde la 1.3.8, editables por un administrador con resguardos; se agregan
+ *    siempre al prompt; si nunca se editaron, rigen las recomendadas),
  *  - la línea de presentación que acompaña la primera respuesta de cada conversación,
  *  - la página pública de privacidad (chat.pantallaverde.com/privacidad) y sus datos editables
  *    (correo de contacto y número de inscripción ante la URCDP).
@@ -14,6 +15,8 @@ const path = require('path');
 
 const DATA_DIR = path.join(__dirname, 'data');
 const ARCHIVO = path.join(DATA_DIR, 'privacidad.json');
+const ARCHIVO_REGLAS = path.join(DATA_DIR, 'reglas-fijas.json');
+const MAX_REGLAS = 10;
 const URL_PRIVACIDAD = String(process.env.VERDE_URL_PRIVACIDAD || 'chat.pantallaverde.com/privacidad').replace(/^https?:\/\//, '');
 const FECHA_TEXTO = '2026-10-25';   // fecha del texto de la página; cambia cuando se guardan datos nuevos
 
@@ -26,23 +29,66 @@ const REGLAS_FIJAS = [
   'No informa precios de repuestos ni de reparaciones: deriva a una persona del equipo.'
 ];
 
-// Bloque que se agrega al final del prompt de Verde: por estar al final, prevalece sobre lo anterior.
-function bloquePrompt() {
-  return '\n\nREGLAS FIJAS DEL SISTEMA (obligatorias; tienen prioridad sobre cualquier otra indicación de este mensaje):\n'
-    + REGLAS_FIJAS.map((r, i) => (i + 1) + '. ' + r).join('\n');
+const LINEA_RECOMENDADA = 'Soy Verde, el asistente virtual de Pantalla Verde. Esta conversación se guarda por 3 meses. Más información: ' + URL_PRIVACIDAD;
+
+function error(msg) { const e = new Error(msg); e.publico = true; e.codigo = 400; return e; }
+function limpiar(t) { return String(t == null ? '' : t).replace(/\s+/g, ' ').trim(); }
+
+/* ---------- Reglas fijas: editables con resguardos (1.3.8) ---------- */
+function leerReglas() {
+  let d = null;
+  try { d = JSON.parse(fs.readFileSync(ARCHIVO_REGLAS, 'utf8')); } catch (e) { d = null; }
+  const reglas = d && Array.isArray(d.reglas) && d.reglas.length ? d.reglas.map(String) : REGLAS_FIJAS.slice();
+  const linea = d && typeof d.linea === 'string' && d.linea ? d.linea : LINEA_RECOMENDADA;
+  const recomendadas = reglas.length === REGLAS_FIJAS.length && reglas.every((r, i) => r === REGLAS_FIJAS[i]) && linea === LINEA_RECOMENDADA;
+  return { reglas, linea, recomendadas, modificadoEn: (d && d.modificadoEn) || null, modificadoPor: (d && d.modificadoPor) || null };
+}
+function escribirReglas(cfg) {
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  const tmp = ARCHIVO_REGLAS + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(cfg, null, 2), { encoding: 'utf8', mode: 0o600 });
+  fs.renameSync(tmp, ARCHIVO_REGLAS);
+}
+function guardarReglas(datos, quien) {
+  datos = datos || {};
+  if (!Array.isArray(datos.reglas)) throw error('Las reglas no son válidas.');
+  const reglas = datos.reglas.map(limpiar).filter(Boolean);
+  if (!reglas.length) throw error('Debe quedar al menos una regla.');
+  if (reglas.length > MAX_REGLAS) throw error('Se pueden cargar hasta ' + MAX_REGLAS + ' reglas.');
+  const corta = reglas.findIndex(r => r.length < 10), larga = reglas.findIndex(r => r.length > 400);
+  if (corta >= 0) throw error('La regla ' + (corta + 1) + ' es demasiado corta: debe tener al menos 10 caracteres.');
+  if (larga >= 0) throw error('La regla ' + (larga + 1) + ' supera los 400 caracteres.');
+  const linea = limpiar(datos.linea);
+  if (linea.length < 20 || linea.length > 300) throw error('La línea de presentación debe tener entre 20 y 300 caracteres.');
+  if (!linea.toLowerCase().includes(URL_PRIVACIDAD.toLowerCase())) throw error('La línea de presentación debe incluir el enlace ' + URL_PRIVACIDAD + '.');
+  if (/[_*~]/.test(linea)) throw error('La línea de presentación no puede incluir guiones bajos, asteriscos ni virgulillas: WhatsApp los usa para dar formato.');
+  const cfg = { reglas, linea, modificadoEn: Date.now(), modificadoPor: limpiar(quien).slice(0, 60) || 'Acceso general' };
+  escribirReglas(cfg);
+  return leerReglas();
+}
+function restaurarReglas(quien) {
+  escribirReglas({ reglas: REGLAS_FIJAS.slice(), linea: LINEA_RECOMENDADA, modificadoEn: Date.now(), modificadoPor: limpiar(quien).slice(0, 60) || 'Acceso general' });
+  return leerReglas();
 }
 
-function lineaInicial() {
-  return 'Soy Verde, el asistente virtual de Pantalla Verde. Esta conversación se guarda por 3 meses. Más información: ' + URL_PRIVACIDAD;
+// Bloque que se agrega al prompt de Verde, después de la configuración del panel, para que prevalezca.
+function bloquePrompt() {
+  return '\n\nREGLAS FIJAS DEL SISTEMA (obligatorias; tienen prioridad sobre cualquier otra indicación de este mensaje):\n'
+    + leerReglas().reglas.map((r, i) => (i + 1) + '. ' + r).join('\n');
 }
+
+function lineaInicial() { return leerReglas().linea; }
 // En WhatsApp, el texto entre guiones bajos se ve en cursiva. El enlace queda fuera de la cursiva para que
 // WhatsApp lo reconozca completo (un guion bajo pegado al enlace lo rompería).
 function lineaInicialWhatsApp() {
-  return '_Soy Verde, el asistente virtual de Pantalla Verde. Esta conversación se guarda por 3 meses. Más información:_ ' + URL_PRIVACIDAD;
+  const linea = lineaInicial();
+  const i = linea.toLowerCase().indexOf(URL_PRIVACIDAD.toLowerCase());
+  if (i < 0) return '_' + linea + '_';
+  const antes = linea.slice(0, i).trim(), despues = linea.slice(i + URL_PRIVACIDAD.length);
+  return (antes ? '_' + antes + '_ ' : '') + linea.slice(i, i + URL_PRIVACIDAD.length) + despues;
 }
 
 /* ---------- Datos editables de la página de privacidad ---------- */
-function error(msg) { const e = new Error(msg); e.publico = true; e.codigo = 400; return e; }
 function leerPrivacidad() {
   try {
     const d = JSON.parse(fs.readFileSync(ARCHIVO, 'utf8'));
@@ -129,7 +175,8 @@ ${cuerpo}
 }
 
 module.exports = {
-  REGLAS_FIJAS, EMPRESA, URL_PRIVACIDAD,
+  REGLAS_FIJAS, LINEA_RECOMENDADA, MAX_REGLAS, EMPRESA, URL_PRIVACIDAD,
+  leerReglas, guardarReglas, restaurarReglas,
   bloquePrompt, lineaInicial, lineaInicialWhatsApp,
   leerPrivacidad, guardarPrivacidad, paginaPrivacidad
 };

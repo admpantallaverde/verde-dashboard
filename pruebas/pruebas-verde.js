@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.3.7';
+const VERSION_ESPERADA = '1.3.8';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -36,6 +36,9 @@ global.fetch = async (url, opts = {}) => {
     await new Promise(r => setTimeout(r, 150));
     if (modoIA === 'error400') return new Response('{"error":"bad request"}', { status: 400 });
     if (modoIA === 'vacio') return new Response(JSON.stringify({ content: [], stop_reason: 'refusal', usage: { input_tokens: 1000, output_tokens: 0 } }), { status: 200 });
+    if (JSON.stringify(JSON.parse(opts.body).system || '').includes('ASISTENTE DE AYUDA')) {
+      return new Response(JSON.stringify({ content: [{ type: 'text', text: '{"respuesta":"Para devolver un chat a Verde, usar el botón «Devolver a Verde» del encabezado.","fuentes":["conversaciones","portafolio"]}' }], stop_reason: 'end_turn', usage: { input_tokens: 3000, output_tokens: 80 } }), { status: 200 });
+    }
     const ultimo = (JSON.parse(opts.body).messages || []).slice(-1)[0] || {};
     if (/precio exacto/i.test(String(ultimo.content || ''))) {
       return new Response(JSON.stringify({ content: [{ type: 'text', text: 'Te paso con un asesor para confirmarte el precio.\n[DERIVAR]' }], stop_reason: 'end_turn', usage: { input_tokens: 1000, output_tokens: 100 } }), { status: 200 });
@@ -385,6 +388,16 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   rr = await api('/api/cumplimiento', 'GET', null, galletaCarla);
   let rr2 = await api('/api/privacidad', 'PUT', { correo: 'x@y.com' }, galletaCarla);
   verificar(rr.status === 403 && rr2.status === 403, 'un asesor no puede ver ni cambiar los datos de privacidad');
+  rr = await api('/api/reglas-fijas', 'PUT', { reglas: ['Una regla cualquiera de prueba.'], linea: 'x' }, galletaCarla);
+  rr2 = await api('/api/reglas-fijas/restaurar', 'POST', {}, galletaCarla);
+  verificar(rr.status === 403 && rr2.status === 403, 'un asesor no puede editar ni restaurar las reglas fijas');
+  rr = await api('/api/ayuda', 'GET', null, galletaCarla);
+  const ayC = await json(rr);
+  verificar(rr.status === 200 && ayC.rol === 'asesor' && !ayC.articulos.some(a => a.soloAdmin) && ayC.articulos.some(a => a.id === 'conversaciones'), 'un asesor ve el Centro de ayuda sin los temas de administración ni las guías de Meta');
+  rr = await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Cómo devuelvo un chat a Verde?' }, galletaCarla);
+  const pC = await json(rr);
+  const sysC = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system);
+  verificar(rr.status === 200 && pC.fuentes.length && pC.fuentes.every(f => f.id !== 'portafolio') && /Asesor\. No dar instrucciones/.test(sysC) && !sysC.includes('Portafolio comercial de Meta'), 'al asesor el asistente le responde sin las guías de administración, aunque la IA las cite');
   rr = await realFetch(BASE + '/privacidad');
   verificar(rr.status === 200 && /Privacidad del canal de WhatsApp/.test(await rr.text()), 'con el ingreso propio activo, la página de privacidad sigue siendo pública');
   rr = await api('/api/consumo-ia', 'GET', null, galletaJefe);
@@ -807,6 +820,67 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(/inscripta ante la Unidad Reguladora y de Control de Datos Personales \(URCDP\) con el número URCDP-12345/.test(html53), 'con el número cargado, aparece la sección de inscripción');
   const cu53 = await json(await api('/api/cumplimiento', 'GET'));
   verificar(cu53.reglas.length === 4 && /asistente virtual/.test(cu53.lineaInicial) && cu53.url === 'https://chat.pantallaverde.com/privacidad' && cu53.privacidad.urcdp === 'URCDP-12345', 'el panel recibe las reglas fijas, la presentación y los datos de privacidad');
+
+
+  mostrar('54) Reglas fijas del sistema: editables con resguardos');
+  let cf = await json(await api('/api/cumplimiento', 'GET'));
+  verificar(cf.recomendadas === true && cf.modificadoPor === null && cf.reglas.length === 4, 'sin cambios, rigen las reglas recomendadas');
+  const nuevas54 = cf.reglas.slice(0, 3).concat(['Ofrece siempre el diagnóstico antes de cualquier reparación.']);
+  rr = await api('/api/reglas-fijas', 'PUT', { reglas: nuevas54, linea: cf.lineaInicial });
+  cf = await json(rr);
+  verificar(rr.status === 200 && cf.recomendadas === false && cf.reglas[3] === nuevas54[3] && cf.modificadoPor === 'Acceso general' && cf.modificadoEn > 0, 'se guardan las reglas editadas, con registro de quién y cuándo');
+  await post360(avisoDe('59872000030', 'Reglas Editadas', 'hola', 're1'));
+  await espera(500);
+  const sys54 = JSON.stringify((llamadasIA[llamadasIA.length - 1] || { body: {} }).body.system || '');
+  verificar(sys54.includes('Ofrece siempre el diagnóstico antes de cualquier reparación.') && !sys54.includes('No informa precios de repuestos ni de reparaciones'), 'Verde usa las reglas editadas');
+  rr = await api('/api/reglas-fijas', 'PUT', { reglas: [], linea: cf.lineaInicial });
+  verificar(rr.status === 400, 'no se puede dejar sin reglas');
+  rr = await api('/api/reglas-fijas', 'PUT', { reglas: nuevas54.concat(['corta']), linea: cf.lineaInicial });
+  verificar(rr.status === 400, 'rechaza una regla demasiado corta');
+  rr = await api('/api/reglas-fijas', 'PUT', { reglas: nuevas54, linea: 'Soy Verde, el asistente virtual de la tienda.' });
+  verificar(rr.status === 400 && /debe incluir el enlace/.test((await json(rr)).error), 'la presentación no se puede guardar sin el enlace a la privacidad');
+  rr = await api('/api/reglas-fijas', 'PUT', { reglas: nuevas54, linea: 'Soy _Verde_, el asistente. Más información: chat.pantallaverde.com/privacidad' });
+  verificar(rr.status === 400, 'rechaza los caracteres de formato de WhatsApp en la presentación');
+  rr = await api('/api/reglas-fijas', 'PUT', { reglas: nuevas54, linea: 'Hola, soy Verde, el asistente virtual. Privacidad: chat.pantallaverde.com/privacidad (3 meses).' });
+  verificar(rr.status === 200, 'acepta una presentación nueva que incluye el enlace');
+  await post360(avisoDe('59872000031', 'Linea Nueva', 'hola', 're2'));
+  await espera(500);
+  const env54 = envios360.filter(x => x.body.to === '59872000031').pop();
+  verificar(env54 && env54.body.text.body.endsWith('\n\n_Hola, soy Verde, el asistente virtual. Privacidad:_ chat.pantallaverde.com/privacidad (3 meses).'), 'la primera respuesta usa la presentación nueva, con el enlace fuera de la cursiva');
+  rr = await api('/api/reglas-fijas/restaurar', 'POST', {});
+  cf = await json(rr);
+  verificar(rr.status === 200 && cf.recomendadas === true && cf.reglas.length === 4 && /^Soy Verde/.test(cf.lineaInicial) && cf.modificadoPor === 'Acceso general', 'restaurar vuelve a las reglas recomendadas y deja constancia de quién lo hizo');
+
+  mostrar('55) Centro de ayuda: manual y guías según el rol');
+  const ay55 = await json(await api('/api/ayuda', 'GET'));
+  verificar(ay55.rol === 'admin' && ay55.articulos.filter(a => a.grupo === 'manual').length === 8 && ay55.articulos.filter(a => a.grupo === 'meta').length === 6 && ay55.revisionMeta === '2026-10-24', 'el administrador ve los 8 temas del manual y las 6 guías de Meta');
+  verificar(ay55.articulos.every(a => a.titulo && a.resumen && a.bloques && a.bloques.length), 'cada tema tiene título, resumen y contenido');
+
+  mostrar('56) Asistente de ayuda');
+  rr = await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Cómo devuelvo un chat a Verde?' });
+  const pa56 = await json(rr);
+  const ped56 = llamadasIA[llamadasIA.length - 1].body;
+  const sys56 = JSON.stringify(ped56.system);
+  verificar(rr.status === 200 && /Devolver a Verde/.test(pa56.respuesta) && pa56.fuentes.some(f => f.id === 'conversaciones' && f.titulo), 'responde con el contenido del manual e indica la fuente');
+  verificar(ped56.model === 'claude-sonnet-5-5', 'usa siempre Sonnet 5.5, el modelo más económico');
+  verificar(sys56.includes('ASISTENTE DE AYUDA') && sys56.includes('12 horas') && sys56.includes('Conversaciones y «Devolver a Verde»') && sys56.includes('Portafolio comercial de Meta'), 'el asistente conoce el manual, las guías y la configuración real');
+  const c56 = await json(await api('/api/consumo-ia', 'GET'));
+  verificar(c56.porOrigen.ayuda && c56.porOrigen.ayuda.consultas >= 1, 'la consulta se registra en «Consumo de IA» como origen «Ayuda»');
+  rr = await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿y si no responde?', historial: [{ pregunta: '¿Cómo devuelvo un chat a Verde?', respuesta: pa56.respuesta }] });
+  const msgs56 = llamadasIA[llamadasIA.length - 1].body.messages;
+  verificar(rr.status === 200 && msgs56.length === 3 && msgs56[0].content === '¿Cómo devuelvo un chat a Verde?' && msgs56[2].content === '¿y si no responde?', 'mantiene el hilo de la conversación');
+  rr = await api('/api/ayuda/preguntar', 'POST', { pregunta: '' });
+  verificar(rr.status === 400, 'rechaza una pregunta vacía');
+  rr = await api('/api/ayuda/preguntar', 'POST', { pregunta: 'x'.repeat(501) });
+  verificar(rr.status === 400, 'rechaza una pregunta de más de 500 caracteres');
+  process.env.VERDE_AYUDA_LIMITE_HORA = '2';
+  rr = await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Qué es la ventana de 24 horas?' });
+  verificar(rr.status === 429 && /límite/.test((await json(rr)).error), 'respeta el límite de preguntas por hora');
+  delete process.env.VERDE_AYUDA_LIMITE_HORA;
+  modoIA = 'error400';
+  rr = await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Qué hago si no anda?' });
+  modoIA = 'ok';
+  verificar(rr.status === 502 && /no está disponible/.test((await json(rr)).error), 'si la IA falla, avisa sin romper el panel');
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }

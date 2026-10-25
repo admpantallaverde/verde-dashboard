@@ -1150,6 +1150,98 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 .burbuja em{font-style:italic}
 @media(max-width:600px){.av-plantilla{grid-template-columns:1fr}.av-tabla{min-width:0}.av-sugerido{margin:0 14px 14px}}
 
+/* ===================== 1.3.8: Centro de ayuda y reglas fijas editables ===================== */
+.ay-buscar{display:flex;align-items:center;gap:10px;min-height:44px;box-sizing:border-box;padding:0 14px;border-radius:12px;background:var(--surface);border:1px solid var(--border);margin-bottom:16px;color:var(--faint)}
+.ay-buscar svg{width:16px;height:16px;flex:none}
+.ay-buscar input{flex:1 1 auto;min-width:0;border:none;background:none;outline:none;color:var(--text);font:inherit;font-size:14px}
+.ay-buscar:focus-within{border-color:var(--accent-borde)}
+.ay-tabs{display:none}
+.ay-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start}
+.ay-asistente{display:flex;flex-direction:column;min-height:560px;margin-bottom:0}
+.ay-chat{flex:1 1 auto;padding:16px 18px;display:flex;flex-direction:column;gap:12px;max-height:62vh;overflow-y:auto}
+.ay-pie{padding:12px 18px 14px;border-top:1px solid var(--border-soft);display:flex;flex-direction:column;gap:8px}
+.ay-input{display:flex;gap:10px;align-items:flex-end}
+.ay-input textarea{flex:1 1 auto;min-height:44px;max-height:140px;box-sizing:border-box;resize:none;padding:11px 14px;border-radius:22px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font:inherit;font-size:14px}
+.ay-input textarea:focus{outline:none;border-color:var(--accent-borde)}
+.ay-enviar{flex:none;width:44px;height:44px;border-radius:50%;border:none;background:var(--accent);color:var(--accent-ink);display:inline-grid;place-items:center;cursor:pointer}
+.ay-enviar:disabled{opacity:.6;cursor:progress}
+.ay-enviar:focus-visible{outline:2px solid var(--accent-borde);outline-offset:2px}
+.ay-enviar svg{width:18px;height:18px}
+.ay-preg{align-self:flex-end;max-width:85%;background:var(--wa-ok-bg);color:var(--text);border-radius:12px 12px 2px 12px;padding:9px 12px;font-size:13.5px;white-space:pre-wrap;word-break:break-word}
+.ay-resp{align-self:flex-start;max-width:92%;background:var(--surface-2);border:1px solid var(--border-soft);color:var(--text);border-radius:12px 12px 12px 2px;padding:10px 12px;font-size:13.5px;line-height:1.55;display:flex;flex-direction:column;gap:8px}
+.ay-resp .ay-quien{font-size:11.5px;font-weight:700;color:var(--accent-text)}
+.ay-resp .ay-txt{white-space:pre-wrap;word-break:break-word}
+.ay-resp.error{background:var(--wa-roja-bg);border-color:var(--wa-roja-borde);color:var(--wa-roja-tx)}
+.ay-fuentes{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:11.5px;color:var(--faint)}
+.ay-fuente{font:inherit;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:20px;border:none;background:var(--surface-3);color:var(--text);cursor:pointer}
+.ay-fuente:hover{background:var(--border)}
+.ay-pensando{align-self:flex-start;font-size:13px;color:var(--faint);padding:6px 2px}
+.ay-vacio{display:flex;flex-direction:column;gap:10px;color:var(--muted);font-size:13.5px}
+.ay-sug{display:flex;flex-wrap:wrap;gap:8px}
+.ay-sug button{font:inherit;font-size:12.5px;padding:7px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;text-align:left}
+.ay-sug button:hover{border-color:var(--accent-borde)}
+.ay-temas{display:flex;flex-direction:column;gap:16px}
+.ay-temas .panel{margin-bottom:0}
+.ay-lista{list-style:none;margin:0;padding:4px 10px 10px}
+.ay-tema{width:100%;display:flex;align-items:center;gap:10px;padding:10px 8px;border:none;border-bottom:1px solid var(--border-soft);background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer;border-radius:8px}
+.ay-tema:hover{background:var(--surface-2)}
+.ay-tema:focus-visible{outline:2px solid var(--accent-borde);outline-offset:-2px}
+.ay-tema .ay-ic{flex:none;color:var(--faint);display:inline-flex}
+.ay-tema .ay-ic svg{width:16px;height:16px}
+.ay-tt{flex:1 1 auto;display:flex;flex-direction:column;min-width:0}
+.ay-tt b{font-size:13.5px;font-weight:600}
+.ay-tt span{font-size:12px;color:var(--faint)}
+.ay-flecha{flex:none;color:var(--faint)}
+.ay-tag{font-family:inherit;font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:2px 8px;border-radius:20px;background:var(--wa-per-bg);color:var(--wa-per-tx)}
+.ay-articulo{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:20px;align-items:start}
+.ay-art{padding:22px 26px;margin-bottom:0}
+.ay-art-cab{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.ay-crumb{font-size:12.5px;color:var(--faint)}
+.ay-art h2{margin:0;font-family:'Bricolage Grotesque',sans-serif;font-size:26px;font-weight:800;letter-spacing:-.5px;color:var(--text)}
+.ay-art-cuerpo{display:flex;flex-direction:column;gap:10px;font-size:14px;line-height:1.6;color:var(--text)}
+.ay-art-cuerpo h3{margin:8px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-size:17px;font-weight:800;color:var(--text)}
+.ay-art-cuerpo p{margin:0}
+.ay-art-cuerpo .note{margin:4px 0 0}
+.ay-pasos{list-style:none;margin:0;padding:0}
+.ay-pasos li{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border-soft)}
+.ay-num{flex:none;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:13px;display:inline-flex;align-items:center;justify-content:center}
+.ay-pasos b{display:block;color:var(--text)}
+.ay-art-lado{display:flex;flex-direction:column;gap:12px;position:sticky;top:16px}
+.ay-art-lado .btn{width:100%;justify-content:center}
+.ay-indice{padding:14px 16px;margin-bottom:0;display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--text)}
+.ay-indice ol{margin:0;padding-left:18px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+@media print{#view-ayuda{display:none!important}}
+@media(max-width:900px){
+  .ay-tabs{display:flex;padding:3px;border-radius:10px;background:var(--surface-3);margin-bottom:12px}
+  .ay-tabs button{flex:1 1 0;font:inherit;font-size:13px;font-weight:600;min-height:38px;border-radius:8px;border:none;background:none;color:var(--muted);cursor:pointer}
+  .ay-tabs button[aria-selected="true"]{background:var(--surface);color:var(--text);font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.15)}
+  .ay-grid{grid-template-columns:1fr}
+  .ay-grid[data-tab="asistente"] .ay-temas{display:none}
+  .ay-grid[data-tab="manual"] .ay-asistente,.ay-grid[data-tab="meta"] .ay-asistente{display:none}
+  .ay-grid[data-tab="manual"] .ay-grupo[data-grupo="meta"],.ay-grid[data-tab="meta"] .ay-grupo[data-grupo="manual"]{display:none}
+  .ay-asistente{min-height:0}
+  .ay-chat{max-height:none}
+  .ay-articulo{grid-template-columns:1fr}
+  .ay-art-lado{position:static}
+  .ay-art{padding:18px}
+}
+@media(min-width:881px){:root[data-menu="corto"] #navAyuda{display:flex;flex-direction:column;align-items:center;gap:2px;width:100%}}
+/* Reglas fijas editables */
+.fijas-acciones{display:flex;gap:8px;flex-wrap:wrap;flex:none}
+.fijas-edit{display:flex;flex-direction:column;gap:10px;padding-top:6px}
+.fijas-fila{display:flex;gap:10px;align-items:flex-start}
+.fijas-fila .fijas-num{margin-top:9px}
+.fijas-txt{flex:1 1 auto;min-height:40px;max-height:140px;box-sizing:border-box;resize:none;padding:9px 12px;border-radius:9px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font:inherit;font-size:13.5px;line-height:1.45}
+.fijas-txt:focus,#vFijasLinea:focus{outline:none;border-color:var(--accent-borde)}
+.fijas-quitar{flex:none;width:36px;height:36px;margin-top:2px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--red);display:inline-grid;place-items:center;cursor:pointer}
+.fijas-quitar:hover{background:var(--surface-3)}
+.fijas-quitar svg{width:15px;height:15px}
+.fijas-agregar{margin-top:10px}
+#vFijasLinea{width:100%;box-sizing:border-box;min-height:58px;resize:vertical;padding:10px 12px;border-radius:9px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font:inherit;font-size:13.5px;font-style:italic;line-height:1.45}
+.fijas-pie{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 20px 14px;border-top:1px solid var(--border-soft);font-size:12.5px;color:var(--faint)}
+#vFijas .cons-err{margin-top:10px}
+@media(max-width:600px){.fijas-acciones{width:100%}.fijas-acciones .btn{flex:1 1 auto}}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -1215,6 +1307,10 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
       <div class="nav-label">Sistema</div>
       <button class="tree-leaf" id="leaf-usuarios" onclick="go('usuarios')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Usuarios</button>
       <button class="tree-leaf" id="leaf-consumo" onclick="go('consumo')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Consumo de IA</button>
+    </div>
+    <div id="navAyuda">
+      <div class="nav-label">Ayuda</div>
+      <button class="tree-leaf" id="leaf-ayuda" onclick="go('ayuda')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Centro de ayuda</button>
     </div>
     <div class="side-foot">
       <div class="bot-card">
@@ -1551,12 +1647,16 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
             </div>
           </div>
 
-          <!-- 1.3.7: Reglas fijas del sistema (no editables) -->
+          <!-- 1.3.8: Reglas fijas del sistema (editables con resguardos) -->
           <div class="panel" id="vFijas">
-            <div class="panel-head fijas-head"><div><h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Reglas fijas del sistema <span class="fijas-tag">No editable</span></h3><p>Se aplican siempre, antes que las reglas de oro. Las define el sistema para cumplir las políticas de WhatsApp y la Ley N.º 18.331 de protección de datos personales.</p></div></div>
-            <div class="fijas-cuerpo"><ol class="fijas-lista" id="vFijasLista"></ol>
-              <div class="fijas-pres"><b>Presentación en la primera respuesta</b><span>En la primera respuesta de cada conversación, Verde agrega siempre esta línea al final:</span><blockquote id="vFijasLinea"></blockquote><span class="faint">Se considera primera respuesta cuando el cliente no tiene mensajes anteriores en los últimos 3 meses.</span></div>
+            <div class="panel-head fijas-head"><div><h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Reglas fijas del sistema</h3><p>Se aplican siempre, antes que las reglas de oro. Protegen el cumplimiento de las políticas de WhatsApp y de la Ley N.º 18.331: modificarlas con cuidado.</p></div><div class="fijas-acciones"><button class="btn btn-ghost" type="button" id="fijasRestaurar" onclick="restaurarReglasFijas()">Restaurar las reglas recomendadas</button><button class="btn btn-primary" type="button" id="fijasGuardar" onclick="guardarReglasFijas()">Guardar</button></div></div>
+            <div class="fijas-cuerpo">
+              <div class="fijas-edit" id="vFijasLista"></div>
+              <button class="btn btn-ghost fijas-agregar" type="button" id="fijasAgregar" onclick="agregarReglaFija()">+ Agregar regla</button>
+              <div class="fijas-pres"><label for="vFijasLinea"><b>Presentación en la primera respuesta</b></label><span>En la primera respuesta de cada conversación, Verde agrega esta línea al final:</span><textarea id="vFijasLinea" rows="2" maxlength="300"></textarea><span class="faint" id="vFijasAyuda">Debe incluir el enlace a la página de privacidad: sin el enlace no se puede guardar.</span></div>
+              <div class="cons-err" id="fijasErr" role="alert"></div>
             </div>
+            <div class="fijas-pie"><span id="fijasMod">—</span><span id="fijasEstado">—</span></div>
           </div>
           <!-- 1.3.7: Datos de la página pública de privacidad -->
           <div class="panel" id="vPriv">
@@ -1780,7 +1880,35 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
         <div id="consDetalle"></div>
       </div>
       <div class="note oculto" id="consSinPrecio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span id="consSinPrecioTx"></span></div>
-      <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span><b>Cómo se calcula.</b> Cada consulta a la IA informa cuánto texto procesó (tokens de entrada y de salida). Verde multiplica esas cantidades por el precio publicado por Anthropic para el modelo usado, vigente al momento de la consulta. Es un valor estimado, en dólares estadounidenses y sin impuestos; el monto facturado se consulta en platform.claude.com, en «Cost». Incluye las pruebas hechas en «Probar a Verde».</span></div>
+      <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span><b>Cómo se calcula.</b> Cada consulta a la IA informa cuánto texto procesó (tokens de entrada y de salida). Verde multiplica esas cantidades por el precio publicado por Anthropic para el modelo usado, vigente al momento de la consulta. Es un valor estimado, en dólares estadounidenses y sin impuestos; el monto facturado se consulta en platform.claude.com, en «Cost». Incluye las pruebas hechas en «Probar a Verde» y las preguntas del Centro de ayuda.</span></div>
+    </div>
+    <!-- ===== VIEW: CENTRO DE AYUDA (1.3.8) ===== -->
+    <div class="view" id="view-ayuda">
+      <label class="ay-buscar"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="search" id="ayBuscar" placeholder="Buscar en el manual y las guías…" aria-label="Buscar en el manual y las guías" oninput="filtrarAyuda()"></label>
+      <div class="ay-tabs" role="tablist" aria-label="Secciones del Centro de ayuda">
+        <button type="button" role="tab" data-tab="asistente" aria-selected="true" onclick="tabAyuda('asistente')">Asistente</button>
+        <button type="button" role="tab" data-tab="manual" aria-selected="false" onclick="tabAyuda('manual')">Manual</button>
+        <button type="button" role="tab" data-tab="meta" aria-selected="false" id="ayTabMeta" onclick="tabAyuda('meta')">Guías de Meta</button>
+      </div>
+      <div class="ay-grid" id="ayGrid" data-tab="asistente">
+        <section class="panel ay-asistente" aria-labelledby="ayTitAsistente">
+          <div class="panel-head"><div><h3 id="ayTitAsistente"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> Asistente de ayuda</h3><p>Responde preguntas sobre el panel, Verde y las reglas de WhatsApp.</p></div><button class="btn btn-ghost" type="button" id="ayLimpiar" onclick="limpiarAyuda()">Nueva conversación</button></div>
+          <div class="ay-chat" id="ayChat" aria-live="polite"></div>
+          <div class="ay-pie">
+            <div class="ay-input"><textarea id="ayPregunta" rows="1" maxlength="500" placeholder="Escribir una pregunta sobre el panel o las reglas de WhatsApp…" aria-label="Pregunta para el asistente" onkeydown="teclaAyuda(event)" oninput="ajustarAlto(this)"></textarea><button class="ay-enviar" type="button" id="ayEnviar" onclick="preguntarAyuda()" aria-label="Enviar la pregunta"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button></div>
+            <span class="faint" id="ayNota">Responde con el manual del panel, la configuración actual y las reglas de Meta. Si no sabe algo, lo indica.</span>
+          </div>
+        </section>
+        <div class="ay-temas">
+          <section class="panel ay-grupo" data-grupo="manual"><div class="panel-head"><div><h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> Manual del panel</h3></div></div><ul class="ay-lista" id="ayManual"></ul></section>
+          <section class="panel ay-grupo" data-grupo="meta" id="ayMetaPanel"><div class="panel-head"><div><h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Guías de Meta <span class="ay-tag">Solo administradores</span></h3></div></div><ul class="ay-lista" id="ayMeta"></ul></section>
+          <div class="empty oculto" id="aySinResultados"><p>Sin resultados en el manual. Se puede preguntar al asistente.</p></div>
+        </div>
+      </div>
+      <div class="ay-articulo oculto" id="ayArticulo">
+        <article class="panel ay-art"><div class="ay-art-cab"><span class="ay-crumb" id="ayArtCrumb"></span><h2 id="ayArtTitulo"></h2><span class="faint" id="ayArtFecha"></span></div><div class="ay-art-cuerpo" id="ayArtCuerpo"></div></article>
+        <aside class="ay-art-lado"><div class="panel ay-indice"><b>En este tema</b><ol id="ayArtIndice"></ol></div><button class="btn btn-primary" type="button" onclick="preguntarSobreTema()">Preguntar al asistente sobre este tema</button><button class="btn btn-ghost" type="button" onclick="cerrarArticulo()">Volver al Centro de ayuda</button></aside>
+      </div>
     </div>
   </main>
 </div>
@@ -1890,7 +2018,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>
       </div>
       <div class="confirm-txt">
-        <h3 id="confirmTitle">¿Confirmás?</h3>
+        <h3 id="confirmTitle">¿Confirmar?</h3>
         <p id="confirmMsg"></p>
       </div>
     </div>
@@ -2005,7 +2133,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
       <div id="connRows"></div>
       <div class="note" style="margin-top:14px">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
-        El bot lee la misma base de datos que editás acá: no hace falta pegar ningún código. La conexión con WhatsApp y la IA se configuran en los próximos pasos del servidor.
+        El bot lee la misma base de datos que se edita en este panel: no hace falta pegar ningún código. La conexión con WhatsApp y la IA se configuran en los próximos pasos del servidor.
       </div>
     </div>
     <div class="modal-foot">
@@ -2373,7 +2501,8 @@ function _doGo(view){
     avisos:['Avisos a celulares del equipo','Cada vez que un chat entra a «Chats por responder», estos números reciben un aviso por WhatsApp. Verde nunca les responde como a un cliente.','<b>Atención</b> › <b>Chats por responder</b> › Avisos'],
     conversaciones:['Conversaciones','Todos los chats que atiende Verde. Desde aquí se puede responder a un cliente o apagar a Verde en un chat puntual.','<b>Atención</b> › Conversaciones'],
     usuarios:['Usuarios','Personas que pueden entrar al panel. Cada acción queda registrada con su usuario.','<b>Sistema</b> › Usuarios'],
-    consumo:['Consumo de IA','Costo estimado de las consultas a la IA de Verde. Solo lo ven los administradores.','<b>Sistema</b> › Consumo de IA']
+    consumo:['Consumo de IA','Costo estimado de las consultas a la IA de Verde. Solo lo ven los administradores.','<b>Sistema</b> › Consumo de IA'],
+    ayuda:['Centro de ayuda','Manual del panel, guías de Meta y un asistente para resolver dudas.','<b>Ayuda</b> › Centro de ayuda']
   }[view];
   if(view==='verde'){renderVerde();cargarCumplimiento();}
   document.getElementById('viewTitle').textContent=meta[0];
@@ -2388,6 +2517,7 @@ function _doGo(view){
   if(view==='avisos')cargarAvisos();
   if(view==='usuarios')cargarUsuarios();
   if(view==='consumo')cargarConsumo();
+  if(view==='ayuda')cargarAyuda();
   if(view==='conversaciones')cargarConversaciones();
 }
 
@@ -2472,7 +2602,7 @@ const ICONS_C={
 };
 function askConfirm(opts,cb){
   confirmCb=cb;
-  document.getElementById('confirmTitle').textContent=opts.title||'¿Confirmás?';
+  document.getElementById('confirmTitle').textContent=opts.title||'¿Confirmar?';
   document.getElementById('confirmMsg').textContent=opts.message||'';
   const ok=document.getElementById('confirmOk');
   ok.textContent=opts.okLabel||'Confirmar';
@@ -2777,8 +2907,8 @@ function openPreview(id){
   const loadedRows=(data&&data.length)?data.length-1:0;
   document.getElementById('prevNote').textContent=real
     ? (s.rows && loadedRows>=s.rows
-        ? `Buscás sobre las ${s.rows} filas del archivo.`
-        : `Buscás sobre una muestra de ${loadedRows} filas (el archivo tiene ${s.rows}).`)
+        ? `Se busca sobre las ${s.rows} filas del archivo.`
+        : `Se busca sobre una muestra de ${loadedRows} filas (el archivo tiene ${s.rows}).`)
     : 'Muestra representativa de la estructura. Al conectar la fuente real se mostrarán sus datos.';
   currentPreview=(data&&data.length)?{head:data[0],body:data.slice(1)}:null;
   document.getElementById('prevSearch').value='';
@@ -3539,7 +3669,7 @@ function renderVerdePower(){
 function toggleVerdePower(){
   const on=DB.verde.encendido!==false;
   if(on){
-    askConfirm({title:'Apagar el bot',message:'Verde dejará de responder a los clientes en WhatsApp hasta que lo vuelvas a encender. ¿Confirmás?',okLabel:'Apagar bot',icon:'warn'},
+    askConfirm({title:'Apagar el bot',message:'Verde dejará de responder a los clientes en WhatsApp hasta que lo vuelvas a encender. ¿Confirmar?',okLabel:'Apagar bot',icon:'warn'},
       ()=>{DB.verde.encendido=false;persist();renderVerdePower();buildVerdePrompt();toast('Bot apagado','Verde no atenderá clientes hasta encenderlo.','info');});
   }else{
     DB.verde.encendido=true;persist();renderVerdePower();buildVerdePrompt();toast('Bot encendido','Verde ya vuelve a atender a los clientes.','success');
@@ -4945,8 +5075,8 @@ function pintarConsumo(c){
   const mesDato=c.desde.slice(0,7);
   document.getElementById('consCostoSub').textContent=c.tipo==='mes'?(etiquetaMes(mesDato,false)+(mesDato===actual?', hasta hoy':'')):textoPeriodo(c.desde,c.hasta);
   document.getElementById('consConsultas').textContent=_consEnt.format(c.total.consultas);
-  const w=((c.porOrigen||{}).whatsapp||{}).consultas||0,pr=((c.porOrigen||{}).pruebas||{}).consultas||0;
-  document.getElementById('consOrigen').textContent='WhatsApp: '+_consEnt.format(w)+' · Pruebas en el panel: '+_consEnt.format(pr);
+  const w=((c.porOrigen||{}).whatsapp||{}).consultas||0,pr=((c.porOrigen||{}).pruebas||{}).consultas||0,ay=((c.porOrigen||{}).ayuda||{}).consultas||0;
+  document.getElementById('consOrigen').textContent='WhatsApp: '+_consEnt.format(w)+' · Pruebas en el panel: '+_consEnt.format(pr)+' · Ayuda: '+_consEnt.format(ay);
   document.getElementById('consPromedio').textContent=c.total.consultas?'US$ '+_cons4.format(c.promedio):'—';
   const m=c.modeloActual||{};
   const mv=document.getElementById('consModelo');
@@ -5002,8 +5132,7 @@ async function cargarCumplimiento(){
   const r=await api('/api/cumplimiento');
   if(!r.ok)return;
   const c=r.json;
-  document.getElementById('vFijasLista').innerHTML=(c.reglas||[]).map((x,i)=>'<li><span class="fijas-num">'+(i+1)+'</span><span>'+escH(x)+'</span></li>').join('');
-  document.getElementById('vFijasLinea').textContent=c.lineaInicial||'';
+  pintarReglasFijas(c);
   const ver=document.getElementById('privVer');if(ver&&c.url)ver.href=c.url;
   pintarPrivacidad(c.privacidad||{});
 }
@@ -5046,6 +5175,172 @@ async function copiarPlantilla(){
   const el=document.getElementById('avTextoPlantilla');
   try{await navigator.clipboard.writeText(el.textContent);toast('Texto copiado','Pegarlo en WhatsApp Manager al crear la plantilla.','success');}
   catch(e){const s=window.getSelection(),rg=document.createRange();rg.selectNodeContents(el);s.removeAllRanges();s.addRange(rg);toast('Texto seleccionado','Copiarlo con Ctrl + C.','info');}
+}
+
+
+/* ===================== 1.3.8: Centro de ayuda ===================== */
+const AYUDA={articulos:[],rol:'admin',revision:'',hilo:[],cargando:false,actual:null};
+const IC138={
+  libro:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+  escudo:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+  info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+  tacho:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>'
+};
+function normAyuda(t){return String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
+function textoPlanoArticulo(a){return a.bloques.map(b=>b.tipo==='pasos'?b.items.map(i=>i.titulo+' '+i.texto).join(' '):b.texto).join(' ');}
+async function cargarAyuda(){
+  if(!AYUDA.articulos.length){
+    const r=await api('/api/ayuda');
+    if(!r.ok){document.getElementById('ayManual').innerHTML='<li class="faint" style="padding:10px 8px">No se pudo cargar el manual. Volver a intentar en unos minutos.</li>';return;}
+    AYUDA.articulos=r.json.articulos||[];AYUDA.rol=r.json.rol||'admin';AYUDA.revision=r.json.revisionMeta||'';
+  }
+  const hayMeta=AYUDA.articulos.some(a=>a.grupo==='meta');
+  document.getElementById('ayMetaPanel').classList.toggle('oculto',!hayMeta);
+  document.getElementById('ayTabMeta').classList.toggle('oculto',!hayMeta);
+  if(AYUDA.revision)document.getElementById('ayNota').textContent='Responde con el manual del panel, la configuración actual y las reglas de Meta revisadas el '+fechaDMA(AYUDA.revision)+'. Si no sabe algo, lo indica.';
+  const ta=document.getElementById('ayPregunta');
+  ta.placeholder=(window.matchMedia&&window.matchMedia('(max-width: 600px)').matches)?'Escribir una pregunta…':'Escribir una pregunta sobre el panel o las reglas de WhatsApp…';
+  pintarTemasAyuda();pintarChatAyuda();
+}
+function pintarTemasAyuda(){
+  const item=a=>'<li data-id="'+escH(a.id)+'"><button type="button" class="ay-tema" onclick="abrirArticulo(\''+escH(a.id)+'\')"><span class="ay-ic">'+(a.grupo==='meta'?IC138.escudo:IC138.libro)+'</span><span class="ay-tt"><b>'+escH(a.titulo)+'</b><span>'+escH(a.resumen)+'</span></span><span class="ay-flecha" aria-hidden="true">›</span></button></li>';
+  document.getElementById('ayManual').innerHTML=AYUDA.articulos.filter(a=>a.grupo==='manual').map(item).join('');
+  document.getElementById('ayMeta').innerHTML=AYUDA.articulos.filter(a=>a.grupo==='meta').map(item).join('');
+  filtrarAyuda();
+}
+function filtrarAyuda(){
+  const q=normAyuda(document.getElementById('ayBuscar').value.trim());
+  let total=0;
+  ['manual','meta'].forEach(g=>{
+    const panel=document.querySelector('.ay-grupo[data-grupo="'+g+'"]');let vis=0;
+    panel.querySelectorAll('li[data-id]').forEach(li=>{
+      const a=AYUDA.articulos.find(x=>x.id===li.dataset.id);
+      const ok=!q||normAyuda(a.titulo+' '+a.resumen+' '+textoPlanoArticulo(a)).includes(q);
+      li.classList.toggle('oculto',!ok);if(ok)vis++;
+    });
+    panel.classList.toggle('oculto',(g==='meta'&&!AYUDA.articulos.some(a=>a.grupo==='meta'))||(q&&!vis));
+    total+=vis;
+  });
+  document.getElementById('aySinResultados').classList.toggle('oculto',!q||total>0);
+  if(q&&document.getElementById('ayGrid').dataset.tab==='asistente')tabAyuda('manual');
+}
+function tabAyuda(t){
+  document.getElementById('ayGrid').dataset.tab=t;
+  document.querySelectorAll('.ay-tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===t)));
+}
+function abrirArticulo(id){
+  const a=AYUDA.articulos.find(x=>x.id===id);if(!a)return;
+  AYUDA.actual=id;
+  document.getElementById('ayArtCrumb').textContent='Centro de ayuda › '+(a.grupo==='meta'?'Guías de Meta':'Manual del panel')+' › '+a.titulo;
+  document.getElementById('ayArtTitulo').textContent=a.titulo;
+  document.getElementById('ayArtFecha').textContent=a.grupo==='meta'?('Revisado el '+fechaDMA(AYUDA.revision)+' · Solo administradores'):('Manual del panel'+(a.soloAdmin?' · Solo administradores':''));
+  const indice=[];
+  document.getElementById('ayArtCuerpo').innerHTML=a.bloques.map(b=>{
+    if(b.tipo==='h'){indice.push(b.texto);return '<h3>'+escH(b.texto)+'</h3>';}
+    if(b.tipo==='nota')return '<div class="note">'+IC138.info+'<span>'+escH(b.texto)+'</span></div>';
+    if(b.tipo==='pasos'){if(!a.bloques.some(x=>x.tipo==='h'))b.items.forEach(i=>indice.push(i.titulo));return '<ol class="ay-pasos">'+b.items.map((i,n)=>'<li><span class="ay-num">'+(n+1)+'</span><div><b>'+escH(i.titulo)+'</b><span>'+escH(i.texto)+'</span></div></li>').join('')+'</ol>';}
+    return '<p>'+escH(b.texto)+'</p>';
+  }).join('');
+  document.getElementById('ayArtIndice').innerHTML=indice.length?indice.map(t=>'<li>'+escH(t)+'</li>').join(''):'<li>'+escH(a.resumen)+'</li>';
+  document.getElementById('ayGrid').classList.add('oculto');
+  document.getElementById('ayArticulo').classList.remove('oculto');
+  window.scrollTo(0,0);
+}
+function cerrarArticulo(){
+  AYUDA.actual=null;
+  document.getElementById('ayArticulo').classList.add('oculto');
+  document.getElementById('ayGrid').classList.remove('oculto');
+}
+function preguntarSobreTema(){
+  const a=AYUDA.articulos.find(x=>x.id===AYUDA.actual);
+  cerrarArticulo();tabAyuda('asistente');
+  const ta=document.getElementById('ayPregunta');
+  ta.value=a?'Sobre «'+a.titulo+'»: ':'';ta.focus();
+}
+function sugerenciasAyuda(){
+  return AYUDA.rol==='admin'
+    ?['¿Cómo devuelvo un chat a Verde?','¿Qué es la ventana de 24 horas?','¿Cómo creo un usuario asesor?']
+    :['¿Cómo devuelvo un chat a Verde?','¿Cómo marco un chat como atendido?','¿Qué significa «Verde en pausa»?'];
+}
+function pintarChatAyuda(){
+  const box=document.getElementById('ayChat');
+  if(!AYUDA.hilo.length){
+    box.innerHTML='<div class="ay-vacio"><span>Escribir una pregunta o elegir una de estas:</span><div class="ay-sug">'+sugerenciasAyuda().map(s=>'<button type="button" onclick="preguntarAyuda(this.textContent)">'+escH(s)+'</button>').join('')+'</div></div>';
+    return;
+  }
+  box.innerHTML=AYUDA.hilo.map(x=>{
+    let h='<div class="ay-preg">'+escH(x.pregunta)+'</div>';
+    if(x.pendiente)return h+'<div class="ay-pensando" role="status">Buscando la respuesta…</div>';
+    if(x.error)return h+'<div class="ay-resp error"><span class="ay-txt">'+escH(x.error)+'</span></div>';
+    const f=(x.fuentes||[]).length?'<div class="ay-fuentes"><span>Fuente:</span>'+x.fuentes.map(s=>'<button type="button" class="ay-fuente" onclick="abrirArticulo(\''+escH(s.id)+'\')">'+escH((s.grupo==='meta'?'Guías de Meta':'Manual')+' › '+s.titulo)+'</button>').join('')+'</div>':'';
+    return h+'<div class="ay-resp"><span class="ay-quien">Asistente de ayuda</span><span class="ay-txt">'+escH(x.respuesta)+'</span>'+f+'</div>';
+  }).join('');
+  box.scrollTop=box.scrollHeight;
+}
+async function preguntarAyuda(texto){
+  if(AYUDA.cargando)return;
+  const ta=document.getElementById('ayPregunta');
+  const q=String(texto!==undefined?texto:ta.value).trim();
+  if(!q)return;
+  const historial=AYUDA.hilo.filter(x=>x.respuesta&&!x.error).slice(-3).map(x=>({pregunta:x.pregunta,respuesta:x.respuesta}));
+  const item={pregunta:q,pendiente:true};
+  AYUDA.hilo.push(item);AYUDA.cargando=true;
+  ta.value='';ajustarAlto(ta);
+  const btn=document.getElementById('ayEnviar');btn.disabled=true;
+  pintarChatAyuda();
+  const r=await api('/api/ayuda/preguntar',{method:'POST',body:{pregunta:q,historial}});
+  item.pendiente=false;AYUDA.cargando=false;btn.disabled=false;
+  if(r.ok){item.respuesta=r.json.respuesta;item.fuentes=r.json.fuentes||[];}
+  else item.error=r.json.error||'No se pudo obtener la respuesta. Intentar de nuevo.';
+  pintarChatAyuda();ta.focus();
+}
+function teclaAyuda(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();preguntarAyuda();}}
+function limpiarAyuda(){if(AYUDA.cargando)return;AYUDA.hilo=[];pintarChatAyuda();document.getElementById('ayPregunta').focus();}
+
+/* ===================== 1.3.8: Reglas fijas del sistema, editables con resguardos ===================== */
+const FIJAS={reglas:[],enlace:'chat.pantallaverde.com/privacidad',max:10};
+const _fmtFechaHora138=new Intl.DateTimeFormat('es-UY',{timeZone:'America/Montevideo',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false});
+function fechaHoraTexto(ms){const p=Object.fromEntries(_fmtFechaHora138.formatToParts(new Date(ms)).map(x=>[x.type,x.value]));return p.day+'/'+p.month+'/'+p.year+' a las '+p.hour+':'+p.minute;}
+function pintarReglasFijas(c){
+  FIJAS.reglas=(c.reglas||[]).slice();FIJAS.enlace=c.enlace||FIJAS.enlace;FIJAS.max=c.maxReglas||10;
+  renderReglasFijas();
+  document.getElementById('vFijasLinea').value=c.lineaInicial||'';
+  document.getElementById('vFijasAyuda').textContent='Debe incluir el enlace '+FIJAS.enlace+': sin el enlace no se puede guardar.';
+  document.getElementById('fijasMod').textContent=c.modificadoEn?('Última modificación: '+fechaHoraTexto(c.modificadoEn)+', por '+(c.modificadoPor||'—')+'.'):'Sin modificaciones: rigen las reglas recomendadas.';
+  document.getElementById('fijasEstado').textContent='Texto recomendado del sistema: '+(c.recomendadas?'sin cambios':'con cambios');
+  document.getElementById('fijasErr').textContent='';
+}
+function renderReglasFijas(){
+  const box=document.getElementById('vFijasLista');
+  box.innerHTML=FIJAS.reglas.map((r,i)=>'<div class="fijas-fila"><span class="fijas-num">'+(i+1)+'</span><textarea class="fijas-txt" rows="1" maxlength="400" aria-label="Regla '+(i+1)+'" oninput="FIJAS.reglas['+i+']=this.value;ajustarAlto(this)">'+escH(r)+'</textarea><button type="button" class="fijas-quitar" aria-label="Quitar la regla '+(i+1)+'" title="Quitar la regla" onclick="quitarReglaFija('+i+')">'+IC138.tacho+'</button></div>').join('');
+  box.querySelectorAll('.fijas-txt').forEach(ajustarAlto);
+  document.getElementById('fijasAgregar').disabled=FIJAS.reglas.length>=FIJAS.max;
+}
+function agregarReglaFija(){
+  if(FIJAS.reglas.length>=FIJAS.max)return;
+  FIJAS.reglas.push('');renderReglasFijas();
+  const t=document.querySelectorAll('#vFijasLista .fijas-txt');if(t.length)t[t.length-1].focus();
+}
+function quitarReglaFija(i){
+  const r=String(FIJAS.reglas[i]||'').trim();
+  askConfirm({title:'¿Quitar la regla '+(i+1)+'?',message:(r?'«'+(r.length>90?r.slice(0,90)+'…':r)+'». ':'')+'Esta regla forma parte de las protecciones de cumplimiento. El cambio se aplica al tocar «Guardar» y se puede deshacer con «Restaurar las reglas recomendadas».',okLabel:'Quitar regla'},()=>{FIJAS.reglas.splice(i,1);renderReglasFijas();});
+}
+async function guardarReglasFijas(){
+  const err=document.getElementById('fijasErr');err.textContent='';
+  const b=document.getElementById('fijasGuardar');b.disabled=true;
+  const r=await api('/api/reglas-fijas',{method:'PUT',body:{reglas:FIJAS.reglas.map(x=>String(x).trim()).filter(Boolean),linea:document.getElementById('vFijasLinea').value}});
+  b.disabled=false;
+  if(!r.ok){err.textContent=r.json.error||'No se pudieron guardar las reglas.';return;}
+  pintarReglasFijas(r.json);
+  toast('Reglas fijas guardadas','Verde ya usa las reglas nuevas.','success');
+}
+function restaurarReglasFijas(){
+  askConfirm({title:'¿Restaurar las reglas recomendadas?',message:'Se reemplazan las reglas y la línea de presentación actuales por el texto recomendado del sistema.',okLabel:'Restaurar',danger:false},async()=>{
+    const r=await api('/api/reglas-fijas/restaurar',{method:'POST',body:{}});
+    if(!r.ok){document.getElementById('fijasErr').textContent=r.json.error||'No se pudieron restaurar las reglas.';return;}
+    pintarReglasFijas(r.json);
+    toast('Reglas recomendadas restauradas','Verde vuelve a usar el texto recomendado del sistema.','success');
+  });
 }
 
 </script>
