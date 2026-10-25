@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.4.4';
+const VERSION_ESPERADA = '1.4.5';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -1096,8 +1096,11 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   let antes60 = envios360.length;
   await post360(aviso([{ id: 'ga60-1', from: '59879000001', type: 'text', text: { body: 'hola, me cambiaron la pantalla hace 2 semanas y quiero la garantía porque el touch no anda' } }]));
   await espera(600);
+  const botG0 = require('./bot.js');
   const sys60 = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system);
   verificar(sys60.includes('== RECLAMOS Y GARANTÍA ==') && sys60.includes('El touch no responde') && sys60.includes('Número de la boleta de garantía') && sys60.includes('nunca afirmar ni dar a entender que la garantía corresponde'), 'Verde recibe el protocolo: datos a juntar, síntomas y la regla de no prometer la garantía');
+  verificar(/^Presentar la orden de trabajo/.test(botG0.GARANTIA_REQUISITOS_DEFECTO) && /^La garantía es de 30 días/.test(botG0.GARANTIA_COBERTURA_DEFECTO) && !/['\\]/.test(botG0.GARANTIA_REQUISITOS_DEFECTO + botG0.GARANTIA_COBERTURA_DEFECTO), 'los textos precargados de la política no arrastran comillas ni barras');
+  verificar(sys60.includes('REQUISITOS INDISPENSABLES') && sys60.includes('orden de trabajo (boleta de garantía)') && sys60.includes('30 días corridos desde la entrega') && sys60.includes('No inventar procedimientos ni ofrecer alternativas'), 'la política real de la tienda va precargada: requisitos, plazos y cobertura, y la regla de no inventar procedimientos');
   const env60 = envios360.slice(antes60).find(x => x.body.to === '59879000001');
   verificar(env60 && /¿Tenés la boleta de garantía\?/.test(env60.body.text.body) && !/RECLAMO|\{|\}|DERIVAR/.test(env60.body.text.body), 'el cliente recibe la respuesta sin la ficha ni las marcas internas');
   let p60 = (await json(await api('/api/chats/pendientes'))).lista.find(x => x.numero === '59879000001');
@@ -1126,7 +1129,9 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   const botG = require('./bot.js');
   verificar(!botG.buildSystemPrompt({ garantia: { activo: false } }).includes('== RECLAMOS Y GARANTÍA =='), 'con el protocolo desactivado, el bloque no entra al prompt');
   const promptG = botG.buildSystemPrompt({ garantia: { condiciones: 'Las reparaciones tienen 90 días de garantía.', sintomas: [{ sintoma: 'La batería dura poco', preguntar: 'Cuántas horas dura.', sugerir: 'Revisar apps en segundo plano.' }] } });
-  verificar(promptG.includes('Las reparaciones tienen 90 días de garantía.') && promptG.includes('La batería dura poco') && promptG.includes('Número de la boleta de garantía'), 'las condiciones y los síntomas configurados entran al prompt, con los datos a juntar por defecto');
+  verificar(promptG.includes('Las reparaciones tienen 90 días de garantía.') && !promptG.includes('solo sobre la reparación realizada y por defectos del repuesto, sin rayas') && promptG.includes('La batería dura poco') && promptG.includes('Número de la boleta de garantía'), 'lo cargado en el panel reemplaza la cobertura precargada; los síntomas y los datos a juntar también entran');
+  const promptR = botG.buildSystemPrompt({ garantia: { requisitos: 'Solo con factura electrónica.' } });
+  verificar(promptR.includes('REQUISITOS INDISPENSABLES (sin ellos no hay garantía): Solo con factura electrónica.') && !promptR.includes('Presentar la orden de trabajo') && promptR.includes('30 días corridos desde la entrega'), 'los requisitos cargados reemplazan a los precargados sin tocar la cobertura');
   const sim60 = await json(await api('/api/simulate', 'POST', { message: 'quiero la garantía de la pantalla', from: 'garantia-sim' }));
   verificar(/\(Ficha del reclamo que vería el asesor: boleta: 4582/.test(sim60.reply) && !/\[RECLAMO\]/.test(sim60.reply), 'en «Probar a Verde» se ve la ficha que armaría Verde');
 

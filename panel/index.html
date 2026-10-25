@@ -1358,7 +1358,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 .g-tabla td:first-child{width:180px}
 .g-tabla td:last-child{width:44px}
 .g-tabla textarea{width:100%;box-sizing:border-box;min-height:52px;resize:vertical;padding:8px 10px;border-radius:9px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font:inherit;font-size:13px;line-height:1.4}
-#v_gCond{width:100%;box-sizing:border-box}
+#v_gCond,#v_gReq{width:100%;box-sizing:border-box}
 #secGarantia .panel-head{flex-wrap:wrap}
 /* Ficha del reclamo */
 .ficha-modal{max-width:560px}
@@ -1848,10 +1848,11 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
               <div class="g-acciones"><button type="button" class="sw-mini" id="v_gActivo" role="switch" aria-checked="true" aria-label="Protocolo de garantía activo" onclick="alternarGarantia()"><span class="sw-mini-bola"></span></button><span class="g-estado" id="v_gEstado">Protocolo activo</span><button class="btn btn-primary" type="button" onclick="saveVerde('garantia')">Guardar</button></div>
             </div>
             <div style="padding:16px 20px">
-              <div class="field"><label for="v_gCond">Plazos y condiciones generales de la garantía (lo que Verde puede informar)</label><textarea id="v_gCond" rows="3" maxlength="1200" placeholder="Por ejemplo: «Las reparaciones tienen X meses de garantía sobre el repuesto instalado. No cubre golpes, humedad ni daños posteriores. Es necesario presentar la boleta.»" oninput="buildVerdePrompt()"></textarea><span class="faint fr-ayuda">Verde informa estas condiciones si el cliente pregunta. Nunca afirma que la garantía corresponde: eso lo decide el asesor con la ficha.</span></div>
+              <div class="field"><label for="v_gReq">Requisitos indispensables para iniciar el reclamo (sin ellos no hay garantía)</label><textarea id="v_gReq" rows="4" maxlength="1500" oninput="buildVerdePrompt()"></textarea><span class="faint fr-ayuda">Verde los trata como condición de corte: si falta uno, lo dice con claridad, aclara que el reclamo no puede avanzar hasta que se cumpla e igual arma la ficha para el asesor. No ofrece alternativas que no estén escritas acá. Si se deja vacío, usa la política precargada de la tienda.</span></div>
+              <div class="field"><label for="v_gCond">Plazos y cobertura (lo que Verde puede informar)</label><textarea id="v_gCond" rows="6" maxlength="2500" oninput="buildVerdePrompt()"></textarea><span class="faint fr-ayuda">Verde lo informa si el cliente pregunta. Nunca afirma que la garantía corresponde: eso lo decide el asesor con la ficha. Si se deja vacío, usa la política precargada de la tienda.</span></div>
               <div class="field"><label>Datos que Verde debe juntar antes de pasar el reclamo</label><div class="g-lista" id="v_gDatos"></div><button class="btn btn-ghost" type="button" onclick="agregarDatoGarantia()">+ Agregar dato</button></div>
               <div class="field" style="margin-bottom:0"><label>Sugerencias por síntoma</label><div class="cons-scroll"><table class="g-tabla"><thead><tr><th scope="col">Síntoma</th><th scope="col">Qué preguntar</th><th scope="col">Qué sugerir</th><th scope="col" aria-label="Acciones"></th></tr></thead><tbody id="v_gSintomas"></tbody></table></div><button class="btn btn-ghost" type="button" style="margin-top:10px" onclick="agregarSintomaGarantia()">+ Agregar síntoma</button></div>
-              <div class="note" style="margin-top:14px"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span><b>Reglas fijas del protocolo (no editables):</b> Verde nunca afirma que la garantía corresponde ni que se va a dar; explica que primero se necesita el contexto completo para evaluarla. No le menciona al cliente nada sobre buena o mala fe. Al terminar, arma la ficha y pasa el reclamo a un asesor, que decide y cierra.</span></div>
+              <div class="note" style="margin-top:14px"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span><b>Reglas fijas del protocolo (no editables):</b> Verde nunca afirma que la garantía corresponde ni que se va a dar. <b>No inventa procedimientos ni ofrece alternativas que no estén escritas en estos campos</b> (por ejemplo, buscar el trabajo en el sistema o ubicar la venta por nombre): si no sabe algo, dice que lo confirma el asesor. No le menciona al cliente nada sobre buena o mala fe. Al terminar, arma la ficha y pasa el reclamo a un asesor, que decide y cierra.</span></div>
             </div>
           </div>
         </div>
@@ -4000,7 +4001,7 @@ function saveVerde(section){
     v.frases={bienvenida:bien,derivacion:document.getElementById('v_fDeriv').value.trim(),error:document.getElementById('v_fError').value.trim(),adjunto:document.getElementById('v_fAdjunto').value.trim()};
     persist();toast('Frases guardadas','Los mensajes clave quedaron actualizados.','success');
   }else if(section==='garantia'){
-    const g=normGarantia(Object.assign({},vGarantia,{condiciones:document.getElementById('v_gCond').value}));
+    const g=normGarantia(Object.assign({},vGarantia,{requisitos:document.getElementById('v_gReq').value,condiciones:document.getElementById('v_gCond').value}));
     if(!g.datos.length){showVerdeErr('Agregar al menos un dato para juntar.');return;}
     if(vGarantia.sintomas.some(s=>!(s.sintoma||'').trim()&&((s.preguntar||'').trim()||(s.sugerir||'').trim()))){showVerdeErr('Cada síntoma necesita un nombre.');return;}
     v.garantia=g;vGarantia=garantiaUI(g);renderGarantia();
@@ -4031,7 +4032,7 @@ function snapVerde(src){
       objeciones:vObjeciones.filter(o=>(o.obj||'').trim()&&(o.resp||'').trim()).map(o=>({obj:o.obj.trim(),resp:o.resp.trim()})),
       reglas:vReglas.map(r=>(r||'').trim()).filter(Boolean),
       frases:{bienvenida:(g('v_fBien').value||'').trim(),derivacion:(g('v_fDeriv').value||'').trim(),error:(g('v_fError').value||'').trim(),adjunto:(g('v_fAdjunto').value||'').trim()},
-      garantia:normGarantia(Object.assign({},vGarantia,{condiciones:(g('v_gCond')||{}).value||''})),
+      garantia:normGarantia(Object.assign({},vGarantia,{requisitos:(g('v_gReq')||{}).value||'',condiciones:(g('v_gCond')||{}).value||''})),
       tecnico:{modelo:(g('v_modelo').value||'').trim(),maxTokens:parseInt(g('v_tokens').value,10)||0,memoria:parseInt(g('v_memoria').value,10)||0}
     });
   }
@@ -4087,7 +4088,7 @@ function buildVerdePrompt(){
     `Si hay un error técnico: "${esc(fError)}"\n`+
     `Cuando el cliente envía un archivo (llega como «[El cliente envió …]»): ${esc(((document.getElementById('v_fAdjunto')||{}).value||'').trim()||ADJUNTO_POR_DEFECTO_UI)}\n`+
     `No es posible ver el contenido de los archivos: nunca describir ni opinar sobre lo que muestran.`;
-  if(vGarantia.activo){const ng=normGarantia(Object.assign({},vGarantia,{condiciones:(document.getElementById('v_gCond')||{}).value||''}));p+='\n\n'+H('RECLAMOS Y GARANTÍA')+'\nDatos a juntar:\n'+ng.datos.map((d,i)=>(i+1)+'. '+esc(d)).join('\n')+'\nSíntomas:\n'+(ng.sintomas.map(s=>'- '+esc(s.sintoma)+': preguntar '+esc(s.preguntar)+' Sugerir: '+esc(s.sugerir)).join('\n')||'—')+'\nCondiciones: '+esc(ng.condiciones||'(sin cargar: el asesor las confirma)')+'\nRegla fija: nunca afirmar que la garantía corresponde; la evalúa el asesor con la ficha.';}
+  if(vGarantia.activo){const ng=normGarantia(Object.assign({},vGarantia,{requisitos:(document.getElementById('v_gReq')||{}).value||'',condiciones:(document.getElementById('v_gCond')||{}).value||''}));p+='\n\n'+H('RECLAMOS Y GARANTÍA')+'\nDatos a juntar:\n'+ng.datos.map((d,i)=>(i+1)+'. '+esc(d)).join('\n')+'\nSíntomas:\n'+(ng.sintomas.map(s=>'- '+esc(s.sintoma)+': preguntar '+esc(s.preguntar)+' Sugerir: '+esc(s.sugerir)).join('\n')||'—')+'\nRequisitos indispensables: '+esc(ng.requisitos)+'\nPlazos y cobertura: '+esc(ng.condiciones)+'\nReglas fijas: nunca afirmar que la garantía corresponde (la evalúa el asesor con la ficha); no inventar procedimientos ni ofrecer alternativas que no estén escritas.';}
   pre.innerHTML=p;
 }
 
@@ -5671,22 +5672,25 @@ const GARANTIA_SINTOMAS_UI=[
   {sintoma:'El touch no responde',preguntar:'Si el equipo se golpeó o se mojó después del cambio. Desde cuándo y si falla siempre o a veces.',sugerir:'Reinicio forzado, con las instrucciones según el equipo (iPhone o Android). Si sigue, pedir un video corto.'},
   {sintoma:'No carga o carga lento',preguntar:'Si lo carga en el auto. Qué cargador y qué cable usa.',sugerir:'Pedir una foto del cargador y del cable, o que los traiga para revisarlos junto con el equipo.'}
 ];
-let vGarantia={activo:true,condiciones:'',datos:[],sintomas:[]};
+const GARANTIA_REQUISITOS_UI='Presentar la orden de trabajo (boleta de garantía) con su número: sin ella no se puede iniciar el reclamo. El reclamo lo gestiona la persona que ingresó el equipo al local, titular de la orden; si no está disponible, no se puede dar una solución hasta que se presente. El reclamo debe hacerse dentro de los 30 días corridos desde la entrega del equipo y referirse a la reparación realizada (lo detallado en la orden), por defectos del repuesto.';
+const GARANTIA_COBERTURA_UI='La garantía es de 30 días corridos desde la entrega, solo sobre la reparación realizada y por defectos del repuesto, sin rayas, golpes, apretones ni humedad. No cubre otros componentes, fallas por golpes, humedad, mal uso o daños posteriores, ni equipos abiertos por terceros. Reparar un componente no garantiza el funcionamiento de otros. Los equipos ingresados apagados, mojados, con daños de sistema, pantalla rota o partes expuestas, o sin la clave de desbloqueo, no se prueban por completo: sus funciones y partes internas (micrófono, cámara, pin, etc.) no se verifican ni garantizan, y su falla no es atribuible a la tienda; un golpe o la humedad pueden haber dañado componentes internos aunque el daño visible fuera solo la pantalla o la tapa. El cliente acepta el estado descrito en la orden que firma y debe revisar y probar el equipo al retirarlo; los reclamos se rigen por esta garantía. El respaldo de los datos es responsabilidad del cliente. El equipo debe retirarse dentro de los 30 días corridos; después se considera abandonado y se pierde el derecho sobre él.';
+let vGarantia={activo:true,requisitos:'',condiciones:'',datos:[],sintomas:[]};
 function garantiaUI(g){
   g=g||{};
-  return {activo:g.activo!==false,condiciones:String(g.condiciones||'').trim(),
+  return {activo:g.activo!==false,requisitos:String(g.requisitos||'').trim()||GARANTIA_REQUISITOS_UI,condiciones:String(g.condiciones||'').trim()||GARANTIA_COBERTURA_UI,
     datos:(Array.isArray(g.datos)&&g.datos.length)?g.datos.map(x=>String(x||'')):GARANTIA_DATOS_UI.slice(),
     sintomas:(Array.isArray(g.sintomas)&&g.sintomas.length)?g.sintomas.map(s=>({sintoma:String(s.sintoma||''),preguntar:String(s.preguntar||''),sugerir:String(s.sugerir||'')})):GARANTIA_SINTOMAS_UI.map(s=>Object.assign({},s))};
 }
 function normGarantia(g){
   const x=garantiaUI(g);
-  return {activo:x.activo,condiciones:x.condiciones,datos:x.datos.map(d=>d.trim()).filter(Boolean),sintomas:x.sintomas.filter(s=>(s.sintoma||'').trim()).map(s=>({sintoma:s.sintoma.trim(),preguntar:(s.preguntar||'').trim(),sugerir:(s.sugerir||'').trim()}))};
+  return {activo:x.activo,requisitos:x.requisitos,condiciones:x.condiciones,datos:x.datos.map(d=>d.trim()).filter(Boolean),sintomas:x.sintomas.filter(s=>(s.sintoma||'').trim()).map(s=>({sintoma:s.sintoma.trim(),preguntar:(s.preguntar||'').trim(),sugerir:(s.sugerir||'').trim()}))};
 }
 const IC144={escudo:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'};
 function renderGarantia(){
   const sw=document.getElementById('v_gActivo');if(!sw)return;
   sw.setAttribute('aria-checked',String(vGarantia.activo));
   document.getElementById('v_gEstado').textContent=vGarantia.activo?'Protocolo activo':'Protocolo desactivado';
+  document.getElementById('v_gReq').value=vGarantia.requisitos||'';
   document.getElementById('v_gCond').value=vGarantia.condiciones||'';
   document.getElementById('v_gDatos').innerHTML=vGarantia.datos.map((d,i)=>'<div class="g-fila"><span class="fijas-num">'+(i+1)+'</span><input type="text" maxlength="200" value="'+escH(d)+'" aria-label="Dato '+(i+1)+'" oninput="vGarantia.datos['+i+']=this.value;buildVerdePrompt()"><button type="button" class="fijas-quitar" aria-label="Quitar el dato '+(i+1)+'" onclick="quitarDatoGarantia('+i+')">'+IC138.tacho+'</button></div>').join('')||'<span class="faint">Sin datos cargados: agregar al menos uno.</span>';
   document.getElementById('v_gSintomas').innerHTML=vGarantia.sintomas.map((s,i)=>'<tr><td><textarea maxlength="120" aria-label="Síntoma '+(i+1)+'" oninput="vGarantia.sintomas['+i+'].sintoma=this.value;buildVerdePrompt()">'+escH(s.sintoma)+'</textarea></td><td><textarea maxlength="400" aria-label="Qué preguntar" oninput="vGarantia.sintomas['+i+'].preguntar=this.value;buildVerdePrompt()">'+escH(s.preguntar)+'</textarea></td><td><textarea maxlength="400" aria-label="Qué sugerir" oninput="vGarantia.sintomas['+i+'].sugerir=this.value;buildVerdePrompt()">'+escH(s.sugerir)+'</textarea></td><td><button type="button" class="fijas-quitar" aria-label="Quitar este síntoma" onclick="quitarSintomaGarantia('+i+')">'+IC138.tacho+'</button></td></tr>').join('')||'<tr><td colspan="4" class="faint" style="padding:10px 6px">Sin síntomas cargados.</td></tr>';

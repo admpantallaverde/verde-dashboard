@@ -87,6 +87,9 @@ const GARANTIA_DATOS_DEFECTO = [
   'Si ya reinició el equipo',
   'Fotos o videos que muestren la falla'
 ];
+// Política real de Pantalla Verde (términos y condiciones de la orden de trabajo). Se puede editar desde el panel.
+const GARANTIA_REQUISITOS_DEFECTO = 'Presentar la orden de trabajo (boleta de garantía) con su número: sin ella no se puede iniciar el reclamo. El reclamo lo gestiona la persona que ingresó el equipo al local, titular de la orden; si no está disponible, no se puede dar una solución hasta que se presente. El reclamo debe hacerse dentro de los 30 días corridos desde la entrega del equipo y referirse a la reparación realizada (lo detallado en la orden), por defectos del repuesto.';
+const GARANTIA_COBERTURA_DEFECTO = 'La garantía es de 30 días corridos desde la entrega, solo sobre la reparación realizada y por defectos del repuesto, sin rayas, golpes, apretones ni humedad. No cubre otros componentes, fallas por golpes, humedad, mal uso o daños posteriores, ni equipos abiertos por terceros. Reparar un componente no garantiza el funcionamiento de otros. Los equipos ingresados apagados, mojados, con daños de sistema, pantalla rota o partes expuestas, o sin la clave de desbloqueo, no se prueban por completo: sus funciones y partes internas (micrófono, cámara, pin, etc.) no se verifican ni garantizan, y su falla no es atribuible a la tienda; un golpe o la humedad pueden haber dañado componentes internos aunque el daño visible fuera solo la pantalla o la tapa. El cliente acepta el estado descrito en la orden que firma y debe revisar y probar el equipo al retirarlo; los reclamos se rigen por esta garantía. El respaldo de los datos es responsabilidad del cliente. El equipo debe retirarse dentro de los 30 días corridos; después se considera abandonado y se pierde el derecho sobre él.';
 const GARANTIA_SINTOMAS_DEFECTO = [
   { sintoma: 'El touch no responde', preguntar: 'Si el equipo se golpeó o se mojó después del cambio. Desde cuándo y si falla siempre o a veces.', sugerir: 'Reinicio forzado, con las instrucciones según el equipo (iPhone o Android). Si sigue, pedir un video corto.' },
   { sintoma: 'No carga o carga lento', preguntar: 'Si lo carga en el auto. Qué cargador y qué cable usa.', sugerir: 'Pedir una foto del cargador y del cable, o que los traiga para revisarlos junto con el equipo.' }
@@ -95,7 +98,8 @@ function garantiaDe(v) {
   const g = (v && v.garantia) || {};
   return {
     activo: g.activo !== false,
-    condiciones: String(g.condiciones || '').trim(),
+    requisitos: String(g.requisitos || '').trim() || GARANTIA_REQUISITOS_DEFECTO,
+    condiciones: String(g.condiciones || '').trim() || GARANTIA_COBERTURA_DEFECTO,
     datos: Array.isArray(g.datos) && g.datos.length ? g.datos.map(x => String(x || '').trim()).filter(Boolean) : GARANTIA_DATOS_DEFECTO.slice(),
     sintomas: Array.isArray(g.sintomas) && g.sintomas.length ? g.sintomas.filter(s => s && String(s.sintoma || '').trim()) : GARANTIA_SINTOMAS_DEFECTO.map(s => Object.assign({}, s))
   };
@@ -110,9 +114,10 @@ function bloqueGarantia(v) {
     + '1. Mostrar empatía y explicar que, para evaluarlo, hace falta juntar algunos datos y que después lo revisa un asesor.\n'
     + '2. Juntar estos datos, de a una o dos preguntas por mensaje:\n' + datos + '\n'
     + '3. Según el síntoma, preguntar y sugerir lo indicado:\n' + sintomas + '\n'
-    + '4. Condiciones generales que se pueden informar si el cliente pregunta: ' + (g.condiciones || 'no hay condiciones cargadas; indicar que el asesor las confirma') + '\n'
-    + '5. REGLAS FIJAS DEL PROTOCOLO: nunca afirmar ni dar a entender que la garantía corresponde o que se va a dar; decir que se evalúa con la información reunida y que el asesor confirma cómo seguir. No mencionar nada sobre buena o mala fe del cliente. No prometer plazos de resolución.\n'
-    + '6. Cuando tengas los datos suficientes (o el cliente no pueda aportar más), cerrar con un resumen breve para el cliente y agregar al final del mensaje, en una línea aparte y sin texto adicional en esa línea, la ficha en este formato exacto:\n'
+    + '4. REQUISITOS INDISPENSABLES (sin ellos no hay garantía): ' + g.requisitos + ' Si el cliente no cumple alguno, decirlo con claridad: hasta que no se cumpla, el reclamo no puede avanzar. No ofrecer alternativas que no estén escritas en este punto, e igual armar la ficha para el asesor con los datos que haya.\n'
+    + '5. Plazos y cobertura que se pueden informar si el cliente pregunta: ' + g.condiciones + '\n'
+    + '6. REGLAS FIJAS DEL PROTOCOLO: nunca afirmar ni dar a entender que la garantía corresponde o que se va a dar; decir que se evalúa con la información reunida y que el asesor confirma cómo seguir. No inventar procedimientos ni ofrecer alternativas que no estén escritas en los puntos 4 y 5 (por ejemplo, buscar el trabajo en el sistema o ubicar la venta por nombre y apellido): si algo no está escrito, decir que lo confirma el asesor. No mencionar nada sobre buena o mala fe del cliente. No prometer plazos de resolución.\n'
+    + '7. Cuando tengas los datos suficientes (o el cliente no pueda aportar más), cerrar con un resumen breve para el cliente y agregar al final del mensaje, en una línea aparte y sin texto adicional en esa línea, la ficha en este formato exacto:\n'
     + '[RECLAMO]{"boleta":"","producto":"","mismo":"sí|no|no sabe","falla":"","desde":"","momento":"","golpes":"","reinicio":"","sugerencias":"","notas":""}\n'
     + '   junto con [DERIVAR]. Si después el cliente aporta datos nuevos del reclamo, repetir la línea [RECLAMO] actualizada.';
 }
@@ -543,7 +548,7 @@ function modeloEnUso() { return resolverModelo(getVerde()); }
 
 module.exports = {
   ADJUNTO_POR_DEFECTO, instruccionesArchivo, notaAtencion,
-  GARANTIA_DATOS_DEFECTO, GARANTIA_SINTOMAS_DEFECTO, garantiaDe, bloqueGarantia, separarReclamo,
+  GARANTIA_DATOS_DEFECTO, GARANTIA_SINTOMAS_DEFECTO, GARANTIA_REQUISITOS_DEFECTO, GARANTIA_COBERTURA_DEFECTO, garantiaDe, bloqueGarantia, separarReclamo,
   tieneRespuestas,
   modeloEnUso,
   responderPendiente,

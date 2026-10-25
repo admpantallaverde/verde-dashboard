@@ -113,7 +113,8 @@ const ARTICULOS = [
       { tipo: 'p', texto: 'Cuando un cliente plantea una falla de algo que compró o reparó en la tienda, Verde sigue el protocolo de garantía: junta los datos necesarios (boleta, qué se vendió o reparó, qué falla y desde cuándo, si reinició el equipo, fotos o videos) y da sugerencias según el síntoma, como el reinicio forzado. Nunca afirma que la garantía corresponde: explica que se evalúa con la información reunida y que un asesor confirma cómo seguir.' },
       { tipo: 'h', texto: 'Qué ve el equipo' },
       { tipo: 'p', texto: 'El chat aparece en «Chats por responder» con la etiqueta «Reclamo de garantía». Dentro del chat, el botón «Ver ficha» abre la ficha del reclamo con todos los datos ordenados, y se puede copiar. La ficha es un resumen de lo que el cliente declaró: la decisión sobre la garantía es del asesor, que revisa las fotos o videos en el chat y cierra el caso.' },
-      { tipo: 'nota', texto: 'Las condiciones generales que Verde puede informar, los datos que junta y las sugerencias por síntoma se configuran en «Comportamiento del bot › I · Reclamos y garantía» (solo administradores).' }
+      { tipo: 'p', texto: 'Verde aplica los requisitos indispensables de la tienda: la orden de trabajo (boleta de garantía) con su número, que el reclamo lo gestione quien ingresó el equipo y que esté dentro de los 30 días corridos desde la entrega. Si falta alguno, se lo dice al cliente con claridad y no ofrece alternativas que no estén en las condiciones: igual deja la ficha para el asesor.' },
+      { tipo: 'nota', texto: 'Los requisitos indispensables, los plazos y la cobertura que Verde puede informar, los datos que junta y las sugerencias por síntoma se configuran en «Comportamiento del bot › I · Reclamos y garantía» (solo administradores). Vienen precargados con la política de la tienda.' }
     ]
   },
   {
