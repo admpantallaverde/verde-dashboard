@@ -140,8 +140,81 @@ function separarReclamo(texto) {
   return { texto: limpio, ficha };
 }
 
-// Prompt completo: la configuración del panel, el protocolo de garantía y las reglas fijas del sistema (1.3.7), siempre al final.
-function buildSystemPrompt(v) { return buildSystemPromptBase(v) + bloqueGarantia(v) + cumplimiento.bloquePrompt(); }
+// 1.4.7: fichas de consulta (reparaciones y compras). Se configuran en «Comportamiento del bot › J».
+const CONSULTA_REPARACION_DEFECTO = [
+  'Marca y modelo del equipo',
+  'Qué le pasa o qué reparación necesita',
+  'Cómo empezó (golpe, caída, humedad u otro)',
+  'Si el equipo enciende',
+  'Si fue reparado o abierto antes',
+  'Si prefiere la opción más económica o la de mejor calidad',
+  'Cuándo podría traer el equipo al local'
+];
+const CONSULTA_COMPRA_DEFECTO = [
+  'Qué producto busca (modelo, color, capacidad o variante)',
+  'Para qué equipo es, si es un accesorio o repuesto',
+  'Cantidad',
+  'Si retira en el local o necesita envío (y a qué zona)',
+  'Para cuándo lo necesita',
+  'Forma de pago que prefiere'
+];
+function listaConsulta(lista, defecto) {
+  const l = Array.isArray(lista) ? lista.map(x => String(x || '').trim()).filter(Boolean) : [];
+  return l.length ? l : defecto.slice();
+}
+function consultasDe(v) {
+  const c = (v && v.consultas) || {};
+  return { activo: c.activo !== false, reparacion: listaConsulta(c.reparacion, CONSULTA_REPARACION_DEFECTO), compra: listaConsulta(c.compra, CONSULTA_COMPRA_DEFECTO) };
+}
+function bloqueConsultas(v) {
+  const c = consultasDe(v);
+  if (!c.activo) return '';
+  const num = l => l.map((d, i) => '   ' + (i + 1) + '. ' + d).join('\n');
+  return '\n\n== FICHAS DE CONSULTA ==\n'
+    + 'Cuando derives el chat a un asesor por una consulta de reparación o de compra (por ejemplo, cuando el cliente pide precio), armá la ficha de la consulta para el asesor con los datos que ya tengas, y seguí completándola mientras conversás.\n'
+    + 'Datos para una consulta de REPARACIÓN:\n' + num(c.reparacion) + '\n'
+    + 'Datos para una consulta de COMPRA:\n' + num(c.compra) + '\n'
+    + 'Reglas: preguntar de a uno o dos datos por mensaje, sin insistir si el cliente no sabe o no quiere responder. Nunca dar precios. Si el cliente reclama por algo que ya compró o reparó, usar el protocolo de reclamos y garantía, no esta ficha.\n'
+    + 'Formato: al final del mensaje, en una línea aparte y sin texto adicional en esa línea, la ficha en este formato exacto:\n'
+    + '[CONSULTA]{"tipo":"reparación|compra","1":"","2":"","notas":""}\n'
+    + '   donde cada número es el dato de la lista del tipo elegido; incluir solo los datos conocidos. Agregar la línea en el mensaje en que derivás (junto con [DERIVAR]) y repetirla actualizada cada vez que el cliente aporte un dato nuevo.';
+}
+// La ficha viaja al final de la respuesta como [CONSULTA]{…}: se quita del mensaje y se arma con los nombres
+// de la lista configurada en ese momento (así la ficha conserva sus nombres aunque después se edite la lista).
+function separarConsulta(texto, v) {
+  const t = String(texto == null ? '' : texto);
+  const m = /\[CONSULTA\]\s*(\{[^{}]*\})/.exec(t);
+  const limpio = t.replace(/\[CONSULTA\]\s*\{[^{}]*\}/g, '').replace(/\[CONSULTA\][^\n]*/g, '').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  if (!m) return { texto: limpio, ficha: null };
+  const c = consultasDe(v);
+  if (!c.activo) return { texto: limpio, ficha: null };
+  let ficha = null;
+  try {
+    const j = JSON.parse(m[1]);
+    const tipoTx = String((j && j.tipo) || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const tipo = tipoTx.startsWith('repar') ? 'reparación' : (tipoTx.startsWith('compra') ? 'compra' : null);
+    if (tipo) {
+      const lista = tipo === 'reparación' ? c.reparacion : c.compra;
+      const campos = lista.map((dato, i) => { const val = j[String(i + 1)]; return { dato, valor: val != null ? String(val).replace(/\s+/g, ' ').trim().slice(0, 300) : '' }; });
+      const notas = j.notas != null ? String(j.notas).replace(/\s+/g, ' ').trim().slice(0, 300) : '';
+      if (campos.some(x => x.valor) || notas) ficha = { tipo, campos, notas };
+    }
+  } catch (e) { ficha = null; }
+  return { texto: limpio, ficha };
+}
+
+// 1.4.7: en la primera respuesta, el sistema agrega la línea de presentación; Verde no debe presentarse por su cuenta.
+function notaPresentacion(linea) {
+  const l = String(linea || '').trim();
+  if (!l) return '';
+  return '\n\n== PRIMERA RESPUESTA DE ESTA CONVERSACIÓN ==\n'
+    + 'Al final de este mensaje el sistema agrega automáticamente esta presentación: «' + l + '». '
+    + 'No te presentes con tu nombre ni digas que sos un asistente virtual en este mensaje, aunque la frase de bienvenida o los pasos de venta lo indiquen: saludá brevemente y respondé la consulta. Si el cliente pregunta quién sos, la presentación ya lo responde.';
+}
+
+// Prompt completo: la configuración del panel, el protocolo de garantía, las fichas de consulta y las reglas fijas
+// del sistema (1.3.7), siempre al final.
+function buildSystemPrompt(v) { return buildSystemPromptBase(v) + bloqueGarantia(v) + bloqueConsultas(v) + cumplimiento.bloquePrompt(); }
 function buildSystemPromptBase(v) {
   v = v || {};
   const trato = { vos: 'Tratá al cliente de "vos" (rioplatense)', 'tú': 'Tratá al cliente de "tú"', usted: 'Tratá al cliente de "usted" (formal)' }[v.trato || 'vos'];
@@ -482,7 +555,7 @@ async function responder(from, body, opciones) {
   // 2) se arma el pedido con el historial guardado
   const convs = loadConversations();
   const hist = Array.isArray(convs[from]) ? convs[from] : [];
-  const system = buildSystemPrompt(v) + bloqueContexto() + productBlock(body) + notaAtencion(opciones.atencion);
+  const system = buildSystemPrompt(v) + bloqueContexto() + productBlock(body) + notaAtencion(opciones.atencion) + notaPresentacion(opciones.presentacion);
   let crudo;
   try {
     crudo = await callClaude(system, paraLaIA(hist, memoriaDe(v)), v, opciones.modelo, String(from).startsWith('sim:') ? 'pruebas' : 'whatsapp');
@@ -493,7 +566,8 @@ async function responder(from, body, opciones) {
     return { texto: fr.error || 'Disculpá, tuve un problema técnico. Ahora mismo te conecto con uno de nuestros asesores 🙌', derivar: true, error: true };
   }
   const rec = separarReclamo(crudo);
-  const sep = separarDerivacion(rec.texto);
+  const con = separarConsulta(rec.texto, v);
+  const sep = separarDerivacion(con.texto);
   const reply = sep.texto || fr.derivacion || 'Te paso con un asesor para que te ayude. 🙌';
 
   // 3) si mientras pensaba una persona del equipo tomó la conversación, o alguien apagó a Verde
@@ -502,7 +576,7 @@ async function responder(from, body, opciones) {
 
   // 4) se guarda la respuesta de Verde (sin las marcas)
   registrarMensaje(from, 'assistant', reply);
-  return { texto: reply, derivar: sep.derivar, error: false, reclamo: rec.ficha };
+  return { texto: reply, derivar: sep.derivar, error: false, reclamo: rec.ficha, consulta: con.ficha };
 }
 
 // «Devolver a Verde» desde el panel: Verde responde la última consulta del cliente que quedó sin
@@ -520,7 +594,7 @@ async function responderUltima(from, opciones) {
   const ultimo = hist[hist.length - 1];
   if (!ultimo || ultimo.role !== 'user') return null;   // la última palabra fue del equipo o de Verde
   if (noDebeResponder(from, opciones)) return null;
-  const system = buildSystemPrompt(v) + bloqueContexto() + productBlock(String(ultimo.content || '')) + notaAtencion(opciones.atencion);
+  const system = buildSystemPrompt(v) + bloqueContexto() + productBlock(String(ultimo.content || '')) + notaAtencion(opciones.atencion) + notaPresentacion(opciones.presentacion);
   let crudo;
   try {
     crudo = await callClaude(system, paraLaIA(hist, memoriaDe(v)), v, undefined, 'whatsapp');
@@ -530,11 +604,12 @@ async function responderUltima(from, opciones) {
     return { texto: fr.error || 'Disculpá, tuve un problema técnico. Ahora mismo te conecto con uno de nuestros asesores 🙌', derivar: true, error: true };
   }
   const rec = separarReclamo(crudo);
-  const sep = separarDerivacion(rec.texto);
+  const con = separarConsulta(rec.texto, v);
+  const sep = separarDerivacion(con.texto);
   const reply = sep.texto || fr.derivacion || 'Te paso con un asesor para que te ayude. 🙌';
   if (noDebeResponder(from, opciones)) return null;
   registrarMensaje(from, 'assistant', reply);
-  return { texto: reply, derivar: sep.derivar, error: false, reclamo: rec.ficha };
+  return { texto: reply, derivar: sep.derivar, error: false, reclamo: rec.ficha, consulta: con.ficha };
 }
 
 // ¿Verde ya le respondió algo a este cliente? (se usa para la presentación en el simulador)
@@ -549,6 +624,7 @@ function modeloEnUso() { return resolverModelo(getVerde()); }
 module.exports = {
   ADJUNTO_POR_DEFECTO, instruccionesArchivo, notaAtencion,
   GARANTIA_DATOS_DEFECTO, GARANTIA_SINTOMAS_DEFECTO, GARANTIA_REQUISITOS_DEFECTO, GARANTIA_COBERTURA_DEFECTO, garantiaDe, bloqueGarantia, separarReclamo,
+  CONSULTA_REPARACION_DEFECTO, CONSULTA_COMPRA_DEFECTO, consultasDe, bloqueConsultas, separarConsulta, notaPresentacion,
   tieneRespuestas,
   modeloEnUso,
   responderPendiente,

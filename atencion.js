@@ -74,7 +74,7 @@ function resumen(a, ahora) {
     id: a.id, clave: a.clave, nombre: a.nombre, numero: a.numero, estado: a.estado, creadoEn: a.creadoEn,
     ultimoMensaje: a.ultimoMensaje, ultimoMensajeEn: a.ultimoMensajeEn, cerradoEn: a.cerradoEn,
     esperaMin: Math.max(0, Math.floor(((a.cerradoEn || ahora) - a.creadoEn) / 60000)),
-    cierre: a.cierre, volvioAEscribir: !!a.volvioAEscribir, reabiertaDe: a.reabiertaDe || null, revision: !!a.revision, reclamo: !!a.reclamo
+    cierre: a.cierre, volvioAEscribir: !!a.volvioAEscribir, reabiertaDe: a.reabiertaDe || null, revision: !!a.revision, reclamo: !!a.reclamo, consulta: a.consulta ? a.consulta.tipo : null
   };
 }
 
@@ -191,6 +191,37 @@ function guardarReclamo(clave, ficha) {
   guardar(d);
   return a;
 }
+/* ---------- 1.4.7: ficha de la consulta (reparación o compra; la arma Verde al derivar) ---------- */
+// Se completa por nombre de dato: lo nuevo reemplaza lo anterior y lo que no llegó se conserva.
+function guardarConsulta(clave, ficha) {
+  if (!ficha || typeof ficha !== 'object' || !Array.isArray(ficha.campos)) return null;
+  const d = cargar();
+  const a = pendienteDe(d, clave);
+  if (!a) return null;
+  const ahora = reloj();
+  const prev = a.consulta;
+  let nueva;
+  if (!prev || prev.tipo !== ficha.tipo) {
+    nueva = { tipo: ficha.tipo, campos: ficha.campos.map(c => ({ dato: c.dato, valor: c.valor || '' })), notas: ficha.notas || '', creado: ahora, actualizado: ahora };
+  } else {
+    const campos = prev.campos.map(c => Object.assign({}, c));
+    for (const c of ficha.campos) {
+      const i = campos.findIndex(x => x.dato === c.dato);
+      if (i >= 0) { if (c.valor) campos[i].valor = c.valor; }
+      else campos.push({ dato: c.dato, valor: c.valor || '' });
+    }
+    nueva = Object.assign({}, prev, { campos, notas: ficha.notas || prev.notas || '', actualizado: ahora });
+  }
+  a.consulta = nueva;
+  evento(a, 'consulta', !prev ? 'Verde armó la ficha de la consulta (' + nueva.tipo + ').' : (prev.tipo !== nueva.tipo ? 'Verde cambió la ficha a una consulta de ' + nueva.tipo + '.' : 'Verde actualizó la ficha de la consulta.'));
+  guardar(d);
+  return a;
+}
+function consultaDe(clave) {
+  const d = cargar();
+  const a = pendienteDe(d, clave) || ultimaDe(d, clave);
+  return a && a.consulta ? Object.assign({}, a.consulta, { atencionId: a.id, estado: a.estado, creadoEn: a.creadoEn }) : null;
+}
 // Ficha del chat: la de la atención pendiente o, si no hay, la de la última atención.
 function reclamoDe(clave) {
   const d = cargar();
@@ -259,7 +290,7 @@ function purgar(dias) {
 }
 
 module.exports = {
-  esperaPersona, pendienteRevision, clavesRevision, guardarReclamo, reclamoDe,
+  esperaPersona, pendienteRevision, clavesRevision, guardarReclamo, reclamoDe, guardarConsulta, consultaDe,
   MOTIVOS, RETENCION_DIAS, tienePendiente, pendienteId, derivar, mensajeCliente, respuestaEquipo, marcarAtendido,
   anotarAvisos, pendientes, respondidos, detalle, purgar, clavesPendientes, ultimaPorClave, _usarReloj
 };

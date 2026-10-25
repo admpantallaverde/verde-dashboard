@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.4.6';
+const VERSION_ESPERADA = '1.4.7';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -45,6 +45,10 @@ global.fetch = async (url, opts = {}) => {
     if (/garantía/i.test(ult)) return respuestaIA('Lamento el inconveniente 🙏 ¿Tenés la boleta de garantía?\n[RECLAMO]{"boleta":"4582","producto":"Cambio de pantalla hace 2 semanas","mismo":"sí","falla":"El touch no responde a veces","desde":"ayer","reinicio":"forzado hecho"}\n[DERIVAR]');
     if (/actualizar ficha/i.test(ult)) return respuestaIA('Anotado, gracias.\n[RECLAMO]{"golpes":"no","notas":"video recibido"}');
     if (/ficha rota/i.test(ult)) return respuestaIA('Te paso con un asesor.\n[RECLAMO]{boleta: 1}\n[DERIVAR]');
+    if (/actualizar consulta/i.test(ult)) return respuestaIA('Anotado, gracias.\n[CONSULTA]{"tipo":"reparación","3":"Se cayó ayer","4":"Sí","notas":"prefiere la más económica"}');
+    if (/consulta rota/i.test(ult)) return respuestaIA('Te paso con un asesor.\n[CONSULTA]{tipo: x}\n[DERIVAR]');
+    if (/consulta de reparación/i.test(ult)) return respuestaIA('El precio te lo confirma un asesor. ¿Qué le pasó a la pantalla?\n[CONSULTA]{"tipo":"reparación","1":"iPhone 13 Pro Max","2":"Cambio de pantalla"}\n[DERIVAR]');
+    if (/consulta de compra/i.test(ult)) return respuestaIA('¡Genial! Un asesor te confirma precio y disponibilidad.\n[CONSULTA]{"tipo":"compra","1":"Funda MagSafe","3":"2"}\n[DERIVAR]');
     if (/precio exacto/i.test(ult)) {
       return new Response(JSON.stringify({ content: [{ type: 'text', text: 'Te paso con un asesor para confirmarte el precio.\n[DERIVAR]' }], stop_reason: 'end_turn', usage: { input_tokens: 1000, output_tokens: 100 } }), { status: 200 });
     }
@@ -417,7 +421,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(rr.status === 401, 'sin sesión no se puede ver ningún archivo');
   rr = await api('/api/ayuda', 'GET', null, galletaCarla);
   const ayC = await json(rr);
-  verificar(rr.status === 200 && ayC.rol === 'asesor' && !ayC.articulos.some(a => a.soloAdmin) && ayC.articulos.map(a => a.id).join(',') === 'chats-por-responder,conversaciones,chats-respondidos,garantia,apariencia', 'un asesor ve solo los 5 temas para atender los chats');
+  verificar(rr.status === 200 && ayC.rol === 'asesor' && !ayC.articulos.some(a => a.soloAdmin) && ayC.articulos.map(a => a.id).join(',') === 'chats-por-responder,conversaciones,chats-respondidos,garantia,consultas,apariencia', 'un asesor ve solo los 6 temas para atender los chats');
   rr = await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Cómo devuelvo un chat a Verde?' }, galletaCarla);
   const pC = await json(rr);
   const sysC = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system);
@@ -882,7 +886,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
 
   mostrar('55) Centro de ayuda: manual y guías según el rol');
   const ay55 = await json(await api('/api/ayuda', 'GET'));
-  verificar(ay55.rol === 'admin' && ay55.articulos.filter(a => a.grupo === 'manual').length === 9 && ay55.articulos.filter(a => a.grupo === 'meta').length === 6 && ay55.revisionMeta === '2026-10-24', 'el administrador ve los 9 temas del manual y las 6 guías de Meta');
+  verificar(ay55.rol === 'admin' && ay55.articulos.filter(a => a.grupo === 'manual').length === 10 && ay55.articulos.filter(a => a.grupo === 'meta').length === 6 && ay55.revisionMeta === '2026-10-24', 'el administrador ve los 10 temas del manual y las 6 guías de Meta');
   verificar(ay55.articulos.every(a => a.titulo && a.resumen && a.bloques && a.bloques.length), 'cada tema tiene título, resumen y contenido');
 
   mostrar('56) Asistente de ayuda');
@@ -1183,6 +1187,97 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   await post360(aviso([{ id: 'es62-3', from: '59879000064', type: 'text', text: { body: 'hola' } }]));
   await espera(600);
   verificar(envios360.slice(antes62).some(x => x.body.to === '59879000064'), 'con la espera en 0, Verde vuelve a responder de inmediato');
+
+
+  mostrar('63) Una sola presentación: Verde sabe que el sistema agrega la línea');
+  const est63 = await json(await api('/api/state'));
+  const st63 = JSON.parse(JSON.stringify(est63));
+  st63.verde = Object.assign({}, st63.verde, { nombre: 'ManzanaVerde IA', empresa: 'Pantalla Verde' });
+  await guardarEstado61(st63);
+  let ia63 = llamadasIA.length;
+  await post360(aviso([{ id: 'pr63-1', from: '59879000071', type: 'text', text: { body: 'hola' } }]));
+  await espera(600);
+  const sys63a = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system);
+  verificar(llamadasIA.length === ia63 + 1 && sys63a.includes('== PRIMERA RESPUESTA DE ESTA CONVERSACIÓN ==') && sys63a.includes('Soy ManzanaVerde IA, el asistente virtual de Pantalla Verde') && sys63a.includes('No te presentes con tu nombre'), 'en la primera respuesta, Verde recibe la nota con el texto exacto de la presentación y el nombre configurado');
+  await post360(aviso([{ id: 'pr63-2', from: '59879000071', type: 'text', text: { body: 'tengo una pregunta' } }]));
+  await espera(600);
+  verificar(!JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system).includes('PRIMERA RESPUESTA'), 'desde la segunda respuesta, la nota ya no se agrega');
+  const s63a = await json(await api('/api/simulate', 'POST', { message: 'hola', from: 'pres-sim-63' }));
+  const sysS63a = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system);
+  await api('/api/simulate', 'POST', { message: 'gracias', from: 'pres-sim-63' });
+  const sysS63b = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system);
+  verificar(sysS63a.includes('PRIMERA RESPUESTA') && /Soy ManzanaVerde IA/.test(s63a.reply) && !sysS63b.includes('PRIMERA RESPUESTA'), 'en «Probar a Verde» pasa lo mismo: la nota va solo en la primera respuesta');
+  const st63b = JSON.parse(JSON.stringify(st63));
+  st63b.verde.tecnico = Object.assign({}, st63b.verde.tecnico || {}, { espera: 1 });
+  await guardarEstado61(st63b);
+  ia63 = llamadasIA.length;
+  await post360(aviso([{ id: 'pr63-3', from: '59879000072', type: 'text', text: { body: 'hola' } }]));
+  await espera(200);
+  await post360(aviso([{ id: 'pr63-4', from: '59879000072', type: 'text', text: { body: 'quería saber algo' } }]));
+  await espera(1900);
+  verificar(llamadasIA.length === ia63 + 1 && JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system).includes('PRIMERA RESPUESTA'), 'con la espera activada, la respuesta agrupada también recibe la nota');
+  await guardarEstado61(est63);
+  const botP = require('./bot.js');
+  verificar(botP.notaPresentacion('') === '' && botP.notaPresentacion(null) === '', 'sin presentación no se agrega ninguna nota');
+
+  mostrar('64) Fichas de consulta: reparación y compra');
+  await api('/api/avisos', 'PUT', { numeros: ['59899000102'] });
+  const aviso64 = desde => envios360.slice(desde).filter(x => x.body.to === '59899000102');
+  const detalle64 = async n => json(await api('/api/conversaciones/' + encodeURIComponent('wa:' + n), 'GET'));
+  let antes64 = envios360.length;
+  await post360(aviso([{ id: 'co64-1', from: '59879000081', type: 'text', text: { body: 'hola, consulta de reparación: cuánto sale la pantalla de un iPhone 13 Pro Max' } }]));
+  await espera(600);
+  const sys64 = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system);
+  verificar(sys64.includes('== FICHAS DE CONSULTA ==') && sys64.includes('Marca y modelo del equipo') && sys64.includes('Qué producto busca') && sys64.includes('usar el protocolo de reclamos y garantía, no esta ficha') && sys64.includes('Nunca dar precios'), 'Verde recibe las listas de reparación y de compra, la regla de no dar precios y la de pasar los reclamos a garantía');
+  const env64 = envios360.slice(antes64).find(x => x.body.to === '59879000081');
+  verificar(env64 && /¿Qué le pasó a la pantalla\?/.test(env64.body.text.body) && !/CONSULTA|\{|\}|DERIVAR/.test(env64.body.text.body), 'el cliente recibe la respuesta sin la ficha ni las marcas internas');
+  const p64 = (await json(await api('/api/chats/pendientes'))).lista.find(x => x.numero === '59879000081');
+  verificar(p64 && p64.consulta === 'reparación' && p64.verdeActivo === true && p64.reclamo === false, 'el chat pasa a «Chats por responder» como consulta de reparación, con Verde activo');
+  verificar(aviso64(antes64).length === 1 && /Consulta de reparación: Verde juntó los datos para el asesor/.test(aviso64(antes64)[0].body.text.body), 'el aviso al equipo dice que es una consulta de reparación');
+  let d64 = await detalle64('59879000081');
+  verificar(d64.consulta && d64.consulta.tipo === 'reparación' && d64.consulta.campos.length === 7 && d64.consulta.campos[0].dato === 'Marca y modelo del equipo' && d64.consulta.campos[0].valor === 'iPhone 13 Pro Max' && d64.consulta.campos[2].valor === '' && d64.consulta.archivos === 0 && d64.consulta.estado === 'pendiente', 'la conversación trae la ficha con los 7 datos configurados, los que faltan vacíos');
+  antes64 = envios360.length;
+  await post360(aviso([{ id: 'co64-2', from: '59879000081', type: 'text', text: { body: 'actualizar consulta: se cayó ayer y prende' } }]));
+  await espera(600);
+  d64 = await detalle64('59879000081');
+  verificar(d64.consulta.campos[0].valor === 'iPhone 13 Pro Max' && d64.consulta.campos[2].valor === 'Se cayó ayer' && d64.consulta.campos[3].valor === 'Sí' && d64.consulta.notas === 'prefiere la más económica' && aviso64(antes64).length === 0 && envios360.slice(antes64).some(x => x.body.to === '59879000081'), 'cuando el cliente suma datos, la ficha se completa sin perder lo anterior ni repetir el aviso');
+  await post360(aviso([{ id: 'co64-3', from: '59879000081', type: 'image', image: { id: 'med-co-1', mime_type: 'image/jpeg' } }]));
+  await espera(500);
+  d64 = await detalle64('59879000081');
+  verificar(d64.consulta.archivos === 1, 'la ficha cuenta los archivos que mandó el cliente');
+  const at64 = await json(await api('/api/chats/' + p64.id));
+  const ev64 = (at64.eventos || (at64.atencion && at64.atencion.eventos) || []).filter(x => x.tipo === 'consulta');
+  verificar(ev64.length === 2, 'el recorrido de la atención registra la ficha y su actualización');
+  antes64 = envios360.length;
+  await post360(aviso([{ id: 'co64-4', from: '59879000082', type: 'text', text: { body: 'consulta de compra: quiero dos fundas' } }]));
+  await espera(600);
+  const d64c = await detalle64('59879000082');
+  const av64c = aviso64(antes64)[0];
+  verificar(d64c.consulta && d64c.consulta.tipo === 'compra' && d64c.consulta.campos.length === 6 && d64c.consulta.campos[0].dato === 'Qué producto busca (modelo, color, capacidad o variante)' && d64c.consulta.campos[0].valor === 'Funda MagSafe' && d64c.consulta.campos[2].valor === '2' && av64c && /Consulta de compra: Verde juntó los datos para el asesor/.test(av64c.body.text.body), 'una consulta de compra usa su propia lista de datos y su propio aviso');
+  antes64 = envios360.length;
+  await post360(aviso([{ id: 'co64-5', from: '59879000083', type: 'text', text: { body: 'consulta rota' } }]));
+  await espera(600);
+  const p64r = (await json(await api('/api/chats/pendientes'))).lista.find(x => x.numero === '59879000083');
+  const env64r = envios360.slice(antes64).find(x => x.body.to === '59879000083');
+  verificar(p64r && p64r.consulta === null && env64r && !/CONSULTA|\{/.test(env64r.body.text.body), 'si la ficha llega mal formada, se ignora sin romper nada: el chat se deriva igual y el cliente no ve la marca');
+  const st64 = JSON.parse(JSON.stringify(est63));
+  st64.verde = Object.assign({}, st64.verde, { consultas: { activo: false } });
+  await guardarEstado61(st64);
+  antes64 = envios360.length;
+  await post360(aviso([{ id: 'co64-6', from: '59879000084', type: 'text', text: { body: 'consulta de compra: una funda' } }]));
+  await espera(600);
+  const sys64off = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system);
+  const d64off = await detalle64('59879000084');
+  const env64off = envios360.slice(antes64).find(x => x.body.to === '59879000084');
+  verificar(!sys64off.includes('== FICHAS DE CONSULTA ==') && d64off.consulta === null && env64off && !/CONSULTA/.test(env64off.body.text.body), 'con las fichas desactivadas, Verde no las recibe, no se guarda ninguna y el cliente tampoco ve la marca');
+  await guardarEstado61(est63);
+  const botC = require('./bot.js');
+  const pCN = botC.buildSystemPrompt({ consultas: { reparacion: ['Color del equipo'] } });
+  verificar(pCN.includes('   1. Color del equipo') && pCN.includes('Qué producto busca') && !pCN.includes('Marca y modelo del equipo'), 'una lista editada desde el panel reemplaza a la precargada; la otra conserva sus datos');
+  const fC = botC.separarConsulta('Hola\n[CONSULTA]{"tipo":"reparacion","1":"Negro","9":"fuera de la lista"}', { consultas: { reparacion: ['Color del equipo'] } });
+  verificar(fC.texto === 'Hola' && fC.ficha && fC.ficha.tipo === 'reparación' && fC.ficha.campos.length === 1 && fC.ficha.campos[0].dato === 'Color del equipo' && fC.ficha.campos[0].valor === 'Negro', 'la ficha usa los nombres de la lista configurada e ignora números que no están en ella');
+  const sim64 = await json(await api('/api/simulate', 'POST', { message: 'consulta de reparación de pantalla', from: 'consulta-sim-64' }));
+  verificar(/\(Ficha de la consulta que vería el asesor: tipo: reparación · Marca y modelo del equipo: iPhone 13 Pro Max/.test(sim64.reply) && !/\[CONSULTA\]/.test(sim64.reply), 'en «Probar a Verde» se ve la ficha de la consulta que armaría Verde');
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }

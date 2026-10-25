@@ -76,9 +76,9 @@ const ARTICULOS = [
     id: 'comportamiento', grupo: 'manual', soloAdmin: true, titulo: 'Comportamiento del bot',
     resumen: 'Cómo se configura lo que dice y hace Verde, las reglas fijas y la página de privacidad.',
     bloques: [
-      { tipo: 'p', texto: 'En «Agentes IA › Comportamiento del bot» se configura a Verde sin tocar código: identidad (A), personalidad y tono (B), ventajas (C), pasos de venta (D), objeciones (E), reglas de oro (F), frases clave (G), que incluye las indicaciones para cuando el cliente envía un archivo, parámetros técnicos, como el modelo de inteligencia artificial y el tiempo de espera antes de responder (H), y reclamos y garantía (I): las condiciones que Verde puede informar, los datos que debe juntar y las sugerencias por síntoma. Cada sección se guarda con su botón «Guardar».' },
+      { tipo: 'p', texto: 'En «Agentes IA › Comportamiento del bot» se configura a Verde sin tocar código: identidad (A), personalidad y tono (B), ventajas (C), pasos de venta (D), objeciones (E), reglas de oro (F), frases clave (G), que incluye las indicaciones para cuando el cliente envía un archivo, parámetros técnicos, como el modelo de inteligencia artificial y el tiempo de espera antes de responder (H), reclamos y garantía (I): las condiciones que Verde puede informar, los datos que debe juntar y las sugerencias por síntoma, y fichas de consulta (J): los datos que Verde junta en las consultas de reparación y de compra. Cada sección se guarda con su botón «Guardar».' },
       { tipo: 'h', texto: 'Reglas fijas del sistema' },
-      { tipo: 'p', texto: 'Se aplican siempre, antes que las reglas de oro, y protegen el cumplimiento de las políticas de WhatsApp y de la Ley N.º 18.331. Se pueden editar con cuidado: queda registrado quién las cambió, y el botón «Restaurar las reglas recomendadas» vuelve al texto original. Se recomienda que la línea de presentación de la primera respuesta incluya el enlace a la página de privacidad; si falta, el panel lo avisa. En esa línea, {nombre} y {empresa} se reemplazan por lo configurado en «A · Identidad del bot», y el panel muestra debajo cómo la verá el cliente.' },
+      { tipo: 'p', texto: 'Se aplican siempre, antes que las reglas de oro, y protegen el cumplimiento de las políticas de WhatsApp y de la Ley N.º 18.331. Se pueden editar con cuidado: queda registrado quién las cambió, y el botón «Restaurar las reglas recomendadas» vuelve al texto original. Se recomienda que la línea de presentación de la primera respuesta incluya el enlace a la página de privacidad; si falta, el panel lo avisa. En esa línea, {nombre} y {empresa} se reemplazan por lo configurado en «A · Identidad del bot», y el panel muestra debajo cómo la verá el cliente. En ese mensaje Verde no se presenta por su cuenta: la presentación es esa línea.' },
       { tipo: 'h', texto: 'Tiempo de espera antes de responder' },
       { tipo: 'p', texto: 'En «H · Parámetros técnicos» se define cuántos segundos espera Verde desde el último mensaje del cliente antes de responder. Si el cliente sigue escribiendo, vuelve a contar y responde a todo junto en un solo mensaje. Con 0 responde de inmediato. No se aplica en «Probar a Verde».' },
       { tipo: 'h', texto: 'Otras funciones' },
@@ -117,6 +117,16 @@ const ARTICULOS = [
       { tipo: 'p', texto: 'El chat aparece en «Chats por responder» con la etiqueta «Reclamo de garantía». Dentro del chat, el botón «Ver ficha» abre la ficha del reclamo con todos los datos ordenados, y se puede copiar. La ficha es un resumen de lo que el cliente declaró: la decisión sobre la garantía es del asesor, que revisa las fotos o videos en el chat y cierra el caso.' },
       { tipo: 'p', texto: 'Verde aplica los requisitos indispensables de la tienda: la orden de trabajo (boleta de garantía) con su número, que el reclamo lo gestione quien ingresó el equipo y que esté dentro de los 30 días corridos desde la entrega. Si falta alguno, se lo dice al cliente con claridad y no ofrece alternativas que no estén en las condiciones: igual deja la ficha para el asesor.' },
       { tipo: 'nota', texto: 'Los requisitos indispensables, los plazos y la cobertura que Verde puede informar, los datos que junta y las sugerencias por síntoma se configuran en «Comportamiento del bot › I · Reclamos y garantía» (solo administradores). Vienen precargados con la política de la tienda.' }
+    ]
+  },
+  {
+    id: 'consultas', grupo: 'manual', soloAdmin: false, titulo: 'Fichas de consulta',
+    resumen: 'Qué datos junta Verde en las consultas de reparación y de compra, y qué le llega al asesor.',
+    bloques: [
+      { tipo: 'p', texto: 'Cuando Verde deriva un chat a una persona del equipo por una consulta de reparación o de compra (por ejemplo, porque el cliente pidió un precio), arma la ficha de la consulta con los datos que ya tiene y la va completando mientras sigue conversando. Pregunta de a uno o dos datos por mensaje, no insiste si el cliente no sabe o no quiere responder y nunca da precios.' },
+      { tipo: 'h', texto: 'Qué ve el equipo' },
+      { tipo: 'p', texto: 'El chat aparece en «Chats por responder» con la etiqueta «Consulta de reparación» o «Consulta de compra». Dentro del chat, el botón «Ver ficha» de la franja abre la ficha: cada dato configurado con lo que respondió el cliente, «Sin dato todavía» en lo que falta y la cantidad de archivos recibidos. La ficha se puede copiar. El precio y la decisión son del asesor.' },
+      { tipo: 'nota', texto: 'Los datos que Verde junta para cada tipo de consulta se configuran en «Comportamiento del bot › J · Fichas de consulta» (solo administradores). Si se edita la lista, las fichas ya creadas conservan los nombres con que se armaron.' }
     ]
   },
   {
