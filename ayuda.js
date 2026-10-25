@@ -28,7 +28,7 @@ const ARTICULOS = [
   },
   {
     id: 'conversaciones', grupo: 'manual', soloAdmin: false, titulo: 'Conversaciones y «Devolver a Verde»',
-    resumen: 'Todos los chats, el interruptor de Verde por chat, la pausa de 12 horas y cómo devolverle un chat a Verde.',
+    resumen: 'Todos los chats, el interruptor de Verde por chat, la pausa de 12 horas, cómo devolverle un chat a Verde y los archivos del cliente.',
     bloques: [
       { tipo: 'p', texto: '«Conversaciones» muestra todos los chats que atiende Verde. Se pueden buscar por nombre, número o mensaje, y filtrar por estado: Verde atendiendo, atiende una persona, Verde apagado o por responder.' },
       { tipo: 'h', texto: 'La pausa de 12 horas' },
@@ -41,6 +41,9 @@ const ARTICULOS = [
       { tipo: 'p', texto: 'Si el cliente escribe durante la pausa y nadie le responde en 5 minutos, el chat vuelve a «Chats por responder» y se avisa al equipo.' },
       { tipo: 'h', texto: 'Apagar a Verde en un chat' },
       { tipo: 'p', texto: 'El interruptor «Verde» apaga a Verde en ese chat sin límite de tiempo, hasta que se vuelva a encender. Con Verde apagado rige el mismo resguardo de 5 minutos.' },
+      { tipo: 'h', texto: 'Fotos, audios y documentos del cliente' },
+      { tipo: 'p', texto: 'Los archivos que manda el cliente aparecen en el chat como una tarjeta con el botón «Descargar». Nada se guarda automáticamente: el archivo se baja de WhatsApp recién al tocar «Descargar», y desde ese momento se ve en el panel durante 3 meses. Las fotos se abren en grande al tocarlas; los audios y los videos se reproducen en el chat; los PDF se abren con «Abrir». Cualquier archivo se puede guardar en la computadora.' },
+      { tipo: 'p', texto: 'WhatsApp conserva los archivos alrededor de 7 días: conviene descargarlos antes. Pasado ese plazo puede que ya no estén disponibles, y habría que pedirle al cliente que los reenvíe. Los archivos que llegaron antes de esta función se ven solo en el WhatsApp de la tienda.' },
       { tipo: 'nota', texto: 'Desde el panel solo se puede responder dentro de las 24 horas desde el último mensaje del cliente: es una regla de WhatsApp.' }
     ]
   },

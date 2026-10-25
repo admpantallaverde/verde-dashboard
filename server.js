@@ -28,11 +28,12 @@ const bot = require('./bot.js');
 const consumo = require('./consumo');
 const cumplimiento = require('./cumplimiento');
 const ayuda = require('./ayuda');
+const archivos = require('./archivos');
 const usuarios = require('./usuarios.js');
 const atencion = require('./atencion.js');
 const conversaciones = require('./conversaciones.js');
 
-const VERSION = '1.3.9';
+const VERSION = '1.4.0';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -357,7 +358,7 @@ function interpretar(msg) {
   }
   if (DESCRIPCION_ADJUNTO[tipo]) {
     const leyenda = msg[tipo] && msg[tipo].caption ? ': ' + msg[tipo].caption : '';
-    return { clase: 'adjunto', desc: DESCRIPCION_ADJUNTO[tipo], leyenda };
+    return { clase: 'adjunto', desc: DESCRIPCION_ADJUNTO[tipo], leyenda, archivo: archivos.desdeWebhook(msg) };
   }
   return { clase: 'ignorar', tipo: tipo || 'desconocido' };
 }
@@ -538,7 +539,7 @@ async function manejarEntrante(msg, nombres) {
   const info = interpretar(msg);
   if (info.clase === 'ignorar') { console.log('360 <<', info.tipo, 'de', quien, '→ se ignora'); return; }
   const textoCliente = info.clase === 'adjunto' ? '[El cliente envió ' + info.desc + info.leyenda + ']' : info.texto;
-  conversaciones.registrar({ clave, numero, nombre, destino, tipo: 'cliente', texto: textoCliente });
+  conversaciones.registrar({ clave, numero, nombre, destino, tipo: 'cliente', texto: textoCliente, archivo: info.archivo || null });
 
   const v = bot.getVerde();
   if (v.encendido === false) { console.log('360 << de', quien, '→ Verde apagado, sin respuesta'); return; }
@@ -813,8 +814,38 @@ function conDatosDelPanel(d, req) {
   d.firmaUsuario = req.usuario ? (req.usuario.firma || '') : '';
   d.d360 = d360Configurado();
   d.pendienteId = atencion.pendienteId(d.clave);   // para «Marcar atendido» desde la conversación abierta
+  // 1.4.0: estado de cada archivo recibido (sin descargar, guardado, vencido…), con una sola lectura del índice.
+  const indice = archivos.leerIndice();
+  if (Array.isArray(d.mensajes)) d.mensajes = d.mensajes.map(m => m.archivo ? Object.assign({}, m, { archivo: archivos.estado(m.archivo, indice) }) : m);
   return d;
 }
+/* ---------- Archivos recibidos (1.4.0): se descargan de WhatsApp solo cuando alguien toca «Descargar» ---------- */
+app.post('/api/archivos/:id/descargar', requiere(['admin', 'asesor']), async (req, res) => {
+  try {
+    const id = String(req.params.id || '');
+    const clave = String((req.body && req.body.clave) || '');
+    if (!archivos.idValido(id)) return res.status(400).json({ error: 'El archivo no es válido.' });
+    const d = detalleConversacion(clave);
+    const m = d && (d.mensajes || []).find(x => x.archivo && x.archivo.id === id);
+    if (!m) return res.status(404).json({ error: 'El archivo no existe en esta conversación.' });
+    const r = await archivos.descargar(m.archivo, quienEs(req), { messagesUrl: process.env.D360_MESSAGES_URL, apiKey: process.env.D360_API_KEY });
+    if (r && r.estado === 'guardado') console.log('Archivos: ' + quienEs(req) + ' descargó un archivo de ' + clave);
+    res.json({ ok: r && r.estado === 'guardado', archivo: r });
+  } catch (e) { responderError(res, e); }
+});
+app.get('/api/archivos/:id', requiere(['admin', 'asesor']), (req, res) => {
+  const f = archivos.paraServir(req.params.id);
+  if (!f) return res.status(404).json({ error: 'El archivo no está guardado en el panel.' });
+  const enPanel = f.enPanel && req.query.guardar !== '1';
+  const ascii = f.nombre.replace(/[^\x20-\x7e]/g, '_').replace(/["\\]/g, '_');
+  res.setHeader('Content-Type', f.enPanel ? f.mime : 'application/octet-stream');   // los formatos que no se muestran nunca se interpretan
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.setHeader('Content-Disposition', (enPanel ? 'inline' : 'attachment') + '; filename="' + ascii + '"; filename*=UTF-8\'\'' + encodeURIComponent(f.nombre));
+  if (f.mime !== 'application/pdf') res.setHeader('Content-Security-Policy', "default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'; sandbox");
+  fs.createReadStream(f.ruta).on('error', () => res.end()).pipe(res);
+});
+
 app.get('/api/conversaciones', requiere(['admin', 'asesor']), (req, res) => {
   res.json(conversaciones.lista({ buscar: req.query.buscar, estado: req.query.estado }, contexto()));
 });
@@ -947,6 +978,8 @@ function purgarHistorial() {
     if (n) console.log('Historial: se borraron ' + n + ' chats de más de 3 meses.');
     const m = conversaciones.purgar();
     if (m) console.log('Conversaciones: se borraron ' + m + ' chats sin movimiento hace más de 3 meses.');
+    const f = archivos.limpiar();
+    if (f) console.log('Archivos: se borraron ' + f + ' archivos de más de 3 meses.');
   } catch (e) { console.error('No se pudo limpiar el historial:', e.message); }
 }
 purgarHistorial();

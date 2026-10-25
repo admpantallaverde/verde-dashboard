@@ -79,6 +79,7 @@ function registrar(datos) {
   const m = { en: reloj(), tipo: datos.tipo, texto: corto(datos.texto, 2000) };
   if (datos.autor) m.autor = corto(datos.autor, 80);
   if (datos.origen) m.origen = datos.origen;
+  if (datos.archivo && typeof datos.archivo === 'object') m.archivo = datos.archivo;   // 1.4.0: datos del archivo, sin el archivo
   if (datos.tipo === 'equipo') m.firma = !!datos.firma;
   agregarMensaje(c, m);
   if (datos.tipo === 'cliente') {

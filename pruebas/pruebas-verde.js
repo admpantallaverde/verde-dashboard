@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.3.9';
+const VERSION_ESPERADA = '1.4.0';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -46,6 +46,20 @@ global.fetch = async (url, opts = {}) => {
     contadorIA++;
     return new Response(JSON.stringify({ content: [{ type: 'text', text: 'Respuesta de Verde ' + contadorIA }], stop_reason: 'end_turn', usage: { input_tokens: 1000, output_tokens: 100 } }), { status: 200 });
   }
+  if (url.includes('360dialog.io') && (!opts || !opts.method || String(opts.method).toUpperCase() === 'GET')) {
+    // 1.4.0: descarga de archivos. Sandbox: /v1/media/{id}. Número real: /{id} (dirección) y /whatsapp_business/attachments/ (archivo).
+    pedidosMedia.push(url);
+    const u = new URL(url);
+    let mid, paso = 'archivo';
+    if (u.pathname.startsWith('/v1/media/')) mid = decodeURIComponent(u.pathname.slice(10));
+    else if (u.pathname.startsWith('/whatsapp_business/attachments/')) mid = u.searchParams.get('mid');
+    else { mid = decodeURIComponent(u.pathname.slice(1)); paso = 'info'; }
+    const m = medios360[mid];
+    if (!m || m.vencido) return new Response(JSON.stringify({ error: { message: 'not found' } }), { status: 404 });
+    if (paso === 'info') return new Response(JSON.stringify({ messaging_product: 'whatsapp', url: 'https://lookaside.fbsbx.com/whatsapp_business/attachments/?mid=' + encodeURIComponent(mid) + '&ext=1&hash=x', mime_type: m.mime, file_size: m.tamanoInformado || m.datos.length, id: mid }), { status: 200 });
+    const cuerpo = m.alterado ? Buffer.from('otro contenido') : m.datos;
+    return new Response(cuerpo, { status: 200, headers: { 'Content-Type': m.mime, 'Content-Length': String(cuerpo.length) } });
+  }
   if (url.includes('360dialog.io')) {
     contadorEnvio++;
     envios360.push({ url, headers: opts.headers, body: JSON.parse(opts.body) });
@@ -56,6 +70,7 @@ global.fetch = async (url, opts = {}) => {
 
 process.chdir(__dirname);
 require('./server.js');
+var medios360 = {}, pedidosMedia = [];
 
 const espera = ms => new Promise(r => setTimeout(r, ms));
 let ok = 0, mal = 0;
@@ -391,6 +406,8 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   rr = await api('/api/reglas-fijas', 'PUT', { reglas: ['Una regla cualquiera de prueba.'], linea: 'x' }, galletaCarla);
   rr2 = await api('/api/reglas-fijas/restaurar', 'POST', {}, galletaCarla);
   verificar(rr.status === 403 && rr2.status === 403, 'un asesor no puede editar ni restaurar las reglas fijas');
+  rr = await realFetch(BASE + '/api/archivos/' + 'a'.repeat(24));
+  verificar(rr.status === 401, 'sin sesión no se puede ver ningún archivo');
   rr = await api('/api/ayuda', 'GET', null, galletaCarla);
   const ayC = await json(rr);
   verificar(rr.status === 200 && ayC.rol === 'asesor' && !ayC.articulos.some(a => a.soloAdmin) && ayC.articulos.map(a => a.id).join(',') === 'chats-por-responder,conversaciones,chats-respondidos,apariencia', 'un asesor ve solo los 4 temas para atender los chats');
@@ -886,6 +903,82 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   rr = await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Qué hago si no anda?' });
   modoIA = 'ok';
   verificar(rr.status === 502 && /no está disponible/.test((await json(rr)).error), 'si la IA falla, avisa sin romper el panel');
+
+
+  mostrar('57) Archivos recibidos: se guardan solo al tocar «Descargar»');
+  const cripto57 = require('crypto'), fs57 = require('fs'), path57 = require('path'), arch57 = require('./archivos.js');
+  const huella = (b, f) => cripto57.createHash('sha256').update(b).digest(f || 'hex');
+  const clave57 = 'wa:59873000001';
+  const ultimoArchivo = async () => { const d = await json(await api('/api/conversaciones/' + encodeURIComponent(clave57), 'GET')); return (d.mensajes || []).filter(m => m.archivo).pop().archivo; };
+  const descargar57 = async id => { const r = await api('/api/archivos/' + id + '/descargar', 'POST', { clave: clave57 }); return { status: r.status, j: await json(r) }; };
+  const foto57 = Buffer.from('FOTO-DE-PRUEBA-' + 'x'.repeat(200));
+  medios360['med-foto-1'] = { datos: foto57, mime: 'image/jpeg' };
+  await post360(aviso([{ id: 'ar1', from: '59873000001', type: 'image', image: { id: 'med-foto-1', mime_type: 'image/jpeg', sha256: huella(foto57), caption: 'Así quedó la pantalla' } }]));
+  await espera(500);
+  let a57 = await ultimoArchivo();
+  verificar(a57 && a57.estado === 'pendiente' && a57.tipo === 'image' && a57.leyenda === 'Así quedó la pantalla' && a57.limite > Date.now() + 6 * 86400000, 'al llegar una foto se registran sus datos y el plazo para descargarla');
+  verificar(!a57.mediaId && !a57.sha256, 'el panel no recibe el identificador de WhatsApp ni la huella');
+  verificar(pedidosMedia.length === 0 && !fs57.existsSync(path57.join(__dirname, 'data', 'archivos')), 'ningún archivo se descarga ni se guarda automáticamente');
+  let r57 = await descargar57(a57.id);
+  verificar(r57.status === 200 && r57.j.ok && r57.j.archivo.estado === 'guardado' && r57.j.archivo.tamano === foto57.length && r57.j.archivo.enPanel, 'al tocar «Descargar», el archivo se baja de WhatsApp, se verifica y se guarda');
+  verificar(pedidosMedia.includes('https://waba-sandbox.360dialog.io/v1/media/med-foto-1'), 'en modo de prueba usa la descarga directa de 360dialog');
+  rr = await realFetch(BASE + '/api/archivos/' + a57.id);
+  const buf57 = Buffer.from(await rr.arrayBuffer());
+  verificar(rr.status === 200 && rr.headers.get('content-type') === 'image/jpeg' && /^inline/.test(rr.headers.get('content-disposition')) && rr.headers.get('x-content-type-options') === 'nosniff' && buf57.equals(foto57), 'la foto se ve en el panel tal cual llegó');
+  rr = await realFetch(BASE + '/api/archivos/' + a57.id + '?guardar=1');
+  verificar(/^attachment; filename="imagen-\d{4}-\d{2}-\d{2}\.jpg"/.test(rr.headers.get('content-disposition')), '«Guardar en la computadora» la entrega como descarga, con un nombre claro');
+  const pedidosAntes = pedidosMedia.length;
+  r57 = await descargar57(a57.id);
+  verificar(r57.status === 200 && pedidosMedia.length === pedidosAntes, 'si ya estaba guardado, no se vuelve a pedir a WhatsApp');
+  verificar((await ultimoArchivo()).estado === 'guardado', 'la conversación muestra el archivo como guardado');
+
+  const urlPrevia57 = process.env.D360_MESSAGES_URL;
+  process.env.D360_MESSAGES_URL = 'https://waba-v2.360dialog.io/messages';
+  medios360['med-pdf-1'] = { datos: Buffer.from('%PDF-1.4 presupuesto de prueba'), mime: 'application/pdf' };
+  await post360(aviso([{ id: 'ar2', from: '59873000001', type: 'document', document: { id: 'med-pdf-1', mime_type: 'application/pdf', filename: '../../presupuesto.pdf' } }]));
+  await espera(400);
+  const p57 = await ultimoArchivo();
+  verificar(p57.nombre === 'presupuesto.pdf', 'el nombre del documento se limpia (sin rutas de carpetas)');
+  r57 = await descargar57(p57.id);
+  verificar(r57.j.archivo.estado === 'guardado' && pedidosMedia.includes('https://waba-v2.360dialog.io/med-pdf-1') && pedidosMedia.some(u => u.startsWith('https://waba-v2.360dialog.io/whatsapp_business/attachments/?mid=med-pdf-1')), 'con el número real usa los dos pasos de la documentación de 360dialog');
+  rr = await realFetch(BASE + '/api/archivos/' + p57.id);
+  verificar(rr.headers.get('content-type') === 'application/pdf' && /filename="presupuesto\.pdf"/.test(rr.headers.get('content-disposition')) && !rr.headers.get('content-security-policy'), 'el PDF se abre en el navegador con su nombre');
+  medios360['med-html-1'] = { datos: Buffer.from('<script>alert(1)</script>'), mime: 'text/html' };
+  await post360(aviso([{ id: 'ar3', from: '59873000001', type: 'document', document: { id: 'med-html-1', mime_type: 'text/html', filename: 'pagina.html' } }]));
+  await espera(400);
+  const h57 = await ultimoArchivo();
+  verificar(h57.enPanel === false, 'un formato que el navegador podría ejecutar no se ofrece para ver en el panel');
+  await descargar57(h57.id);
+  rr = await realFetch(BASE + '/api/archivos/' + h57.id);
+  verificar(rr.headers.get('content-type') === 'application/octet-stream' && /^attachment/.test(rr.headers.get('content-disposition')), 'y se entrega solo para guardar, nunca para abrir');
+  medios360['med-alt-1'] = { datos: Buffer.from('original'), mime: 'image/png', alterado: true };
+  await post360(aviso([{ id: 'ar4', from: '59873000001', type: 'image', image: { id: 'med-alt-1', mime_type: 'image/png', sha256: huella(Buffer.from('original'), 'base64') } }]));
+  await espera(400);
+  const x57 = await ultimoArchivo();
+  r57 = await descargar57(x57.id);
+  verificar(r57.status === 502 && /huella de control/.test(r57.j.error) && (await ultimoArchivo()).estado === 'pendiente', 'un archivo alterado no se guarda');
+  process.env.VERDE_ARCHIVO_MAX_MB = '1';
+  medios360['med-grande-1'] = { datos: Buffer.alloc(10), mime: 'video/mp4', tamanoInformado: 5 * 1024 * 1024 };
+  await post360(aviso([{ id: 'ar5', from: '59873000001', type: 'video', video: { id: 'med-grande-1', mime_type: 'video/mp4' } }]));
+  await espera(400);
+  r57 = await descargar57((await ultimoArchivo()).id);
+  verificar(r57.status === 200 && r57.j.archivo.estado === 'grande' && /supera 1 MB/.test(r57.j.archivo.error), 'respeta el tamaño máximo por archivo');
+  delete process.env.VERDE_ARCHIVO_MAX_MB;
+  medios360['med-venc-1'] = { vencido: true };
+  await post360(aviso([{ id: 'ar6', from: '59873000001', type: 'audio', audio: { id: 'med-venc-1', mime_type: 'audio/ogg' } }]));
+  await espera(400);
+  r57 = await descargar57((await ultimoArchivo()).id);
+  verificar(r57.j.archivo.estado === 'vencido', 'si WhatsApp ya lo eliminó, queda marcado como no disponible');
+  medios360['med-par-1'] = { datos: Buffer.from('paralelo'), mime: 'image/jpeg' };
+  await post360(aviso([{ id: 'ar7', from: '59873000001', type: 'image', image: { id: 'med-par-1', mime_type: 'image/jpeg' } }]));
+  await espera(400);
+  const par57 = await ultimoArchivo();
+  const antesPar = pedidosMedia.length;
+  await Promise.all([descargar57(par57.id), descargar57(par57.id)]);
+  verificar(pedidosMedia.length - antesPar === 2, 'si dos personas tocan «Descargar» a la vez, se descarga una sola vez');
+  process.env.D360_MESSAGES_URL = urlPrevia57;
+  verificar(arch57.estado({ id: 'a'.repeat(24), tipo: 'image', mime: 'image/jpeg', recibido: Date.now() - 8 * 86400000 }).estado === 'antiguo', 'pasados 7 días sin descargar, el archivo se marca como posiblemente eliminado');
+  verificar(arch57.limpiar(Date.now() + 91 * 86400000) >= 1 && !arch57.paraServir(a57.id), 'a los 3 meses los archivos guardados se borran solos');
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }

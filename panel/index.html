@@ -1273,6 +1273,49 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 /* Reglas fijas: aviso cuando la presentación no incluye el enlace a la privacidad */
 #vFijasAviso{margin-top:8px}
 
+/* ===================== 1.4.0: Archivos recibidos ===================== */
+:root{--arch-prim:#008069;--arch-prim-tx:#ffffff;--arch-fondo:rgba(11,20,26,.04);--arch-sub:#667781}
+:root[data-tema="oscuro"]{--arch-prim:#00a884;--arch-prim-tx:#0b141a;--arch-fondo:rgba(255,255,255,.05);--arch-sub:#8696a0}
+.burbuja.con-archivo{max-width:min(380px,88%)}
+.arch{display:flex;flex-direction:column;gap:8px;min-width:0;padding-top:2px}
+.arch-tarj{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;background:var(--arch-fondo);border:1px solid var(--wa-borde)}
+.arch-ic{flex:none;width:38px;height:38px;border-radius:8px;background:color-mix(in srgb,var(--arch-prim) 14%,transparent);color:var(--arch-prim);display:inline-flex;align-items:center;justify-content:center}
+.arch-ic svg{width:18px;height:18px}
+.arch-tt{display:flex;flex-direction:column;min-width:0}
+.arch-tt b{font-size:13.5px;font-weight:600;color:var(--wa-texto);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.arch-tt span{font-size:12px;color:var(--arch-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.arch-nota{font-size:12px;line-height:1.45;color:var(--arch-sub)}
+.arch-nota.error{color:var(--wa-roja-tx)}
+.arch-acc{display:flex;gap:8px;flex-wrap:wrap}
+.arch-btn{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;box-sizing:border-box;border-radius:8px;border:1px solid var(--wa-borde);background:var(--wa-panel);color:var(--wa-texto);font:inherit;font-size:13px;font-weight:600;text-decoration:none;cursor:pointer}
+.arch-btn:hover{background:var(--wa-hover)}
+.arch-btn.prim{background:var(--arch-prim);border-color:var(--arch-prim);color:var(--arch-prim-tx)}
+.arch-btn.prim:hover{filter:brightness(1.06)}
+.arch-btn:focus-visible,.arch-foto:focus-visible{outline:2px solid var(--arch-prim);outline-offset:2px}
+.arch-btn svg{width:15px;height:15px;flex:none}
+.arch-prog{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--arch-sub)}
+.arch-giro{width:14px;height:14px;border-radius:50%;border:2px solid var(--wa-borde);border-top-color:var(--arch-prim);animation:archGiro .8s linear infinite}
+@keyframes archGiro{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.arch-giro{animation:none}}
+.arch-foto{display:block;padding:0;border:none;background:none;cursor:zoom-in;border-radius:6px;overflow:hidden;max-width:100%}
+.arch-foto img{display:block;max-width:100%;max-height:300px;object-fit:cover;border-radius:6px}
+.arch audio{width:min(300px,100%)}
+.arch video{max-width:100%;max-height:300px;border-radius:6px;background:#000}
+/* Visor de imagen */
+.visor{position:fixed;inset:0;z-index:120;background:rgba(11,20,26,.97);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:flex;flex-direction:column;color:#e9edef}
+.visor.oculto{display:none}
+.visor-cab{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px}
+.visor-cab b{display:block;font-size:14.5px}
+.visor-cab span{font-size:12px;color:#8696a0}
+.visor-acc{display:flex;gap:10px;flex:none}
+.visor-btn{display:inline-flex;align-items:center;gap:6px;min-height:40px;min-width:40px;justify-content:center;padding:0 14px;box-sizing:border-box;border-radius:10px;border:none;background:#2a3942;color:#e9edef;font:inherit;font-size:13px;font-weight:600;text-decoration:none;cursor:pointer}
+.visor-btn:hover{background:#374248}
+.visor-btn:focus-visible{outline:2px solid #00a884;outline-offset:2px}
+.visor-btn svg{width:16px;height:16px}
+.visor-img{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;padding:0 20px 24px}
+.visor-img img{max-width:100%;max-height:100%;object-fit:contain;border-radius:4px}
+@media(max-width:600px){.visor-cab{padding:12px}.visor-btn .vb-tx{display:none}.visor-img{padding:0 8px 12px}}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -1942,6 +1985,10 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
   </main>
 </div>
 
+<div class="visor oculto" id="visorImg" role="dialog" aria-modal="true" aria-labelledby="visorTit" onclick="if(event.target===this)cerrarVisor()">
+  <div class="visor-cab"><div><b id="visorTit">Imagen</b><span id="visorSub"></span></div><div class="visor-acc"><a class="visor-btn" id="visorGuardar" href="#" download><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span class="vb-tx">Guardar en la computadora</span></a><button type="button" class="visor-btn" id="visorCerrar" onclick="cerrarVisor()" aria-label="Cerrar el visor"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div></div>
+  <div class="visor-img" onclick="if(event.target===this)cerrarVisor()"><img id="visorFoto" alt=""></div>
+</div>
 <div class="toasts" id="toasts"></div>
 
 <!-- ===== 1.3.1: VENTANAS NUEVAS ===== -->
@@ -4751,7 +4798,7 @@ function cerrarConversacion(){
 }
 function marcarDesdeConversacion(){const id=document.getElementById('convMarcar').dataset.id;if(id)abrirAtendido(id);}
 // Escape cierra la conversación abierta (si no hay una ventana encima).
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&CONV.clave&&!document.querySelector('.overlay.show'))cerrarConversacion();},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&CONV.clave&&!document.querySelector('.overlay.show')&&document.getElementById('visorImg').classList.contains('oculto')&&document.getElementById('cuentaMenu').classList.contains('oculto'))cerrarConversacion();},true);
 async function refrescarConversacion(primera){
   const clave=CONV.clave;if(!clave)return;
   const r=await api('/api/conversaciones/'+encodeURIComponent(clave));
@@ -4933,7 +4980,7 @@ function renderMensajes(ms){
     const hora='<span class="hora">'+escH(horaSola(m.en))+'</span>';
     if(m.tipo==='sistema')return sep+'<div class="linea-sis">'+escH(horaSola(m.en))+' · '+escH(m.texto)+'</div>';
     const adj=parsearAdjunto(m.texto);
-    if(m.tipo==='cliente')return sep+'<div class="burbuja cli">'+(adj?htmlAdjuntoBurbuja(adj,true):'<span class="txt">'+formatoWa(m.texto)+'</span>')+hora+'</div>';
+    if(m.tipo==='cliente')return sep+'<div class="burbuja cli'+(m.archivo?' con-archivo':'')+'">'+(m.archivo?htmlArchivo(m.archivo):adj?htmlAdjuntoBurbuja(adj,true):'<span class="txt">'+formatoWa(m.texto)+'</span>')+hora+'</div>';
     if(m.tipo==='verde')return sep+'<div class="burbuja ver"><span class="quien">Verde</span><span class="txt">'+formatoWa(m.texto)+'</span>'+hora+'</div>';
     const quien=(m.autor?m.autor+' (equipo)':'Equipo')+(m.origen==='panel'?' · desde el panel':(m.firma?'':' · sin firma'));
     return sep+'<div class="burbuja equ"><span class="quien">'+escH(quien)+'</span>'+(adj?htmlAdjuntoBurbuja(adj,false):'<span class="txt">'+formatoWa(m.texto)+'</span>')+hora+'</div>';
@@ -4994,7 +5041,8 @@ function pintarConversacion(c,primera){
   const ms=c.mensajes||[];
   const ultimo=ms.length?ms[ms.length-1].en:0;
   const cambio=primera||!anterior||(anterior.mensajes||[]).length!==ms.length||((anterior.mensajes||[]).slice(-1)[0]||{}).en!==ultimo;
-  if(cambio){
+  if(cambio&&!primera&&mediaSonando())CONV.repintar=true;
+  else if(cambio){
     const cerca=box.scrollHeight-box.scrollTop-box.clientHeight<80;
     box.innerHTML=renderMensajes(ms);
     if(primera||cerca)box.scrollTop=box.scrollHeight;
@@ -5412,5 +5460,94 @@ function revisarEnlaceFijas(){
   document.getElementById('vFijasAvisoTx').textContent='La línea no incluye el enlace '+FIJAS.enlace+'. Se puede guardar igual, pero sin el enlace la presentación pierde su valor frente a la ley de protección de datos: conviene volver a agregarlo.';
 }
 pintarTema();
+
+
+/* ===================== 1.4.0: Archivos recibidos ===================== */
+// Ningún archivo se guarda solo: se descarga de WhatsApp cuando alguien toca «Descargar».
+const ARCH={estado:{},error:{}};
+const IC140={
+  image:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
+  audio:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>',
+  video:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>',
+  document:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+  bajar:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+  abrir:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>',
+  cerrar:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+};
+const _fmtFecha140=new Intl.DateTimeFormat('es-UY',{timeZone:'America/Montevideo',day:'2-digit',month:'2-digit',year:'numeric'});
+function fechaArchivo(ms){return _fmtFecha140.format(new Date(ms));}
+function tamanoTexto(b){return b<1048576?Math.max(1,Math.round(b/1024))+' KB':(b/1048576).toLocaleString('es-UY',{maximumFractionDigits:1})+' MB';}
+function tipoDocumento(m){
+  return ({'application/pdf':'Documento PDF','application/msword':'Documento de Word','application/vnd.openxmlformats-officedocument.wordprocessingml.document':'Documento de Word','application/vnd.ms-excel':'Planilla de Excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':'Planilla de Excel','application/vnd.ms-powerpoint':'Presentación','application/vnd.openxmlformats-officedocument.presentationml.presentation':'Presentación','text/plain':'Archivo de texto'})[m]||'Documento';
+}
+function tarjetaArchivo(a){
+  const titulo=a.tipo==='document'?(a.nombre||'Documento'):({image:'Imagen',audio:'Audio',video:'Video'}[a.tipo]||'Archivo');
+  const sub=a.tipo==='document'?tipoDocumento(a.mime)+(a.tamano?' · '+tamanoTexto(a.tamano):''):(a.leyenda?'«'+a.leyenda+'»':(a.tamano?tamanoTexto(a.tamano):'Sin comentario'));
+  return '<div class="arch-tarj"><span class="arch-ic">'+(IC140[a.tipo]||IC140.document)+'</span><span class="arch-tt"><b>'+escH(titulo)+'</b><span>'+escH(sub)+'</span></span></div>';
+}
+function htmlArchivo(a){
+  const id=a.id,url='/api/archivos/'+encodeURIComponent(id);
+  const guardar='<a class="arch-btn" href="'+url+'?guardar=1" download>'+IC140.bajar+'Guardar en la computadora</a>';
+  const leyenda=a.leyenda&&a.tipo!=='document'?'<span class="txt">'+escH(a.leyenda)+'</span>':'';
+  const est=ARCH.estado[id]||a.estado;
+  if(est==='descargando')return '<div class="arch">'+tarjetaArchivo(a)+'<span class="arch-prog" role="status"><span class="arch-giro" aria-hidden="true"></span>Descargando desde WhatsApp…</span></div>';
+  if(est==='guardado'){
+    if(a.enPanel&&a.tipo==='image')return '<div class="arch"><button type="button" class="arch-foto" onclick="verImagen(\''+id+'\')" aria-label="Ver la imagen en grande"><img src="'+url+'" alt="Imagen enviada por el cliente" loading="lazy"></button>'+leyenda+'<div class="arch-acc">'+guardar+'</div></div>';
+    if(a.enPanel&&a.tipo==='audio')return '<div class="arch"><audio controls preload="metadata" src="'+url+'" aria-label="Audio enviado por el cliente"></audio>'+leyenda+'<div class="arch-acc">'+guardar+'</div></div>';
+    if(a.enPanel&&a.tipo==='video')return '<div class="arch"><video controls preload="metadata" src="'+url+'" aria-label="Video enviado por el cliente"></video>'+leyenda+'<div class="arch-acc">'+guardar+'</div></div>';
+    const abrir=a.enPanel&&a.mime==='application/pdf'?'<a class="arch-btn" href="'+url+'" target="_blank" rel="noopener">'+IC140.abrir+'Abrir</a>':'';
+    const nota=a.enPanel?'':'<span class="arch-nota">Este formato no se abre dentro del panel: guardarlo en la computadora para verlo.</span>';
+    return '<div class="arch">'+tarjetaArchivo(a)+leyenda+nota+'<div class="arch-acc">'+abrir+guardar+'</div></div>';
+  }
+  if(est==='vencido')return '<div class="arch">'+tarjetaArchivo(a)+'<span class="arch-nota">Ya no está disponible en WhatsApp. Se puede pedir al cliente que lo reenvíe.</span></div>';
+  if(est==='grande')return '<div class="arch">'+tarjetaArchivo(a)+'<span class="arch-nota">'+escH(a.error||'El archivo supera el tamaño máximo: verlo en el WhatsApp de la tienda.')+'</span></div>';
+  const err=ARCH.error[id];
+  const nota=err?'<span class="arch-nota error" role="alert">'+escH(err)+'</span>'
+    :est==='antiguo'?'<span class="arch-nota">Pasaron más de 7 días: puede que WhatsApp ya lo haya eliminado.</span>'
+    :'<span class="arch-nota">Descargar antes del '+escH(fechaArchivo(a.limite))+': después WhatsApp elimina el archivo.</span>';
+  const txt=err?'Intentar de nuevo':(est==='antiguo'?'Intentar descargar':'Descargar');
+  return '<div class="arch">'+tarjetaArchivo(a)+nota+'<div class="arch-acc"><button type="button" class="arch-btn prim" onclick="descargarArchivo(\''+id+'\')">'+IC140.bajar+escH(txt)+'</button></div></div>';
+}
+// Si hay un audio o un video sonando, el chat no se vuelve a dibujar hasta que termine o se pause.
+function mediaSonando(){return [...document.querySelectorAll('#convMensajes audio,#convMensajes video')].some(m=>!m.paused&&!m.ended);}
+function repintarMensajes(){
+  const box=document.getElementById('convMensajes');if(!box||!CONV.datos)return;
+  const cerca=box.scrollHeight-box.scrollTop-box.clientHeight<80,pos=box.scrollTop;
+  box.innerHTML=renderMensajes(CONV.datos.mensajes||[]);
+  box.scrollTop=cerca?box.scrollHeight:pos;
+  CONV.repintar=false;
+}
+['pause','ended'].forEach(ev=>document.addEventListener(ev,e=>{if(CONV.repintar&&e.target&&e.target.closest&&e.target.closest('#convMensajes'))repintarMensajes();},true));
+async function descargarArchivo(id){
+  if(ARCH.estado[id]==='descargando'||!CONV.clave)return;
+  ARCH.estado[id]='descargando';delete ARCH.error[id];repintarMensajes();
+  const r=await api('/api/archivos/'+encodeURIComponent(id)+'/descargar',{method:'POST',body:{clave:CONV.clave}});
+  delete ARCH.estado[id];
+  if(r.ok&&r.json.archivo){
+    const m=((CONV.datos&&CONV.datos.mensajes)||[]).find(x=>x.archivo&&x.archivo.id===id);
+    if(m)m.archivo=r.json.archivo;
+    if(!r.json.ok&&!['vencido','grande'].includes(r.json.archivo.estado))ARCH.error[id]=r.json.archivo.error||'No se pudo descargar el archivo.';
+  }else ARCH.error[id]=r.json.error||'No se pudo descargar el archivo. Intentar de nuevo en unos minutos.';
+  repintarMensajes();
+}
+// Visor de imagen
+let _focoVisor=null;
+function verImagen(id){
+  const m=((CONV.datos&&CONV.datos.mensajes)||[]).find(x=>x.archivo&&x.archivo.id===id);if(!m)return;
+  const a=m.archivo,c=CONV.datos,url='/api/archivos/'+encodeURIComponent(id);
+  document.getElementById('visorTit').textContent='Imagen de '+(c.nombre||(c.numero?'+'+c.numero:'cliente sin número visible'));
+  document.getElementById('visorSub').textContent='Recibida el '+fechaHoraTexto(a.recibido||m.en)+(a.leyenda?' · «'+a.leyenda+'»':'');
+  const img=document.getElementById('visorFoto');img.src=url;img.alt=a.leyenda?'Imagen: '+a.leyenda:'Imagen enviada por el cliente';
+  document.getElementById('visorGuardar').href=url+'?guardar=1';
+  _focoVisor=document.activeElement;
+  document.getElementById('visorImg').classList.remove('oculto');
+  document.getElementById('visorCerrar').focus();
+}
+function cerrarVisor(){
+  const v=document.getElementById('visorImg');if(v.classList.contains('oculto'))return;
+  v.classList.add('oculto');document.getElementById('visorFoto').removeAttribute('src');
+  if(_focoVisor&&_focoVisor.focus)_focoVisor.focus();
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('visorImg').classList.contains('oculto'))cerrarVisor();});
 
 </script>
