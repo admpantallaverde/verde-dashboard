@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.4.0';
+const VERSION_ESPERADA = '1.4.1';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -916,12 +916,18 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   await post360(aviso([{ id: 'ar1', from: '59873000001', type: 'image', image: { id: 'med-foto-1', mime_type: 'image/jpeg', sha256: huella(foto57), caption: 'Así quedó la pantalla' } }]));
   await espera(500);
   let a57 = await ultimoArchivo();
-  verificar(a57 && a57.estado === 'pendiente' && a57.tipo === 'image' && a57.leyenda === 'Así quedó la pantalla' && a57.limite > Date.now() + 6 * 86400000, 'al llegar una foto se registran sus datos y el plazo para descargarla');
+  verificar(a57 && a57.estado === 'sandbox' && a57.tipo === 'image' && a57.leyenda === 'Así quedó la pantalla', 'en el modo de prueba (sandbox) la tarjeta avisa que el archivo se ve en el celular');
   verificar(!a57.mediaId && !a57.sha256, 'el panel no recibe el identificador de WhatsApp ni la huella');
   verificar(pedidosMedia.length === 0 && !fs57.existsSync(path57.join(__dirname, 'data', 'archivos')), 'ningún archivo se descarga ni se guarda automáticamente');
   let r57 = await descargar57(a57.id);
+  verificar(r57.status === 200 && !r57.j.ok && r57.j.archivo.estado === 'sandbox' && pedidosMedia.length === 0, 'en el modo de prueba no se hace ningún pedido a 360dialog (no lo permite)');
+  const urlPrevia57 = process.env.D360_MESSAGES_URL;
+  process.env.D360_MESSAGES_URL = 'https://waba-v2.360dialog.io/messages';
+  a57 = await ultimoArchivo();
+  verificar(a57.estado === 'pendiente' && a57.limite > Date.now() + 6 * 86400000, 'con el número real, la misma tarjeta ofrece «Descargar» con el plazo');
+  r57 = await descargar57(a57.id);
   verificar(r57.status === 200 && r57.j.ok && r57.j.archivo.estado === 'guardado' && r57.j.archivo.tamano === foto57.length && r57.j.archivo.enPanel, 'al tocar «Descargar», el archivo se baja de WhatsApp, se verifica y se guarda');
-  verificar(pedidosMedia.includes('https://waba-sandbox.360dialog.io/v1/media/med-foto-1'), 'en modo de prueba usa la descarga directa de 360dialog');
+  verificar(pedidosMedia.includes('https://waba-v2.360dialog.io/med-foto-1') && pedidosMedia.some(u => u.startsWith('https://waba-v2.360dialog.io/whatsapp_business/attachments/?mid=med-foto-1')), 'usa los dos pasos de la documentación de 360dialog (dirección y descarga)');
   rr = await realFetch(BASE + '/api/archivos/' + a57.id);
   const buf57 = Buffer.from(await rr.arrayBuffer());
   verificar(rr.status === 200 && rr.headers.get('content-type') === 'image/jpeg' && /^inline/.test(rr.headers.get('content-disposition')) && rr.headers.get('x-content-type-options') === 'nosniff' && buf57.equals(foto57), 'la foto se ve en el panel tal cual llegó');
@@ -932,8 +938,6 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(r57.status === 200 && pedidosMedia.length === pedidosAntes, 'si ya estaba guardado, no se vuelve a pedir a WhatsApp');
   verificar((await ultimoArchivo()).estado === 'guardado', 'la conversación muestra el archivo como guardado');
 
-  const urlPrevia57 = process.env.D360_MESSAGES_URL;
-  process.env.D360_MESSAGES_URL = 'https://waba-v2.360dialog.io/messages';
   medios360['med-pdf-1'] = { datos: Buffer.from('%PDF-1.4 presupuesto de prueba'), mime: 'application/pdf' };
   await post360(aviso([{ id: 'ar2', from: '59873000001', type: 'document', document: { id: 'med-pdf-1', mime_type: 'application/pdf', filename: '../../presupuesto.pdf' } }]));
   await espera(400);
@@ -969,6 +973,20 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   await espera(400);
   r57 = await descargar57((await ultimoArchivo()).id);
   verificar(r57.j.archivo.estado === 'vencido', 'si WhatsApp ya lo eliminó, queda marcado como no disponible');
+  for (const k of [2, 3, 4]) {
+    medios360['med-venc-' + k] = { vencido: true };
+    await post360(aviso([{ id: 'arv' + k, from: '59873000001', type: 'audio', audio: { id: 'med-venc-' + k, mime_type: 'audio/ogg' } }]));
+    await espera(300);
+    await descargar57((await ultimoArchivo()).id);
+  }
+  medios360['med-frena-1'] = { datos: Buffer.from('x'), mime: 'image/jpeg' };
+  await post360(aviso([{ id: 'arf1', from: '59873000001', type: 'image', image: { id: 'med-frena-1', mime_type: 'image/jpeg' } }]));
+  await espera(300);
+  const fr57 = await ultimoArchivo(), antesFreno = pedidosMedia.length;
+  r57 = await descargar57(fr57.id);
+  verificar(fr57.estado === 'frenado' && r57.j.archivo.estado === 'frenado' && r57.j.archivo.hasta > Date.now() + 50 * 60000 && pedidosMedia.length === antesFreno, 'después de 4 pedidos rechazados en una hora, el sistema frena solo para evitar el bloqueo de 360dialog');
+  arch57._reiniciarFreno();
+  verificar((await ultimoArchivo()).estado === 'pendiente', 'pasada la hora, la tarjeta vuelve a ofrecer «Descargar»');
   medios360['med-par-1'] = { datos: Buffer.from('paralelo'), mime: 'image/jpeg' };
   await post360(aviso([{ id: 'ar7', from: '59873000001', type: 'image', image: { id: 'med-par-1', mime_type: 'image/jpeg' } }]));
   await espera(400);

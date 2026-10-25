@@ -33,7 +33,7 @@ const usuarios = require('./usuarios.js');
 const atencion = require('./atencion.js');
 const conversaciones = require('./conversaciones.js');
 
-const VERSION = '1.4.0';
+const VERSION = '1.4.1';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -816,7 +816,8 @@ function conDatosDelPanel(d, req) {
   d.pendienteId = atencion.pendienteId(d.clave);   // para «Marcar atendido» desde la conversación abierta
   // 1.4.0: estado de cada archivo recibido (sin descargar, guardado, vencido…), con una sola lectura del índice.
   const indice = archivos.leerIndice();
-  if (Array.isArray(d.mensajes)) d.mensajes = d.mensajes.map(m => m.archivo ? Object.assign({}, m, { archivo: archivos.estado(m.archivo, indice) }) : m);
+  const ctxArchivos = { sandbox: archivos.esSandbox(process.env.D360_MESSAGES_URL) };
+  if (Array.isArray(d.mensajes)) d.mensajes = d.mensajes.map(m => m.archivo ? Object.assign({}, m, { archivo: archivos.estado(m.archivo, indice, ctxArchivos) }) : m);
   return d;
 }
 /* ---------- Archivos recibidos (1.4.0): se descargan de WhatsApp solo cuando alguien toca «Descargar» ---------- */

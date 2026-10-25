@@ -5499,6 +5499,8 @@ function htmlArchivo(a){
     const nota=a.enPanel?'':'<span class="arch-nota">Este formato no se abre dentro del panel: guardarlo en la computadora para verlo.</span>';
     return '<div class="arch">'+tarjetaArchivo(a)+leyenda+nota+'<div class="arch-acc">'+abrir+guardar+'</div></div>';
   }
+  if(est==='sandbox')return '<div class="arch">'+tarjetaArchivo(a)+'<span class="arch-nota">En el modo de prueba de 360dialog los archivos no se pueden descargar: se ven en el WhatsApp del celular. Con el número real, se descargan desde el panel.</span></div>';
+  if(est==='frenado')return '<div class="arch">'+tarjetaArchivo(a)+'<span class="arch-nota">WhatsApp rechazó varios pedidos de archivos en la última hora. Para evitar un bloqueo, se puede volver a intentar a las '+escH(horaSola(a.hasta))+'.</span></div>';
   if(est==='vencido')return '<div class="arch">'+tarjetaArchivo(a)+'<span class="arch-nota">Ya no está disponible en WhatsApp. Se puede pedir al cliente que lo reenvíe.</span></div>';
   if(est==='grande')return '<div class="arch">'+tarjetaArchivo(a)+'<span class="arch-nota">'+escH(a.error||'El archivo supera el tamaño máximo: verlo en el WhatsApp de la tienda.')+'</span></div>';
   const err=ARCH.error[id];
@@ -5526,7 +5528,7 @@ async function descargarArchivo(id){
   if(r.ok&&r.json.archivo){
     const m=((CONV.datos&&CONV.datos.mensajes)||[]).find(x=>x.archivo&&x.archivo.id===id);
     if(m)m.archivo=r.json.archivo;
-    if(!r.json.ok&&!['vencido','grande'].includes(r.json.archivo.estado))ARCH.error[id]=r.json.archivo.error||'No se pudo descargar el archivo.';
+    if(!r.json.ok&&!['vencido','grande','sandbox','frenado'].includes(r.json.archivo.estado))ARCH.error[id]=r.json.archivo.error||'No se pudo descargar el archivo.';
   }else ARCH.error[id]=r.json.error||'No se pudo descargar el archivo. Intentar de nuevo en unos minutos.';
   repintarMensajes();
 }

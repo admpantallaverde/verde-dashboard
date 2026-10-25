@@ -9,6 +9,10 @@
  * Seguridad: cada archivo se guarda con un nombre aleatorio (nunca con el nombre que puso el cliente), se comprueba
  * la huella de control que informa WhatsApp, se respeta un tamaño máximo, y solo se muestran dentro del panel los
  * formatos que el navegador no ejecuta; el resto se ofrece únicamente para guardar.
+ *
+ * 1.4.1: el modo de prueba (sandbox) de 360dialog no permite descargar archivos (lo indica su documentación), así
+ * que en ese modo no se hace ningún pedido. Y como 360dialog bloquea por una hora la descarga si hay más de 5
+ * pedidos rechazados en una hora, el sistema se frena solo después de 4 rechazos.
  */
 const fs = require('fs');
 const path = require('path');
@@ -32,6 +36,16 @@ const EXTENSIONES = {
 // Formatos que se muestran dentro del panel. Cualquier otro se entrega solo para guardar en la computadora.
 const EN_PANEL = new Set(['image/jpeg', 'image/png', 'image/webp', 'audio/ogg', 'audio/mpeg', 'audio/mp4', 'audio/aac', 'video/mp4', 'video/3gpp', 'application/pdf']);
 const NOMBRE_TIPO = { image: 'imagen', audio: 'audio', video: 'video', document: 'documento' };
+const FALLOS_MAX = 4;                       // 360dialog bloquea una hora a partir del 6.º rechazo en una hora
+const VENTANA_FALLOS = 3600000;
+let fallos = [];                            // momentos de los pedidos rechazados en la última hora
+function frenoHasta(ahora) {
+  ahora = ahora || Date.now();
+  fallos = fallos.filter(t => t > ahora - VENTANA_FALLOS);
+  return fallos.length >= FALLOS_MAX ? fallos[0] + VENTANA_FALLOS : null;
+}
+function anotarFallo() { fallos.push(Date.now()); }
+function esSandbox(url) { try { return /(^|\.)waba-sandbox\./i.test(new URL(url).host); } catch (e) { return false; } }
 
 function error(msg, codigo) { const e = new Error(msg); e.publico = true; e.codigo = codigo || 400; return e; }
 function maxMB() { const mb = Number(process.env.VERDE_ARCHIVO_MAX_MB); return mb > 0 ? mb : 25; }
@@ -72,13 +86,17 @@ function guardarIndice(d) {
 function rutaDe(info) { return info && info.archivo ? path.join(DIR, path.basename(info.archivo)) : null; }
 
 // Estado de un archivo para el panel. «indice» permite resolver muchos mensajes con una sola lectura.
-function estado(a, indice) {
+// «contexto.sandbox»: la conexión es el modo de prueba de 360dialog, que no permite descargar archivos.
+function estado(a, indice, contexto) {
   if (!a || !idValido(a.id)) return null;
   const i = (indice || leerIndice())[a.id];
   const base = { id: a.id, tipo: a.tipo, mime: a.mime, nombre: a.nombre, leyenda: a.leyenda, recibido: a.recibido, limite: a.recibido + DISPONIBLE_MS, enPanel: EN_PANEL.has(a.mime) };
   if (i && i.guardado && fs.existsSync(rutaDe(i))) return Object.assign(base, { estado: 'guardado', mime: i.mime, enPanel: EN_PANEL.has(i.mime), tamano: i.tamano, guardadoPor: i.por || '' });
+  if (contexto && contexto.sandbox) return Object.assign(base, { estado: 'sandbox' });
   if (i && i.vencido) return Object.assign(base, { estado: 'vencido' });
   if (i && i.grande) return Object.assign(base, { estado: 'grande', error: i.error });
+  const freno = frenoHasta();
+  if (freno) return Object.assign(base, { estado: 'frenado', hasta: freno });
   if (i && i.error) base.error = i.error;
   return Object.assign(base, { estado: Date.now() > base.limite ? 'antiguo' : 'pendiente' });
 }
@@ -113,20 +131,20 @@ async function descargarAhora(a, quien, conexion) {
   const previo = leerIndice()[a.id];
   if (previo && previo.guardado && fs.existsSync(rutaDe(previo))) return estado(a);
   if (!conexion.messagesUrl || !conexion.apiKey) throw error('La conexión con WhatsApp no está configurada.');
-  const direccion = new URL(conexion.messagesUrl);
-  const origen = direccion.origin;
-  const nube = !/\/v1\/messages\/?$/.test(direccion.pathname);   // Cloud API (número real) o API anterior (sandbox)
+  if (esSandbox(conexion.messagesUrl)) return estado(a, null, { sandbox: true });   // el sandbox no entrega archivos
+  if (frenoHasta()) return estado(a);   // freno de seguridad activo: no se hace ningún pedido
+  const origen = new URL(conexion.messagesUrl).origin;
   const cab = { 'D360-API-KEY': conexion.apiKey };
   const tope = maxMB() * 1024 * 1024;
   const grande = () => { anotar(a, { grande: true, error: 'El archivo supera ' + maxMB() + ' MB: verlo en el WhatsApp de la tienda.' }); return estado(a); };
   const vencido = () => { anotar(a, { vencido: Date.now() }); return estado(a); };
   let resp, mime = a.mime, huella = a.sha256;
   try {
-    if (nube) {
-      // Paso 1: pedir la dirección del archivo con su identificador. Paso 2: descargarlo desde 360dialog.
+    {
+      // Cloud API. Paso 1: pedir la dirección del archivo con su identificador. Paso 2: descargarlo desde 360dialog.
       const r1 = await pedir(origen + '/' + encodeURIComponent(a.mediaId), { headers: cab });
-      if ([400, 404, 410].includes(r1.status)) return vencido();
-      if (!r1.ok) throw error('WhatsApp no entregó el archivo (código ' + r1.status + '). Intentar de nuevo en unos minutos.', 502);
+      if ([400, 404, 410].includes(r1.status)) { anotarFallo(); return vencido(); }   // 400: no reintentar (documentación)
+      if (!r1.ok) { anotarFallo(); throw error('WhatsApp no entregó el archivo (código ' + r1.status + '). Intentar de nuevo en unos minutos.', 502); }
       const info = await r1.json().catch(() => null);
       if (!info || !info.url) throw error('WhatsApp no informó la dirección del archivo. Intentar de nuevo en unos minutos.', 502);
       if (Number(info.file_size) > tope) return grande();
@@ -134,15 +152,13 @@ async function descargarAhora(a, quien, conexion) {
       if (info.sha256) huella = String(info.sha256);
       const u = new URL(info.url);   // se reemplaza el servidor de Facebook por el de 360dialog, como indica su documentación
       resp = await pedir(origen + u.pathname + u.search, { headers: cab });
-    } else {
-      resp = await pedir(origen + '/v1/media/' + encodeURIComponent(a.mediaId), { headers: cab });
     }
   } catch (e) {
     if (e.publico) throw e;
     throw error('No se pudo conectar con WhatsApp para descargar el archivo. Intentar de nuevo en unos minutos.', 502);
   }
-  if ([404, 410].includes(resp.status)) return vencido();
-  if (!resp.ok) throw error('WhatsApp no entregó el archivo (código ' + resp.status + '). Intentar de nuevo en unos minutos.', 502);
+  if ([404, 410].includes(resp.status)) { anotarFallo(); return vencido(); }
+  if (!resp.ok) { anotarFallo(); throw error('WhatsApp no entregó el archivo (código ' + resp.status + '). Intentar de nuevo en unos minutos.', 502); }
   if (Number(resp.headers.get('content-length')) > tope) return grande();
   const buf = Buffer.from(await resp.arrayBuffer());
   if (!buf.length) throw error('WhatsApp entregó el archivo vacío. Intentar de nuevo en unos minutos.', 502);
@@ -187,4 +203,5 @@ function limpiar(ahora) {
   return borrados;
 }
 
-module.exports = { desdeWebhook, leerIndice, estado, descargar, paraServir, limpiar, idValido, maxMB, DISPONIBLE_MS, RETENCION_MS, EN_PANEL };
+module.exports = { desdeWebhook, leerIndice, estado, descargar, paraServir, limpiar, idValido, maxMB, esSandbox, frenoHasta, DISPONIBLE_MS, RETENCION_MS, EN_PANEL,
+  _anotarFallo: anotarFallo, _reiniciarFreno: () => { fallos = []; } };
