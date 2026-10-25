@@ -12,6 +12,7 @@
 
 const fs = require('fs');
 const consumo = require('./consumo');
+const cumplimiento = require('./cumplimiento');
 const path = require('path');
 
 const DATA_DIR = path.join(__dirname, 'data');
@@ -60,7 +61,9 @@ function getVerde() {
 }
 
 /* ---------- armar el system prompt desde la configuración ---------- */
-function buildSystemPrompt(v) {
+// Prompt completo: la configuración del panel más las reglas fijas del sistema (1.3.7), siempre al final.
+function buildSystemPrompt(v) { return buildSystemPromptBase(v) + cumplimiento.bloquePrompt(); }
+function buildSystemPromptBase(v) {
   v = v || {};
   const trato = { vos: 'Tratá al cliente de "vos" (rioplatense)', 'tú': 'Tratá al cliente de "tú"', usted: 'Tratá al cliente de "usted" (formal)' }[v.trato || 'vos'];
   const emojis = { nada: 'No uses emojis.', moderado: 'Usá emojis con moderación.', abundante: 'Usá emojis de forma abundante.' }[v.emojis || 'moderado'];
@@ -451,10 +454,17 @@ async function responderUltima(from, opciones) {
   return { texto: reply, derivar: sep.derivar, error: false };
 }
 
+// ¿Verde ya le respondió algo a este cliente? (se usa para la presentación en el simulador)
+function tieneRespuestas(from) {
+  const h = loadConversations()[String(from)];
+  return Array.isArray(h) && h.some(m => m.role === 'assistant');
+}
+
 // Modelo que usa Verde hoy (con los reemplazos de modelos retirados ya aplicados).
 function modeloEnUso() { return resolverModelo(getVerde()); }
 
 module.exports = {
+  tieneRespuestas,
   modeloEnUso,
   responderPendiente,
   buildSystemPrompt, getReply, getVerde, callClaude, findProducts, productBlock, resetConversation,

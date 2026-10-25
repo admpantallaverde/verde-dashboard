@@ -1127,6 +1127,29 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
   .cons-costo b{min-width:0;white-space:nowrap}
 }
 
+/* ===================== 1.3.7: Cumplimiento ===================== */
+.fijas-head{background:var(--surface-2);border-radius:14px 14px 0 0}
+.fijas-tag{font-family:inherit;font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:2px 8px;border-radius:20px;background:var(--surface-3);color:var(--muted)}
+.fijas-cuerpo{padding:6px 20px 16px}
+.fijas-lista{list-style:none;margin:0;padding:0}
+.fijas-lista li{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border-soft);font-size:13.5px;color:var(--text)}
+.fijas-num{flex:none;width:22px;height:22px;border-radius:6px;background:var(--surface-3);color:var(--muted);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.fijas-pres{margin-top:14px;display:flex;flex-direction:column;gap:8px;font-size:12.5px;color:var(--muted)}
+.fijas-pres b{font-size:13.5px;color:var(--text)}
+.fijas-pres blockquote{margin:0;border-left:3px solid var(--green);background:var(--surface-2);border-radius:0 8px 8px 0;padding:10px 14px;font-size:13.5px;font-style:italic;color:var(--text)}
+.priv-campos{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:4px 18px;padding:16px 20px 0}
+.priv-pie{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:0 20px 16px;font-size:12.5px}
+.priv-pie a{color:var(--accent-text);font-weight:600}
+#vPriv .cons-err{padding:0 20px 14px;margin-top:0}
+.av-plantilla{display:grid;grid-template-columns:minmax(0,1fr) 210px;gap:12px}
+.av-aviso{display:flex;gap:8px;align-items:flex-start;margin-top:14px;padding:10px 12px;border-radius:10px;background:var(--wa-ambar-bg);color:var(--wa-ambar-tx);font-size:12.5px}
+.av-aviso svg{width:16px;height:16px;flex:none;margin-top:2px}
+.av-tabla{width:100%;min-width:480px}
+.av-sugerido{margin:0 20px 18px;padding:12px 14px;border-radius:10px;background:var(--surface-2);border:1px dashed var(--border);font-size:13.5px;color:var(--text)}
+.av-estado .note{margin:12px 20px 16px}
+.burbuja em{font-style:italic}
+@media(max-width:600px){.av-plantilla{grid-template-columns:1fr}.av-tabla{min-width:0}.av-sugerido{margin:0 14px 14px}}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -1380,7 +1403,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
         <div class="panel-head">
           <div>
             <h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg> Probar respuesta del chatbot</h3>
-            <p>Escribí lo que preguntaría un cliente y mirá qué recurso enviaría el bot.</p>
+            <p>Escribir lo que preguntaría un cliente para ver qué recurso enviaría el bot.</p>
           </div>
         </div>
         <div style="padding:16px 20px">
@@ -1436,14 +1459,14 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 
       <div class="panel" style="margin-bottom:20px">
         <div class="panel-head">
-          <div><h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" style="vertical-align:-3px"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> Probar a Verde</h3><p>Escribile como si fueras un cliente y mirá cómo responde con tu configuración actual.</p></div>
+          <div><h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" style="vertical-align:-3px"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> Probar a Verde</h3><p>Escribir como si fuera un cliente para ver cómo responde Verde con la configuración actual.</p></div>
           <button class="btn btn-ghost" type="button" onclick="simReset()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6"/></svg> Reiniciar charla</button>
         </div>
         <div style="padding:16px 20px">
           <div id="v_simHint" class="note" style="margin-bottom:14px;display:none"></div>
           <div id="v_simChat" class="sim-chat"></div>
           <div class="sim-input">
-            <input type="text" id="v_simInput" placeholder="Escribí un mensaje de cliente…" onkeydown="if(event.key==='Enter')simSend()">
+            <input type="text" id="v_simInput" placeholder="Escribir un mensaje de cliente…" onkeydown="if(event.key==='Enter')simSend()">
             <button class="btn btn-primary" type="button" id="v_simSend" onclick="simSend()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg> Enviar</button>
           </div>
         </div>
@@ -1476,7 +1499,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
             </div>
             <div style="padding:16px 20px" class="campos-grid">
               <div class="field campo-ancho">
-                <label>Rasgos de personalidad <span class="faint" style="font-weight:400">(escribí y Enter para agregar)</span></label>
+                <label>Rasgos de personalidad <span class="faint" style="font-weight:400">(escribir y presionar Enter para agregar)</span></label>
                 <div class="tagbox" id="v_rasgosBox" onclick="document.getElementById('v_rasgosInput').focus()">
                   <span id="v_rasgosChips"></span>
                   <input type="text" id="v_rasgosInput" placeholder="agregar rasgo…" onkeydown="rasgoKey(event)">
@@ -1507,7 +1530,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
           <!-- Sección D: Pasos de venta -->
           <div class="panel">
             <div class="panel-head">
-              <div><h3><span class="sec-let">D</span> Pasos del proceso de venta</h3><p>El orden importa. Arrastrá para reordenar; apagá los que no quieras.</p></div>
+              <div><h3><span class="sec-let">D</span> Pasos del proceso de venta</h3><p>El orden importa. Arrastrar para reordenar y apagar los pasos que no se usen.</p></div>
               <button class="btn btn-primary" onclick="saveVerde('pasos')">Guardar</button>
             </div>
             <div style="padding:14px 20px">
@@ -1526,6 +1549,24 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
               <div id="v_objList"></div>
               <button class="btn btn-ghost" type="button" onclick="addObj()" style="margin-top:10px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg> Agregar objeción</button>
             </div>
+          </div>
+
+          <!-- 1.3.7: Reglas fijas del sistema (no editables) -->
+          <div class="panel" id="vFijas">
+            <div class="panel-head fijas-head"><div><h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Reglas fijas del sistema <span class="fijas-tag">No editable</span></h3><p>Se aplican siempre, antes que las reglas de oro. Las define el sistema para cumplir las políticas de WhatsApp y la Ley N.º 18.331 de protección de datos personales.</p></div></div>
+            <div class="fijas-cuerpo"><ol class="fijas-lista" id="vFijasLista"></ol>
+              <div class="fijas-pres"><b>Presentación en la primera respuesta</b><span>En la primera respuesta de cada conversación, Verde agrega siempre esta línea al final:</span><blockquote id="vFijasLinea"></blockquote><span class="faint">Se considera primera respuesta cuando el cliente no tiene mensajes anteriores en los últimos 3 meses.</span></div>
+            </div>
+          </div>
+          <!-- 1.3.7: Datos de la página pública de privacidad -->
+          <div class="panel" id="vPriv">
+            <div class="panel-head"><div><h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Página de privacidad</h3><p>Datos de la página pública que Verde enlaza en su presentación.</p></div><button class="btn btn-primary" type="button" id="privGuardar" onclick="guardarPrivacidad()">Guardar</button></div>
+            <div class="priv-campos">
+              <div class="field"><label for="privCorreo">Correo de contacto para temas de privacidad</label><input type="text" inputmode="email" autocomplete="email" spellcheck="false" id="privCorreo" maxlength="120" placeholder="por ejemplo: privacidad@pantallaverde.com"></div>
+              <div class="field"><label for="privUrcdp">N.º de inscripción en la URCDP <span class="faint" style="font-weight:400">(completar cuando la base esté inscripta)</span></label><input type="text" id="privUrcdp" maxlength="40" placeholder="Sin inscripción por ahora"></div>
+            </div>
+            <div class="priv-pie"><span class="faint" id="privFecha">Última actualización de la página: —</span><a href="/privacidad" target="_blank" rel="noopener" id="privVer">Ver página pública</a></div>
+            <div class="cons-err" id="privErr" role="alert"></div>
           </div>
 
           <!-- Sección F: Reglas de oro -->
@@ -1669,25 +1710,32 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
             <div class="field"><label for="avNuevo">Agregar un número</label>
               <div style="display:flex;gap:8px;flex-wrap:wrap"><input type="tel" inputmode="tel" id="avNuevo" placeholder="+598 9X XXX XXX" style="flex:1 1 200px" onkeydown="if(event.key==='Enter')agregarNumeroAviso()"><button class="btn btn-ghost" type="button" onclick="agregarNumeroAviso()">Agregar</button></div>
             </div>
-            <div class="field" style="margin-bottom:0"><label for="avPlantilla">Nombre de la plantilla aprobada en Meta <span class="faint" style="font-weight:400">(se completa al conectar el número real)</span></label>
-              <input type="text" id="avPlantilla" placeholder="por ejemplo: chat_por_responder">
+            <div class="av-plantilla">
+              <div class="field" style="margin-bottom:0"><label for="avPlantilla">Nombre de la plantilla aprobada en Meta <span class="faint" style="font-weight:400">(se completa al conectar el número real)</span></label><input type="text" id="avPlantilla" placeholder="por ejemplo: chat_por_responder"></div>
+              <div class="field" style="margin-bottom:0"><label for="avIdioma">Idioma</label><select id="avIdioma"><option value="es">Español (es)</option><option value="es_AR">Español de Argentina (es_AR)</option><option value="es_ES">Español de España (es_ES)</option><option value="es_MX">Español de México (es_MX)</option></select></div>
             </div>
+            <div class="av-aviso oculto" id="avSinPlantilla"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>La plantilla todavía no está configurada. Hasta que se apruebe en Meta, los avisos solo llegan a los celulares con la ventana de 24 horas abierta.</span></div>
           </div>
           <div>
             <div class="field" style="margin-bottom:6px"><label>Vista previa del aviso</label></div>
             <div style="background:#efeae2;border:1px solid #e9edef;border-radius:12px;padding:16px">
               <div style="max-width:380px;background:#fff;color:#111b21;border-radius:0 10px 10px 10px;padding:9px 12px 7px;font-size:13.5px;line-height:1.45;display:flex;flex-direction:column;gap:2px;box-shadow:0 1px 1px rgba(11,20,26,.13)">
-                <span style="font-size:12px;font-weight:600;color:#008069">Pantalla Verde</span>
-                <span style="font-weight:700">Chat por responder</span>
-                <span>Cliente: Nombre del cliente (+598 9X XXX XXX)</span>
-                <span>Pidió: «Mensaje del cliente»</span>
-                <span>Responder desde el WhatsApp de la tienda.</span>
+                <span>Pantalla Verde: hay un chat por responder de <b>Nombre del cliente (+598 9X XXX XXX)</b>. Motivo: <b>Verde lo derivó a una persona del equipo</b>. Se puede atender desde el panel.</span>
               </div>
             </div>
-            <p class="faint" style="margin-top:8px">El texto del aviso se registra en Meta como plantilla, un requisito para poder enviarlo a un celular que no escribió al número de la tienda en las últimas 24 horas.</p>
+            <p class="faint" style="margin-top:8px">El aviso no incluye el contenido del mensaje del cliente, para proteger su privacidad. Para enviarlo a un celular que no escribió al número de la tienda en las últimas 24 horas, WhatsApp exige una plantilla aprobada por Meta.</p>
           </div>
         </div>
         <div class="drawer-foot" style="border-radius:0 0 14px 14px"><button class="btn btn-ghost" type="button" onclick="go('chats')">Cancelar</button><button class="btn btn-primary" type="button" onclick="guardarAvisosPanel()">Guardar</button></div>
+      </div>
+      <div class="panel av-estado">
+        <div class="panel-head"><div><h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Estado de cada número</h3><p>Cómo sale el próximo aviso a cada celular.</p></div></div>
+        <div id="avEstados"></div>
+        <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>La ventana se abre cuando el celular le escribe al número de la tienda. Un mensaje como «inicio de turno» al empezar el día permite recibir avisos durante 24 horas, sin costo adicional.</span></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div><h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Texto sugerido para la plantilla</h3><p>Se crea en WhatsApp Manager al conectar el número real. Categoría: Utilidad · Idioma: Español · Nombre: chat_por_responder.</p></div><button class="btn btn-ghost" type="button" id="avCopiar" onclick="copiarPlantilla()"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiar texto</button></div>
+        <div class="av-sugerido" id="avTextoPlantilla">Pantalla Verde: hay un chat por responder de {{1}}. Motivo: {{2}}. Se puede atender desde el panel.</div>
       </div>
     </div>
 
@@ -2301,7 +2349,7 @@ function toggleParent(){
 }
 function go(view){
   if(currentView==='verde' && view!=='verde' && verdeHasUnsaved()){
-    askConfirm({title:'Cambios sin guardar',message:'Tenés cambios en el comportamiento de Verde que todavía no guardaste. Si salís ahora, se pierden. ¿Querés salir igual?',okLabel:'Salir sin guardar',icon:'warn'},()=>_doGo(view));
+    askConfirm({title:'Cambios sin guardar',message:'Hay cambios en el comportamiento de Verde que todavía no se guardaron. Si se sale ahora, se pierden. ¿Salir igual?',okLabel:'Salir sin guardar',icon:'warn'},()=>_doGo(view));
     return;
   }
   _doGo(view);
@@ -2319,7 +2367,7 @@ function _doGo(view){
     rastreador:['Rastreador Web','Extrae productos, precios y disponibilidad de sitios web hacia la base de conocimientos.'],
     multimedia:['Multimedia','Fotos, imágenes, PDF, notas de voz, audios y videos que el chatbot reconoce para poder responder sobre ellos.'],
     recursos:['Recursos enviables','PDF, imágenes, enlaces o textos que el chatbot reconoce y envía al cliente cuando pregunta por temas clave.'],
-    verde:['Comportamiento del bot','Editá la personalidad, los pasos de venta, las objeciones y las reglas de Verde sin tocar código.'],
+    verde:['Comportamiento del bot','Permite editar la personalidad, los pasos de venta, las objeciones y las reglas de Verde sin tocar código.'],
     chats:['Chats por responder','Clientes que Verde derivó a un asesor. Mientras esperan, Verde no les responde.','<b>Atención</b> › Chats por responder'],
     respondidos:['Chats respondidos','Historial de los chats que Verde derivó y cómo se atendió cada uno, para supervisar la atención.','<b>Atención</b> › Chats respondidos'],
     avisos:['Avisos a celulares del equipo','Cada vez que un chat entra a «Chats por responder», estos números reciben un aviso por WhatsApp. Verde nunca les responde como a un cliente.','<b>Atención</b> › <b>Chats por responder</b> › Avisos'],
@@ -2327,7 +2375,7 @@ function _doGo(view){
     usuarios:['Usuarios','Personas que pueden entrar al panel. Cada acción queda registrada con su usuario.','<b>Sistema</b> › Usuarios'],
     consumo:['Consumo de IA','Costo estimado de las consultas a la IA de Verde. Solo lo ven los administradores.','<b>Sistema</b> › Consumo de IA']
   }[view];
-  if(view==='verde')renderVerde();
+  if(view==='verde'){renderVerde();cargarCumplimiento();}
   document.getElementById('viewTitle').textContent=meta[0];
   document.getElementById('viewSub').textContent=meta[1];
   const crumb=document.getElementById('crumb');
@@ -2506,7 +2554,7 @@ function renderCrawler(){
         <button class="ico-btn danger" style="width:24px;height:24px;margin-left:auto" title="Borrar objetivo" onclick="event.stopPropagation();delTarget('${t.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></h5>
         <div class="u">${esc(t.url)}</div>
         <div class="chips-line">${t.fields.map(f=>`<span class="minichip">${esc(f)}</span>`).join('')}</div>
-        <div class="st" ${isEmpty?'style="color:var(--amber)"':''}>${isEmpty?'Sin resultados · tocá Re-ejecutar':`${c} productos · ${t.lastRun?ago(t.lastRun):'sin rastrear'}`}</div>`;
+        <div class="st" ${isEmpty?'style="color:var(--amber)"':''}>${isEmpty?'Sin resultados · usar «Re-ejecutar»':`${c} productos · ${t.lastRun?ago(t.lastRun):'sin rastrear'}`}</div>`;
       w.appendChild(el);
     });
   }
@@ -2591,14 +2639,14 @@ function onFile(input){
   const ext=(f.name.split('.').pop()||'').toLowerCase();
   if(!['xlsx','xls','csv'].includes(ext)){
     invalidFile=true;fb.classList.add('error');detail.classList.add('err');
-    detail.textContent='Formato no admitido. Usá .xlsx, .xls o .csv';
+    detail.textContent='Formato no admitido. Usar .xlsx, .xls o .csv.';
     toast('Archivo no admitido','El formato .'+ext+' no es válido para una fuente.','error');
     return;
   }
   if(f.size>8*1048576){
     invalidFile=true;fb.classList.add('error');detail.classList.add('err');
     detail.textContent='El archivo supera el límite de 8 MB en esta demo.';
-    toast('Archivo demasiado grande','Probá con un archivo de menos de 8 MB.','error');
+    toast('Archivo demasiado grande','Usar un archivo de menos de 8 MB.','error');
     return;
   }
   if(!document.getElementById('srcName').value)document.getElementById('srcName').value=f.name.replace(/\.[^.]+$/,'');
@@ -2648,8 +2696,8 @@ function saveSource(){
   if(srcMode==='excel'){
     const n=document.getElementById('srcName').value.trim();
     if(!n){showErr('srcErr','Ponle un nombre a la fuente.');flashField('srcName');return;}
-    if(invalidFile){showErr('srcErr','El archivo tiene un problema. Subí un Excel/CSV válido.');return;}
-    if(!parsedFile){showErr('srcErr','Subí un archivo Excel o CSV antes de guardar.');return;}
+    if(invalidFile){showErr('srcErr','El archivo tiene un problema. Subir un Excel o CSV válido.');return;}
+    if(!parsedFile){showErr('srcErr','Subir un archivo Excel o CSV antes de guardar.');return;}
     DB.sources.unshift({id:uid(),name:n,type:'excel',
       rows:parsedFile.rows,cols:parsedFile.cols,size:parsedFile.size,
       preview:parsedFile.preview,
@@ -2659,7 +2707,7 @@ function saveSource(){
     const n=document.getElementById('sheetName').value.trim();
     const u=document.getElementById('sheetUrl').value.trim();
     if(!n){showErr('srcErr','Ponle un nombre a la fuente.');flashField('sheetName');return;}
-    if(!u){showErr('srcErr','Pegá la URL de la hoja de Google Sheets.');flashField('sheetUrl');return;}
+    if(!u){showErr('srcErr','Pegar la URL de la hoja de Google Sheets.');flashField('sheetUrl');return;}
     if(!isSheetUrl(u)){showErr('srcErr','Esa URL no parece de Google Sheets. Debe contener docs.google.com/spreadsheets.');flashField('sheetUrl');return;}
     DB.sources.unshift({id:uid(),name:n,type:'sheets',url:u,rows:0,cols:0,created:now(),updated:now(),status:'sync'});
     persist();close_('srcOverlay');toast('Hoja conectada',n+' · sincronizando…','success');
@@ -2671,9 +2719,9 @@ function resync(id){
   const s=DB.sources.find(x=>x.id===id);if(!s)return;
   // Google Sheets puede fallar el acceso (simulado). Excel siempre re-sincroniza ok.
   if(s.type==='sheets' && s.status!=='error' && Math.random()<0.28){
-    s.status='error';s.errorMsg='No se pudo acceder a la hoja (simulado). Verificá los permisos de acceso por enlace.';
+    s.status='error';s.errorMsg='No se pudo acceder a la hoja (simulado). Verificar los permisos de acceso por enlace.';
     s.updated=now();persist();
-    toast('No se pudo sincronizar',s.name+': la hoja no respondió. Tocá Reintentar.','error');
+    toast('No se pudo sincronizar',s.name+': la hoja no respondió. Usar «Reintentar».','error');
     return;
   }
   s.status=s.type==='sheets'?'sync':'ok';s.errorMsg=null;s.updated=now();persist();
@@ -2827,10 +2875,10 @@ function runCrawl(){
   const name=document.getElementById('crName').value.trim();
   const url=document.getElementById('crUrl').value.trim();
   if(!name){showErr('crErr','Ponle un nombre al objetivo.');flashField('crName');return;}
-  if(!url){showErr('crErr','Indicá la URL a rastrear.');flashField('crUrl');return;}
+  if(!url){showErr('crErr','Indicar la URL a rastrear.');flashField('crUrl');return;}
   if(!isHttpUrl(url)){showErr('crErr','La URL no es válida. Debe empezar con http:// o https://');flashField('crUrl');return;}
   const fields=[...document.querySelectorAll('#crFields .check.on')].map(c=>c.dataset.f);
-  if(!fields.length){showErr('crErr','Elegí al menos un dato para extraer.');return;}
+  if(!fields.length){showErr('crErr','Elegir al menos un dato para extraer.');return;}
 
   document.getElementById('crawlFoot').style.display='none';
   const anim=document.getElementById('crawlAnim');anim.classList.add('show');anim.classList.remove('error');
@@ -2845,7 +2893,7 @@ function runCrawl(){
     if(outcome==='fail'&&i===1){
       anim.classList.add('error');bar.style.width='45%';
       msg.textContent='No se pudo conectar con el sitio (simulado).';
-      showErr('crErr','El sitio no respondió o bloqueó el acceso. Revisá la URL e intentá de nuevo.');
+      showErr('crErr','El sitio no respondió o bloqueó el acceso. Revisar la URL e intentar de nuevo.');
       document.getElementById('crawlFoot').style.display='flex';
       anim.classList.remove('show');
       toast('Rastreo fallido',name+': no se pudo conectar.','error');
@@ -2857,7 +2905,7 @@ function runCrawl(){
       if(outcome==='empty'){
         tg.status='empty';tg.note='Sin resultados en el último rastreo';
         DB.targets.unshift(tg);activeTarget=tg.id;persist();renderCrawler();close_('crawlOverlay');
-        toast('Sin resultados',name+': no se encontraron productos. Probá otra URL.','info');
+        toast('Sin resultados',name+': no se encontraron productos. Probar con otra URL.','info');
       }else{
         const n=Math.floor(Math.random()*6)+5;
         DB.products=[...genProducts(tg.id,n,name),...DB.products];
@@ -2884,7 +2932,7 @@ function delTarget(id){
   });
 }
 function rerun(){
-  if(!DB.targets.length){toast('Nada para re-ejecutar','Primero creá un objetivo de rastreo.','info');return;}
+  if(!DB.targets.length){toast('Nada para re-ejecutar','Primero crear un objetivo de rastreo.','info');return;}
   const targets=activeTarget==='all'?DB.targets:DB.targets.filter(t=>t.id===activeTarget);
   let totalNew=0;
   targets.forEach(t=>{
@@ -2939,12 +2987,12 @@ function onMediaFile(input){
   if(f.size>25*1048576){
     mediaInvalid=true;fb.classList.add('error');det.classList.add('err');
     det.textContent='El archivo supera el límite de 25 MB en esta demo.';
-    toast('Archivo demasiado grande','Probá con uno de menos de 25 MB.','error');return;
+    toast('Archivo demasiado grande','Usar uno de menos de 25 MB.','error');return;
   }
   let t=detectType(f);
   if(!t){
     mediaInvalid=true;fb.classList.add('error');det.classList.add('err');
-    det.textContent='Tipo no admitido. Usá imagen, PDF, audio o video.';
+    det.textContent='Tipo no admitido. Usar imagen, PDF, audio o video.';
     toast('Tipo no admitido','Ese formato no se puede analizar.','error');return;
   }
   mediaFile={name:f.name,size:fmtBytes(f.size)};mediaType=t;
@@ -2991,8 +3039,8 @@ function pickType(k){mediaType=k;document.querySelectorAll('#mediaTypePick .tpic
   const det=document.getElementById('mediaFileDetail');det.textContent=MTYPES[k].label+' · '+(mediaFile?mediaFile.size:'')+(mediaDur?' · '+mediaDur:'');}
 function saveMedia(){
   hideErr('mediaErr');
-  if(!mediaFile){showErr('mediaErr','Subí un archivo para analizar.');return;}
-  if(mediaInvalid){showErr('mediaErr','El archivo tiene un problema. Probá con otro.');return;}
+  if(!mediaFile){showErr('mediaErr','Subir un archivo para analizar.');return;}
+  if(mediaInvalid){showErr('mediaErr','El archivo tiene un problema. Probar con otro.');return;}
   const item={id:uid(),name:mediaFile.name,type:mediaType,size:mediaFile.size,thumb:mediaThumb||null,dur:mediaDur||null,
     pages:mediaType==='pdf'?(Math.floor(Math.random()*8)+2):null,
     created:now(),status:'processing',rec:null,summary:'',tags:[],instructions:'',confidence:null,verified:false};
@@ -3008,7 +3056,7 @@ function analyzeMedia(id){
       it.status='error';it.confidence=null;
       it.errorMsg='No se pudo analizar el archivo. Puede estar dañado o en un formato no legible.';
       persist();
-      toast('No se pudo analizar',it.name+': tocá Reintentar para volver a procesarlo.','error');
+      toast('No se pudo analizar',it.name+': usar «Reintentar» para volver a procesarlo.','error');
       return;
     }
     const pool=REC_SAMPLES[it.type]||REC_SAMPLES.image;
@@ -3028,7 +3076,7 @@ function retryMedia(id){
   // en el reintento, alta probabilidad de éxito
   setTimeout(()=>{
     const it=DB.media.find(x=>x.id===id);if(!it)return;
-    if(Math.random()<0.06){it.status='error';it.errorMsg='Sigue sin poder analizarse. Probá con otro archivo o formato.';persist();toast('No se pudo analizar',it.name,'error');return;}
+    if(Math.random()<0.06){it.status='error';it.errorMsg='Sigue sin poder analizarse. Probar con otro archivo o formato.';persist();toast('No se pudo analizar',it.name,'error');return;}
     const pool=REC_SAMPLES[it.type]||REC_SAMPLES.image;
     it.rec=pool[Math.floor(Math.random()*pool.length)];
     it.confidence=Math.floor(Math.random()*30)+68;it.status='ready';it.errorMsg=null;persist();
@@ -3263,7 +3311,7 @@ function onResFile(input){
   if(!okPdf&&!okImg){
     document.getElementById('resFilePrompt').innerHTML='<b>Haz clic para subir</b> '+(resType==='image'?'la imagen':'el PDF');
     document.getElementById('resFileInput').value='';
-    showErr('resErr',resType==='image'?'Ese archivo no es una imagen. Elegí un .jpg, .png, etc.':'Ese archivo no es un PDF. Elegí un archivo .pdf.');
+    showErr('resErr',resType==='image'?'Ese archivo no es una imagen. Elegir un .jpg, .png, etc.':'Ese archivo no es un PDF. Elegir un archivo .pdf.');
     return;
   }
   if(f.size>15*1048576){
@@ -3279,14 +3327,14 @@ function addResItem(){
   hideErr('resErr');
   if(resType==='link'){
     const u=document.getElementById('resUrl').value.trim();
-    if(!u||!/^https?:\/\/.+/i.test(u)){showErr('resErr','Pegá un enlace válido (http/https) para agregarlo.');return;}
+    if(!u||!/^https?:\/\/.+/i.test(u)){showErr('resErr','Pegar un enlace válido (http o https) para agregarlo.');return;}
     resItems.push({type:'link',url:u});document.getElementById('resUrl').value='';
   }else if(resType==='text'){
     const tx=document.getElementById('resText').value.trim();
-    if(!tx){showErr('resErr','Escribí el texto antes de agregarlo.');return;}
+    if(!tx){showErr('resErr','Escribir el texto antes de agregarlo.');return;}
     resItems.push({type:'text',text:tx});document.getElementById('resText').value='';
   }else{ // pdf/image
-    if(!resPendingFile){showErr('resErr','Elegí el archivo '+(resType==='image'?'de imagen':'PDF')+' antes de agregarlo.');return;}
+    if(!resPendingFile){showErr('resErr','Elegir el archivo '+(resType==='image'?'de imagen':'PDF')+' antes de agregarlo.');return;}
     resItems.push(resPendingFile);resPendingFile=null;
     document.getElementById('resFilePrompt').innerHTML='<b>Haz clic para subir</b> '+(resType==='image'?'otra imagen':'otro PDF');
     document.getElementById('resFileInput').value='';
@@ -3319,9 +3367,9 @@ function saveRes(){
   hideErr('resErr');
   const name=document.getElementById('resName').value.trim();
   if(!name){showErr('resErr','Ponle un nombre al recurso.');flashField('resName');return;}
-  if(!resItems.length){showErr('resErr','Agregá al menos un elemento (archivo, enlace o texto) a la lista.');return;}
+  if(!resItems.length){showErr('resErr','Agregar al menos un elemento (archivo, enlace o texto) a la lista.');return;}
   const triggers=document.getElementById('resTriggers').value.split(',').map(t=>t.trim()).filter(Boolean);
-  if(!triggers.length){showErr('resErr','Agregá al menos un disparador (qué dice el cliente).');flashField('resTriggers');return;}
+  if(!triggers.length){showErr('resErr','Agregar al menos un disparador (lo que dice el cliente).');flashField('resTriggers');return;}
   const base={
     name,category:document.getElementById('resCatSel').value,
     items:resItems.map(it=>Object.assign({},it)),
@@ -3385,7 +3433,7 @@ function openResView(id){
 function runResTest(){
   const q=norm((document.getElementById('resTest').value||'').trim());
   const out=document.getElementById('resTestOut');
-  if(!q){out.innerHTML='<div class="nomatch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>Escribí una consulta para probar.</div>';return;}
+  if(!q){out.innerHTML='<div class="nomatch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>Escribir una consulta para probar.</div>';return;}
   const matches=(DB.resources||[]).filter(r=>r.active).map(r=>{
     const hit=(r.triggers||[]).map(t=>norm(t)).filter(t=>t&&(q.includes(t)||t.includes(q)));
     return {r,score:hit.reduce((a,t)=>Math.max(a,t.length),0)};
@@ -3501,7 +3549,7 @@ function toggleVerdePower(){
 let simState=[];
 function renderSim(){
   const box=document.getElementById('v_simChat');if(!box)return;
-  if(!simState.length){box.innerHTML='<div class="sim-empty">Todavía no hay mensajes. Escribí algo como "hola, se me rompió la pantalla" para empezar.</div>';return;}
+  if(!simState.length){box.innerHTML='<div class="sim-empty">Todavía no hay mensajes. Escribir algo como «hola, se me rompió la pantalla» para empezar.</div>';return;}
   box.innerHTML=simState.map(m=>`<div class="sbub ${m.role}">${esc(m.text)}</div>`).join('');
   box.scrollTop=box.scrollHeight;
 }
@@ -3517,7 +3565,7 @@ async function updateSimHint(){
   try{const r=await fetch('/api/health',{cache:'no-store'});if(r.ok){const j=await r.json();server=true;ia=!!j.ia;}}catch(e){server=false;}
   if(!server){
     hint.style.display='flex';
-    hint.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg><span>El simulador necesita el <b>servidor encendido</b>. Abrí el dashboard desde <b>http://localhost:3000</b> (no como archivo suelto) para poder chatear con Verde.</span>';
+    hint.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg><span>El simulador necesita el <b>servidor encendido</b>. Abrir el panel desde su dirección web (no como archivo suelto) para poder chatear con Verde.</span>';
   }else if(!ia){
     hint.style.display='flex';
     hint.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg><span>Falta cargar la <b>clave de IA</b> en el archivo <b>.env</b> del servidor. Sin ella, Verde responde con su mensaje de error.</span>';
@@ -3536,7 +3584,7 @@ async function simSend(){
     const r=await fetch('/api/simulate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg,from:'dashboard'})});
     if(r.ok){const j=await r.json();reply=j.reply;}
     else{const j=await r.json().catch(()=>({}));errText=j.error||('El servidor respondió con error '+r.status+'.');}
-  }catch(e){errText='No me pude conectar con el servidor. Abrí el dashboard desde http://localhost:3000 con el servidor encendido.';}
+  }catch(e){errText='No se pudo conectar con el servidor. Verificar que esté encendido y volver a intentar.';}
   simState=simState.filter(m=>m.role!=='typing');
   if(reply!=null)simState.push({role:'bot',text:reply});
   else simState.push({role:'err',text:errText||'No se pudo generar la respuesta.'});
@@ -3601,7 +3649,7 @@ function renderReglas(){
   document.getElementById('v_reglasList').innerHTML=vReglas.map((r,i)=>
     `<div class="regrow">
       <span class="rnum">${i+1}</span>
-      <input class="rtext" value="${esc(r||'')}" oninput="vReglas[${i}]=this.value;buildVerdePrompt()" placeholder="Escribí la regla…">
+      <input class="rtext" value="${esc(r||'')}" oninput="vReglas[${i}]=this.value;buildVerdePrompt()" placeholder="Escribir la regla…">
       <div class="rmove"><button type="button" title="Subir" onclick="moveRegla(${i},-1)"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 15l6-6 6 6"/></svg></button><button type="button" title="Bajar" onclick="moveRegla(${i},1)"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></button></div>
       <button class="rdel" type="button" title="Quitar" onclick="delRegla(${i})"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>
     </div>`).join('')||'<div class="faint" style="font-size:12px">Sin reglas todavía.</div>';
@@ -3625,25 +3673,25 @@ function saveVerde(section){
     const nombre=document.getElementById('v_nombre').value.trim();
     const empresa=document.getElementById('v_empresa').value.trim();
     if(!nombre){showVerdeErr('El nombre del bot no puede quedar vacío.');flashField('v_nombre');return;}
-    if(!empresa){showVerdeErr('Indicá el nombre de la empresa.');flashField('v_empresa');return;}
+    if(!empresa){showVerdeErr('Indicar el nombre de la empresa.');flashField('v_empresa');return;}
     v.nombre=nombre;v.rol=document.getElementById('v_rol').value.trim();v.empresa=empresa;
     v.rubro=document.getElementById('v_rubro').value.trim();v.idioma=document.getElementById('v_idioma').value;
     persist();toast('Identidad guardada','Los cambios ya forman parte del cerebro de Verde.','success');
   }else if(section==='personalidad'){
-    if(!vRasgos.length){showVerdeErr('Agregá al menos un rasgo de personalidad.');return;}
+    if(!vRasgos.length){showVerdeErr('Agregar al menos un rasgo de personalidad.');return;}
     v.rasgos=vRasgos.slice();v.trato=document.getElementById('v_trato').value;
     v.lineas=Math.max(1,parseInt(document.getElementById('v_lineas').value,10)||3);
     v.emojis=document.getElementById('v_emojis').value;
     persist();toast('Personalidad guardada','Verde ya habla con este estilo.','success');
   }else if(section==='ventajas'){
     const clean=vVentajas.filter(x=>(x.texto||'').trim());
-    if(!clean.length){showVerdeErr('Agregá al menos una ventaja con texto.');return;}
+    if(!clean.length){showVerdeErr('Agregar al menos una ventaja con texto.');return;}
     v.ventajas=clean.map(x=>({emoji:(x.emoji||'').trim(),texto:x.texto.trim()}));
     vVentajas=v.ventajas.map(x=>Object.assign({},x));renderVentajas();
     persist();toast('Ventajas guardadas',v.ventajas.length+' diferenciales activos.','success');
   }else if(section==='pasos'){
     const clean=vPasos.filter(x=>(x.titulo||'').trim());
-    if(!clean.length){showVerdeErr('Agregá al menos un paso con título.');return;}
+    if(!clean.length){showVerdeErr('Agregar al menos un paso con título.');return;}
     v.pasos=clean.map(x=>({titulo:x.titulo.trim(),desc:(x.desc||'').trim(),ejemplo:(x.ejemplo||'').trim(),activo:x.activo!==false}));
     vPasos=v.pasos.map(x=>Object.assign({},x));renderPasos();
     const act=v.pasos.filter(s=>s.activo).length;
@@ -3656,7 +3704,7 @@ function saveVerde(section){
     persist();toast('Objeciones guardadas',v.objeciones.length+' respuestas listas.','success');
   }else if(section==='reglas'){
     const clean=vReglas.map(r=>(r||'').trim()).filter(Boolean);
-    if(!clean.length){showVerdeErr('Agregá al menos una regla.');return;}
+    if(!clean.length){showVerdeErr('Agregar al menos una regla.');return;}
     v.reglas=clean;vReglas=clean.slice();renderReglas();
     persist();toast('Reglas guardadas',v.reglas.length+' reglas de oro.','success');
   }else if(section==='frases'){
@@ -3666,7 +3714,7 @@ function saveVerde(section){
     persist();toast('Frases guardadas','Los mensajes clave quedaron actualizados.','success');
   }else if(section==='tecnico'){
     const modelo=document.getElementById('v_modelo').value.trim();
-    if(!modelo){showVerdeErr('Indicá el identificador del modelo de IA.');flashField('v_modelo');return;}
+    if(!modelo){showVerdeErr('Indicar el identificador del modelo de IA.');flashField('v_modelo');return;}
     if(!/^claude-[a-z0-9.\-]+$/i.test(modelo)){showVerdeErr('El identificador no parece válido. Suele empezar con "claude-". Confirmalo con tu programador.');flashField('v_modelo');return;}
     const tk=parseInt(document.getElementById('v_tokens').value,10);
     const mem=parseInt(document.getElementById('v_memoria').value,10);
@@ -4056,7 +4104,7 @@ const QUIEN_EVENTO={cliente:'Cliente',verde:'Verde',derivado:'Sistema',aviso:'Si
 let AVISOS={numeros:[],plantilla:'',idioma:'es'};
 async function cargarAvisos(){
   const r=await api('/api/avisos');
-  if(r.ok)AVISOS=Object.assign({numeros:[],plantilla:'',idioma:'es'},r.json);
+  if(r.ok)AVISOS=Object.assign({numeros:[],plantilla:'',idioma:'es',estados:[]},r.json);
   pintarAvisos();
 }
 function pintarAvisos(){
@@ -4065,6 +4113,10 @@ function pintarAvisos(){
     ?AVISOS.numeros.map((n,i)=>'<span class="chip-tag">+'+escH(n)+'<button type="button" aria-label="Quitar este número" onclick="quitarNumeroAviso('+i+')">'+SVG131.x+'</button></span>').join('')
     :'<span class="faint">Todavía no hay números cargados.</span>';
   document.getElementById('avPlantilla').value=AVISOS.plantilla||'';
+  const idi=document.getElementById('avIdioma');
+  if(idi)idi.value=[...idi.options].some(o=>o.value===AVISOS.idioma)?AVISOS.idioma:'es';
+  document.getElementById('avSinPlantilla').classList.toggle('oculto',!!AVISOS.plantilla);
+  pintarEstadosAvisos();
 }
 function agregarNumeroAviso(){
   const i=document.getElementById('avNuevo');
@@ -4077,9 +4129,10 @@ function agregarNumeroAviso(){
 function quitarNumeroAviso(i){AVISOS.numeros.splice(i,1);pintarAvisos();}
 async function guardarAvisosPanel(){
   const plantilla=document.getElementById('avPlantilla').value.trim();
-  const r=await api('/api/avisos',{method:'PUT',body:{numeros:AVISOS.numeros,plantilla,idioma:AVISOS.idioma||'es'}});
+  const idioma=(document.getElementById('avIdioma')||{}).value||'es';
+  const r=await api('/api/avisos',{method:'PUT',body:{numeros:AVISOS.numeros,plantilla,idioma}});
   if(!r.ok){toast('No se guardó',r.json.error||'Revisar los datos.','error');return;}
-  AVISOS=r.json.avisos;pintarAvisos();
+  AVISOS=Object.assign({numeros:[],plantilla:'',idioma:'es',estados:[]},r.json.avisos);pintarAvisos();
   toast('Avisos guardados',AVISOS.numeros.length===1?'1 número recibe avisos.':AVISOS.numeros.length+' números reciben avisos.','success');
 }
 
@@ -4720,10 +4773,10 @@ function renderMensajes(ms){
     const hora='<span class="hora">'+escH(horaSola(m.en))+'</span>';
     if(m.tipo==='sistema')return sep+'<div class="linea-sis">'+escH(horaSola(m.en))+' · '+escH(m.texto)+'</div>';
     const adj=parsearAdjunto(m.texto);
-    if(m.tipo==='cliente')return sep+'<div class="burbuja cli">'+(adj?htmlAdjuntoBurbuja(adj,true):'<span class="txt">'+escH(m.texto)+'</span>')+hora+'</div>';
-    if(m.tipo==='verde')return sep+'<div class="burbuja ver"><span class="quien">Verde</span><span class="txt">'+escH(m.texto)+'</span>'+hora+'</div>';
+    if(m.tipo==='cliente')return sep+'<div class="burbuja cli">'+(adj?htmlAdjuntoBurbuja(adj,true):'<span class="txt">'+formatoWa(m.texto)+'</span>')+hora+'</div>';
+    if(m.tipo==='verde')return sep+'<div class="burbuja ver"><span class="quien">Verde</span><span class="txt">'+formatoWa(m.texto)+'</span>'+hora+'</div>';
     const quien=(m.autor?m.autor+' (equipo)':'Equipo')+(m.origen==='panel'?' · desde el panel':(m.firma?'':' · sin firma'));
-    return sep+'<div class="burbuja equ"><span class="quien">'+escH(quien)+'</span>'+(adj?htmlAdjuntoBurbuja(adj,false):'<span class="txt">'+escH(m.texto)+'</span>')+hora+'</div>';
+    return sep+'<div class="burbuja equ"><span class="quien">'+escH(quien)+'</span>'+(adj?htmlAdjuntoBurbuja(adj,false):'<span class="txt">'+formatoWa(m.texto)+'</span>')+hora+'</div>';
   }).join('');
 }
 function pintarSwitch(c){
@@ -4939,5 +4992,60 @@ function aplicarRangoConsumo(){
   cargarConsumo();
 }
 ['consDesde','consHasta'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();aplicarRangoConsumo();}});});
+
+
+/* ===================== 1.3.7: Cumplimiento ===================== */
+// Formato de WhatsApp en las burbujas: el texto entre guiones bajos se ve en cursiva, como lo recibe el cliente.
+function formatoWa(t){return escH(t).replace(/(^|[\s(])_([^_\n]+?)_(?=[\s).,;:!?]|$)/g,'$1<em>$2</em>');}
+// Reglas fijas y datos de la página de privacidad (en «Comportamiento del bot»).
+async function cargarCumplimiento(){
+  const r=await api('/api/cumplimiento');
+  if(!r.ok)return;
+  const c=r.json;
+  document.getElementById('vFijasLista').innerHTML=(c.reglas||[]).map((x,i)=>'<li><span class="fijas-num">'+(i+1)+'</span><span>'+escH(x)+'</span></li>').join('');
+  document.getElementById('vFijasLinea').textContent=c.lineaInicial||'';
+  const ver=document.getElementById('privVer');if(ver&&c.url)ver.href=c.url;
+  pintarPrivacidad(c.privacidad||{});
+}
+function pintarPrivacidad(p){
+  document.getElementById('privCorreo').value=p.correo||'';
+  document.getElementById('privUrcdp').value=p.urcdp||'';
+  document.getElementById('privFecha').textContent='Última actualización de la página: '+(p.actualizada?fechaDMA(p.actualizada):'—');
+}
+async function guardarPrivacidad(){
+  const err=document.getElementById('privErr');err.textContent='';
+  const correo=document.getElementById('privCorreo').value.trim();
+  const urcdp=document.getElementById('privUrcdp').value.trim();
+  const b=document.getElementById('privGuardar');b.disabled=true;
+  const r=await api('/api/privacidad',{method:'PUT',body:{correo,urcdp}});
+  b.disabled=false;
+  if(!r.ok){err.textContent=r.json.error||'No se pudieron guardar los datos.';return;}
+  pintarPrivacidad(r.json.privacidad||{});
+  toast('Página de privacidad actualizada',correo?'Los clientes pueden escribir a '+correo+'.':'Sin correo cargado, la página indica el canal de WhatsApp y el local.','success');
+}
+// Avisos al equipo: estado de cada número según su ventana de 24 horas.
+function pintarEstadosAvisos(){
+  const box=document.getElementById('avEstados');if(!box)return;
+  if(!AVISOS.numeros.length){box.innerHTML='<div class="empty"><p>Todavía no hay números cargados.</p></div>';return;}
+  const est=AVISOS.estados||[];
+  box.innerHTML='<div class="cons-scroll"><table class="av-tabla"><thead><tr><th scope="col">Número</th><th scope="col">Ventana de 24 horas</th><th scope="col">Próximo aviso</th></tr></thead><tbody>'+
+    AVISOS.numeros.map(n=>{
+      const e=est.find(x=>x.numero===n);
+      let ventana,pill;
+      if(!e){ventana='—';pill='<span class="estado apa">Guardar para ver el estado</span>';}
+      else{
+        ventana=e.ventanaHasta?'Abierta hasta '+hastaTexto(e.ventanaHasta):'Cerrada';
+        pill=e.proximo==='comun'?'<span class="estado ok">Mensaje común</span>'
+          :e.proximo==='plantilla'?'<span class="estado per">Plantilla «'+escH(AVISOS.plantilla)+'»</span>'
+          :'<span class="estado mal">No se envía: falta la plantilla</span>';
+      }
+      return '<tr><td>+'+escH(n)+'</td><td>'+escH(ventana)+'</td><td>'+pill+'</td></tr>';
+    }).join('')+'</tbody></table></div>';
+}
+async function copiarPlantilla(){
+  const el=document.getElementById('avTextoPlantilla');
+  try{await navigator.clipboard.writeText(el.textContent);toast('Texto copiado','Pegarlo en WhatsApp Manager al crear la plantilla.','success');}
+  catch(e){const s=window.getSelection(),rg=document.createRange();rg.selectNodeContents(el);s.removeAllRanges();s.addRange(rg);toast('Texto seleccionado','Copiarlo con Ctrl + C.','info');}
+}
 
 </script>

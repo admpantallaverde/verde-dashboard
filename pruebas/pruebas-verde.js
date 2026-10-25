@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.3.6';
+const VERSION_ESPERADA = '1.3.7';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -77,7 +77,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   mostrar('2) Modelo de IA y ajustes oficiales');
   let r = await simular('hola', 'dashboard');
   const p = llamadasIA[llamadasIA.length - 1].body;
-  verificar(r.reply === 'Respuesta de Verde 1', 'el simulador devuelve la respuesta de la IA');
+  verificar(r.reply.startsWith('Respuesta de Verde 1\n\nSoy Verde, el asistente virtual'), 'el simulador devuelve la respuesta de la IA (con la presentación, por ser la primera)');
   verificar(p.model === 'claude-sonnet-5-5', 'el modelo viejo del panel se reemplaza por claude-sonnet-5-5');
   verificar(p.thinking && p.thinking.type === 'between_tools', 'razonamiento previo desactivado (between_tools)');
   verificar(p.output_config && p.output_config.effort === 'medium', 'esfuerzo fijado en "medium"');
@@ -101,7 +101,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(res.status === 200, '360dialog recibe confirmación inmediata');
   await espera(700);
   let e = envios360[envios360.length - 1];
-  verificar(envios360.length === 1 && e && e.body.to === '59896254735' && e.body.text.body === 'Respuesta de Verde 2', 'Verde responde al número correcto');
+  verificar(envios360.length === 1 && e && e.body.to === '59896254735' && e.body.text.body.startsWith('Respuesta de Verde 2\n\n_Soy Verde, el asistente virtual'), 'Verde responde al número correcto (la primera vez, con la presentación)');
   verificar(e && e.url === 'https://waba-sandbox.360dialog.io/v1/messages' && e.headers['D360-API-KEY'] === 'clave-360-de-prueba', 'usa la dirección y la clave de 360dialog del .env');
   verificar(e && e.body.messaging_product === 'whatsapp' && e.body.type === 'text', 'el envío tiene el formato estándar de WhatsApp');
 
@@ -144,7 +144,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   await post360(aviso([{ id: 'm6', from: '59833333333', type: 'image', image: { caption: 'comprobante' } }]));
   await espera(400);
   e = envios360[envios360.length - 1];
-  verificar(envios360.length === antes2 + 1 && e.body.text.body === 'Gracias, recibí tu archivo. Un asesor lo revisa.' && llamadasIA.length === antesIA2, 'una imagen recibe la frase de adjunto del panel, sin consultar a la IA');
+  verificar(envios360.length === antes2 + 1 && e.body.text.body.startsWith('Gracias, recibí tu archivo. Un asesor lo revisa.\n\n_Soy Verde, el asistente virtual') && llamadasIA.length === antesIA2, 'una imagen recibe la frase de adjunto del panel, sin consultar a la IA (con la presentación, por ser la primera)');
   antes2 = envios360.length;
   await post360(aviso([{ id: 'm7', from: '59833333333', type: 'sticker', sticker: {} }]));
   await espera(300);
@@ -231,6 +231,9 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   mostrar('18) Verde deriva: el chat pasa a «Chats por responder» y avisa al equipo');
   let rr = await api('/api/avisos', 'PUT', { numeros: ['+598 99 000 101', '59899000102'] });
   verificar(rr.status === 200 && (await json(rr)).avisos.numeros.length === 2, 'se guardan los 2 celulares que reciben avisos');
+  await post360(avisoDe('59899000101', '', 'inicio de turno', 'v101'));
+  await post360(avisoDe('59899000102', '', 'inicio de turno', 'v102'));
+  await espera(300);
   let antes = envios360.length;
   await post360(avisoDe('59870000001', 'Lucía Fernández', 'quiero el precio exacto del cambio de pantalla', 'd1'));
   await espera(700);
@@ -238,7 +241,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   const alCliente = nuevos.find(x => x.body.to === '59870000001');
   const avisos = nuevos.filter(x => ['59899000101', '59899000102'].includes(x.body.to));
   verificar(alCliente && !/DERIVAR/.test(alCliente.body.text.body) && /asesor/.test(alCliente.body.text.body), 'el cliente recibe la respuesta sin la marca interna');
-  verificar(avisos.length === 2 && avisos.every(x => /Chat por responder/.test(x.body.text.body) && /Lucía Fernández/.test(x.body.text.body)), 'llega el aviso a los 2 celulares del equipo, con el nombre del cliente');
+  verificar(avisos.length === 2 && avisos.every(x => /hay un chat por responder de Lucía Fernández/.test(x.body.text.body) && !/precio exacto/.test(x.body.text.body)), 'llega el aviso a los 2 celulares del equipo, con el nombre del cliente y sin el contenido de su mensaje');
   let pend = await json(await api('/api/chats/pendientes'));
   let luciaP = pend.lista.find(x => x.numero === '59870000001');
   verificar(luciaP && luciaP.nombre === 'Lucía Fernández' && /precio exacto/.test(luciaP.ultimoMensaje) && pend.total === pend.lista.length, 'el chat aparece en «Chats por responder»');
@@ -318,14 +321,14 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(rr.status === 404, 'un chat inexistente devuelve «no existe»');
 
   mostrar('25) Avisos con plantilla de Meta');
-  rr = await api('/api/avisos', 'PUT', { numeros: ['59899000101'], plantilla: 'chat_por_responder', idioma: 'es' });
+  rr = await api('/api/avisos', 'PUT', { numeros: ['59899000103'], plantilla: 'chat_por_responder', idioma: 'es' });
   verificar(rr.status === 200, 'se guarda el nombre de la plantilla');
   antes = envios360.length;
   await post360(avisoDe('59870000004', 'Sofía\nRodríguez', 'precio exacto\nde una funda', 'd7'));
   await espera(600);
-  const plant = envios360.slice(antes).find(x => x.body.to === '59899000101');
+  const plant = envios360.slice(antes).find(x => x.body.to === '59899000103');
   const params = plant && plant.body.template && plant.body.template.components[0].parameters.map(x => x.text);
-  verificar(plant && plant.body.type === 'template' && plant.body.template.name === 'chat_por_responder' && params.length === 2 && params.every(t => !/\n/.test(t)), 'el aviso sale como plantilla, con datos sin saltos de línea');
+  verificar(plant && plant.body.type === 'template' && plant.body.template.name === 'chat_por_responder' && params.length === 2 && params.every(t => !/\n/.test(t)) && params[1] === 'Verde lo derivó a una persona del equipo' && !params.some(t => /funda/.test(t)), 'con la ventana cerrada, el aviso sale como plantilla: cliente y motivo, sin el mensaje del cliente');
   rr = await api('/api/avisos', 'PUT', { numeros: ['123'] });
   verificar(rr.status === 400, 'un número inválido se rechaza');
   rr = await api('/api/avisos', 'PUT', { numeros: [], plantilla: 'Plantilla Mal' });
@@ -379,6 +382,11 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(rr.status === 403, 'un asesor no puede ver ni cambiar la configuración de Verde');
   rr = await api('/api/consumo-ia', 'GET', null, galletaCarla);
   verificar(rr.status === 403, 'un asesor no puede ver el consumo de IA');
+  rr = await api('/api/cumplimiento', 'GET', null, galletaCarla);
+  let rr2 = await api('/api/privacidad', 'PUT', { correo: 'x@y.com' }, galletaCarla);
+  verificar(rr.status === 403 && rr2.status === 403, 'un asesor no puede ver ni cambiar los datos de privacidad');
+  rr = await realFetch(BASE + '/privacidad');
+  verificar(rr.status === 200 && /Privacidad del canal de WhatsApp/.test(await rr.text()), 'con el ingreso propio activo, la página de privacidad sigue siendo pública');
   rr = await api('/api/consumo-ia', 'GET', null, galletaJefe);
   verificar(rr.status === 200, 'el administrador sí ve el consumo de IA');
   await post360(avisoDe('59870000006', 'Diego Pérez', 'precio exacto del cargador', 'd9'));
@@ -720,6 +728,85 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(rc.status === 400, 'rechaza rangos de más de 400 días');
   rc = await api('/api/consumo-ia?mes=2026-13', 'GET');
   verificar(rc.status === 400, 'rechaza un mes inválido');
+
+
+  mostrar('49) Reglas fijas: van siempre en el prompt de Verde');
+  const cumplimientoMod = require('./cumplimiento.js');
+  await post360(avisoDe('59872000020', 'Reglas Prueba', 'hola, ¿qué horario tienen?', 'rf1'));
+  await espera(500);
+  const sys49 = JSON.stringify((llamadasIA[llamadasIA.length - 1] || { body: {} }).body.system || '');
+  verificar(/REGLAS FIJAS DEL SISTEMA/.test(sys49) && cumplimientoMod.REGLAS_FIJAS.every(r => sys49.includes(r)), 'las cuatro reglas fijas van en cada consulta a la IA');
+
+  mostrar('50) Presentación como asistente virtual en la primera respuesta');
+  const pres50 = envios360.filter(x => x.body.to === '59872000020').pop();
+  verificar(pres50 && pres50.body.text.body.endsWith(cumplimientoMod.lineaInicialWhatsApp()) && /\n\n_Soy Verde, el asistente virtual de Pantalla Verde\./.test(pres50.body.text.body), 'la primera respuesta termina con la presentación fija, en cursiva');
+  verificar(/Más información:_ chat\.pantallaverde\.com\/privacidad$/.test(pres50.body.text.body), 'el enlace queda fuera de la cursiva, para que WhatsApp lo reconozca completo');
+  await post360(avisoDe('59872000020', 'Reglas Prueba', '¿y los sábados?', 'rf2'));
+  await espera(500);
+  const pres50b = envios360.filter(x => x.body.to === '59872000020').pop();
+  verificar(pres50b && pres50b !== pres50 && !/asistente virtual/.test(pres50b.body.text.body), 'las respuestas siguientes no repiten la presentación');
+  const conv50 = await json(await api('/api/conversaciones/' + encodeURIComponent('wa:59872000020'), 'GET'));
+  const verdes50 = (conv50.mensajes || []).filter(m => m.tipo === 'verde');
+  verificar(verdes50.length >= 2 && /asistente virtual/.test(verdes50[0].texto) && !/asistente virtual/.test(verdes50[1].texto), 'el panel muestra exactamente lo que recibió el cliente');
+  const ia50 = (llamadasIA[llamadasIA.length - 1] || { body: { messages: [] } }).body.messages;
+  verificar(!ia50.some(m => /asistente virtual/.test(String(m.content))), 'la presentación no se suma al historial que lee la IA');
+
+  mostrar('51) Presentación en «Probar a Verde»');
+  await api('/api/simulate/reset', 'POST', { from: 'presentacion' });
+  let s51 = await json(await api('/api/simulate', 'POST', { message: 'hola', from: 'presentacion' }));
+  verificar(s51.reply && s51.reply.includes(cumplimientoMod.lineaInicial()), 'la primera respuesta del simulador muestra la presentación');
+  s51 = await json(await api('/api/simulate', 'POST', { message: '¿y el horario?', from: 'presentacion' }));
+  verificar(s51.reply && !/asistente virtual/.test(s51.reply), 'la segunda no la repite');
+
+  mostrar('52) Avisos según la ventana de 24 horas de cada celular');
+  await api('/api/avisos', 'PUT', { numeros: ['59899000201', '59899000202'], plantilla: '' });
+  await post360(avisoDe('59899000201', '', 'inicio de turno', 'av201'));
+  await espera(300);
+  let est52 = await json(await api('/api/avisos', 'GET'));
+  const e201 = est52.estados.find(x => x.numero === '59899000201'), e202 = est52.estados.find(x => x.numero === '59899000202');
+  verificar(e201 && e201.proximo === 'comun' && e201.ventanaHasta > Date.now() + 23 * 3600000 && e202 && e202.proximo === 'sin_envio' && e202.ventanaHasta === null, 'el panel sabe qué celular tiene la ventana abierta y cuál no');
+  antesEnvN = envios360.length;
+  await post360(avisoDe('59872000021', 'Aviso Prueba', 'necesito el precio exacto de la batería', 'av1'));
+  await espera(600);
+  const env52 = envios360.slice(antesEnvN);
+  const a201 = env52.find(x => x.body.to === '59899000201'), a202 = env52.find(x => x.body.to === '59899000202');
+  verificar(a201 && a201.body.type === 'text' && /hay un chat por responder de Aviso Prueba/.test(a201.body.text.body) && /Motivo: Verde lo derivó a una persona del equipo/.test(a201.body.text.body) && !/batería/.test(a201.body.text.body), 'con la ventana abierta, el aviso sale como mensaje común y sin el mensaje del cliente');
+  verificar(!a202, 'con la ventana cerrada y sin plantilla, no se intenta un envío que WhatsApp rechazaría');
+  const pend52 = (await json(await api('/api/chats/pendientes'))).lista.find(x => x.numero === '59872000021');
+  const det52 = JSON.stringify(pend52 ? await json(await api('/api/chats/' + pend52.id)) : {});
+  verificar(/1 de 2 celulares/.test(det52) && /no hay plantilla configurada/.test(det52), 'la atención deja constancia de qué celular quedó sin aviso y por qué');
+  await api('/api/avisos', 'PUT', { numeros: ['59899000201', '59899000202'], plantilla: 'chat_por_responder', idioma: 'es' });
+  est52 = await json(await api('/api/avisos', 'GET'));
+  verificar(est52.estados.find(x => x.numero === '59899000202').proximo === 'plantilla', 'con plantilla configurada, el celular sin ventana pasa a recibir la plantilla');
+  antesEnvN = envios360.length;
+  await post360(avisoDe('59872000022', 'Plantilla Prueba', 'precio exacto de un glass', 'av2'));
+  await espera(600);
+  const env52b = envios360.slice(antesEnvN);
+  const p202 = env52b.find(x => x.body.to === '59899000202'), p201 = env52b.find(x => x.body.to === '59899000201');
+  const par52 = p202 && p202.body.template ? p202.body.template.components[0].parameters.map(x => x.text) : [];
+  verificar(p202 && p202.body.type === 'template' && par52[0] === 'Plantilla Prueba (+59872000022)' && par52[1] === 'Verde lo derivó a una persona del equipo', 'la plantilla lleva el cliente y el motivo');
+  verificar(p201 && p201.body.type === 'text', 'el celular con la ventana abierta sigue recibiendo el mensaje común');
+  await api('/api/avisos', 'PUT', { numeros: ['59899000102'] });
+
+  mostrar('53) Página pública de privacidad');
+  rr = await realFetch(BASE + '/privacidad');
+  let html53 = await rr.text();
+  verificar(rr.status === 200 && /text\/html/.test(rr.headers.get('content-type') || '') && /Privacidad del canal de WhatsApp/.test(html53) && /RUT 218621040016/.test(html53), 'la página se ve sin iniciar sesión');
+  verificar(/por este mismo canal de WhatsApp/.test(html53) && !/inscripta ante la Unidad/.test(html53), 'sin datos cargados, indica el canal y el local, y no afirma una inscripción inexistente');
+  rr = await api('/api/privacidad', 'PUT', { correo: 'no-es-un-correo', urcdp: '' });
+  verificar(rr.status === 400, 'rechaza un correo inválido');
+  rr = await api('/api/privacidad', 'PUT', { correo: 'privacidad@pantallaverde.com', urcdp: '' });
+  const pr53 = await json(rr);
+  verificar(rr.status === 200 && pr53.privacidad.correo === 'privacidad@pantallaverde.com' && /^\d{4}-\d{2}-\d{2}$/.test(pr53.privacidad.actualizada), 'guarda el correo y la fecha de actualización');
+  html53 = await (await realFetch(BASE + '/privacidad')).text();
+  verificar(/mailto:privacidad@pantallaverde\.com/.test(html53) && !/inscripta ante la Unidad/.test(html53), 'la página muestra el correo para ejercer los derechos');
+  rr = await api('/api/privacidad', 'PUT', { correo: 'privacidad@pantallaverde.com', urcdp: '<script>' });
+  verificar(rr.status === 400, 'rechaza un número de inscripción con caracteres no válidos');
+  await api('/api/privacidad', 'PUT', { correo: 'privacidad@pantallaverde.com', urcdp: 'URCDP-12345' });
+  html53 = await (await realFetch(BASE + '/privacidad')).text();
+  verificar(/inscripta ante la Unidad Reguladora y de Control de Datos Personales \(URCDP\) con el número URCDP-12345/.test(html53), 'con el número cargado, aparece la sección de inscripción');
+  const cu53 = await json(await api('/api/cumplimiento', 'GET'));
+  verificar(cu53.reglas.length === 4 && /asistente virtual/.test(cu53.lineaInicial) && cu53.url === 'https://chat.pantallaverde.com/privacidad' && cu53.privacidad.urcdp === 'URCDP-12345', 'el panel recibe las reglas fijas, la presentación y los datos de privacidad');
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }

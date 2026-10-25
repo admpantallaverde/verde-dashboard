@@ -26,11 +26,12 @@ const fs = require('fs');
 const crypto = require('crypto');
 const bot = require('./bot.js');
 const consumo = require('./consumo');
+const cumplimiento = require('./cumplimiento');
 const usuarios = require('./usuarios.js');
 const atencion = require('./atencion.js');
 const conversaciones = require('./conversaciones.js');
 
-const VERSION = '1.3.6';
+const VERSION = '1.3.7';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -234,10 +235,11 @@ app.post('/api/simulate', requiere(['admin']), async (req, res) => {
     const modelo = (req.body && req.body.modelo || '').toString().trim();
     if (!message.trim()) return res.status(400).json({ error: 'Escribí un mensaje.' });
     if (modelo && !bot.modeloPermitido(modelo)) return res.status(400).json({ error: 'Esa IA no está disponible.' });
+    const primera = !bot.tieneRespuestas('sim:' + from);
     const r = await bot.responderCliente('sim:' + from, message, { modelo: modelo || undefined });
     if (!r) return res.json({ reply: '(Verde está apagado y no enviaría ninguna respuesta.)', derivaria: false });
     res.json({
-      reply: r.texto + (r.derivar ? '\n\n(Este chat pasaría a «Chats por responder».)' : ''),
+      reply: r.texto + (primera ? '\n\n' + cumplimiento.lineaInicial() : '') + (r.derivar ? '\n\n(Este chat pasaría a «Chats por responder».)' : ''),
       derivaria: !!r.derivar,
       modelo: modelo || null
     });
@@ -436,22 +438,81 @@ function guardarAvisos(datos) {
   fs.renameSync(tmp, AVISOS_FILE);
   return cfg;
 }
+/* ---------- Ventana de 24 horas de cada celular del equipo (1.3.7) ---------- */
+// La ventana se abre cuando el celular le escribe al número de la tienda. Con la ventana abierta, el aviso sale
+// como mensaje común; con la ventana cerrada, WhatsApp solo acepta la plantilla aprobada por Meta.
+const VENTANAS_FILE = path.join(DATA_DIR, 'avisos-ventanas.json');
+const MARGEN_VENTANA = 10 * 60000;   // se considera cerrada 10 minutos antes de vencer, por seguridad
+function leerVentanas() {
+  try { const d = JSON.parse(fs.readFileSync(VENTANAS_FILE, 'utf8')); return d && typeof d === 'object' ? d : {}; }
+  catch (e) { return {}; }
+}
+function registrarVentanaEquipo(numero) {
+  const f = soloDigitos(numero);
+  const n = leerAvisos().numeros.find(d => f === d || f.endsWith(d) || d.endsWith(f));
+  if (!n) return false;
+  const v = leerVentanas();
+  v[n] = Date.now();
+  const tmp = VENTANAS_FILE + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(v), 'utf8');
+  fs.renameSync(tmp, VENTANAS_FILE);
+  return true;
+}
+function ventanaHasta(v, n) { return v[n] ? v[n] + 24 * 3600000 : null; }
+function ventanaAbierta(v, n) { const h = ventanaHasta(v, n); return !!h && Date.now() < h - MARGEN_VENTANA; }
+// Configuración de avisos más el estado de cada número (para el panel).
+function estadoAvisos() {
+  const cfg = leerAvisos();
+  const v = leerVentanas();
+  return Object.assign({}, cfg, {
+    estados: cfg.numeros.map(n => {
+      const abierta = ventanaAbierta(v, n);
+      return { numero: n, ventanaHasta: abierta ? ventanaHasta(v, n) : null, proximo: abierta ? 'comun' : (cfg.plantilla ? 'plantilla' : 'sin_envio') };
+    })
+  });
+}
+// Motivo del aviso. Nunca incluye el contenido del mensaje del cliente, para proteger su privacidad.
+function motivoAviso(a, motivo) {
+  if (motivo === 'volvió a escribir') return 'El cliente volvió a escribir';
+  if (motivo === 'Verde en pausa en ese chat') return 'Verde estaba en pausa y el cliente esperó 5 minutos';
+  if (motivo === 'Verde apagado en ese chat') return 'Verde está apagado en ese chat y el cliente esperó 5 minutos';
+  if (a && /envió /.test(a.motivo || '')) return 'El cliente envió un archivo';
+  if (a && /problema técnico/.test(a.motivo || '')) return 'Verde tuvo un problema técnico';
+  return 'Verde lo derivó a una persona del equipo';
+}
+function textoAviso(cliente, motivo) {
+  return 'Pantalla Verde: hay un chat por responder de ' + cliente + '. Motivo: ' + motivo + '. Se puede atender desde el panel.';
+}
 async function avisarEquipo(a, motivo) {
   const cfg = leerAvisos();
   if (!cfg.numeros.length || !d360Configurado()) return;
   const cliente = ((a.nombre ? a.nombre + ' ' : '') + (a.numero ? '(+' + a.numero + ')' : '(sin número visible)')).trim();
-  const pedido = a.ultimoMensaje || '(sin texto)';
-  let enviados = 0;
+  const mot = motivoAviso(a, motivo);
+  const ventanas = leerVentanas();
+  let enviados = 0, sinEnvio = 0;
   for (const num of cfg.numeros) {
-    const ok = cfg.plantilla
-      ? await enviarPlantilla({ to: num }, cfg.plantilla, cfg.idioma, [cliente, pedido])
-      : await enviarWhatsApp({ to: num }, 'Chat por responder' + (motivo ? ' (' + motivo + ')' : '') + '\nCliente: ' + cliente + '\nPidió: «' + pedido + '»\nResponder desde el WhatsApp de la tienda.');
+    const abierta = ventanaAbierta(ventanas, num);
+    let ok = false;
+    if (abierta) ok = await enviarWhatsApp({ to: num }, textoAviso(cliente, mot));
+    // Ventana cerrada (o WhatsApp rechazó el mensaje común): solo con la plantilla aprobada.
+    if (!ok && cfg.plantilla) ok = await enviarPlantilla({ to: num }, cfg.plantilla, cfg.idioma, [cliente, mot]);
+    if (!ok && !abierta && !cfg.plantilla) sinEnvio++;
     if (ok) enviados++;
   }
   atencion.anotarAvisos(a.id, enviados === cfg.numeros.length
     ? 'Aviso enviado a ' + enviados + (enviados === 1 ? ' celular' : ' celulares') + ' del equipo.'
-    : 'Aviso enviado a ' + enviados + ' de ' + cfg.numeros.length + ' celulares del equipo: revisar los números o la plantilla.');
-  console.log('360 avisos: ' + enviados + ' de ' + cfg.numeros.length + ' enviados');
+    : sinEnvio
+      ? 'Aviso enviado a ' + enviados + ' de ' + cfg.numeros.length + ' celulares del equipo: ' + sinEnvio + (sinEnvio === 1 ? ' no tenía' : ' no tenían') + ' la ventana de 24 horas abierta y no hay plantilla configurada.'
+      : 'Aviso enviado a ' + enviados + ' de ' + cfg.numeros.length + ' celulares del equipo: revisar los números o la plantilla.');
+  console.log('360 avisos: ' + enviados + ' de ' + cfg.numeros.length + ' enviados' + (sinEnvio ? ' (' + sinEnvio + ' sin ventana ni plantilla)' : ''));
+}
+
+// Primera respuesta de la conversación (sin mensajes de Verde ni del equipo en los últimos 3 meses):
+// se agrega la presentación fija como asistente virtual, con el enlace a la página de privacidad.
+function conPresentacion(clave, texto) {
+  const d = conversaciones.detalle(clave, contexto());
+  const hubo = !!(d && (d.mensajes || []).some(m => m.tipo === 'verde' || m.tipo === 'equipo'));
+  return hubo ? texto : texto + '\n\n' + cumplimiento.lineaInicialWhatsApp();
 }
 
 // Mensaje de un cliente
@@ -466,7 +527,12 @@ async function manejarEntrante(msg, nombres) {
   const quien = numero ? '+' + numero : 'cliente sin número visible';
   const nombre = (nombres && (nombres[numero] || nombres[usuario])) || '';
 
-  if (numero && esNumeroInterno(numero)) { console.log('360 << número interno', quien, '→ sin respuesta'); return; }
+  if (numero && esNumeroInterno(numero)) {
+    // Un celular del equipo le escribió a la tienda: su ventana de 24 horas para recibir avisos queda abierta.
+    const ventana = registrarVentanaEquipo(numero);
+    console.log('360 << número interno', quien, '→ sin respuesta' + (ventana ? ' (ventana de avisos abierta por 24 horas)' : ''));
+    return;
+  }
 
   const info = interpretar(msg);
   if (info.clase === 'ignorar') { console.log('360 <<', info.tipo, 'de', quien, '→ se ignora'); return; }
@@ -512,9 +578,10 @@ async function manejarEntrante(msg, nombres) {
     const fr = v.frases || {};
     const resp = fr.adjunto || '¡Gracias! 🙌 Recibí tu archivo. En un momento un asesor lo revisa y te confirma todo. Si querés, dejame por acá cualquier dato que quieras sumar.';
     bot.registrarMensaje(clave, 'user', textoCliente);
-    const ok = await enviarWhatsApp(destino, resp);
+    const enviado = conPresentacion(clave, resp);
+    const ok = await enviarWhatsApp(destino, enviado);
     if (ok) bot.registrarMensaje(clave, 'assistant', resp);
-    if (ok) conversaciones.registrar({ clave, tipo: 'verde', texto: resp });
+    if (ok) conversaciones.registrar({ clave, tipo: 'verde', texto: enviado });
     const d = atencion.derivar({ clave, destino, numero, nombre, mensajeCliente: textoCliente, respuestaVerde: ok ? resp : null, motivo: 'El cliente envió ' + info.desc + ': lo revisa una persona del equipo.' });
     console.log('360 << adjunto de', quien, '→', ok ? 'derivado a una persona' : 'NO se pudo responder', '· pasa a «Chats por responder»');
     await avisarEquipo(d.atencion);
@@ -527,9 +594,10 @@ async function manejarEntrante(msg, nombres) {
   // Si mientras la IA prepara la respuesta alguien apaga a Verde en este chat, la respuesta se descarta.
   const r = await bot.responderCliente(clave, textoCliente, { puedeResponder: () => !conversaciones.estaApagado(clave) });
   if (!r) { console.log('360 >> sin respuesta (Verde apagado o una persona del equipo tomó la conversación)'); return; }
-  const ok = await enviarWhatsApp(destino, r.texto);
-  if (ok) conversaciones.registrar({ clave, tipo: 'verde', texto: r.texto });
-  console.log('360 >>', ok ? 'enviado' : 'NO enviado', ':', r.texto.slice(0, 200));
+  const enviado = conPresentacion(clave, r.texto);
+  const ok = await enviarWhatsApp(destino, enviado);
+  if (ok) conversaciones.registrar({ clave, tipo: 'verde', texto: enviado });
+  console.log('360 >>', ok ? 'enviado' : 'NO enviado', ':', enviado.slice(0, 200));
   if (r.derivar) {
     const d = atencion.derivar({
       clave, destino, numero, nombre, mensajeCliente: textoCliente, respuestaVerde: ok ? r.texto : null,
@@ -626,10 +694,25 @@ app.post('/api/chats/:id/atendido', requiere(['admin', 'asesor']), (req, res) =>
     res.json({ ok: true, chat: atencion.detalle(a.id) });
   } catch (e) { responderError(res, e); }
 });
-app.get('/api/avisos', requiere(['admin']), (req, res) => res.json(leerAvisos()));
+app.get('/api/avisos', requiere(['admin']), (req, res) => res.json(estadoAvisos()));
 app.put('/api/avisos', requiere(['admin']), (req, res) => {
-  try { res.json({ ok: true, avisos: guardarAvisos(req.body || {}) }); }
+  try { guardarAvisos(req.body || {}); res.json({ ok: true, avisos: estadoAvisos() }); }
   catch (e) { responderError(res, e); }
+});
+
+/* ---------- Cumplimiento (1.3.7): reglas fijas y datos de la página de privacidad ---------- */
+const fmtHoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Montevideo', year: 'numeric', month: '2-digit', day: '2-digit' });
+app.get('/api/cumplimiento', requiere(['admin']), (req, res) => {
+  res.json({ reglas: cumplimiento.REGLAS_FIJAS, lineaInicial: cumplimiento.lineaInicial(), url: 'https://' + cumplimiento.URL_PRIVACIDAD, privacidad: cumplimiento.leerPrivacidad() });
+});
+app.put('/api/privacidad', requiere(['admin']), (req, res) => {
+  try { res.json({ ok: true, privacidad: cumplimiento.guardarPrivacidad(req.body || {}, fmtHoy.format(new Date())) }); }
+  catch (e) { responderError(res, e); }
+});
+// Página pública de privacidad: no pide ingreso (en Nginx, esta ruta también queda sin contraseña).
+app.get('/privacidad', (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache');
+  res.type('html').send(cumplimiento.paginaPrivacidad());
 });
 
 /* ============================================================
@@ -700,10 +783,11 @@ async function responderConsultaPendiente(clave) {
   if (!d.puedeResponder) return sin(d.motivoNoResponder);
   const r = await bot.responderPendiente(clave, { puedeResponder: () => !conversaciones.estaApagado(clave) && !atencion.tienePendiente(clave) });
   if (!r) return sin();
-  const ok = await enviarWhatsApp(d.destino, r.texto);
-  console.log('360 >> (chat devuelto a Verde)', ok ? 'enviado' : 'NO enviado', ':', r.texto.slice(0, 200));
+  const enviado = conPresentacion(clave, r.texto);
+  const ok = await enviarWhatsApp(d.destino, enviado);
+  console.log('360 >> (chat devuelto a Verde)', ok ? 'enviado' : 'NO enviado', ':', enviado.slice(0, 200));
   if (!ok) return sin('WhatsApp no aceptó la respuesta de Verde. Si el cliente vuelve a escribir, Verde le responde.');
-  conversaciones.registrar({ clave, tipo: 'verde', texto: r.texto });
+  conversaciones.registrar({ clave, tipo: 'verde', texto: enviado });
   if (r.derivar) {
     const a = atencion.derivar({ clave, destino: d.destino, numero: d.numero, nombre: d.nombre, mensajeCliente: ultimo.texto, respuestaVerde: r.texto,
       motivo: r.error ? 'Verde tuvo un problema técnico y lo derivó a una persona del equipo.' : 'Verde lo derivó a una persona del equipo.' });
