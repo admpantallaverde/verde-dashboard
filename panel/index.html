@@ -1242,11 +1242,50 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 #vFijas .cons-err{margin-top:10px}
 @media(max-width:600px){.fijas-acciones{width:100%}.fijas-acciones .btn{flex:1 1 auto}}
 
+/* ===================== 1.3.9: menú más corto; modo y perfil arriba a la derecha ===================== */
+.cuenta{position:fixed;top:23px;right:18px;z-index:40;display:flex;align-items:center;gap:10px}
+.app.vista-split .cuenta{top:25px;right:24px}
+.tema-sw{position:relative;flex:none;width:56px;height:30px;border-radius:15px;border:1px solid var(--border);background:var(--surface-2);padding:0;cursor:pointer}
+.tema-sw-bola{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--surface);color:var(--amber);box-shadow:0 1px 2px rgba(0,0,0,.25);display:inline-flex;align-items:center;justify-content:center;transition:left .18s}
+.tema-sw-bola svg{width:13px;height:13px}
+.tema-sw .ic-luna{display:none}
+.tema-sw[aria-checked="true"] .tema-sw-bola{left:29px;background:var(--text);color:var(--bg)}
+.tema-sw[aria-checked="true"] .ic-sol{display:none}
+.tema-sw[aria-checked="true"] .ic-luna{display:block}
+.tema-sw:focus-visible,.cuenta-av:focus-visible,.cuenta-item:focus-visible{outline:2px solid var(--accent-borde);outline-offset:2px}
+.cuenta-av{flex:none;width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--surface-3);color:var(--text);font:inherit;font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.cuenta-av:hover{border-color:var(--accent-borde)}
+.cuenta-menu{position:absolute;top:46px;right:0;width:240px;box-sizing:border-box;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.25);padding:8px;display:flex;flex-direction:column}
+.cuenta-cab{display:flex;flex-direction:column;padding:8px 10px 10px}
+.cuenta-cab b{font-size:13.5px;color:var(--text)}
+.cuenta-cab span{font-size:12px;color:var(--faint);word-break:break-word}
+.cuenta-item{display:flex;align-items:center;gap:8px;min-height:40px;padding:0 10px;margin-top:4px;border-radius:8px;border:none;border-top:1px solid var(--border-soft);background:none;color:var(--text);font:inherit;font-size:13.5px;cursor:pointer;text-align:left}
+.cuenta-item:hover{background:var(--surface-2)}
+.cuenta-item .su-salir-ic{display:block;width:16px;height:16px}
+@media(min-width:881px){
+  .topbar{padding-right:120px}
+  .app.vista-split .conv-cab{padding-right:128px}
+}
+@media(max-width:880px){
+  .app{position:relative}
+  .cuenta,.app.vista-split .cuenta{position:absolute;top:16px;right:14px}
+}
+/* Reglas fijas: aviso cuando la presentación no incluye el enlace a la privacidad */
+#vFijasAviso{margin-top:8px}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
 
 <div class="app" id="app" style="display:none">
+  <div class="cuenta" id="barraCuenta">
+    <button type="button" class="tema-sw" id="temaSwitch" role="switch" aria-checked="true" aria-label="Modo oscuro" title="Cambiar a modo claro" onclick="alternarTema()"><span class="tema-sw-bola"><svg class="ic-sol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg><svg class="ic-luna" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span></button>
+    <button type="button" class="cuenta-av" id="cuentaBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="cuentaMenu" aria-label="Abrir el menú del perfil" onclick="alternarCuenta()"><span id="suAv">AG</span></button>
+    <div class="cuenta-menu oculto" id="cuentaMenu" role="menu" aria-label="Perfil">
+      <div class="cuenta-cab"><b id="suNombre">Acceso general</b><span id="suRol">Ingreso con usuario propio inactivo</span></div>
+      <button class="cuenta-item oculto" type="button" id="suSalir" role="menuitem" onclick="cerrarSesion()"><svg class="su-salir-ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Cerrar sesión</button>
+    </div>
+  </div>
   <!-- SIDEBAR -->
   <aside class="side">
     <div class="brand">
@@ -1268,12 +1307,12 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
     <div id="navAdmin">
     <div class="nav-label">Categorías</div>
 
-    <button class="tree-parent open" id="parentBtn" onclick="toggleParent()">
+    <button class="tree-parent" id="parentBtn" onclick="toggleParent()" aria-expanded="false" aria-controls="parentChildren">
       <span class="dot"></span> Agentes IA
       <svg class="chev" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
     </button>
 
-    <div class="tree-children" id="parentChildren">
+    <div class="tree-children" id="parentChildren" style="display:none">
       <button class="tree-sub" onclick="go('fuentes')">
         <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7v10c0 1.1 3.6 2 8 2s8-.9 8-2V7"/><path d="M4 7c0 1.1 3.6 2 8 2s8-.9 8-2-3.6-2-8-2-8 .9-8 2z"/></svg>
         Base de Conocimientos
@@ -1326,16 +1365,6 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
         <button class="link-btn" onclick="openConn()">Ver estado de conexión</button>
       </div>
       <button type="button" class="conex-corta" id="conexCorta" onclick="openConn()" aria-label="Estado de conexión" data-tip="Estado de conexión"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span class="punto" aria-hidden="true"></span></button>
-      <div class="tema-seg" role="group" aria-label="Modo del panel">
-        <button type="button" id="temaClaro" aria-pressed="false" onclick="ponerTema('claro')"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>Claro</button>
-        <button type="button" id="temaOscuro" aria-pressed="true" onclick="ponerTema('oscuro')"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>Oscuro</button>
-      </div>
-      <button type="button" class="tema-corto" id="temaCorto" onclick="alternarTema()" aria-label="Pasar a modo claro" data-tip="Modo claro"><svg class="ic-sol" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg><svg class="ic-luna" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
-      <div class="side-user" id="sideUser">
-        <span class="su-av" id="suAv">AG</span>
-        <div class="su-tx"><b id="suNombre">Acceso general</b><span id="suRol">Ingreso con usuario propio inactivo</span></div>
-        <button class="btn btn-ghost oculto" type="button" id="suSalir" onclick="cerrarSesion()" data-tip="Cerrar sesión"><svg class="su-salir-ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Cerrar sesión</button>
-      </div>
     </div>
   </aside>
 
@@ -1653,7 +1682,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
             <div class="fijas-cuerpo">
               <div class="fijas-edit" id="vFijasLista"></div>
               <button class="btn btn-ghost fijas-agregar" type="button" id="fijasAgregar" onclick="agregarReglaFija()">+ Agregar regla</button>
-              <div class="fijas-pres"><label for="vFijasLinea"><b>Presentación en la primera respuesta</b></label><span>En la primera respuesta de cada conversación, Verde agrega esta línea al final:</span><textarea id="vFijasLinea" rows="2" maxlength="300"></textarea><span class="faint" id="vFijasAyuda">Debe incluir el enlace a la página de privacidad: sin el enlace no se puede guardar.</span></div>
+              <div class="fijas-pres"><label for="vFijasLinea"><b>Presentación en la primera respuesta</b></label><span>En la primera respuesta de cada conversación, Verde agrega esta línea al final:</span><textarea id="vFijasLinea" rows="2" maxlength="300" oninput="revisarEnlaceFijas()"></textarea><span class="faint" id="vFijasAyuda">Se recomienda incluir el enlace a la página de privacidad.</span><div class="av-aviso oculto" id="vFijasAviso"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span id="vFijasAvisoTx"></span></div></div>
               <div class="cons-err" id="fijasErr" role="alert"></div>
             </div>
             <div class="fijas-pie"><span id="fijasMod">—</span><span id="fijasEstado">—</span></div>
@@ -2474,6 +2503,7 @@ function genProducts(targetId,n,origin){
 function toggleParent(){
   const b=document.getElementById('parentBtn');b.classList.toggle('open');
   document.getElementById('parentChildren').style.display=b.classList.contains('open')?'flex':'none';
+  b.setAttribute('aria-expanded',String(b.classList.contains('open')));
 }
 function go(view){
   if(currentView==='verde' && view!=='verde' && verdeHasUnsaved()){
@@ -4124,7 +4154,7 @@ async function arrancarApp(){
   setInterval(revisarSalud,60000);
   await actualizarContador();
   setInterval(()=>actualizarContador(),30000);
-  if(asesor)_doGo('chats');
+  _doGo('chats');
 }
 async function revisarSalud(){
   try{
@@ -5305,7 +5335,7 @@ function pintarReglasFijas(c){
   FIJAS.reglas=(c.reglas||[]).slice();FIJAS.enlace=c.enlace||FIJAS.enlace;FIJAS.max=c.maxReglas||10;
   renderReglasFijas();
   document.getElementById('vFijasLinea').value=c.lineaInicial||'';
-  document.getElementById('vFijasAyuda').textContent='Debe incluir el enlace '+FIJAS.enlace+': sin el enlace no se puede guardar.';
+  document.getElementById('vFijasAyuda').textContent='Se recomienda incluir el enlace '+FIJAS.enlace+'.';revisarEnlaceFijas();
   document.getElementById('fijasMod').textContent=c.modificadoEn?('Última modificación: '+fechaHoraTexto(c.modificadoEn)+', por '+(c.modificadoPor||'—')+'.'):'Sin modificaciones: rigen las reglas recomendadas.';
   document.getElementById('fijasEstado').textContent='Texto recomendado del sistema: '+(c.recomendadas?'sin cambios':'con cambios');
   document.getElementById('fijasErr').textContent='';
@@ -5342,5 +5372,45 @@ function restaurarReglasFijas(){
     toast('Reglas recomendadas restauradas','Verde vuelve a usar el texto recomendado del sistema.','success');
   });
 }
+
+
+/* ===================== 1.3.9: modo y perfil arriba a la derecha ===================== */
+// Interruptor de modo: refleja el modo actual (encendido = oscuro).
+const _pintarTema134=pintarTema;
+pintarTema=function(){
+  _pintarTema134();
+  const s=document.getElementById('temaSwitch');if(!s)return;
+  const oscuro=temaActual()==='oscuro';
+  s.setAttribute('aria-checked',String(oscuro));
+  s.title=oscuro?'Cambiar a modo claro':'Cambiar a modo oscuro';
+};
+// Menú del perfil: nombre, rol y usuario; «Cerrar sesión».
+const _pintarUsuario134=pintarUsuario;
+pintarUsuario=function(){
+  _pintarUsuario134();
+  const u=SESION.usuario,b=document.getElementById('cuentaBtn');
+  if(u&&u.usuario)document.getElementById('suRol').textContent=(u.rolNombre||u.rol)+' · '+u.usuario;
+  if(b)b.setAttribute('aria-label',(u?u.nombre:'Acceso general')+': abrir el menú del perfil');
+};
+function alternarCuenta(abrir){
+  const m=document.getElementById('cuentaMenu'),b=document.getElementById('cuentaBtn');
+  const ver=abrir===undefined?m.classList.contains('oculto'):!!abrir;
+  m.classList.toggle('oculto',!ver);b.setAttribute('aria-expanded',String(ver));
+}
+document.addEventListener('click',e=>{
+  const c=document.getElementById('barraCuenta');
+  if(c&&!c.contains(e.target)&&!document.getElementById('cuentaMenu').classList.contains('oculto'))alternarCuenta(false);
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&!document.getElementById('cuentaMenu').classList.contains('oculto')){alternarCuenta(false);document.getElementById('cuentaBtn').focus();}
+});
+// Reglas fijas: aviso ámbar si la presentación no incluye el enlace (se puede guardar igual).
+function revisarEnlaceFijas(){
+  const linea=document.getElementById('vFijasLinea').value.toLowerCase();
+  const falta=!!linea.trim()&&!linea.includes(String(FIJAS.enlace).toLowerCase());
+  document.getElementById('vFijasAviso').classList.toggle('oculto',!falta);
+  document.getElementById('vFijasAvisoTx').textContent='La línea no incluye el enlace '+FIJAS.enlace+'. Se puede guardar igual, pero sin el enlace la presentación pierde su valor frente a la ley de protección de datos: conviene volver a agregarlo.';
+}
+pintarTema();
 
 </script>

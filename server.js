@@ -32,7 +32,7 @@ const usuarios = require('./usuarios.js');
 const atencion = require('./atencion.js');
 const conversaciones = require('./conversaciones.js');
 
-const VERSION = '1.3.8';
+const VERSION = '1.3.9';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -705,7 +705,7 @@ app.put('/api/avisos', requiere(['admin']), (req, res) => {
 const fmtHoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Montevideo', year: 'numeric', month: '2-digit', day: '2-digit' });
 function datosCumplimiento() {
   const r = cumplimiento.leerReglas();
-  return { reglas: r.reglas, lineaInicial: r.linea, recomendadas: r.recomendadas, modificadoEn: r.modificadoEn, modificadoPor: r.modificadoPor,
+  return { reglas: r.reglas, lineaInicial: r.linea, recomendadas: r.recomendadas, sinEnlace: r.sinEnlace, modificadoEn: r.modificadoEn, modificadoPor: r.modificadoPor,
     maxReglas: cumplimiento.MAX_REGLAS, url: 'https://' + cumplimiento.URL_PRIVACIDAD, enlace: cumplimiento.URL_PRIVACIDAD, privacidad: cumplimiento.leerPrivacidad() };
 }
 app.get('/api/cumplimiento', requiere(['admin']), (req, res) => res.json(datosCumplimiento()));

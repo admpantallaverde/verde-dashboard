@@ -73,7 +73,7 @@ const ARTICULOS = [
     bloques: [
       { tipo: 'p', texto: 'En «Agentes IA › Comportamiento del bot» se configura a Verde sin tocar código: identidad (A), personalidad y tono (B), ventajas (C), pasos de venta (D), objeciones (E), reglas de oro (F), frases clave (G) y parámetros técnicos, como el modelo de inteligencia artificial (H). Cada sección se guarda con su botón «Guardar».' },
       { tipo: 'h', texto: 'Reglas fijas del sistema' },
-      { tipo: 'p', texto: 'Se aplican siempre, antes que las reglas de oro, y protegen el cumplimiento de las políticas de WhatsApp y de la Ley N.º 18.331. Se pueden editar con cuidado: queda registrado quién las cambió, y el botón «Restaurar las reglas recomendadas» vuelve al texto original. La línea de presentación de la primera respuesta debe incluir el enlace a la página de privacidad.' },
+      { tipo: 'p', texto: 'Se aplican siempre, antes que las reglas de oro, y protegen el cumplimiento de las políticas de WhatsApp y de la Ley N.º 18.331. Se pueden editar con cuidado: queda registrado quién las cambió, y el botón «Restaurar las reglas recomendadas» vuelve al texto original. Se recomienda que la línea de presentación de la primera respuesta incluya el enlace a la página de privacidad; si falta, el panel lo avisa.' },
       { tipo: 'h', texto: 'Otras funciones' },
       { tipo: 'p', texto: '«Probar a Verde» permite conversar con Verde como si fuera un cliente, sin WhatsApp. «Ver cerebro de Verde» muestra las instrucciones completas que recibe la inteligencia artificial. «Apagar bot» apaga a Verde para todos los chats. En «Página de privacidad» se cargan el correo de contacto y el número de inscripción ante la URCDP.' }
     ]
@@ -87,7 +87,7 @@ const ARTICULOS = [
     ]
   },
   {
-    id: 'usuarios', grupo: 'manual', soloAdmin: false, titulo: 'Usuarios y contraseñas',
+    id: 'usuarios', grupo: 'manual', soloAdmin: true, titulo: 'Usuarios y contraseñas',
     resumen: 'Roles, alta de usuarios, contraseñas temporales y firma.',
     bloques: [
       { tipo: 'p', texto: 'Hay dos roles. Administrador: acceso a todo el panel. Asesor: atiende los chats y consulta el historial, pero no cambia la configuración ni los usuarios.' },
@@ -103,10 +103,11 @@ const ARTICULOS = [
   },
   {
     id: 'apariencia', grupo: 'manual', soloAdmin: false, titulo: 'Modo claro, oscuro y menú',
-    resumen: 'Cómo cambiar entre modo claro y oscuro, y cómo achicar el menú.',
+    resumen: 'Cómo cambiar entre modo claro y oscuro, achicar el menú y cerrar la sesión.',
     bloques: [
-      { tipo: 'p', texto: 'Al pie del menú está el selector «Claro | Oscuro». La primera vez, el panel usa el modo configurado en la computadora o el celular; después recuerda la elección en cada equipo.' },
-      { tipo: 'p', texto: 'En la computadora, el botón junto al logo achica el menú para dejar solo los íconos y ganar espacio. Al pasar el mouse sobre un ícono aparece su nombre. El mismo botón vuelve a abrir el menú completo.' }
+      { tipo: 'p', texto: 'Arriba a la derecha está el interruptor de modo, con un sol (modo claro) o una luna (modo oscuro). La primera vez, el panel usa el modo configurado en la computadora o el celular; después recuerda la elección en cada equipo.' },
+      { tipo: 'p', texto: 'Al lado están las iniciales del usuario. Al tocarlas se ven el nombre y el rol, y la opción «Cerrar sesión».' },
+      { tipo: 'p', texto: 'En la computadora, el botón junto al logo achica el menú para dejar solo los íconos y ganar espacio. Al pasar el mouse sobre un ícono aparece su nombre. El mismo botón vuelve a abrir el menú completo. La rama «Agentes IA» aparece cerrada al abrir el panel y se despliega al tocarla.' }
     ]
   },
 

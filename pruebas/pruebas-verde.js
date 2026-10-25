@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.3.8';
+const VERSION_ESPERADA = '1.3.9';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -393,7 +393,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(rr.status === 403 && rr2.status === 403, 'un asesor no puede editar ni restaurar las reglas fijas');
   rr = await api('/api/ayuda', 'GET', null, galletaCarla);
   const ayC = await json(rr);
-  verificar(rr.status === 200 && ayC.rol === 'asesor' && !ayC.articulos.some(a => a.soloAdmin) && ayC.articulos.some(a => a.id === 'conversaciones'), 'un asesor ve el Centro de ayuda sin los temas de administración ni las guías de Meta');
+  verificar(rr.status === 200 && ayC.rol === 'asesor' && !ayC.articulos.some(a => a.soloAdmin) && ayC.articulos.map(a => a.id).join(',') === 'chats-por-responder,conversaciones,chats-respondidos,apariencia', 'un asesor ve solo los 4 temas para atender los chats');
   rr = await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Cómo devuelvo un chat a Verde?' }, galletaCarla);
   const pC = await json(rr);
   const sysC = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system);
@@ -838,7 +838,12 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   rr = await api('/api/reglas-fijas', 'PUT', { reglas: nuevas54.concat(['corta']), linea: cf.lineaInicial });
   verificar(rr.status === 400, 'rechaza una regla demasiado corta');
   rr = await api('/api/reglas-fijas', 'PUT', { reglas: nuevas54, linea: 'Soy Verde, el asistente virtual de la tienda.' });
-  verificar(rr.status === 400 && /debe incluir el enlace/.test((await json(rr)).error), 'la presentación no se puede guardar sin el enlace a la privacidad');
+  const sin54 = await json(rr);
+  verificar(rr.status === 200 && sin54.sinEnlace === true && sin54.lineaInicial === 'Soy Verde, el asistente virtual de la tienda.', 'desde la 1.3.9 la presentación se puede guardar sin el enlace, y el servidor lo informa para el aviso');
+  await post360(avisoDe('59872000032', 'Sin Enlace', 'hola', 're3'));
+  await espera(500);
+  const env54b = envios360.filter(x => x.body.to === '59872000032').pop();
+  verificar(env54b && env54b.body.text.body.endsWith('\n\n_Soy Verde, el asistente virtual de la tienda._'), 'sin enlace, la presentación sale completa en cursiva');
   rr = await api('/api/reglas-fijas', 'PUT', { reglas: nuevas54, linea: 'Soy _Verde_, el asistente. Más información: chat.pantallaverde.com/privacidad' });
   verificar(rr.status === 400, 'rechaza los caracteres de formato de WhatsApp en la presentación');
   rr = await api('/api/reglas-fijas', 'PUT', { reglas: nuevas54, linea: 'Hola, soy Verde, el asistente virtual. Privacidad: chat.pantallaverde.com/privacidad (3 meses).' });

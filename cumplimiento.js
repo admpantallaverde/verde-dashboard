@@ -41,7 +41,8 @@ function leerReglas() {
   const reglas = d && Array.isArray(d.reglas) && d.reglas.length ? d.reglas.map(String) : REGLAS_FIJAS.slice();
   const linea = d && typeof d.linea === 'string' && d.linea ? d.linea : LINEA_RECOMENDADA;
   const recomendadas = reglas.length === REGLAS_FIJAS.length && reglas.every((r, i) => r === REGLAS_FIJAS[i]) && linea === LINEA_RECOMENDADA;
-  return { reglas, linea, recomendadas, modificadoEn: (d && d.modificadoEn) || null, modificadoPor: (d && d.modificadoPor) || null };
+  const sinEnlace = !linea.toLowerCase().includes(URL_PRIVACIDAD.toLowerCase());
+  return { reglas, linea, recomendadas, sinEnlace, modificadoEn: (d && d.modificadoEn) || null, modificadoPor: (d && d.modificadoPor) || null };
 }
 function escribirReglas(cfg) {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -60,7 +61,7 @@ function guardarReglas(datos, quien) {
   if (larga >= 0) throw error('La regla ' + (larga + 1) + ' supera los 400 caracteres.');
   const linea = limpiar(datos.linea);
   if (linea.length < 20 || linea.length > 300) throw error('La línea de presentación debe tener entre 20 y 300 caracteres.');
-  if (!linea.toLowerCase().includes(URL_PRIVACIDAD.toLowerCase())) throw error('La línea de presentación debe incluir el enlace ' + URL_PRIVACIDAD + '.');
+  // Desde la 1.3.9 el enlace a la privacidad es recomendado, no obligatorio: el panel avisa si falta.
   if (/[_*~]/.test(linea)) throw error('La línea de presentación no puede incluir guiones bajos, asteriscos ni virgulillas: WhatsApp los usa para dar formato.');
   const cfg = { reglas, linea, modificadoEn: Date.now(), modificadoPor: limpiar(quien).slice(0, 60) || 'Acceso general' };
   escribirReglas(cfg);
