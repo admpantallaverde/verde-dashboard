@@ -15,8 +15,8 @@ const ARTICULOS = [
     id: 'chats-por-responder', grupo: 'manual', soloAdmin: false, titulo: 'Chats por responder',
     resumen: 'Clientes que esperan a una persona del equipo: cómo responderlos y cómo marcarlos como atendidos.',
     bloques: [
-      { tipo: 'p', texto: 'Cuando Verde deriva un chat a una persona del equipo (por ejemplo, porque el cliente pide un precio exacto), el chat aparece en «Chats por responder». Mientras está ahí, Verde no le responde a ese cliente.' },
-      { tipo: 'p', texto: 'Hay una excepción: cuando el cliente envía un archivo, el chat aparece con la etiqueta «Archivo para revisar» y Verde sigue conversando mientras una persona revisa el archivo. Si en esa conversación el cliente pide un precio, Verde deriva y deja de responder, como siempre.' },
+      { tipo: 'p', texto: 'Cuando Verde deriva un chat a una persona del equipo (por ejemplo, porque el cliente pide un precio exacto), el chat aparece en «Chats por responder» y se avisa al equipo. Verde sigue conversando con el cliente, sin dar precios, hasta que una persona del equipo responda; ahí hace su pausa de 12 horas.' },
+      { tipo: 'p', texto: 'Cuando el cliente envía un archivo, el chat aparece con la etiqueta «Archivo para revisar». Si después el cliente pide un precio, pasa a «Por responder» y se avisa al equipo por ese motivo. En los dos casos, Verde sigue conversando.' },
       { tipo: 'p', texto: 'Los tiempos de espera de más de 5 minutos se muestran en rojo. El número junto a «Chats por responder» en el menú indica cuántos chats esperan.' },
       { tipo: 'h', texto: 'Cómo atender un chat' },
       { tipo: 'pasos', items: [

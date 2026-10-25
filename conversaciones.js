@@ -208,7 +208,7 @@ function estadoDe(c, ctx, ahora) {
   const pausaHasta = hasta > ahora ? hasta : null;
   const apagado = !!c.apagado;
   const persona = !pendiente && !apagado && !!pausaHasta;
-  const verde = !apagado && !persona && (!pendiente || (revision && !pausaHasta));
+  const verde = !apagado && !persona && !pausaHasta;   // 1.4.3: estar por responder ya no calla a Verde
   return { pendiente, revision, apagado, persona, verde, pausaHasta };
 }
 const FILTROS = {

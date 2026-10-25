@@ -33,7 +33,7 @@ const usuarios = require('./usuarios.js');
 const atencion = require('./atencion.js');
 const conversaciones = require('./conversaciones.js');
 
-const VERSION = '1.4.2';
+const VERSION = '1.4.3';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -544,19 +544,14 @@ async function manejarEntrante(msg, nombres) {
   const v = bot.getVerde();
   if (v.encendido === false) { console.log('360 << de', quien, '→ Verde apagado, sin respuesta'); return; }
 
-  // 1) El chat ya espera a una persona del equipo: Verde no responde y el mensaje se suma a «Por responder».
-  //    (1.4.2: un archivo para revisar no cuenta como espera: Verde sigue conversando.)
-  if (atencion.esperaPersona(clave)) {
-    bot.registrarMensaje(clave, 'user', textoCliente);
-    atencion.mensajeCliente({ clave, destino, numero, nombre, texto: textoCliente, enPausa: bot.estaPausado(clave) });
-    console.log('360 << de', quien, '→ espera a una persona del equipo (Verde no responde)');
-    return;
-  }
+  // 1) 1.4.3: estar en «Chats por responder» ya no calla a Verde. Sigue conversando hasta que responde una persona
+  //    del equipo (ahí hace su pausa de 12 horas). Solo lo callan el interruptor del chat y la pausa (pasos 1b y 2).
 
   // 1b) Verde está apagado en este chat: no responde. Si nadie del equipo responde en 5 minutos,
   //     el resguardo pasa el chat a «Chats por responder» y avisa al equipo.
   if (conversaciones.estaApagado(clave)) {
     bot.registrarMensaje(clave, 'user', textoCliente);
+    if (atencion.tienePendiente(clave)) atencion.mensajeCliente({ clave, destino, numero, nombre, texto: textoCliente });
     console.log('360 << de', quien, '→ Verde está apagado en este chat (lo atiende una persona del equipo)');
     return;
   }
@@ -578,37 +573,49 @@ async function manejarEntrante(msg, nombres) {
 
   // 3) Archivos (1.4.2): Verde no ve su contenido, pero sigue conversando. El chat queda en «Chats por responder»
   //    con la marca «Archivo para revisar» para que una persona lo revise; el aviso al equipo sale solo la primera vez.
-  const enRevision = atencion.tienePendiente(clave);   // acá solo puede ser un archivo para revisar (la espera ya se atendió en el paso 1)
+  const pendienteAntes = atencion.tienePendiente(clave);
+  const revisionAntes = pendienteAntes && atencion.pendienteRevision(clave);
+  let avisoArchivo = null;   // el aviso por un archivo sale después de la respuesta de Verde: si Verde deriva, sale uno solo
   if (info.clase === 'adjunto') {
-    if (enRevision) {
+    if (pendienteAntes) {
       atencion.mensajeCliente({ clave, destino, numero, nombre, texto: textoCliente });
     } else {
       const d = atencion.derivar({ clave, destino, numero, nombre, mensajeCliente: textoCliente, revision: true, motivo: 'El cliente envió ' + info.desc + ': hay un archivo para revisar. Verde sigue conversando.' });
       console.log('360 << archivo de', quien, '→ «Archivo para revisar» en «Chats por responder» (Verde sigue conversando)');
-      await avisarEquipo(d.atencion);
+      avisoArchivo = d.atencion;
     }
-  } else if (enRevision) {
+  } else if (pendienteAntes) {
     atencion.mensajeCliente({ clave, destino, numero, nombre, texto: textoCliente });   // el asesor ve el último mensaje
   }
-  const yaAnotado = enRevision || info.clase === 'adjunto';
+  const yaAnotado = pendienteAntes || info.clase === 'adjunto';
+  const yaDerivado = pendienteAntes && !revisionAntes;
+  const estadoChat = yaDerivado ? 'derivado' : (pendienteAntes || avisoArchivo ? 'revision' : null);
 
   // 4) Verde responde (texto o archivo) y, si deriva, el chat pasa a «Chats por responder» con Verde en espera.
-  if (!textoCliente.trim()) return;
+  if (!textoCliente.trim()) { if (avisoArchivo) await avisarEquipo(avisoArchivo); return; }
   console.log('360 << de', quien, ':', textoCliente.slice(0, 200));
   // Si mientras la IA prepara la respuesta alguien apaga a Verde en este chat, la respuesta se descarta.
-  const r = await bot.responderCliente(clave, textoCliente, { puedeResponder: () => !conversaciones.estaApagado(clave) });
-  if (!r) { console.log('360 >> sin respuesta (Verde apagado o una persona del equipo tomó la conversación)'); return; }
+  const r = await bot.responderCliente(clave, textoCliente, { puedeResponder: () => !conversaciones.estaApagado(clave), atencion: estadoChat });
+  if (!r) {
+    console.log('360 >> sin respuesta (Verde apagado o una persona del equipo tomó la conversación)');
+    if (avisoArchivo) await avisarEquipo(avisoArchivo);
+    return;
+  }
   const enviado = conPresentacion(clave, r.texto);
   const ok = await enviarWhatsApp(destino, enviado);
   if (ok) conversaciones.registrar({ clave, tipo: 'verde', texto: enviado });
   console.log('360 >>', ok ? 'enviado' : 'NO enviado', ':', enviado.slice(0, 200));
-  if (r.derivar) {
+  if (r.derivar && !yaDerivado) {
     const d = atencion.derivar({
       clave, destino, numero, nombre, mensajeCliente: yaAnotado ? null : textoCliente, respuestaVerde: ok ? r.texto : null,
       motivo: r.error ? 'Verde tuvo un problema técnico y lo derivó a una persona del equipo.' : 'Verde lo derivó a una persona del equipo.'
     });
-    console.log('360 → derivado: pasa a «Chats por responder»');
+    console.log('360 → derivado: pasa a «Chats por responder» (Verde sigue conversando)');
     await avisarEquipo(d.atencion);
+  } else if (avisoArchivo) {
+    await avisarEquipo(avisoArchivo);
+  } else if (r.derivar) {
+    console.log('360 → el chat ya estaba derivado: Verde sigue conversando sin repetir el aviso');
   }
 }
 
@@ -678,7 +685,9 @@ async function procesarAviso360(body) {
    ============================================================ */
 app.get('/api/chats/pendientes', requiere(['admin', 'asesor']), (req, res) => {
   const apagados = conversaciones.apagados();
-  const lista = atencion.pendientes().map(p => Object.assign(p, { apagado: apagados.has(p.clave) }));
+  const pausas = bot.pausasVigentes(), ahora = Date.now(), encendido = bot.getVerde().encendido !== false;
+  // verdeActivo (1.4.3): Verde sigue conversando en ese chat (no está apagado ni en pausa).
+  const lista = atencion.pendientes().map(p => Object.assign(p, { apagado: apagados.has(p.clave), verdeActivo: encendido && !apagados.has(p.clave) && !(Number(pausas[p.clave]) > ahora) }));
   res.json({ total: lista.length, lista });
 });
 app.get('/api/chats/respondidos', requiere(['admin', 'asesor']), (req, res) => {
@@ -883,20 +892,20 @@ async function responderConsultaPendiente(clave) {
   if (!d) return sin();
   const ultimo = (d.mensajes || []).filter(m => m.tipo !== 'sistema').pop();
   if (!ultimo || ultimo.tipo !== 'cliente') return sin();   // no quedó ninguna consulta sin responder
-  if (/^\[El cliente envió /.test(ultimo.texto)) return sin('La última consulta es un archivo: Verde no interpreta archivos y responde cuando el cliente escriba.');
   if (bot.getVerde().encendido === false) return sin('Verde está apagado para todos los chats desde «Comportamiento del bot».');
-  if (conversaciones.estaApagado(clave) || atencion.tienePendiente(clave)) return sin();
+  if (conversaciones.estaApagado(clave)) return sin();
+  const pend = atencion.tienePendiente(clave), yaDerivado = pend && !atencion.pendienteRevision(clave);
   if (!d360Configurado()) return sin('La conexión con WhatsApp (360dialog) no está configurada en el servidor.');
   if (!d.puedeResponder) return sin(d.motivoNoResponder);
-  const r = await bot.responderPendiente(clave, { puedeResponder: () => !conversaciones.estaApagado(clave) && !atencion.tienePendiente(clave) });
+  const r = await bot.responderPendiente(clave, { puedeResponder: () => !conversaciones.estaApagado(clave), atencion: yaDerivado ? 'derivado' : (pend ? 'revision' : null) });
   if (!r) return sin();
   const enviado = conPresentacion(clave, r.texto);
   const ok = await enviarWhatsApp(d.destino, enviado);
   console.log('360 >> (chat devuelto a Verde)', ok ? 'enviado' : 'NO enviado', ':', enviado.slice(0, 200));
   if (!ok) return sin('WhatsApp no aceptó la respuesta de Verde. Si el cliente vuelve a escribir, Verde le responde.');
   conversaciones.registrar({ clave, tipo: 'verde', texto: enviado });
-  if (r.derivar) {
-    const a = atencion.derivar({ clave, destino: d.destino, numero: d.numero, nombre: d.nombre, mensajeCliente: ultimo.texto, respuestaVerde: r.texto,
+  if (r.derivar && !yaDerivado) {
+    const a = atencion.derivar({ clave, destino: d.destino, numero: d.numero, nombre: d.nombre, mensajeCliente: pend ? null : ultimo.texto, respuestaVerde: r.texto,
       motivo: r.error ? 'Verde tuvo un problema técnico y lo derivó a una persona del equipo.' : 'Verde lo derivó a una persona del equipo.' });
     console.log('360 → derivado: pasa a «Chats por responder»');
     await avisarEquipo(a.atencion);

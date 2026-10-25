@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.4.2';
+const VERSION_ESPERADA = '1.4.3';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -269,7 +269,8 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   await espera(500);
   pend = await json(await api('/api/chats/pendientes'));
   luciaP = pend.lista.find(x => x.numero === '59870000001');
-  verificar(envios360.length === antes && luciaP && /sigo esperando/.test(luciaP.ultimoMensaje), 'mientras espera, Verde no responde y se actualiza el último mensaje');
+  const sigue18 = envios360.slice(antes);
+  verificar(sigue18.some(x => x.body.to === '59870000001') && !sigue18.some(x => /^598990001/.test(x.body.to)) && luciaP && /sigo esperando/.test(luciaP.ultimoMensaje), 'mientras espera a una persona, Verde sigue conversando, el aviso no se repite y se actualiza el último mensaje');
   antes = envios360.length;
   await post360(avisoDe('59899000101', '', 'ok, lo veo', 'd3'));
   await espera(400);
@@ -1037,8 +1038,51 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   antesIA58 = llamadasIA.length;
   await post360(aviso([{ id: 'rv5', from: '59876000001', type: 'text', text: { body: 'hola?' } }]));
   await espera(400);
-  verificar(llamadasIA.length === antesIA58, 'a partir de ahí Verde espera a la persona del equipo, como siempre');
+  verificar(llamadasIA.length === antesIA58 + 1 && /ESTADO DE ESTE CHAT: ya está derivado/.test(JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system)), 'después de derivar, Verde sigue conversando y sabe que el chat ya está derivado');
   verificar(botMod.buildSystemPrompt({ frases: { adjunto: 'Pedir la foto del IMEI.' } }).includes('Pedir la foto del IMEI.') && !botMod.buildSystemPrompt({ frases: { adjunto: 'Pedir la foto del IMEI.' } }).includes(botMod.ADJUNTO_POR_DEFECTO), 'las indicaciones configuradas en el panel reemplazan a las sugeridas');
+
+
+  mostrar('59) Verde sigue conversando también después de derivar');
+  await api('/api/avisos', 'PUT', { numeros: ['59899000102'] });
+  const aviso59 = desde => envios360.slice(desde).filter(x => x.body.to === '59899000102').length;
+  let antes59 = envios360.length, antesIA59 = llamadasIA.length;
+  await post360(aviso([{ id: 'dr59-1', from: '59877000001', type: 'text', text: { body: 'hola, ¿cuál es el precio exacto del cambio de pantalla?' } }]));
+  await espera(500);
+  let p59 = (await json(await api('/api/chats/pendientes'))).lista.find(x => x.numero === '59877000001');
+  verificar(p59 && !p59.revision && p59.verdeActivo === true && aviso59(antes59) === 1, 'al pedir un precio, Verde deriva: el chat pasa a «Chats por responder», se avisa al equipo y Verde sigue activo');
+  antes59 = envios360.length; antesIA59 = llamadasIA.length;
+  await post360(aviso([{ id: 'dr59-2', from: '59877000001', type: 'text', text: { body: 'iPhone 13 Pro Max' } }]));
+  await espera(500);
+  verificar(llamadasIA.length === antesIA59 + 1 && envios360.slice(antes59).some(x => x.body.to === '59877000001') && aviso59(antes59) === 0, 'el cliente manda el modelo: Verde le responde y no se repite el aviso');
+  verificar(/ESTADO DE ESTE CHAT: ya está derivado/.test(JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system)), 'Verde sabe que el chat ya está derivado (no vuelve a derivar ni repite que lo pasa a un asesor)');
+  antes59 = envios360.length;
+  await post360(aviso([{ id: 'dr59-3', from: '59877000001', type: 'text', text: { body: '¿y el precio exacto entonces?' } }]));
+  await espera(500);
+  const at59 = await json(await api('/api/chats/' + p59.id));
+  const derivados59 = (at59.eventos || (at59.atencion && at59.atencion.eventos) || []).filter(x => x.tipo === 'derivado').length;
+  verificar(envios360.slice(antes59).some(x => x.body.to === '59877000001') && aviso59(antes59) === 0 && derivados59 === 1, 'si insiste con el precio, Verde responde sin repetir la derivación ni el aviso');
+  const det59 = await json(await api('/api/conversaciones/' + encodeURIComponent('wa:59877000001'), 'GET'));
+  verificar(det59.pendiente && det59.verde && !det59.revision, 'la conversación figura por responder y con Verde atendiendo');
+  antes59 = envios360.length;
+  await post360(aviso([{ id: 'dr59-4', from: '59877000002', type: 'image', image: { id: 'med-dv-1', mime_type: 'image/jpeg', caption: 'precio exacto de esto' } }]));
+  await espera(500);
+  const p59b = (await json(await api('/api/chats/pendientes'))).lista.find(x => x.numero === '59877000002');
+  verificar(p59b && !p59b.revision && aviso59(antes59) === 1, 'un archivo que además pide precio genera un solo aviso, por la derivación');
+  await api('/api/conversaciones/' + encodeURIComponent('wa:59877000001') + '/apagar', 'POST', {});
+  p59 = (await json(await api('/api/chats/pendientes'))).lista.find(x => x.numero === '59877000001');
+  verificar(p59 && p59.verdeActivo === false, 'con Verde apagado en ese chat, la fila no lo muestra como activo');
+  await api('/api/conversaciones/' + encodeURIComponent('wa:59877000001') + '/encender', 'POST', {});
+  await post360(aviso([{ id: 'dr59-5', from: '59877000003', type: 'text', text: { body: 'hola, quiero un presupuesto' } }]));
+  await espera(400);
+  rr = await api('/api/conversaciones/' + encodeURIComponent('wa:59877000003') + '/responder', 'POST', { texto: 'Hola, ¿qué equipo es?' });
+  await espera(200);
+  antesIA59 = llamadasIA.length;
+  await post360(aviso([{ id: 'dr59-6', from: '59877000003', type: 'image', image: { id: 'med-dv-2', mime_type: 'image/jpeg' } }]));
+  await espera(400);
+  verificar(llamadasIA.length === antesIA59, 'durante la pausa (respondió una persona), Verde no responde, ni siquiera a un archivo');
+  rr = await api('/api/conversaciones/' + encodeURIComponent('wa:59877000003') + '/reanudar', 'POST', {});
+  const rj59 = await json(rr);
+  verificar(rr.status === 200 && rj59.verde && rj59.verde.respondio === true && llamadasIA.length === antesIA59 + 1, '«Devolver a Verde» con un archivo como última consulta: Verde responde enseguida');
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }

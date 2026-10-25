@@ -69,6 +69,14 @@ function instruccionesArchivo(fr) {
   return t && t !== ADJUNTO_VIEJO ? t : ADJUNTO_POR_DEFECTO;
 }
 
+// 1.4.3: estado del chat para Verde. Un chat derivado o con un archivo para revisar no calla a Verde:
+// sigue conversando hasta que responde una persona del equipo (ahí hace su pausa de 12 horas).
+function notaAtencion(estado) {
+  if (estado === 'derivado') return '\n\nESTADO DE ESTE CHAT: ya está derivado a una persona del equipo, que va a responder en cuanto pueda. Seguir conversando y ayudando sin dar precios ni confirmar presupuestos. No volver a derivar ni repetir en cada mensaje que se lo pasa a un asesor; si el cliente pregunta por el precio o por la persona, indicar que un asesor le va a escribir.';
+  if (estado === 'revision') return '\n\nESTADO DE ESTE CHAT: el cliente envió un archivo que una persona del equipo va a revisar. Seguir conversando con normalidad.';
+  return '';
+}
+
 // Prompt completo: la configuración del panel más las reglas fijas del sistema (1.3.7), siempre al final.
 function buildSystemPrompt(v) { return buildSystemPromptBase(v) + cumplimiento.bloquePrompt(); }
 function buildSystemPromptBase(v) {
@@ -411,7 +419,7 @@ async function responder(from, body, opciones) {
   // 2) se arma el pedido con el historial guardado
   const convs = loadConversations();
   const hist = Array.isArray(convs[from]) ? convs[from] : [];
-  const system = buildSystemPrompt(v) + bloqueContexto() + productBlock(body);
+  const system = buildSystemPrompt(v) + bloqueContexto() + productBlock(body) + notaAtencion(opciones.atencion);
   let crudo;
   try {
     crudo = await callClaude(system, paraLaIA(hist, memoriaDe(v)), v, opciones.modelo, String(from).startsWith('sim:') ? 'pruebas' : 'whatsapp');
@@ -448,7 +456,7 @@ async function responderUltima(from, opciones) {
   const ultimo = hist[hist.length - 1];
   if (!ultimo || ultimo.role !== 'user') return null;   // la última palabra fue del equipo o de Verde
   if (noDebeResponder(from, opciones)) return null;
-  const system = buildSystemPrompt(v) + bloqueContexto() + productBlock(String(ultimo.content || ''));
+  const system = buildSystemPrompt(v) + bloqueContexto() + productBlock(String(ultimo.content || '')) + notaAtencion(opciones.atencion);
   let crudo;
   try {
     crudo = await callClaude(system, paraLaIA(hist, memoriaDe(v)), v, undefined, 'whatsapp');
@@ -474,7 +482,7 @@ function tieneRespuestas(from) {
 function modeloEnUso() { return resolverModelo(getVerde()); }
 
 module.exports = {
-  ADJUNTO_POR_DEFECTO, instruccionesArchivo,
+  ADJUNTO_POR_DEFECTO, instruccionesArchivo, notaAtencion,
   tieneRespuestas,
   modeloEnUso,
   responderPendiente,

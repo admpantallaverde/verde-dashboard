@@ -4621,7 +4621,7 @@ function renderChats(){
       +(c.nombre&&c.numero?'<span class="chat-num">+'+escH(c.numero)+'</span>':'')
       +'<span class="chat-hora'+(roja?' roja':'')+'">'+escH(tiempoEspera(min))+'</span></div>'
       +'<div class="chat-l2"><span class="chat-msg">'+vistaPrevia(mostrar,b)+'</span>'+(roja?'<span class="punto-rojo" aria-hidden="true"></span>':'')+'</div>'
-      +(c.apagado||c.revision?'<div class="chat-l3">'+(c.revision?'<span class="tag-rev">'+IC142.rev+'Archivo para revisar</span>'+(c.apagado?'':'<span class="tag-verde">Verde atendiendo</span>'):'')+(c.apagado?'<span class="tag-apagado">'+IC132.power+'Verde apagado en este chat</span>':'')+'</div>':'')
+      +(c.apagado||c.revision||c.verdeActivo?'<div class="chat-l3">'+(c.revision?'<span class="tag-rev">'+IC142.rev+'Archivo para revisar</span>':'')+(c.verdeActivo?'<span class="tag-verde">Verde atendiendo</span>':'')+(c.apagado?'<span class="tag-apagado">'+IC132.power+'Verde apagado en este chat</span>':'')+'</div>':'')
       +'</div></li>';
   }).join('');
 }
@@ -4642,7 +4642,7 @@ function pillsConversacion(c){
   if(c.apagado)p.push('<span class="estado apa">Verde apagado</span>');
   if(c.pendiente&&c.revision)p.push('<span class="estado rev">Archivo para revisar</span>');
   else if(c.pendiente)p.push('<span class="estado mal">Por responder</span>');
-  if(!p.length||(c.revision&&!c.apagado))p.push(c.persona?'<span class="estado per">Atiende una persona</span>':'<span class="estado ok">Verde atendiendo</span>');
+  if(!p.length||(c.pendiente&&c.verde))p.push(c.persona?'<span class="estado per">Atiende una persona</span>':'<span class="estado ok">Verde atendiendo</span>');
   return p.join('');
 }
 function prefijoMensaje(m){
@@ -5032,8 +5032,8 @@ function pintarFranja(c){
     if(c.pendienteId)boton='<button type="button" class="btn-mini franja-marcar" onclick="marcarDesdeConversacion()">'+IC134.check+'Marcar atendido</button>';
   }else if(c.pendiente){
     clase='roja';
-    txt='Espera a una persona del equipo: Verde no responde mientras el chat está en «Chats por responder».';
-    corto='Por responder: espera a una persona del equipo.';
+    txt='Por responder: una persona del equipo tiene que atender este chat. Verde sigue conversando, sin dar precios, hasta que alguien responda; ahí hace su pausa de 12 horas.';
+    corto='Por responder: Verde sigue conversando hasta que alguien responda.';
     if(c.pendienteId)boton='<button type="button" class="btn-mini franja-marcar" onclick="marcarDesdeConversacion()">'+IC134.check+'Marcar atendido</button>';
   }else if(c.apagado){
     const info=c.apagadoInfo||{};
