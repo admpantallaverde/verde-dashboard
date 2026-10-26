@@ -74,7 +74,7 @@ function escribirArchivo(id, buf, ext) {
   return guardado;
 }
 function publico(r) {
-  return { id: r.id, nombre: r.nombre, cuando: r.cuando, verde: r.verde !== false,
+  return { id: r.id, nombre: r.nombre, cuando: r.cuando, verde: r.verde !== false, directo: r.verde !== false && r.directo === true,
     archivo: { nombre: r.archivo.nombre, mime: r.archivo.mime, tamano: r.archivo.tamano, tipo: TIPOS[r.archivo.mime] ? TIPOS[r.archivo.mime].nombre : '' },
     creadoEn: r.creadoEn, creadoPor: r.creadoPor || '', actualizadoEn: r.actualizadoEn || r.creadoEn, actualizadoPor: r.actualizadoPor || r.creadoPor || '' };
 }
@@ -85,7 +85,10 @@ function datosValidos(datos, previo) {
   const verde = datos.verde != null ? datos.verde !== false && datos.verde !== 'false' : (previo ? previo.verde !== false : true);
   if (!nombre) throw error('Escribir el nombre del recurso.');
   if (verde && !cuando) throw error('Escribir cuándo usarlo: Verde lo necesita para saber cuándo ofrecerlo.');
-  return { nombre, cuando, verde };
+  // 1.4.9: «Puede enviarlo sin que lo pidan». Si Verde no lo ofrece, tampoco lo envía sin preguntar.
+  let directo = datos.directo != null ? datos.directo === true || datos.directo === 'true' : (previo ? previo.directo === true : false);
+  if (!verde) directo = false;
+  return { nombre, cuando, verde, directo };
 }
 
 /* ---------- operaciones ---------- */
@@ -149,7 +152,7 @@ function paraServir(id) {
 // Los que Verde puede ofrecer, en el orden en que se cargaron (de ahí sale el código R1, R2… del prompt).
 function paraVerde() {
   return leer().lista.filter(r => r.verde !== false && r.cuando && rutaDe(r) && fs.existsSync(rutaDe(r)))
-    .map(r => ({ id: r.id, nombre: r.nombre, cuando: r.cuando, mime: r.archivo.mime }));
+    .map(r => ({ id: r.id, nombre: r.nombre, cuando: r.cuando, mime: r.archivo.mime, directo: r.directo === true }));
 }
 
 module.exports = { TIPOS, MAX_RECURSOS, idValido, tipoPorContenido, validarArchivo, listar, obtener, crear, editar, quitar, paraEnviar, paraServir, paraVerde };

@@ -1447,6 +1447,13 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 .rec-modal textarea,.rec-modal input[type="text"]{width:100%;box-sizing:border-box}
 .rec-interruptor{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;margin:4px 0 6px}
 
+/* ===================== 1.4.9: enviar sin que lo pidan ===================== */
+.rec-directo{display:flex;flex-direction:column;gap:6px;padding:10px 12px;margin:2px 0 8px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2)}
+.rec-directo .rec-interruptor{margin:0}
+.rec-directo-ayuda{font-size:12.5px;color:var(--muted);line-height:1.45}
+.rec-directo.rec-apagado{opacity:.55}
+.rec-sinpreg{display:inline-block;margin-top:6px;white-space:nowrap;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(59,130,246,.16);color:var(--text)}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -1956,7 +1963,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
             </div>
             <div style="padding:6px 10px 14px">
               <div class="cons-scroll"><table class="rec-tabla"><thead><tr><th scope="col">Recurso</th><th scope="col">Cuándo usarlo (indicación para Verde)</th><th scope="col">Verde lo ofrece</th><th scope="col" aria-label="Acciones"></th></tr></thead><tbody id="recLista"><tr><td colspan="4" class="rec-vacio">Cargando la biblioteca…</td></tr></tbody></table></div>
-              <div class="note" style="margin:10px 10px 0"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span><b>Cómo trabaja Verde con la biblioteca:</b> si el cliente pide un recurso, se lo envía; si no lo pidió, primero se lo ofrece y lo envía solo si acepta. Nunca envía los recursos marcados con «No». Límites: PDF hasta 25 MB; JPG o PNG hasta 5 MB. <span id="recModo"></span></span></div>
+              <div class="note" style="margin:10px 10px 0"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span><b>Cómo trabaja Verde con la biblioteca:</b> si el cliente pide un recurso, se lo envía; si no lo pidió, primero se lo ofrece y lo envía solo si acepta, salvo los marcados «Sin preguntar», que envía cuando se cumple su indicación. Nunca envía los recursos marcados con «No». Límites: PDF hasta 25 MB; JPG o PNG hasta 5 MB. <span id="recModo"></span></span></div>
             </div>
           </div>
         </div>
@@ -2186,8 +2193,9 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
     <div class="modal-body">
       <div class="field"><label for="rec_nombre">Nombre del recurso</label><input type="text" id="rec_nombre" maxlength="80" placeholder="Por ejemplo: Términos y condiciones"></div>
       <div class="field"><label for="rec_archivo">Archivo</label><label class="rec-zona" id="recZona" for="rec_archivo"><span id="recZonaTx">Elegir un archivo PDF, JPG o PNG</span></label><input type="file" id="rec_archivo" class="oculto" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" onchange="recArchivoElegido(this)"><span class="faint fr-ayuda">PDF hasta 25 MB; JPG o PNG hasta 5 MB. También se puede arrastrar el archivo hasta este recuadro.</span></div>
-      <div class="field"><label for="rec_cuando">Cuándo usarlo (indicación para Verde)</label><textarea id="rec_cuando" rows="2" maxlength="300" placeholder="Por ejemplo: Cuando el cliente pregunte por la garantía o las condiciones del servicio."></textarea></div>
+      <div class="field"><label for="rec_cuando">Cuándo usarlo (indicación para Verde)</label><textarea id="rec_cuando" rows="4" maxlength="300" placeholder="Por ejemplo: Cuando el cliente pregunte por la garantía o las condiciones del servicio."></textarea></div>
       <div class="rec-interruptor"><button type="button" class="sw-sec" id="rec_verde" role="switch" aria-checked="true" aria-labelledby="recVerdeTx" onclick="alternarVerdeNuevo(this)"><span class="sw-sec-bola"></span></button><span id="recVerdeTx">Verde puede ofrecerlo y enviarlo</span></div>
+      <div class="rec-directo"><span class="rec-interruptor"><button type="button" class="sw-sec" id="rec_directo" role="switch" aria-checked="false" aria-labelledby="recDirectoTx" onclick="alternarDirectoNuevo(this)"><span class="sw-sec-bola"></span></button><span id="recDirectoTx">Puede enviarlo sin que lo pidan</span></span><span class="rec-directo-ayuda"><b>Apagado:</b> si el cliente no lo pidió, Verde primero lo ofrece y lo envía solo si acepta. <b>Encendido:</b> Verde sigue la indicación de «Cuándo usarlo» al pie de la letra y puede enviarlo aunque el cliente no lo haya pedido.</span></div>
       <div class="cons-err" id="recErr" role="alert"></div>
     </div>
     <div class="ficha-pie"><span></span><span class="acciones"><button class="btn btn-ghost" type="button" onclick="cerrarRecurso()">Cancelar</button><button class="btn btn-primary" type="button" id="recGuardar" onclick="guardarRecurso()">Guardar recurso</button></span></div>
@@ -4226,7 +4234,7 @@ function buildVerdePrompt(){
     `No es posible ver el contenido de los archivos: nunca describir ni opinar sobre lo que muestran.`;
   if(vGarantia.activo){const ng=normGarantia(Object.assign({},vGarantia,{requisitos:(document.getElementById('v_gReq')||{}).value||'',condiciones:(document.getElementById('v_gCond')||{}).value||''}));p+='\n\n'+H('RECLAMOS Y GARANTÍA')+'\nDatos a juntar:\n'+ng.datos.map((d,i)=>(i+1)+'. '+esc(d)).join('\n')+'\nSíntomas:\n'+(ng.sintomas.map(s=>'- '+esc(s.sintoma)+': preguntar '+esc(s.preguntar)+' Sugerir: '+esc(s.sugerir)).join('\n')||'—')+'\nRequisitos indispensables: '+esc(ng.requisitos)+'\nPlazos y cobertura: '+esc(ng.condiciones)+'\nReglas fijas: nunca afirmar que la garantía corresponde (la evalúa el asesor con la ficha); no inventar procedimientos ni ofrecer alternativas que no estén escritas.';}
   if(vConsultas.activo){const nc=normConsultas(vConsultas);p+='\n\n'+H('FICHAS DE CONSULTA')+'\nReparación:\n'+nc.reparacion.map((d,i)=>(i+1)+'. '+esc(d)).join('\n')+'\nCompra:\n'+nc.compra.map((d,i)=>(i+1)+'. '+esc(d)).join('\n')+'\nVerde arma la ficha al derivar y la completa mientras conversa; nunca da precios.';}
-  if(RECURSOS&&RECURSOS.some(r=>r.verde)){const rv=RECURSOS.filter(r=>r.verde&&r.cuando);p+='\n\n'+H('BIBLIOTECA DE RECURSOS')+'\n'+rv.map((r,i)=>'R'+(i+1)+' · '+esc(r.nombre)+' ('+(r.archivo.mime==='application/pdf'?'PDF':'imagen')+'): '+esc(r.cuando)).join('\n')+'\nSolo con el número definitivo: en el modo de prueba de 360dialog Verde no envía archivos.';}
+  if(RECURSOS&&RECURSOS.some(r=>r.verde)){const rv=RECURSOS.filter(r=>r.verde&&r.cuando);p+='\n\n'+H('BIBLIOTECA DE RECURSOS')+'\n'+rv.map((r,i)=>'R'+(i+1)+' · '+esc(r.nombre)+' ('+(r.archivo.mime==='application/pdf'?'PDF':'imagen')+')'+(r.directo?' [sin preguntar]':'')+': '+esc(r.cuando)).join('\n')+'\nSolo con el número definitivo: en el modo de prueba de 360dialog Verde no envía archivos.';}
   pre.innerHTML=p;
 }
 
@@ -6071,7 +6079,7 @@ function pintarSeccionRecursos(){
   if(!lista.length)tb.innerHTML='<tr><td colspan="4" class="rec-vacio">Todavía no hay recursos. Tocar «+ Subir recurso» para cargar el primero.</td></tr>';
   else tb.innerHTML=lista.map(rc=>'<tr><td><span class="rec-res">'+iconoRecurso(rc)+'<span class="bib-tt"><b>'+escH(rc.nombre)+'</b><span>'+escH(rc.archivo.tipo+' · '+tamanoTexto(rc.archivo.tamano))+'</span></span></span></td>'
     +'<td class="rec-cuando">'+(rc.cuando?escH(rc.cuando):'<span class="faint">Solo para el equipo.</span>')+'</td>'
-    +'<td><span class="rec-sw"><button type="button" class="sw-sec" role="switch" aria-checked="'+(rc.verde?'true':'false')+'" aria-label="Verde ofrece «'+escH(rc.nombre)+'»" onclick="alternarVerdeRecurso(\''+rc.id+'\')"><span class="sw-sec-bola"></span></button>'+(rc.verde?'Sí':'No')+'</span></td>'
+    +'<td><span class="rec-sw"><button type="button" class="sw-sec" role="switch" aria-checked="'+(rc.verde?'true':'false')+'" aria-label="Verde ofrece «'+escH(rc.nombre)+'»" onclick="alternarVerdeRecurso(\''+rc.id+'\')"><span class="sw-sec-bola"></span></button>'+(rc.verde?'Sí':'No')+'</span>'+(rc.verde&&rc.directo?'<br><span class="rec-sinpreg">Sin preguntar</span>':'')+'</td>'
     +'<td class="rec-acc"><a class="rec-link" href="/api/recursos/'+encodeURIComponent(rc.id)+'/archivo" target="_blank" rel="noopener">Abrir</a><button type="button" class="rec-link" onclick="abrirRecurso(\''+rc.id+'\')">Editar</button><button type="button" class="rec-link rec-quitar" onclick="quitarRecurso(\''+rc.id+'\')">Quitar</button></td></tr>').join('');
   buildVerdePrompt();
 }
@@ -6089,13 +6097,14 @@ function abrirRecurso(id){
   document.getElementById('rec_nombre').value=REC_EDIT?REC_EDIT.nombre:'';
   document.getElementById('rec_cuando').value=REC_EDIT?REC_EDIT.cuando:'';
   document.getElementById('rec_verde').setAttribute('aria-checked',String(REC_EDIT?REC_EDIT.verde:true));
+  document.getElementById('rec_directo').setAttribute('aria-checked',String(!!(REC_EDIT&&REC_EDIT.directo)));sincronizarDirecto();
   document.getElementById('recZonaTx').innerHTML=REC_EDIT?escH(REC_EDIT.archivo.nombre+' · '+tamanoTexto(REC_EDIT.archivo.tamano))+' · <b>Cambiar</b>':'Elegir un archivo PDF, JPG o PNG';
   document.getElementById('recErr').textContent='';
   document.getElementById('recGuardar').disabled=false;
   show('recOverlay');setTimeout(()=>document.getElementById('rec_nombre').focus(),60);
 }
 function cerrarRecurso(){close_('recOverlay');REC_ARCH=null;}
-function alternarVerdeNuevo(b){b.setAttribute('aria-checked',String(b.getAttribute('aria-checked')!=='true'));}
+function alternarVerdeNuevo(b){b.setAttribute('aria-checked',String(b.getAttribute('aria-checked')!=='true'));sincronizarDirecto();}
 function recArchivoElegido(input){
   const f=input.files&&input.files[0];if(input.value!==undefined)input.value='';if(!f)return;
   const t=tipoLocal(f),err=document.getElementById('recErr');
@@ -6113,7 +6122,7 @@ async function guardarRecurso(){
   if(!REC_EDIT&&!REC_ARCH){err.textContent='Elegir el archivo del recurso.';return;}
   if(verde&&!cuando){err.textContent='Escribir cuándo usarlo: Verde lo necesita para saber cuándo ofrecerlo.';document.getElementById('rec_cuando').focus();return;}
   btn.disabled=true;err.textContent='';
-  const datos={nombre,cuando,verde};
+  const datos={nombre,cuando,verde,directo:verde&&document.getElementById('rec_directo').getAttribute('aria-checked')==='true'};
   const r=REC_ARCH?await subirBinario(REC_EDIT?'/api/recursos/'+encodeURIComponent(REC_EDIT.id)+'/archivo':'/api/recursos',REC_ARCH,'X-Recurso',Object.assign({archivo:REC_ARCH.name},datos))
     :await api('/api/recursos/'+encodeURIComponent(REC_EDIT.id),{method:'PUT',body:datos});
   btn.disabled=false;
@@ -6144,5 +6153,17 @@ document.addEventListener('keydown',e=>{
   const m=document.getElementById('adjMenu');
   if(m&&!m.classList.contains('oculto')){cerrarMenuAdjuntar();const b=document.getElementById('convAdjuntar');if(b)b.focus();e.stopImmediatePropagation();e.stopPropagation();}
 },true);
+
+
+/* ===================== 1.4.9: «Puede enviarlo sin que lo pidan» ===================== */
+// Solo tiene sentido si Verde puede ofrecer el recurso: si no, queda apagado y desactivado.
+function sincronizarDirecto(){
+  const v=document.getElementById('rec_verde'),d=document.getElementById('rec_directo');if(!v||!d)return;
+  const on=v.getAttribute('aria-checked')==='true';
+  if(!on)d.setAttribute('aria-checked','false');
+  d.disabled=!on;
+  const caja=d.closest('.rec-directo');if(caja)caja.classList.toggle('rec-apagado',!on);
+}
+function alternarDirectoNuevo(b){if(b.disabled)return;b.setAttribute('aria-checked',String(b.getAttribute('aria-checked')!=='true'));}
 
 </script>

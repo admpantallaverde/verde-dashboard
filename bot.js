@@ -209,9 +209,32 @@ function bloqueBiblioteca(lista) {
   if (!Array.isArray(lista) || !lista.length) return '';
   return '\n\n== BIBLIOTECA DE RECURSOS ==\n'
     + 'Podés enviarle al cliente estos archivos de la tienda:\n'
-    + lista.map((r, i) => '- R' + (i + 1) + ' · «' + r.nombre + '» (' + (r.mime === 'application/pdf' ? 'PDF' : 'imagen') + '): ' + r.cuando).join('\n') + '\n'
-    + 'Reglas: si el cliente pide uno de estos archivos, envialo. Si no lo pidió pero le sirve, primero ofrecelo y envialo solo si acepta. Enviá como máximo un archivo por mensaje y no vuelvas a enviar uno que ya enviaste en esta conversación. No ofrezcas ni prometas archivos que no estén en esta lista.\n'
+    + lista.map((r, i) => '- R' + (i + 1) + ' · «' + r.nombre + '» (' + (r.mime === 'application/pdf' ? 'PDF' : 'imagen') + ')' + (r.directo ? ' [se puede enviar sin que lo pidan]' : '') + ': ' + r.cuando).join('\n') + '\n'
+    + 'Reglas: si el cliente pide uno de estos archivos, envialo. Si no lo pidió pero le sirve, primero ofrecelo y envialo solo si acepta'
+    + (lista.some(r => r.directo) ? ', salvo los marcados [se puede enviar sin que lo pidan]: esos seguí su indicación al pie de la letra y envialos cuando se cumpla, aunque el cliente no los haya pedido ni haya respondido el ofrecimiento' : '')
+    + '. Enviá como máximo un archivo por mensaje y no vuelvas a enviar uno que ya enviaste en esta conversación. No ofrezcas ni prometas archivos que no estén en esta lista.\n'
     + 'Para enviar un archivo, agregá al final del mensaje, en una línea aparte y sin texto adicional en esa línea: [ENVIAR:R1] (con el código del archivo). Tu mensaje viaja junto con el archivo: no digas que lo vas a mandar después.';
+}
+// 1.4.9: si Verde no puede enviar archivos (modo de prueba o biblioteca vacía), lo sabe y no los promete.
+function notaSinArchivos() {
+  return '\n\n== ARCHIVOS ==\n'
+    + 'En este momento no podés enviar archivos ni imágenes. No digas que vas a enviar, que enviaste ni que dejás un archivo (por ejemplo «te lo dejo acá abajo»), aunque otra instrucción lo indique. Si el cliente necesita un archivo, decile que una persona del equipo se lo envía.';
+}
+// 1.4.9: si el archivo no salió, la memoria de Verde lo refleja (para que no dé por hecho que el cliente lo tiene).
+function corregirEnvioFallido(clave, nombre) {
+  const convs = loadConversations();
+  const hist = Array.isArray(convs[clave]) ? convs[clave] : null;
+  if (!hist) return false;
+  const marca = '[Archivo enviado: «' + nombre + '»]';
+  for (let i = hist.length - 1; i >= 0; i--) {
+    const m = hist[i];
+    if (m && m.role === 'assistant' && typeof m.content === 'string' && m.content.includes(marca)) {
+      m.content = m.content.replace(marca, '[No se pudo enviar el archivo «' + nombre + '»: una persona del equipo lo va a enviar]');
+      saveConversations(convs);
+      return true;
+    }
+  }
+  return false;
 }
 // La marca [ENVIAR:Rn] se quita siempre del mensaje; solo vale si el código está en la lista que recibió Verde.
 function separarEnvio(texto, lista) {
@@ -579,7 +602,7 @@ async function responder(from, body, opciones) {
   const convs = loadConversations();
   const hist = Array.isArray(convs[from]) ? convs[from] : [];
   const lista = opciones.biblioteca ? recursos.paraVerde() : [];
-  const system = buildSystemPrompt(v) + bloqueContexto() + productBlock(body) + notaAtencion(opciones.atencion) + notaPresentacion(opciones.presentacion) + bloqueBiblioteca(lista);
+  const system = buildSystemPrompt(v) + bloqueContexto() + productBlock(body) + notaAtencion(opciones.atencion) + notaPresentacion(opciones.presentacion) + (lista.length ? bloqueBiblioteca(lista) : notaSinArchivos());
   let crudo;
   try {
     crudo = await callClaude(system, paraLaIA(hist, memoriaDe(v)), v, opciones.modelo, String(from).startsWith('sim:') ? 'pruebas' : 'whatsapp');
@@ -621,7 +644,7 @@ async function responderUltima(from, opciones) {
   if (!ultimo || ultimo.role !== 'user') return null;   // la última palabra fue del equipo o de Verde
   if (noDebeResponder(from, opciones)) return null;
   const lista = opciones.biblioteca ? recursos.paraVerde() : [];
-  const system = buildSystemPrompt(v) + bloqueContexto() + productBlock(String(ultimo.content || '')) + notaAtencion(opciones.atencion) + notaPresentacion(opciones.presentacion) + bloqueBiblioteca(lista);
+  const system = buildSystemPrompt(v) + bloqueContexto() + productBlock(String(ultimo.content || '')) + notaAtencion(opciones.atencion) + notaPresentacion(opciones.presentacion) + (lista.length ? bloqueBiblioteca(lista) : notaSinArchivos());
   let crudo;
   try {
     crudo = await callClaude(system, paraLaIA(hist, memoriaDe(v)), v, undefined, 'whatsapp');
@@ -654,7 +677,7 @@ module.exports = {
   ADJUNTO_POR_DEFECTO, instruccionesArchivo, notaAtencion,
   GARANTIA_DATOS_DEFECTO, GARANTIA_SINTOMAS_DEFECTO, GARANTIA_REQUISITOS_DEFECTO, GARANTIA_COBERTURA_DEFECTO, garantiaDe, bloqueGarantia, separarReclamo,
   CONSULTA_REPARACION_DEFECTO, CONSULTA_COMPRA_DEFECTO, consultasDe, bloqueConsultas, separarConsulta, notaPresentacion,
-  bloqueBiblioteca, separarEnvio,
+  bloqueBiblioteca, separarEnvio, notaSinArchivos, corregirEnvioFallido,
   tieneRespuestas,
   modeloEnUso,
   responderPendiente,

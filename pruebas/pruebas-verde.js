@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.4.8';
+const VERSION_ESPERADA = '1.4.9';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -1415,6 +1415,39 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   const botE = require('./bot.js');
   const e67e = botE.separarEnvio('Hola\n[ENVIAR:R2]', [{ id: 'a', nombre: 'A', mime: 'application/pdf' }, { id: 'b', nombre: 'B', mime: 'image/png' }]);
   verificar(e67e.texto === 'Hola' && e67e.recurso && e67e.recurso.id === 'b' && botE.bloqueBiblioteca([]) === '', 'la marca elige el recurso por su código; sin recursos para Verde no se agrega el bloque');
+
+
+  mostrar('68) Envío sin que lo pidan y sin promesas falsas');
+  let r68 = await api('/api/recursos/' + idFoto, 'PUT', { directo: true });
+  let j68 = await json(r68);
+  verificar(r68.status === 200 && j68.recurso.directo === true, 'un recurso se puede marcar para enviarse sin que lo pidan');
+  r68 = await subirBin('/api/recursos', pngPrueba, 'X-Recurso', { nombre: 'Solo equipo', verde: false, directo: true, archivo: 'x.png' });
+  j68 = await json(r68);
+  verificar(r68.status === 200 && j68.recurso.directo === false, 'si Verde no lo ofrece, tampoco puede enviarlo sin que lo pidan');
+  await api('/api/recursos/' + j68.recurso.id, 'DELETE');
+  process.env.D360_MESSAGES_URL = 'https://waba-v2.360dialog.io/messages';
+  await post360(aviso([{ id: 'sp68-1', from: '59879000097', type: 'text', text: { body: 'hola' } }]));
+  await espera(600);
+  const sys68 = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system);
+  verificar(sys68.includes('R2 · «Foto del local» (imagen) [se puede enviar sin que lo pidan]') && sys68.includes('salvo los marcados [se puede enviar sin que lo pidan]') && !sys68.includes('== ARCHIVOS =='), 'con el número real, Verde ve qué recursos puede enviar sin que se los pidan');
+  falloSubida = true;
+  let antes68 = envios360.length;
+  await post360(aviso([{ id: 'sp68-2', from: '59879000098', type: 'text', text: { body: 'mandame los términos y condiciones' } }]));
+  await espera(700);
+  falloSubida = false;
+  const e68 = envios360.slice(antes68).filter(x => x.body.to === '59879000098');
+  verificar(e68.length === 1 && e68[0].body.type === 'text' && /Acá tenés los términos/.test(e68[0].body.text.body) && /No pude enviar el archivo en este momento: una persona del equipo te lo envía en breve\./.test(e68[0].body.text.body), 'si el archivo no sale, el cliente recibe la aclaración en el mismo mensaje');
+  await post360(aviso([{ id: 'sp68-3', from: '59879000098', type: 'text', text: { body: 'ok gracias' } }]));
+  await espera(600);
+  const m68 = (llamadasIA[llamadasIA.length - 1].body.messages || []).map(m => JSON.stringify(m.content)).join(' ');
+  verificar(/No se pudo enviar el archivo «Términos y condiciones»/.test(m68) && !/\[Archivo enviado: «Términos y condiciones»\]/.test(m68), 'la memoria de Verde registra que el archivo no salió, para no dar por hecho que el cliente lo tiene');
+  process.env.D360_MESSAGES_URL = urlPrevia66;
+  await post360(aviso([{ id: 'sp68-4', from: '59879000099', type: 'text', text: { body: 'hola' } }]));
+  await espera(600);
+  const sys68b = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system);
+  verificar(sys68b.includes('== ARCHIVOS ==') && sys68b.includes('En este momento no podés enviar archivos ni imágenes') && sys68b.includes('aunque otra instrucción lo indique') && !sys68b.includes('BIBLIOTECA DE RECURSOS'), 'en el modo de prueba, Verde sabe que no puede enviar archivos y no los promete, aunque una regla de oro lo indique');
+  const botN = require('./bot.js');
+  verificar(botN.bloqueBiblioteca([{ id: 'a', nombre: 'A', cuando: 'x', mime: 'image/png', directo: false }]).indexOf('salvo los marcados') === -1, 'sin recursos «sin preguntar», la regla de ofrecer primero queda como siempre');
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }

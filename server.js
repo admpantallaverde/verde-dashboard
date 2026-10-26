@@ -35,7 +35,7 @@ const usuarios = require('./usuarios.js');
 const atencion = require('./atencion.js');
 const conversaciones = require('./conversaciones.js');
 
-const VERSION = '1.4.8';
+const VERSION = '1.4.9';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -536,17 +536,25 @@ function estadoEnvio() {
 }
 // Envía la respuesta de Verde. Si trae un recurso de la biblioteca, lo envía con el texto como comentario (si el texto
 // es largo, primero el texto y después el archivo). Si el archivo no sale, el texto sale igual y se avisa.
+// 1.4.9: aclaración que recibe el cliente cuando un archivo no sale (Verde nunca deja una promesa sin cumplir).
+const AVISO_ARCHIVO_FALLIDO = 'No pude enviar el archivo en este momento: una persona del equipo te lo envía en breve.';
 async function enviarRespuestaVerde(clave, destino, texto, recurso) {
   const res = { ok: false, archivoFallido: null };
-  const conTexto = async () => { const ok = await enviarWhatsApp(destino, texto); if (ok) conversaciones.registrar({ clave, tipo: 'verde', texto }); return ok; };
+  const conTexto = async t => { const ok = await enviarWhatsApp(destino, t); if (ok) conversaciones.registrar({ clave, tipo: 'verde', texto: t }); return ok; };
+  const fallo = async t => {
+    res.archivoFallido = recurso.nombre;
+    bot.corregirEnvioFallido(clave, recurso.nombre);
+    const ok = await conTexto((t ? t + '\n\n' : '') + AVISO_ARCHIVO_FALLIDO);
+    res.ok = res.ok || ok;
+  };
   const info = recurso && puedeEnviarArchivos() ? recursos.paraEnviar(recurso.id) : null;
   if (!info) {
-    if (recurso) res.archivoFallido = recurso.nombre;
-    if (texto) res.ok = await conTexto();
+    if (recurso) await fallo(texto);
+    else if (texto) res.ok = await conTexto(texto);
     return res;
   }
   const comoLeyenda = !!texto && texto.length <= envios.LEYENDA_MAX;
-  if (texto && !comoLeyenda) res.ok = await conTexto();
+  if (texto && !comoLeyenda) res.ok = await conTexto(texto);
   try {
     const mediaId = await envios.subir(info.buf, info.mime, info.nombre, conexion360());
     if (await enviar360(envios.cuerpoMedia(baseDestino(destino), mediaId, info.mime, info.nombre, comoLeyenda ? texto : ''))) {
@@ -556,8 +564,7 @@ async function enviarRespuestaVerde(clave, destino, texto, recurso) {
       return res;
     }
   } catch (e) { console.error('Verde no pudo enviar el archivo «' + info.nombre + '»:', e.message); }
-  res.archivoFallido = recurso.nombre;
-  if (comoLeyenda) res.ok = await conTexto();
+  await fallo(comoLeyenda ? texto : '');
   return res;
 }
 // Si Verde no pudo enviar un archivo, queda anotado y el chat pasa a «Chats por responder» para que lo envíe una persona.
