@@ -1525,6 +1525,15 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 .btn-manual svg{width:16px;height:16px}
 @media(max-width:600px){.btn-manual span{display:none}.btn-manual{padding:0 11px}.ay-cab{flex-wrap:wrap}.ay-cab-acc{width:100%;justify-content:space-between}.ay-cab .ay-adjunto{max-width:100%;flex:1 1 auto}.ay-cajon{width:100vw}}
 
+/* ===================== 1.4.13: encabezado del chat adaptable (no se comprime ni se parte) ===================== */
+.conv-cab{flex:0 0 auto;container-type:inline-size;container-name:cabchat}
+.conv-cab .pill-btn,.conv-cab .sw.sw-mini{white-space:nowrap;flex:none}
+.conv-cab .pill-btn span{white-space:nowrap}
+.conv-cab-tx{flex:1 1 160px;min-width:140px}
+@container cabchat (max-width: 760px){.conv-ayuda span{display:none}.conv-ayuda{padding:0 11px}}
+@container cabchat (max-width: 600px){.conv-marcar span{display:none}.conv-marcar{padding:0 11px}}
+@media(max-width:600px){.conv-marcar span{display:none}.conv-marcar{padding:0 11px}}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -2076,7 +2085,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
             <span class="chat-av conv-av" id="convAvatar" aria-hidden="true"></span>
             <div class="conv-cab-tx"><h3 id="convTitulo"><span class="c-nom" id="convNombre">Conversación</span><span class="c-num" id="convNumero"></span></h3><div class="conv-estados" id="convEstados"></div></div><button type="button" class="sw sw-mini" id="convSwitch" role="switch" aria-checked="true" aria-label="Verde en este chat" data-clave="" onclick="tocarInterruptor(this)"><span class="pista" aria-hidden="true"><span class="bola"></span></span><span class="sw-tx">Verde</span></button><button type="button" class="btn-devolver oculto" id="convDevolver" data-clave="" onclick="reanudarVerde(this)">Devolver a Verde</button>
             <button class="pill-btn conv-ayuda" type="button" id="convAyuda" onclick="ayudaConEsteChat()" title="Ayuda con este chat" aria-label="Ayuda con este chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M4.93 4.93l4.24 4.24M14.83 14.83l4.24 4.24M14.83 9.17l4.24-4.24M9.17 14.83l-4.24 4.24"/></svg><span>Ayuda con este chat</span></button>
-            <button class="pill-btn conv-marcar oculto" type="button" id="convMarcar" data-id="" onclick="marcarDesdeConversacion()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Marcar atendido</button>
+            <button class="pill-btn conv-marcar oculto" type="button" id="convMarcar" data-id="" title="Marcar atendido" aria-label="Marcar atendido" onclick="marcarDesdeConversacion()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Marcar atendido</span></button>
           </div>
           <div class="conv-franja oculto" id="convFranja" role="status"></div>
           <div class="conv-mensajes" id="convMensajes" aria-live="polite"></div>
