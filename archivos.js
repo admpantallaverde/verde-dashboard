@@ -91,6 +91,8 @@ function estado(a, indice, contexto) {
   if (!a || !idValido(a.id)) return null;
   const i = (indice || leerIndice())[a.id];
   const base = { id: a.id, tipo: a.tipo, mime: a.mime, nombre: a.nombre, leyenda: a.leyenda, recibido: a.recibido, limite: a.recibido + DISPONIBLE_MS, enPanel: EN_PANEL.has(a.mime) };
+  if (a.enviado) base.enviado = true;   // 1.4.8: copia de un archivo que se envió al cliente
+  if (a.biblioteca) base.biblioteca = true;
   if (i && i.guardado && fs.existsSync(rutaDe(i))) return Object.assign(base, { estado: 'guardado', mime: i.mime, enPanel: EN_PANEL.has(i.mime), tamano: i.tamano, guardadoPor: i.por || '' });
   if (contexto && contexto.sandbox) return Object.assign(base, { estado: 'sandbox' });
   if (i && i.vencido) return Object.assign(base, { estado: 'vencido' });
@@ -174,6 +176,24 @@ async function descargarAhora(a, quien, conexion) {
   return estado(a);
 }
 
+/* ---------- 1.4.8: copia de los archivos enviados (desde el panel o por Verde) ---------- */
+// Se guarda una copia para verla en la conversación; se borra a los 3 meses, igual que los recibidos.
+function registrarEnviado(buf, mime, nombre, quien) {
+  const id = crypto.randomBytes(12).toString('hex');
+  const tipo = mime === 'application/pdf' ? 'document' : 'image';
+  const archivo = id + '.' + (EXTENSIONES[mime] || 'bin');
+  if (!fs.existsSync(DIR)) fs.mkdirSync(DIR, { recursive: true, mode: 0o700 });
+  const destino = path.join(DIR, archivo);
+  fs.writeFileSync(destino + '.tmp', buf, { mode: 0o600 });
+  fs.renameSync(destino + '.tmp', destino);
+  const ahora = Date.now();
+  const n = limpiarNombre(nombre);
+  const ind = leerIndice();
+  ind[id] = { recibido: ahora, tipo, nombre: n, guardado: ahora, por: String(quien || '').slice(0, 80), tamano: buf.length, mime, archivo, enviado: true };
+  guardarIndice(ind);
+  return { id, tipo, mime, nombre: n, leyenda: '', recibido: ahora, enviado: true };
+}
+
 /* ---------- Para servir un archivo guardado ---------- */
 function paraServir(id) {
   if (!idValido(id)) return null;
@@ -203,5 +223,5 @@ function limpiar(ahora) {
   return borrados;
 }
 
-module.exports = { desdeWebhook, leerIndice, estado, descargar, paraServir, limpiar, idValido, maxMB, esSandbox, frenoHasta, DISPONIBLE_MS, RETENCION_MS, EN_PANEL,
+module.exports = { desdeWebhook, leerIndice, estado, descargar, paraServir, limpiar, idValido, maxMB, esSandbox, frenoHasta, DISPONIBLE_MS, RETENCION_MS, EN_PANEL, registrarEnviado,
   _anotarFallo: anotarFallo, _reiniciarFreno: () => { fallos = []; } };

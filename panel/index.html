@@ -1388,6 +1388,65 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 .ficha-sec{margin:16px 0 2px;font-size:11.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
 .ficha-fila b.ficha-falta{font-weight:400;font-style:italic;color:var(--faint)}
 
+/* ===================== 1.4.8: archivos enviados y biblioteca de recursos ===================== */
+.adj-wrap{position:relative;flex:none}
+.btn-adjuntar{flex:none;width:48px;height:48px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--muted);display:inline-grid;place-items:center;cursor:pointer;transition:color .15s,border-color .15s,background .15s}
+.btn-adjuntar svg{width:20px;height:20px}
+.btn-adjuntar:hover:not(:disabled){color:var(--text);border-color:var(--accent-borde)}
+.btn-adjuntar[aria-expanded="true"]{color:var(--text);border-color:var(--accent-borde);background:var(--accent-suave,rgba(159,212,0,.14))}
+.btn-adjuntar:focus-visible{outline:2px solid var(--accent-borde);outline-offset:2px}
+.btn-adjuntar:disabled{opacity:.45;cursor:not-allowed}
+.adj-menu{position:absolute;left:0;bottom:58px;z-index:30;width:310px;max-width:calc(100vw - 40px);background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 10px 28px rgba(0,0,0,.18);padding:6px;display:flex;flex-direction:column;gap:2px}
+.adj-menu button{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;padding:8px 12px;border:none;border-radius:10px;background:transparent;color:var(--text);text-align:left;cursor:pointer;font:inherit}
+.adj-menu button:hover,.adj-menu button:focus-visible{background:var(--surface-3);outline:none}
+.adj-menu button svg{width:19px;height:19px;flex:none;color:var(--muted)}
+.adj-menu button>span{display:flex;flex-direction:column;gap:1px;min-width:0}
+.adj-menu b{font-size:13.5px;font-weight:700}
+.adj-menu button>span>span{font-size:12px;color:var(--muted)}
+.adj-vista{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--border)}
+.adj-vista.adj-enviando{opacity:.75}
+.adj-pdf{flex:none;width:34px;height:40px;border-radius:4px;background:#e53935;color:#fff;display:inline-flex;align-items:flex-end;justify-content:center;font-size:9px;font-weight:800;letter-spacing:.3px;padding-bottom:4px;box-sizing:border-box}
+.adj-img{flex:none;width:40px;height:40px;border-radius:6px;object-fit:cover;background:var(--surface-3);border:1px solid var(--border)}
+.adj-tt{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:1px}
+.adj-tt b{font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.adj-tt span{font-size:12px;color:var(--muted)}
+.adj-quitar{flex:none;min-height:36px;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--red);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.adj-quitar:focus-visible{outline:2px solid var(--accent-borde);outline-offset:2px}
+@media(max-width:600px){.btn-adjuntar{width:44px;height:44px}.adj-menu{bottom:52px}}
+/* Elegir de la biblioteca */
+.bib-modal{max-width:600px}
+.bib-buscar{width:100%;box-sizing:border-box;min-height:42px;padding:9px 14px;border-radius:22px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font:inherit;font-size:14px}
+.bib-buscar:focus{outline:none;border-color:var(--accent-borde)}
+.bib-lista{display:flex;flex-direction:column;gap:8px;margin:12px 0 4px;max-height:min(58vh,520px);overflow:auto}
+.bib-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
+.bib-tt{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
+.bib-tt b{font-size:13.5px;font-weight:700}
+.bib-tt span{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.bib-tt .bib-cuando{color:var(--text);opacity:.85}
+.bib-elegir{flex:none;min-height:38px}
+.bib-vacio{padding:18px 6px;text-align:center;font-size:13px;color:var(--muted);line-height:1.5}
+/* Sección K: biblioteca de recursos */
+.rec-tabla{width:100%;min-width:680px;border-collapse:collapse;font-size:13px}
+.rec-tabla th{text-align:left;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--faint);padding:8px 10px;font-weight:600}
+.rec-tabla td{padding:10px;border-top:1px solid var(--border-soft);vertical-align:middle}
+.rec-tabla th:nth-child(1){width:290px}
+.rec-tabla th:nth-child(3){width:140px}
+.rec-res{display:flex;align-items:center;gap:10px}
+.rec-cuando{color:var(--text)}
+.rec-sw{display:inline-flex;align-items:center;gap:8px;font-weight:600}
+.rec-acc{white-space:nowrap;text-align:right}
+.rec-link{display:inline-flex;align-items:center;min-height:34px;padding:4px 8px;border:none;background:none;color:var(--text);font:inherit;font-size:12.5px;font-weight:600;text-decoration:none;border-radius:7px;cursor:pointer}
+.rec-link:hover,.rec-link:focus-visible{background:var(--surface-3);outline:none}
+.rec-link.rec-quitar{color:var(--red)}
+.rec-vacio{padding:18px 10px;text-align:center;color:var(--muted)}
+.rec-modal{max-width:560px}
+.rec-zona{display:flex;align-items:center;justify-content:center;min-height:54px;padding:12px;border:1.5px dashed var(--border);border-radius:10px;font-size:13px;color:var(--muted);text-align:center;cursor:pointer;overflow-wrap:anywhere}
+.rec-zona b{color:var(--text)}
+.rec-zona.rec-sobre,.rec-zona:hover{border-color:var(--accent-borde);background:var(--accent-suave,rgba(159,212,0,.1))}
+.rec-modal .modal-body .field{margin-bottom:14px}
+.rec-modal textarea,.rec-modal input[type="text"]{width:100%;box-sizing:border-box}
+.rec-interruptor{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;margin:4px 0 6px}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -1888,6 +1947,18 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
               <div class="note" style="margin-top:16px"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h4"/></svg><span><b>Cómo trabaja Verde con las fichas:</b> arma la ficha cuando deriva el chat a un asesor (por ejemplo, cuando el cliente pide precio) y la va completando mientras sigue conversando. Pregunta de a uno o dos datos por mensaje y no insiste si el cliente no sabe o no quiere responder. Nunca da precios. Si el cliente reclama por algo que ya compró o reparó, sigue el protocolo de garantía (sección I). Si se edita una lista, las fichas ya creadas conservan los nombres con que se armaron.</span></div>
             </div>
           </div>
+
+          <!-- Sección K: Biblioteca de recursos (1.4.8) -->
+          <div class="panel" id="secRecursos">
+            <div class="panel-head">
+              <div><h3><span class="sec-let">K</span> Biblioteca de recursos</h3><p>Archivos que Verde puede ofrecer y enviar, y que el equipo puede elegir al adjuntar desde un chat.</p></div>
+              <button class="btn btn-primary" type="button" onclick="abrirRecurso(null)">+ Subir recurso</button>
+            </div>
+            <div style="padding:6px 10px 14px">
+              <div class="cons-scroll"><table class="rec-tabla"><thead><tr><th scope="col">Recurso</th><th scope="col">Cuándo usarlo (indicación para Verde)</th><th scope="col">Verde lo ofrece</th><th scope="col" aria-label="Acciones"></th></tr></thead><tbody id="recLista"><tr><td colspan="4" class="rec-vacio">Cargando la biblioteca…</td></tr></tbody></table></div>
+              <div class="note" style="margin:10px 10px 0"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span><b>Cómo trabaja Verde con la biblioteca:</b> si el cliente pide un recurso, se lo envía; si no lo pidió, primero se lo ofrece y lo envía solo si acepta. Nunca envía los recursos marcados con «No». Límites: PDF hasta 25 MB; JPG o PNG hasta 5 MB. <span id="recModo"></span></span></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1921,7 +1992,9 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
           <div class="conv-mensajes" id="convMensajes" aria-live="polite"></div>
           <div class="conv-composer">
       <div class="conv-aviso ambar oculto" id="convNoResp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="txt" id="convNoRespTx"></span></div>
+      <div class="adj-vista oculto" id="adjVista" role="status" aria-live="polite"></div>
       <div class="fila">
+        <div class="adj-wrap"><button type="button" class="btn-adjuntar" id="convAdjuntar" aria-label="Adjuntar un archivo" aria-haspopup="menu" aria-expanded="false" onclick="alternarAdjuntar()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></button><div class="adj-menu oculto" id="adjMenu" role="menu" aria-label="Adjuntar un archivo"><button type="button" role="menuitem" onclick="adjDesdeCompu()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg><span><b>Desde la computadora</b><span id="adjLimites">PDF hasta 25 MB · JPG o PNG hasta 5 MB</span></span></button><button type="button" role="menuitem" onclick="abrirBiblioteca()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span><b>Desde la biblioteca</b><span>Recursos cargados por el administrador</span></span></button></div><input type="file" id="adjArchivo" class="oculto" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" onchange="adjElegido(this)" tabindex="-1" aria-hidden="true"></div>
         <textarea id="convTexto" rows="1" placeholder="Escribir un mensaje…" aria-label="Mensaje para el cliente" maxlength="3900" onkeydown="teclaComposer(event)" oninput="ajustarAlto(this)"></textarea>
         <button class="btn-enviar" type="button" id="convEnviar" aria-label="Enviar el mensaje" onclick="enviarRespuesta()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
       </div>
@@ -2099,6 +2172,25 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
     <div class="modal-head"><div><h3 id="fichaTitulo" style="margin:0;display:flex;align-items:center;gap:8px"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Ficha del reclamo</h3><span class="ficha-sub" id="fichaSub">Datos juntados por Verde a partir de lo que declaró <b id="fichaCliente"></b>. La decisión es del asesor.</span></div><button class="x-btn" id="fichaCerrar" type="button" onclick="cerrarFicha()" aria-label="Cerrar la ficha"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <div class="modal-body"><div class="ficha-tabla" id="fichaCuerpo"></div></div>
     <div class="ficha-pie"><span class="faint" id="fichaFecha"></span><span class="acciones"><button class="btn btn-ghost" type="button" onclick="copiarFicha()">Copiar ficha</button><button class="btn btn-primary" type="button" onclick="cerrarFicha()">Cerrar</button></span></div>
+  </div>
+</div>
+<div class="overlay" id="bibOverlay">
+  <div class="modal bib-modal" role="dialog" aria-modal="true" aria-labelledby="bibTitulo">
+    <div class="modal-head"><h3 id="bibTitulo" style="margin:0;display:flex;align-items:center;gap:8px"><svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Elegir de la biblioteca</h3><button class="x-btn" type="button" onclick="cerrarBiblioteca()" aria-label="Cerrar la biblioteca"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <div class="modal-body"><input type="search" class="bib-buscar" id="bibBuscar" placeholder="Buscar por nombre" aria-label="Buscar en la biblioteca" oninput="pintarBiblioteca()"><div class="bib-lista" id="bibLista"></div></div>
+  </div>
+</div>
+<div class="overlay" id="recOverlay">
+  <div class="modal rec-modal" role="dialog" aria-modal="true" aria-labelledby="recTitulo">
+    <div class="modal-head"><h3 id="recTitulo" style="margin:0">Subir recurso</h3><button class="x-btn" type="button" onclick="cerrarRecurso()" aria-label="Cerrar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <div class="modal-body">
+      <div class="field"><label for="rec_nombre">Nombre del recurso</label><input type="text" id="rec_nombre" maxlength="80" placeholder="Por ejemplo: Términos y condiciones"></div>
+      <div class="field"><label for="rec_archivo">Archivo</label><label class="rec-zona" id="recZona" for="rec_archivo"><span id="recZonaTx">Elegir un archivo PDF, JPG o PNG</span></label><input type="file" id="rec_archivo" class="oculto" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" onchange="recArchivoElegido(this)"><span class="faint fr-ayuda">PDF hasta 25 MB; JPG o PNG hasta 5 MB. También se puede arrastrar el archivo hasta este recuadro.</span></div>
+      <div class="field"><label for="rec_cuando">Cuándo usarlo (indicación para Verde)</label><textarea id="rec_cuando" rows="2" maxlength="300" placeholder="Por ejemplo: Cuando el cliente pregunte por la garantía o las condiciones del servicio."></textarea></div>
+      <div class="rec-interruptor"><button type="button" class="sw-sec" id="rec_verde" role="switch" aria-checked="true" aria-labelledby="recVerdeTx" onclick="alternarVerdeNuevo(this)"><span class="sw-sec-bola"></span></button><span id="recVerdeTx">Verde puede ofrecerlo y enviarlo</span></div>
+      <div class="cons-err" id="recErr" role="alert"></div>
+    </div>
+    <div class="ficha-pie"><span></span><span class="acciones"><button class="btn btn-ghost" type="button" onclick="cerrarRecurso()">Cancelar</button><button class="btn btn-primary" type="button" id="recGuardar" onclick="guardarRecurso()">Guardar recurso</button></span></div>
   </div>
 </div>
 <div class="toasts" id="toasts"></div>
@@ -2693,7 +2785,7 @@ function _doGo(view){
     consumo:['Consumo de IA','Costo estimado de las consultas a la IA de Verde. Solo lo ven los administradores.','<b>Sistema</b> › Consumo de IA'],
     ayuda:['Centro de ayuda','Manual del panel, guías de Meta y un asistente para resolver dudas.','<b>Ayuda</b> › Centro de ayuda']
   }[view];
-  if(view==='verde'){renderVerde();cargarCumplimiento();}
+  if(view==='verde'){renderVerde();cargarCumplimiento();cargarSeccionRecursos();}
   document.getElementById('viewTitle').textContent=meta[0];
   document.getElementById('viewSub').textContent=meta[1];
   const crumb=document.getElementById('crumb');
@@ -4134,6 +4226,7 @@ function buildVerdePrompt(){
     `No es posible ver el contenido de los archivos: nunca describir ni opinar sobre lo que muestran.`;
   if(vGarantia.activo){const ng=normGarantia(Object.assign({},vGarantia,{requisitos:(document.getElementById('v_gReq')||{}).value||'',condiciones:(document.getElementById('v_gCond')||{}).value||''}));p+='\n\n'+H('RECLAMOS Y GARANTÍA')+'\nDatos a juntar:\n'+ng.datos.map((d,i)=>(i+1)+'. '+esc(d)).join('\n')+'\nSíntomas:\n'+(ng.sintomas.map(s=>'- '+esc(s.sintoma)+': preguntar '+esc(s.preguntar)+' Sugerir: '+esc(s.sugerir)).join('\n')||'—')+'\nRequisitos indispensables: '+esc(ng.requisitos)+'\nPlazos y cobertura: '+esc(ng.condiciones)+'\nReglas fijas: nunca afirmar que la garantía corresponde (la evalúa el asesor con la ficha); no inventar procedimientos ni ofrecer alternativas que no estén escritas.';}
   if(vConsultas.activo){const nc=normConsultas(vConsultas);p+='\n\n'+H('FICHAS DE CONSULTA')+'\nReparación:\n'+nc.reparacion.map((d,i)=>(i+1)+'. '+esc(d)).join('\n')+'\nCompra:\n'+nc.compra.map((d,i)=>(i+1)+'. '+esc(d)).join('\n')+'\nVerde arma la ficha al derivar y la completa mientras conversa; nunca da precios.';}
+  if(RECURSOS&&RECURSOS.some(r=>r.verde)){const rv=RECURSOS.filter(r=>r.verde&&r.cuando);p+='\n\n'+H('BIBLIOTECA DE RECURSOS')+'\n'+rv.map((r,i)=>'R'+(i+1)+' · '+esc(r.nombre)+' ('+(r.archivo.mime==='application/pdf'?'PDF':'imagen')+'): '+esc(r.cuando)).join('\n')+'\nSolo con el número definitivo: en el modo de prueba de 360dialog Verde no envía archivos.';}
   pre.innerHTML=p;
 }
 
@@ -4930,6 +5023,7 @@ async function abrirConversacion(clave){
 }
 function cerrarConversacion(){
   guardarBorrador();
+  quitarAdjunto(true);cerrarMenuAdjuntar();
   clearInterval(CONV.timer);CONV.timer=null;
   document.getElementById('convPane').classList.add('oculto');
   ['splitChats','splitConv'].forEach(id=>{const sp=document.getElementById(id);sp.classList.remove('abierta');const v=sp.querySelector('.split-vacio');if(v)v.classList.remove('oculto');});
@@ -4938,7 +5032,7 @@ function cerrarConversacion(){
 }
 function marcarDesdeConversacion(){const id=document.getElementById('convMarcar').dataset.id;if(id)abrirAtendido(id);}
 // Escape cierra la conversación abierta (si no hay una ventana encima).
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&CONV.clave&&!document.querySelector('.overlay.show')&&document.getElementById('visorImg').classList.contains('oculto')&&document.getElementById('cuentaMenu').classList.contains('oculto'))cerrarConversacion();},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&CONV.clave&&!document.querySelector('.overlay.show')&&document.getElementById('visorImg').classList.contains('oculto')&&document.getElementById('cuentaMenu').classList.contains('oculto')&&document.getElementById('adjMenu').classList.contains('oculto'))cerrarConversacion();},true);
 async function refrescarConversacion(primera){
   const clave=CONV.clave;if(!clave)return;
   const r=await api('/api/conversaciones/'+encodeURIComponent(clave));
@@ -4958,6 +5052,7 @@ async function enviarRespuesta(){
   const ta=document.getElementById('convTexto'),btn=document.getElementById('convEnviar'),err=document.getElementById('convError');
   const texto=ta.value.trim();
   if(!CONV.clave||btn.disabled)return;
+  if(adjActivo())return enviarAdjunto();   // 1.4.8: con un archivo listo, el texto es opcional
   if(!texto){err.textContent='Escribir el mensaje antes de enviar.';err.classList.remove('oculto');ta.focus();return;}
   btn.disabled=true;ta.disabled=true;
   const r=await api('/api/conversaciones/'+encodeURIComponent(CONV.clave)+'/responder',{method:'POST',body:{texto}});
@@ -5121,9 +5216,9 @@ function renderMensajes(ms){
     if(m.tipo==='sistema')return sep+'<div class="linea-sis">'+escH(horaSola(m.en))+' · '+escH(m.texto)+'</div>';
     const adj=parsearAdjunto(m.texto);
     if(m.tipo==='cliente')return sep+'<div class="burbuja cli'+(m.archivo?' con-archivo':'')+'">'+(m.archivo?htmlArchivo(m.archivo):adj?htmlAdjuntoBurbuja(adj,true):'<span class="txt">'+formatoWa(m.texto)+'</span>')+hora+'</div>';
-    if(m.tipo==='verde')return sep+'<div class="burbuja ver"><span class="quien">Verde</span><span class="txt">'+formatoWa(m.texto)+'</span>'+hora+'</div>';
-    const quien=(m.autor?m.autor+' (equipo)':'Equipo')+(m.origen==='panel'?' · desde el panel':(m.firma?'':' · sin firma'));
-    return sep+'<div class="burbuja equ"><span class="quien">'+escH(quien)+'</span>'+(adj?htmlAdjuntoBurbuja(adj,false):'<span class="txt">'+formatoWa(m.texto)+'</span>')+hora+'</div>';
+    if(m.tipo==='verde')return sep+'<div class="burbuja ver'+(m.archivo?' con-archivo':'')+'"><span class="quien">Verde'+(m.archivo&&m.archivo.biblioteca?' · desde la biblioteca':'')+'</span>'+(m.archivo?htmlArchivo(m.archivo):'')+(m.texto?'<span class="txt">'+formatoWa(m.texto)+'</span>':'')+hora+'</div>';
+    const quien=(m.autor?m.autor+' (equipo)':'Equipo')+(m.origen==='panel'?' · desde el panel':(m.firma?'':' · sin firma'))+(m.archivo&&m.archivo.biblioteca?' · archivo de la biblioteca':'');
+    return sep+'<div class="burbuja equ'+(m.archivo?' con-archivo':'')+'"><span class="quien">'+escH(quien)+'</span>'+(m.archivo?htmlArchivo(m.archivo)+(m.texto?'<span class="txt">'+formatoWa(m.texto)+'</span>':''):(adj?htmlAdjuntoBurbuja(adj,false):'<span class="txt">'+formatoWa(m.texto)+'</span>'))+hora+'</div>';
   }).join('');
 }
 function pintarSwitch(c){
@@ -5182,6 +5277,7 @@ function pintarFranja(c){
 }
 function pintarConversacion(c,primera){
   const anterior=CONV.datos;CONV.datos=c;
+  if(!anterior||anterior.clave!==c.clave){quitarAdjunto(true);cerrarMenuAdjuntar();}   // 1.4.8: el archivo listo es de cada chat
   document.getElementById('convNombre').textContent=c.nombre||(c.numero?'+'+c.numero:'Cliente sin número visible');
   document.getElementById('convNumero').textContent=c.nombre&&c.numero?'+'+c.numero:'';
   document.getElementById('convEstados').innerHTML=pillsConversacion(c);
@@ -5208,11 +5304,14 @@ function pintarConversacion(c,primera){
   noResp.classList.toggle('oculto',puede);
   document.getElementById('convNoRespTx').textContent=puede?'':(motivo||'');
   ta.disabled=!puede;btn.disabled=!puede;
+  const ba=document.getElementById('convAdjuntar');if(ba)ba.disabled=!puede;
+  if(!puede&&adjActivo()){quitarAdjunto(true);cerrarMenuAdjuntar();}
   const firma=String(c.firmaUsuario||'').trim();
   const chico=!!(window.matchMedia&&window.matchMedia('(max-width: 600px)').matches);
   ta.placeholder=!puede?'No se puede responder desde el panel'
     :chico?'Mensaje · '+(firma?'firma «'+firma+'»':'sin firma')
     :'Escribir un mensaje · '+(firma?'sale con la firma «'+firma+'»':'sale sin firma');
+  if(adjActivo())actualizarPlaceholder();
   ta.setAttribute('aria-label','Mensaje para '+(c.nombre||(c.numero?'+'+c.numero:'el cliente')));
   let pista=firma?'Sale desde el WhatsApp de la tienda con la firma «'+firma+'».':'Sale desde el WhatsApp de la tienda sin firma'+(SESION.usuario?' (este usuario no tiene una firma configurada).':'.');
   if(!c.apagado)pista+=' Al enviar, Verde queda en pausa en este chat.';
@@ -5644,7 +5743,7 @@ function htmlArchivo(a){
   const est=ARCH.estado[id]||a.estado;
   if(est==='descargando')return '<div class="arch">'+tarjetaArchivo(a)+'<span class="arch-prog" role="status"><span class="arch-giro" aria-hidden="true"></span>Descargando desde WhatsApp…</span></div>';
   if(est==='guardado'){
-    if(a.enPanel&&a.tipo==='image')return '<div class="arch"><button type="button" class="arch-foto" onclick="verImagen(\''+id+'\')" aria-label="Ver la imagen en grande"><img src="'+url+'" alt="Imagen enviada por el cliente" loading="lazy"></button>'+leyenda+'<div class="arch-acc">'+guardar+'</div></div>';
+    if(a.enPanel&&a.tipo==='image')return '<div class="arch"><button type="button" class="arch-foto" onclick="verImagen(\''+id+'\')" aria-label="Ver la imagen en grande"><img src="'+url+'" alt="'+(a.enviado?'Imagen enviada al cliente':'Imagen enviada por el cliente')+'" loading="lazy"></button>'+leyenda+'<div class="arch-acc">'+guardar+'</div></div>';
     if(a.enPanel&&a.tipo==='audio')return '<div class="arch"><audio controls preload="metadata" src="'+url+'" aria-label="Audio enviado por el cliente"></audio>'+leyenda+'<div class="arch-acc">'+guardar+'</div></div>';
     if(a.enPanel&&a.tipo==='video')return '<div class="arch"><video controls preload="metadata" src="'+url+'" aria-label="Video enviado por el cliente"></video>'+leyenda+'<div class="arch-acc">'+guardar+'</div></div>';
     const abrir=a.enPanel&&a.mime==='application/pdf'?'<a class="arch-btn" href="'+url+'" target="_blank" rel="noopener">'+IC140.abrir+'Abrir</a>':'';
@@ -5689,8 +5788,8 @@ let _focoVisor=null;
 function verImagen(id){
   const m=((CONV.datos&&CONV.datos.mensajes)||[]).find(x=>x.archivo&&x.archivo.id===id);if(!m)return;
   const a=m.archivo,c=CONV.datos,url='/api/archivos/'+encodeURIComponent(id);
-  document.getElementById('visorTit').textContent='Imagen de '+(c.nombre||(c.numero?'+'+c.numero:'cliente sin número visible'));
-  document.getElementById('visorSub').textContent='Recibida el '+fechaHoraTexto(a.recibido||m.en)+(a.leyenda?' · «'+a.leyenda+'»':'');
+  document.getElementById('visorTit').textContent=(a.enviado?'Imagen enviada a ':'Imagen de ')+(c.nombre||(c.numero?'+'+c.numero:'cliente sin número visible'));
+  document.getElementById('visorSub').textContent=(a.enviado?'Enviada el ':'Recibida el ')+fechaHoraTexto(a.recibido||m.en)+(a.leyenda?' · «'+a.leyenda+'»':'');
   const img=document.getElementById('visorFoto');img.src=url;img.alt=a.leyenda?'Imagen: '+a.leyenda:'Imagen enviada por el cliente';
   document.getElementById('visorGuardar').href=url+'?guardar=1';
   _focoVisor=document.activeElement;
@@ -5837,5 +5936,213 @@ function filasConsulta(con){
   f.push(['Archivos recibidos',n===0?'0':n+' (ver en el chat)']);
   return f;
 }
+
+
+/* ===================== 1.4.8: archivos enviados y biblioteca de recursos ===================== */
+var ADJ={archivo:null,recurso:null,url:null};   // archivo listo para enviar en el chat abierto
+var RECURSOS=null,RECURSOS_ENVIO=null;          // biblioteca (se carga al abrirla o en «Comportamiento del bot»)
+var REC_EDIT=null,REC_ARCH=null;                // recurso en edición y archivo elegido en su ventana
+const MB148=1048576;
+function sinTildes148(t){return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();}
+function limitesEnvio(){const e=(CONV.datos&&CONV.datos.envioArchivos)||{};return {pdf:e.pdfMB||25,img:e.imagenMB||5};}
+function tipoLocal(f){
+  const n=String((f&&f.name)||'').toLowerCase(),t=String((f&&f.type)||'').toLowerCase();
+  if(t==='application/pdf'||/\.pdf$/.test(n))return 'pdf';
+  if(t==='image/jpeg'||t==='image/png'||/\.(jpe?g|png)$/.test(n))return 'img';
+  return null;
+}
+function adjActivo(){return !!(ADJ&&(ADJ.archivo||ADJ.recurso));}
+function errorComposer(msg){const err=document.getElementById('convError');if(!err)return;err.textContent=msg;err.classList.remove('oculto');}
+function cerrarMenuAdjuntar(){const m=document.getElementById('adjMenu'),b=document.getElementById('convAdjuntar');if(m)m.classList.add('oculto');if(b)b.setAttribute('aria-expanded','false');}
+function alternarAdjuntar(){
+  const b=document.getElementById('convAdjuntar');if(!b||b.disabled||!CONV.datos)return;
+  const e=CONV.datos.envioArchivos||{};
+  if(!e.disponible){
+    errorComposer(e.modoPrueba?'En el modo de prueba de 360dialog no se pueden enviar archivos. Se podrán enviar al conectar el número definitivo.':'La conexión con WhatsApp (360dialog) no está configurada en el servidor.');
+    return;
+  }
+  const m=document.getElementById('adjMenu'),abrir=m.classList.contains('oculto');
+  m.classList.toggle('oculto',!abrir);b.setAttribute('aria-expanded',String(abrir));
+  if(abrir){const l=limitesEnvio();document.getElementById('adjLimites').textContent='PDF hasta '+l.pdf+' MB · JPG o PNG hasta '+l.img+' MB';const p=m.querySelector('button');if(p)p.focus();}
+}
+function adjDesdeCompu(){cerrarMenuAdjuntar();const i=document.getElementById('adjArchivo');i.value='';i.click();}
+function adjElegido(input){
+  const f=input.files&&input.files[0];input.value='';if(!f)return;
+  const t=tipoLocal(f),l=limitesEnvio();
+  if(!t){errorComposer('Solo se pueden enviar archivos PDF, JPG o PNG.');return;}
+  const max=t==='pdf'?l.pdf:l.img;
+  if(f.size>max*MB148){errorComposer((t==='pdf'?'El PDF supera ':'La imagen supera ')+max+' MB.');return;}
+  quitarAdjunto(true);ADJ.archivo=f;if(t==='img')ADJ.url=URL.createObjectURL(f);
+  const err=document.getElementById('convError');if(err)err.classList.add('oculto');
+  pintarAdjunto();const ta=document.getElementById('convTexto');if(ta&&!ta.disabled)ta.focus();
+}
+function pintarAdjunto(enviando){
+  const v=document.getElementById('adjVista');if(!v)return;
+  const a=ADJ.archivo,r=ADJ.recurso;
+  if(!a&&!r){v.classList.add('oculto');v.innerHTML='';actualizarPlaceholder();return;}
+  const mime=a?(tipoLocal(a)==='pdf'?'application/pdf':(String(a.type)==='image/png'||/\.png$/i.test(a.name)?'image/png':'image/jpeg')):r.archivo.mime;
+  const nombre=a?a.name:r.archivo.nombre,tam=a?a.size:r.archivo.tamano;
+  const ic=mime==='application/pdf'?'<span class="adj-pdf" aria-hidden="true">PDF</span>':'<img class="adj-img" alt="" src="'+escH(a?ADJ.url:'/api/recursos/'+encodeURIComponent(r.id)+'/archivo')+'">';
+  const sub=({'application/pdf':'PDF','image/png':'PNG','image/jpeg':'JPG'}[mime]||'')+' · '+tamanoTexto(tam)+(r?' · de la biblioteca':'')+(enviando?' · enviando…':'');
+  v.innerHTML=ic+'<span class="adj-tt"><b>'+escH(nombre)+'</b><span>'+escH(sub)+'</span></span>'+(enviando?'':'<button type="button" class="adj-quitar" onclick="quitarAdjunto()" aria-label="Quitar el archivo '+escH(nombre)+'">Quitar</button>');
+  v.classList.remove('oculto');v.classList.toggle('adj-enviando',!!enviando);
+  actualizarPlaceholder();
+}
+function quitarAdjunto(silencioso){
+  if(ADJ&&ADJ.url){try{URL.revokeObjectURL(ADJ.url);}catch(e){}}
+  ADJ={archivo:null,recurso:null,url:null};
+  const v=document.getElementById('adjVista');if(v){v.classList.add('oculto');v.innerHTML='';}
+  actualizarPlaceholder();
+  if(!silencioso){const ta=document.getElementById('convTexto');if(ta&&!ta.disabled)ta.focus();}
+}
+// Con un archivo listo, el texto pasa a ser el comentario opcional que lo acompaña.
+function actualizarPlaceholder(){
+  const ta=document.getElementById('convTexto');if(!ta||ta.disabled||!CONV.datos)return;
+  const firma=String(CONV.datos.firmaUsuario||'').trim();
+  const chico=!!(window.matchMedia&&window.matchMedia('(max-width: 600px)').matches);
+  if(adjActivo())ta.placeholder=chico?'Texto opcional':'Agregar un texto (opcional) · '+(firma?'sale con la firma «'+firma+'»':'sale sin firma');
+  else ta.placeholder=chico?'Mensaje · '+(firma?'firma «'+firma+'»':'sin firma'):'Escribir un mensaje · '+(firma?'sale con la firma «'+firma+'»':'sale sin firma');
+}
+// Envía un archivo como cuerpo binario, con sus datos en una cabecera.
+async function subirBinario(ruta,archivo,cabecera,datos){
+  let r;
+  try{r=await fetch(ruta,{method:'POST',headers:{'Content-Type':'application/octet-stream',[cabecera]:encodeURIComponent(JSON.stringify(datos||{}))},body:archivo,cache:'no-store'});}
+  catch(e){return{ok:false,status:0,json:{error:'No hay conexión con el servidor.'}};}
+  let j={};try{j=await r.json();}catch(e){j={};}
+  if(r.status===413&&!(j&&j.error))j={error:'El archivo es demasiado grande para enviarlo desde el panel.'};
+  return{ok:r.ok,status:r.status,json:j||{}};
+}
+async function enviarAdjunto(){
+  const ta=document.getElementById('convTexto'),btn=document.getElementById('convEnviar'),err=document.getElementById('convError'),ba=document.getElementById('convAdjuntar');
+  if(!CONV.clave||btn.disabled||!adjActivo())return;
+  const texto=ta.value.trim();
+  if(texto.length>1000){errorComposer('El texto que acompaña al archivo puede tener hasta 1000 caracteres.');ta.focus();return;}
+  const clave=CONV.clave,ruta='/api/conversaciones/'+encodeURIComponent(clave);
+  btn.disabled=true;ta.disabled=true;if(ba)ba.disabled=true;
+  pintarAdjunto(true);
+  const r=ADJ.recurso?await api(ruta+'/recurso',{method:'POST',body:{recursoId:ADJ.recurso.id,texto}}):await subirBinario(ruta+'/archivo',ADJ.archivo,'X-Archivo',{nombre:ADJ.archivo.name,texto});
+  btn.disabled=false;ta.disabled=false;if(ba)ba.disabled=false;
+  if(clave!==CONV.clave)return;
+  if(!r.ok){pintarAdjunto(false);errorComposer(r.json.error||'No se pudo enviar el archivo.');if(r.status===409)refrescarConversacion(false);return;}
+  quitarAdjunto(true);ta.value='';ajustarAlto(ta);err.classList.add('oculto');delete BORRADORES[CONV.clave];
+  pintarConversacion(r.json.conversacion,true);
+  refrescarListas();
+  if(!ta.disabled)ta.focus();
+}
+/* ---------- Elegir de la biblioteca ---------- */
+async function cargarRecursos(){const r=await api('/api/recursos');if(r.ok){RECURSOS=r.json.lista||[];RECURSOS_ENVIO=r.json.envio||null;}return r;}
+function iconoRecurso(rc){return rc.archivo.mime==='application/pdf'?'<span class="adj-pdf" aria-hidden="true">PDF</span>':'<img class="adj-img" alt="" loading="lazy" src="/api/recursos/'+encodeURIComponent(rc.id)+'/archivo">';}
+async function abrirBiblioteca(){
+  cerrarMenuAdjuntar();
+  document.getElementById('bibBuscar').value='';
+  document.getElementById('bibLista').innerHTML='<div class="bib-vacio">Cargando la biblioteca…</div>';
+  show('bibOverlay');setTimeout(()=>document.getElementById('bibBuscar').focus(),60);
+  const r=await cargarRecursos();
+  if(!r.ok){document.getElementById('bibLista').innerHTML='<div class="bib-vacio">'+escH(r.json.error||'No se pudo cargar la biblioteca.')+'</div>';return;}
+  pintarBiblioteca();
+}
+function pintarBiblioteca(){
+  const box=document.getElementById('bibLista');if(!box)return;
+  const todos=RECURSOS||[],q=sinTildes148(document.getElementById('bibBuscar').value);
+  if(!todos.length){box.innerHTML='<div class="bib-vacio">La biblioteca está vacía. Un administrador puede cargar recursos en «Comportamiento del bot › K · Biblioteca de recursos».</div>';return;}
+  const lista=todos.filter(rc=>!q||sinTildes148(rc.nombre+' '+rc.archivo.nombre).includes(q));
+  if(!lista.length){box.innerHTML='<div class="bib-vacio">Ningún recurso coincide con la búsqueda.</div>';return;}
+  box.innerHTML=lista.map(rc=>'<div class="bib-item">'+iconoRecurso(rc)+'<span class="bib-tt"><b>'+escH(rc.nombre)+'</b><span>'+escH(rc.archivo.nombre+' · '+rc.archivo.tipo+' · '+tamanoTexto(rc.archivo.tamano))+'</span>'+(rc.cuando?'<span class="bib-cuando">'+escH(rc.cuando)+'</span>':'')+'</span><button type="button" class="btn btn-ghost bib-elegir" onclick="elegirRecurso(\''+rc.id+'\')">Elegir</button></div>').join('');
+}
+function elegirRecurso(id){
+  const rc=(RECURSOS||[]).find(x=>x.id===id);if(!rc)return;
+  quitarAdjunto(true);ADJ.recurso=rc;cerrarBiblioteca();
+  const err=document.getElementById('convError');if(err)err.classList.add('oculto');
+  pintarAdjunto();const ta=document.getElementById('convTexto');if(ta&&!ta.disabled)ta.focus();
+}
+function cerrarBiblioteca(){close_('bibOverlay');}
+/* ---------- Sección K: biblioteca de recursos (administradores) ---------- */
+async function cargarSeccionRecursos(){
+  const tb=document.getElementById('recLista');if(!tb)return;
+  const r=await cargarRecursos();
+  if(!r.ok){tb.innerHTML='<tr><td colspan="4" class="rec-vacio">'+escH(r.json.error||'No se pudo cargar la biblioteca.')+'</td></tr>';return;}
+  pintarSeccionRecursos();
+}
+function pintarSeccionRecursos(){
+  const tb=document.getElementById('recLista');if(!tb)return;
+  const lista=RECURSOS||[];
+  const modo=document.getElementById('recModo');
+  if(modo)modo.textContent=RECURSOS_ENVIO&&RECURSOS_ENVIO.modoPrueba?'En el modo de prueba de 360dialog Verde no envía archivos; en «Probar a Verde» se ve qué enviaría.':'';
+  if(!lista.length)tb.innerHTML='<tr><td colspan="4" class="rec-vacio">Todavía no hay recursos. Tocar «+ Subir recurso» para cargar el primero.</td></tr>';
+  else tb.innerHTML=lista.map(rc=>'<tr><td><span class="rec-res">'+iconoRecurso(rc)+'<span class="bib-tt"><b>'+escH(rc.nombre)+'</b><span>'+escH(rc.archivo.tipo+' · '+tamanoTexto(rc.archivo.tamano))+'</span></span></span></td>'
+    +'<td class="rec-cuando">'+(rc.cuando?escH(rc.cuando):'<span class="faint">Solo para el equipo.</span>')+'</td>'
+    +'<td><span class="rec-sw"><button type="button" class="sw-sec" role="switch" aria-checked="'+(rc.verde?'true':'false')+'" aria-label="Verde ofrece «'+escH(rc.nombre)+'»" onclick="alternarVerdeRecurso(\''+rc.id+'\')"><span class="sw-sec-bola"></span></button>'+(rc.verde?'Sí':'No')+'</span></td>'
+    +'<td class="rec-acc"><a class="rec-link" href="/api/recursos/'+encodeURIComponent(rc.id)+'/archivo" target="_blank" rel="noopener">Abrir</a><button type="button" class="rec-link" onclick="abrirRecurso(\''+rc.id+'\')">Editar</button><button type="button" class="rec-link rec-quitar" onclick="quitarRecurso(\''+rc.id+'\')">Quitar</button></td></tr>').join('');
+  buildVerdePrompt();
+}
+async function alternarVerdeRecurso(id){
+  const rc=(RECURSOS||[]).find(x=>x.id===id);if(!rc)return;
+  if(!rc.verde&&!rc.cuando){toast('Falta la indicación','Para que Verde lo ofrezca, completar «Cuándo usarlo».','error');abrirRecurso(id);return;}
+  const r=await api('/api/recursos/'+encodeURIComponent(id),{method:'PUT',body:{verde:!rc.verde}});
+  if(!r.ok){toast('No se pudo cambiar',r.json.error||'','error');return;}
+  RECURSOS=r.json.lista||RECURSOS;pintarSeccionRecursos();
+  toast(r.json.recurso.verde?'Verde puede ofrecerlo':'Solo para el equipo','«'+r.json.recurso.nombre+'»','success');
+}
+function abrirRecurso(id){
+  REC_EDIT=id?((RECURSOS||[]).find(x=>x.id===id)||null):null;REC_ARCH=null;
+  document.getElementById('recTitulo').textContent=REC_EDIT?'Editar recurso':'Subir recurso';
+  document.getElementById('rec_nombre').value=REC_EDIT?REC_EDIT.nombre:'';
+  document.getElementById('rec_cuando').value=REC_EDIT?REC_EDIT.cuando:'';
+  document.getElementById('rec_verde').setAttribute('aria-checked',String(REC_EDIT?REC_EDIT.verde:true));
+  document.getElementById('recZonaTx').innerHTML=REC_EDIT?escH(REC_EDIT.archivo.nombre+' · '+tamanoTexto(REC_EDIT.archivo.tamano))+' · <b>Cambiar</b>':'Elegir un archivo PDF, JPG o PNG';
+  document.getElementById('recErr').textContent='';
+  document.getElementById('recGuardar').disabled=false;
+  show('recOverlay');setTimeout(()=>document.getElementById('rec_nombre').focus(),60);
+}
+function cerrarRecurso(){close_('recOverlay');REC_ARCH=null;}
+function alternarVerdeNuevo(b){b.setAttribute('aria-checked',String(b.getAttribute('aria-checked')!=='true'));}
+function recArchivoElegido(input){
+  const f=input.files&&input.files[0];if(input.value!==undefined)input.value='';if(!f)return;
+  const t=tipoLocal(f),err=document.getElementById('recErr');
+  if(!t){err.textContent='Solo se pueden cargar archivos PDF, JPG o PNG.';return;}
+  const max=t==='pdf'?25:5;
+  if(f.size>max*MB148){err.textContent=(t==='pdf'?'El PDF supera ':'La imagen supera ')+max+' MB.';return;}
+  REC_ARCH=f;err.textContent='';
+  document.getElementById('recZonaTx').innerHTML=escH(f.name+' · '+tamanoTexto(f.size))+' · <b>Cambiar</b>';
+  const n=document.getElementById('rec_nombre');if(!n.value.trim())n.value=f.name.replace(/\.[^.]+$/,'').replace(/[-_]+/g,' ').trim().slice(0,80);
+}
+async function guardarRecurso(){
+  const nombre=document.getElementById('rec_nombre').value.trim(),cuando=document.getElementById('rec_cuando').value.trim(),verde=document.getElementById('rec_verde').getAttribute('aria-checked')==='true';
+  const err=document.getElementById('recErr'),btn=document.getElementById('recGuardar');
+  if(!nombre){err.textContent='Escribir el nombre del recurso.';document.getElementById('rec_nombre').focus();return;}
+  if(!REC_EDIT&&!REC_ARCH){err.textContent='Elegir el archivo del recurso.';return;}
+  if(verde&&!cuando){err.textContent='Escribir cuándo usarlo: Verde lo necesita para saber cuándo ofrecerlo.';document.getElementById('rec_cuando').focus();return;}
+  btn.disabled=true;err.textContent='';
+  const datos={nombre,cuando,verde};
+  const r=REC_ARCH?await subirBinario(REC_EDIT?'/api/recursos/'+encodeURIComponent(REC_EDIT.id)+'/archivo':'/api/recursos',REC_ARCH,'X-Recurso',Object.assign({archivo:REC_ARCH.name},datos))
+    :await api('/api/recursos/'+encodeURIComponent(REC_EDIT.id),{method:'PUT',body:datos});
+  btn.disabled=false;
+  if(!r.ok){err.textContent=r.json.error||'No se pudo guardar el recurso.';return;}
+  const editado=!!REC_EDIT;
+  RECURSOS=r.json.lista||RECURSOS;cerrarRecurso();pintarSeccionRecursos();
+  toast(editado?'Recurso actualizado':'Recurso guardado','«'+r.json.recurso.nombre+'»','success');
+}
+function quitarRecurso(id){
+  const rc=(RECURSOS||[]).find(x=>x.id===id);if(!rc)return;
+  askConfirm({title:'¿Quitar «'+rc.nombre+'»?',message:'El recurso se borra de la biblioteca: Verde deja de ofrecerlo y el equipo ya no lo puede elegir. Los archivos ya enviados quedan en las conversaciones.',okLabel:'Quitar',danger:true},async()=>{
+    const r=await api('/api/recursos/'+encodeURIComponent(id),{method:'DELETE'});
+    if(!r.ok){toast('No se pudo quitar',r.json.error||'','error');return;}
+    RECURSOS=r.json.lista||[];pintarSeccionRecursos();toast('Recurso quitado','«'+rc.nombre+'»','success');
+  });
+}
+// Arrastrar y soltar un archivo en la ventana del recurso.
+(function(){
+  const z=document.getElementById('recZona');if(!z)return;
+  ['dragenter','dragover'].forEach(ev=>z.addEventListener(ev,e=>{e.preventDefault();z.classList.add('rec-sobre');}));
+  ['dragleave','drop'].forEach(ev=>z.addEventListener(ev,e=>{e.preventDefault();z.classList.remove('rec-sobre');}));
+  z.addEventListener('drop',e=>{const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];if(f)recArchivoElegido({files:[f]});});
+})();
+// El menú para adjuntar se cierra al tocar afuera o con Escape (sin cerrar la conversación).
+document.addEventListener('click',e=>{const w=document.querySelector('.adj-wrap');if(w&&!w.contains(e.target))cerrarMenuAdjuntar();});
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  const m=document.getElementById('adjMenu');
+  if(m&&!m.classList.contains('oculto')){cerrarMenuAdjuntar();const b=document.getElementById('convAdjuntar');if(b)b.focus();e.stopImmediatePropagation();e.stopPropagation();}
+},true);
 
 </script>

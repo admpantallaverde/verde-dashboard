@@ -76,7 +76,7 @@ const ARTICULOS = [
     id: 'comportamiento', grupo: 'manual', soloAdmin: true, titulo: 'Comportamiento del bot',
     resumen: 'Cómo se configura lo que dice y hace Verde, las reglas fijas y la página de privacidad.',
     bloques: [
-      { tipo: 'p', texto: 'En «Agentes IA › Comportamiento del bot» se configura a Verde sin tocar código: identidad (A), personalidad y tono (B), ventajas (C), pasos de venta (D), objeciones (E), reglas de oro (F), frases clave (G), que incluye las indicaciones para cuando el cliente envía un archivo, parámetros técnicos, como el modelo de inteligencia artificial y el tiempo de espera antes de responder (H), reclamos y garantía (I): las condiciones que Verde puede informar, los datos que debe juntar y las sugerencias por síntoma, y fichas de consulta (J): los datos que Verde junta en las consultas de reparación y de compra. Cada sección se guarda con su botón «Guardar».' },
+      { tipo: 'p', texto: 'En «Agentes IA › Comportamiento del bot» se configura a Verde sin tocar código: identidad (A), personalidad y tono (B), ventajas (C), pasos de venta (D), objeciones (E), reglas de oro (F), frases clave (G), que incluye las indicaciones para cuando el cliente envía un archivo, parámetros técnicos, como el modelo de inteligencia artificial y el tiempo de espera antes de responder (H), reclamos y garantía (I): las condiciones que Verde puede informar, los datos que debe juntar y las sugerencias por síntoma, fichas de consulta (J): los datos que Verde junta en las consultas de reparación y de compra, y la biblioteca de recursos (K): los archivos que Verde puede ofrecer y enviar, y que el equipo puede elegir al adjuntar. Cada sección se guarda con su botón «Guardar».' },
       { tipo: 'h', texto: 'Reglas fijas del sistema' },
       { tipo: 'p', texto: 'Se aplican siempre, antes que las reglas de oro, y protegen el cumplimiento de las políticas de WhatsApp y de la Ley N.º 18.331. Se pueden editar con cuidado: queda registrado quién las cambió, y el botón «Restaurar las reglas recomendadas» vuelve al texto original. Se recomienda que la línea de presentación de la primera respuesta incluya el enlace a la página de privacidad; si falta, el panel lo avisa. En esa línea, {nombre} y {empresa} se reemplazan por lo configurado en «A · Identidad del bot», y el panel muestra debajo cómo la verá el cliente. En ese mensaje Verde no se presenta por su cuenta: la presentación es esa línea.' },
       { tipo: 'h', texto: 'Tiempo de espera antes de responder' },
@@ -127,6 +127,17 @@ const ARTICULOS = [
       { tipo: 'h', texto: 'Qué ve el equipo' },
       { tipo: 'p', texto: 'El chat aparece en «Chats por responder» con la etiqueta «Consulta de reparación» o «Consulta de compra». Dentro del chat, el botón «Ver ficha» de la franja abre la ficha: cada dato configurado con lo que respondió el cliente, «Sin dato todavía» en lo que falta y la cantidad de archivos recibidos. La ficha se puede copiar. El precio y la decisión son del asesor.' },
       { tipo: 'nota', texto: 'Los datos que Verde junta para cada tipo de consulta se configuran en «Comportamiento del bot › J · Fichas de consulta» (solo administradores). Si se edita la lista, las fichas ya creadas conservan los nombres con que se armaron.' }
+    ]
+  },
+  {
+    id: 'archivos-enviados', grupo: 'manual', soloAdmin: false, titulo: 'Enviar archivos',
+    resumen: 'Cómo enviar un PDF o una imagen desde un chat, y cuándo los envía Verde.',
+    bloques: [
+      { tipo: 'p', texto: 'En la caja de mensaje de cada chat, el botón del clip permite adjuntar un archivo «Desde la computadora» o «Desde la biblioteca». Se pueden enviar PDF de hasta 25 MB e imágenes JPG o PNG de hasta 5 MB. El archivo queda listo encima de la caja de mensaje: se puede sumar un texto, que sale con la firma, o quitarlo antes de enviar.' },
+      { tipo: 'p', texto: 'Rigen las mismas reglas que para los mensajes de texto: solo dentro de las 24 horas desde el último mensaje del cliente, y al enviar, Verde hace su pausa de 12 horas en ese chat. El archivo enviado queda en la conversación para abrirlo o guardarlo.' },
+      { tipo: 'h', texto: 'Cuándo envía archivos Verde' },
+      { tipo: 'p', texto: 'Verde puede enviar los recursos de la biblioteca marcados con «Verde lo ofrece»: si el cliente pide uno, se lo envía; si no lo pidió, primero se lo ofrece y lo envía solo si acepta. Si un archivo no se puede enviar, el chat pasa a «Chats por responder» para que una persona lo envíe.' },
+      { tipo: 'nota', texto: 'En el modo de prueba de 360dialog no se pueden enviar archivos: se habilita al conectar el número definitivo. La biblioteca la administran los administradores en «Comportamiento del bot › K · Biblioteca de recursos».' }
     ]
   },
   {

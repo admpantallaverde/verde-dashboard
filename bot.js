@@ -13,6 +13,7 @@
 const fs = require('fs');
 const consumo = require('./consumo');
 const cumplimiento = require('./cumplimiento');
+const recursos = require('./recursos');   // 1.4.8: biblioteca de recursos
 const path = require('path');
 
 const DATA_DIR = path.join(__dirname, 'data');
@@ -201,6 +202,28 @@ function separarConsulta(texto, v) {
     }
   } catch (e) { ficha = null; }
   return { texto: limpio, ficha };
+}
+
+// 1.4.8: biblioteca de recursos que Verde puede enviar (solo con el número real o en «Probar a Verde»).
+function bloqueBiblioteca(lista) {
+  if (!Array.isArray(lista) || !lista.length) return '';
+  return '\n\n== BIBLIOTECA DE RECURSOS ==\n'
+    + 'Podés enviarle al cliente estos archivos de la tienda:\n'
+    + lista.map((r, i) => '- R' + (i + 1) + ' · «' + r.nombre + '» (' + (r.mime === 'application/pdf' ? 'PDF' : 'imagen') + '): ' + r.cuando).join('\n') + '\n'
+    + 'Reglas: si el cliente pide uno de estos archivos, envialo. Si no lo pidió pero le sirve, primero ofrecelo y envialo solo si acepta. Enviá como máximo un archivo por mensaje y no vuelvas a enviar uno que ya enviaste en esta conversación. No ofrezcas ni prometas archivos que no estén en esta lista.\n'
+    + 'Para enviar un archivo, agregá al final del mensaje, en una línea aparte y sin texto adicional en esa línea: [ENVIAR:R1] (con el código del archivo). Tu mensaje viaja junto con el archivo: no digas que lo vas a mandar después.';
+}
+// La marca [ENVIAR:Rn] se quita siempre del mensaje; solo vale si el código está en la lista que recibió Verde.
+function separarEnvio(texto, lista) {
+  const t = String(texto == null ? '' : texto);
+  const m = /\[ENVIAR:\s*R?(\d{1,3})\s*\]/i.exec(t);
+  const limpio = t.replace(/\[ENVIAR:[^\]\n]*\]?/gi, '').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  const r = m && Array.isArray(lista) ? lista[parseInt(m[1], 10) - 1] : null;
+  return { texto: limpio, recurso: r ? { id: r.id, nombre: r.nombre, mime: r.mime } : null };
+}
+// Lo que queda en la memoria de Verde: el texto y, si mandó un archivo, cuál (para no repetirlo).
+function paraMemoria(reply, recurso) {
+  return (reply || '') + (recurso ? (reply ? '\n' : '') + '[Archivo enviado: «' + recurso.nombre + '»]' : '');
 }
 
 // 1.4.7: en la primera respuesta, el sistema agrega la línea de presentación; Verde no debe presentarse por su cuenta.
@@ -555,7 +578,8 @@ async function responder(from, body, opciones) {
   // 2) se arma el pedido con el historial guardado
   const convs = loadConversations();
   const hist = Array.isArray(convs[from]) ? convs[from] : [];
-  const system = buildSystemPrompt(v) + bloqueContexto() + productBlock(body) + notaAtencion(opciones.atencion) + notaPresentacion(opciones.presentacion);
+  const lista = opciones.biblioteca ? recursos.paraVerde() : [];
+  const system = buildSystemPrompt(v) + bloqueContexto() + productBlock(body) + notaAtencion(opciones.atencion) + notaPresentacion(opciones.presentacion) + bloqueBiblioteca(lista);
   let crudo;
   try {
     crudo = await callClaude(system, paraLaIA(hist, memoriaDe(v)), v, opciones.modelo, String(from).startsWith('sim:') ? 'pruebas' : 'whatsapp');
@@ -567,16 +591,18 @@ async function responder(from, body, opciones) {
   }
   const rec = separarReclamo(crudo);
   const con = separarConsulta(rec.texto, v);
-  const sep = separarDerivacion(con.texto);
-  const reply = sep.texto || fr.derivacion || 'Te paso con un asesor para que te ayude. 🙌';
+  const env = separarEnvio(con.texto, lista);
+  const sep = separarDerivacion(env.texto);
+  // Si Verde solo envía un archivo, el mensaje puede ir sin texto (no se usa la frase de derivación).
+  const reply = sep.texto || (env.recurso ? '' : (fr.derivacion || 'Te paso con un asesor para que te ayude. 🙌'));
 
   // 3) si mientras pensaba una persona del equipo tomó la conversación, o alguien apagó a Verde
   //    en este chat, no se responde
   if (noDebeResponder(from, opciones)) return null;
 
   // 4) se guarda la respuesta de Verde (sin las marcas)
-  registrarMensaje(from, 'assistant', reply);
-  return { texto: reply, derivar: sep.derivar, error: false, reclamo: rec.ficha, consulta: con.ficha };
+  registrarMensaje(from, 'assistant', paraMemoria(reply, env.recurso));
+  return { texto: reply, derivar: sep.derivar, error: false, reclamo: rec.ficha, consulta: con.ficha, recurso: env.recurso };
 }
 
 // «Devolver a Verde» desde el panel: Verde responde la última consulta del cliente que quedó sin
@@ -594,7 +620,8 @@ async function responderUltima(from, opciones) {
   const ultimo = hist[hist.length - 1];
   if (!ultimo || ultimo.role !== 'user') return null;   // la última palabra fue del equipo o de Verde
   if (noDebeResponder(from, opciones)) return null;
-  const system = buildSystemPrompt(v) + bloqueContexto() + productBlock(String(ultimo.content || '')) + notaAtencion(opciones.atencion) + notaPresentacion(opciones.presentacion);
+  const lista = opciones.biblioteca ? recursos.paraVerde() : [];
+  const system = buildSystemPrompt(v) + bloqueContexto() + productBlock(String(ultimo.content || '')) + notaAtencion(opciones.atencion) + notaPresentacion(opciones.presentacion) + bloqueBiblioteca(lista);
   let crudo;
   try {
     crudo = await callClaude(system, paraLaIA(hist, memoriaDe(v)), v, undefined, 'whatsapp');
@@ -605,11 +632,13 @@ async function responderUltima(from, opciones) {
   }
   const rec = separarReclamo(crudo);
   const con = separarConsulta(rec.texto, v);
-  const sep = separarDerivacion(con.texto);
-  const reply = sep.texto || fr.derivacion || 'Te paso con un asesor para que te ayude. 🙌';
+  const env = separarEnvio(con.texto, lista);
+  const sep = separarDerivacion(env.texto);
+  // Si Verde solo envía un archivo, el mensaje puede ir sin texto (no se usa la frase de derivación).
+  const reply = sep.texto || (env.recurso ? '' : (fr.derivacion || 'Te paso con un asesor para que te ayude. 🙌'));
   if (noDebeResponder(from, opciones)) return null;
-  registrarMensaje(from, 'assistant', reply);
-  return { texto: reply, derivar: sep.derivar, error: false, reclamo: rec.ficha, consulta: con.ficha };
+  registrarMensaje(from, 'assistant', paraMemoria(reply, env.recurso));
+  return { texto: reply, derivar: sep.derivar, error: false, reclamo: rec.ficha, consulta: con.ficha, recurso: env.recurso };
 }
 
 // ¿Verde ya le respondió algo a este cliente? (se usa para la presentación en el simulador)
@@ -625,6 +654,7 @@ module.exports = {
   ADJUNTO_POR_DEFECTO, instruccionesArchivo, notaAtencion,
   GARANTIA_DATOS_DEFECTO, GARANTIA_SINTOMAS_DEFECTO, GARANTIA_REQUISITOS_DEFECTO, GARANTIA_COBERTURA_DEFECTO, garantiaDe, bloqueGarantia, separarReclamo,
   CONSULTA_REPARACION_DEFECTO, CONSULTA_COMPRA_DEFECTO, consultasDe, bloqueConsultas, separarConsulta, notaPresentacion,
+  bloqueBiblioteca, separarEnvio,
   tieneRespuestas,
   modeloEnUso,
   responderPendiente,

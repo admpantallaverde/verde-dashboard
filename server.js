@@ -29,11 +29,13 @@ const consumo = require('./consumo');
 const cumplimiento = require('./cumplimiento');
 const ayuda = require('./ayuda');
 const archivos = require('./archivos');
+const recursos = require('./recursos');   // 1.4.8: biblioteca de recursos
+const envios = require('./envios');       // 1.4.8: envío de archivos por WhatsApp
 const usuarios = require('./usuarios.js');
 const atencion = require('./atencion.js');
 const conversaciones = require('./conversaciones.js');
 
-const VERSION = '1.4.7';
+const VERSION = '1.4.8';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -238,10 +240,10 @@ app.post('/api/simulate', requiere(['admin']), async (req, res) => {
     if (!message.trim()) return res.status(400).json({ error: 'Escribí un mensaje.' });
     if (modelo && !bot.modeloPermitido(modelo)) return res.status(400).json({ error: 'Esa IA no está disponible.' });
     const primera = !bot.tieneRespuestas('sim:' + from);
-    const r = await bot.responderCliente('sim:' + from, message, { modelo: modelo || undefined, presentacion: primera ? cumplimiento.lineaInicial(bot.getVerde()) : null });
+    const r = await bot.responderCliente('sim:' + from, message, { modelo: modelo || undefined, presentacion: primera ? cumplimiento.lineaInicial(bot.getVerde()) : null, biblioteca: true });
     if (!r) return res.json({ reply: '(Verde está apagado y no enviaría ninguna respuesta.)', derivaria: false });
     res.json({
-      reply: r.texto + (primera ? '\n\n' + cumplimiento.lineaInicial(bot.getVerde()) : '') + (r.reclamo ? '\n\n(Ficha del reclamo que vería el asesor: ' + Object.entries(r.reclamo).map(([k, v]) => k + ': ' + v).join(' · ') + ')' : '') + (r.consulta ? '\n\n(Ficha de la consulta que vería el asesor: ' + ['tipo: ' + r.consulta.tipo].concat(r.consulta.campos.filter(c => c.valor).map(c => c.dato + ': ' + c.valor), r.consulta.notas ? ['notas: ' + r.consulta.notas] : []).join(' · ') + ')' : '') + ((r.derivar || r.reclamo) ? '\n\n(Este chat pasaría a «Chats por responder».)' : ''),
+      reply: r.texto + (primera ? '\n\n' + cumplimiento.lineaInicial(bot.getVerde()) : '') + (r.reclamo ? '\n\n(Ficha del reclamo que vería el asesor: ' + Object.entries(r.reclamo).map(([k, v]) => k + ': ' + v).join(' · ') + ')' : '') + (r.recurso ? '\n\n(Verde enviaría el archivo «' + r.recurso.nombre + '» (' + (r.recurso.mime === 'application/pdf' ? 'PDF' : 'imagen') + ') junto con este mensaje' + (puedeEnviarArchivos() ? '.)' : '; en el modo de prueba de 360dialog no se envían archivos.)') : '') + (r.consulta ? '\n\n(Ficha de la consulta que vería el asesor: ' + ['tipo: ' + r.consulta.tipo].concat(r.consulta.campos.filter(c => c.valor).map(c => c.dato + ': ' + c.valor), r.consulta.notas ? ['notas: ' + r.consulta.notas] : []).join(' · ') + ')' : '') + ((r.derivar || r.reclamo) ? '\n\n(Este chat pasaría a «Chats por responder».)' : ''),
       derivaria: !!r.derivar,
       modelo: modelo || null
     });
@@ -478,6 +480,7 @@ function motivoAviso(a, motivo) {
   if (motivo === 'reclamo de garantía') return 'Reclamo de garantía: Verde juntó los datos para el asesor';
   if (motivo === 'consulta de reparación') return 'Consulta de reparación: Verde juntó los datos para el asesor';
   if (motivo === 'consulta de compra') return 'Consulta de compra: Verde juntó los datos para el asesor';
+  if (motivo === 'archivo no enviado') return 'Verde no pudo enviar un archivo: hay que enviarlo desde el panel';
   if (motivo === 'volvió a escribir') return 'El cliente volvió a escribir';
   if (motivo === 'Verde en pausa en ese chat') return 'Verde estaba en pausa y el cliente esperó 5 minutos';
   if (motivo === 'Verde apagado en ese chat') return 'Verde está apagado en ese chat y el cliente esperó 5 minutos';
@@ -519,10 +522,52 @@ function yaHuboRespuesta(clave) {
   return !!(d && (d.mensajes || []).some(m => m.tipo === 'verde' || m.tipo === 'equipo'));
 }
 function conPresentacion(clave, texto) {
-  return yaHuboRespuesta(clave) ? texto : texto + '\n\n' + cumplimiento.lineaInicialWhatsApp(bot.getVerde());
+  return yaHuboRespuesta(clave) ? texto : (texto ? texto + '\n\n' : '') + cumplimiento.lineaInicialWhatsApp(bot.getVerde());
 }
 // 1.4.7: si la respuesta va a llevar la presentación, Verde lo sabe y no se presenta por su cuenta.
 function presentacionPara(clave) { return yaHuboRespuesta(clave) ? null : cumplimiento.lineaInicial(bot.getVerde()); }
+/* ---------- 1.4.8: envío de archivos ---------- */
+function conexion360() { return { messagesUrl: process.env.D360_MESSAGES_URL, apiKey: process.env.D360_API_KEY }; }
+// Solo con el número real: el modo de prueba (sandbox) de 360dialog no permite enviar archivos.
+function puedeEnviarArchivos() { return d360Configurado() && envios.disponible(conexion360()); }
+function estadoEnvio() {
+  return { disponible: puedeEnviarArchivos(), modoPrueba: d360Configurado() && archivos.esSandbox(process.env.D360_MESSAGES_URL),
+    pdfMB: recursos.TIPOS['application/pdf'].maxMB, imagenMB: recursos.TIPOS['image/png'].maxMB };
+}
+// Envía la respuesta de Verde. Si trae un recurso de la biblioteca, lo envía con el texto como comentario (si el texto
+// es largo, primero el texto y después el archivo). Si el archivo no sale, el texto sale igual y se avisa.
+async function enviarRespuestaVerde(clave, destino, texto, recurso) {
+  const res = { ok: false, archivoFallido: null };
+  const conTexto = async () => { const ok = await enviarWhatsApp(destino, texto); if (ok) conversaciones.registrar({ clave, tipo: 'verde', texto }); return ok; };
+  const info = recurso && puedeEnviarArchivos() ? recursos.paraEnviar(recurso.id) : null;
+  if (!info) {
+    if (recurso) res.archivoFallido = recurso.nombre;
+    if (texto) res.ok = await conTexto();
+    return res;
+  }
+  const comoLeyenda = !!texto && texto.length <= envios.LEYENDA_MAX;
+  if (texto && !comoLeyenda) res.ok = await conTexto();
+  try {
+    const mediaId = await envios.subir(info.buf, info.mime, info.nombre, conexion360());
+    if (await enviar360(envios.cuerpoMedia(baseDestino(destino), mediaId, info.mime, info.nombre, comoLeyenda ? texto : ''))) {
+      const a = Object.assign(archivos.registrarEnviado(info.buf, info.mime, info.nombre, 'Verde'), { biblioteca: true });
+      conversaciones.registrar({ clave, tipo: 'verde', texto: comoLeyenda ? texto : '', archivo: a, origen: 'biblioteca' });
+      res.ok = true;
+      return res;
+    }
+  } catch (e) { console.error('Verde no pudo enviar el archivo «' + info.nombre + '»:', e.message); }
+  res.archivoFallido = recurso.nombre;
+  if (comoLeyenda) res.ok = await conTexto();
+  return res;
+}
+// Si Verde no pudo enviar un archivo, queda anotado y el chat pasa a «Chats por responder» para que lo envíe una persona.
+async function archivoNoEnviado(clave, datos, nombreArchivo) {
+  conversaciones.anotarSistema(clave, 'Verde no pudo enviar el archivo «' + nombreArchivo + '»: hay que enviarlo desde el panel.');
+  if (atencion.tienePendiente(clave)) return;
+  const d = atencion.derivar(Object.assign({}, datos, { clave, motivo: 'Verde no pudo enviar el archivo «' + nombreArchivo + '»: una persona del equipo tiene que enviarlo.' }));
+  await avisarEquipo(d.atencion, 'archivo no enviado');
+}
+
 // Motivo con que se deriva y se avisa al equipo, según la ficha que haya armado Verde.
 function motivoDerivacion(r) {
   if (r.error) return 'Verde tuvo un problema técnico y lo derivó a una persona del equipo.';
@@ -652,16 +697,16 @@ async function responderAgrupado(turnos) {
 async function responderTurno(turno) {
   const { clave, destino, numero, nombre, textoCliente, avisoArchivo, yaAnotado, yaDerivado, estadoChat } = turno;
   // Si mientras la IA prepara la respuesta alguien apaga a Verde en este chat, la respuesta se descarta.
-  const r = await bot.responderCliente(clave, textoCliente, { puedeResponder: () => !conversaciones.estaApagado(clave), atencion: estadoChat, presentacion: presentacionPara(clave) });
+  const r = await bot.responderCliente(clave, textoCliente, { puedeResponder: () => !conversaciones.estaApagado(clave), atencion: estadoChat, presentacion: presentacionPara(clave), biblioteca: puedeEnviarArchivos() });
   if (!r) {
     console.log('360 >> sin respuesta (Verde apagado o una persona del equipo tomó la conversación)');
     if (avisoArchivo) await avisarEquipo(avisoArchivo);
     return;
   }
   const enviado = conPresentacion(clave, r.texto);
-  const ok = await enviarWhatsApp(destino, enviado);
-  if (ok) conversaciones.registrar({ clave, tipo: 'verde', texto: enviado });
-  console.log('360 >>', ok ? 'enviado' : 'NO enviado', ':', enviado.slice(0, 200));
+  const envio = await enviarRespuestaVerde(clave, destino, enviado, r.recurso);
+  const ok = envio.ok;
+  console.log('360 >>', ok ? 'enviado' : 'NO enviado', ':', enviado.slice(0, 200) + (r.recurso ? ' · con el archivo «' + r.recurso.nombre + '»' + (envio.archivoFallido ? ' (no se pudo enviar)' : '') : ''));
   // 1.4.4: una ficha de reclamo también deriva (aunque la IA no agregue la marca de derivación).
   const reclamo = r.reclamo || null;
   const consulta = r.consulta || null;   // 1.4.7: la ficha de la consulta se guarda solo si el chat está derivado
@@ -680,6 +725,7 @@ async function responderTurno(turno) {
     if (avisoArchivo) await avisarEquipo(avisoArchivo);
     else if (r.derivar) console.log('360 → el chat ya estaba derivado: Verde sigue conversando sin repetir el aviso');
   }
+  if (envio.archivoFallido) await archivoNoEnviado(clave, { destino, numero, nombre, mensajeCliente: yaAnotado ? null : (turno.textoSinAnotar || textoCliente), respuestaVerde: ok ? r.texto : null }, envio.archivoFallido);
 }
 
 // Mensaje que alguien del equipo envió desde la app del celular (coexistencia)
@@ -888,6 +934,7 @@ function conDatosDelPanel(d, req) {
   d.firmaUsuario = req.usuario ? (req.usuario.firma || '') : '';
   d.d360 = d360Configurado();
   d.pendienteId = atencion.pendienteId(d.clave);   // para «Marcar atendido» desde la conversación abierta
+  d.envioArchivos = estadoEnvio();   // 1.4.8: si se pueden enviar archivos (no en el modo de prueba) y sus límites
   // 1.4.4: ficha del reclamo de garantía, con la cantidad de archivos que mandó el cliente desde que empezó la atención.
   const rec = atencion.reclamoDe(d.clave);
   d.reclamo = rec ? Object.assign(rec, { pruebas: (d.mensajes || []).filter(m => m.tipo === 'cliente' && m.archivo && m.en >= (rec.creadoEn || 0) - 3600000).length }) : null;
@@ -966,13 +1013,13 @@ async function responderConsultaPendiente(clave) {
   const pend = atencion.tienePendiente(clave), yaDerivado = pend && !atencion.pendienteRevision(clave);
   if (!d360Configurado()) return sin('La conexión con WhatsApp (360dialog) no está configurada en el servidor.');
   if (!d.puedeResponder) return sin(d.motivoNoResponder);
-  const r = await bot.responderPendiente(clave, { puedeResponder: () => !conversaciones.estaApagado(clave), atencion: yaDerivado ? 'derivado' : (pend ? 'revision' : null), presentacion: presentacionPara(clave) });
+  const r = await bot.responderPendiente(clave, { puedeResponder: () => !conversaciones.estaApagado(clave), atencion: yaDerivado ? 'derivado' : (pend ? 'revision' : null), presentacion: presentacionPara(clave), biblioteca: puedeEnviarArchivos() });
   if (!r) return sin();
   const enviado = conPresentacion(clave, r.texto);
-  const ok = await enviarWhatsApp(d.destino, enviado);
+  const envio = await enviarRespuestaVerde(clave, d.destino, enviado, r.recurso);
+  const ok = envio.ok;
   console.log('360 >> (chat devuelto a Verde)', ok ? 'enviado' : 'NO enviado', ':', enviado.slice(0, 200));
   if (!ok) return sin('WhatsApp no aceptó la respuesta de Verde. Si el cliente vuelve a escribir, Verde le responde.');
-  conversaciones.registrar({ clave, tipo: 'verde', texto: enviado });
   if ((r.derivar || r.reclamo) && !yaDerivado) {
     const a = atencion.derivar({ clave, destino: d.destino, numero: d.numero, nombre: d.nombre, mensajeCliente: pend ? null : ultimo.texto, respuestaVerde: r.texto,
       motivo: motivoDerivacion(r) });
@@ -984,6 +1031,7 @@ async function responderConsultaPendiente(clave) {
     if (r.reclamo) atencion.guardarReclamo(clave, r.reclamo);
     if (r.consulta) atencion.guardarConsulta(clave, r.consulta);
   }
+  if (envio.archivoFallido) await archivoNoEnviado(clave, { destino: d.destino, numero: d.numero, nombre: d.nombre, mensajeCliente: pend ? null : ultimo.texto, respuestaVerde: r.texto }, envio.archivoFallido);
   return { respondio: true, derivo: !!r.derivar, motivo: '' };
 }
 // «Devolver a Verde»: termina la pausa de 12 horas y, si el cliente dejó una consulta sin responder, Verde la responde enseguida.
@@ -1029,6 +1077,117 @@ app.post('/api/conversaciones/:clave/responder', requiere(['admin', 'asesor']), 
     const cerrada = atencion.respuestaEquipo({ clave, texto, firma: u ? { usuarioId: u.id, nombre: u.nombre, firma } : null, origen: 'panel' });
     console.log('Panel: ' + quienEs(req) + ' respondió a ' + clave + (cerrada && cerrada.estado === 'respondido' ? ' · el chat pasa a «Chats respondidos»' : ''));
     res.json({ ok: true, conversacion: conDatosDelPanel(detalleConversacion(clave), req) });
+  } catch (e) { responderError(res, e); }
+});
+
+/* ---------- 1.4.8: archivos que llegan desde el panel (cuerpo binario, con sus datos en una cabecera) ---------- */
+const parserBinario = express.raw({ type: 'application/octet-stream', limit: '26mb' });
+function leerBinario(req, res, next) {
+  parserBinario(req, res, err => {
+    if (err) return res.status(err.status === 413 ? 413 : 400).json({ error: err.status === 413 ? 'El archivo supera el tamaño máximo (PDF hasta 25 MB; JPG o PNG hasta 5 MB).' : 'No se pudo leer el archivo.' });
+    if (!Buffer.isBuffer(req.body) || !req.body.length) return res.status(400).json({ error: 'No llegó ningún archivo.' });
+    next();
+  });
+}
+function datosDeCabecera(req, nombre) {
+  try { const j = JSON.parse(decodeURIComponent(String(req.headers[nombre] || ''))); return j && typeof j === 'object' ? j : {}; }
+  catch (e) { return {}; }
+}
+function servirArchivo(res, f, guardar) {
+  const ascii = f.nombre.replace(/[^\x20-\x7e]/g, '_').replace(/["\\]/g, '_');
+  res.setHeader('Content-Type', f.mime);
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.setHeader('Content-Disposition', (guardar ? 'attachment' : 'inline') + '; filename="' + ascii + '"; filename*=UTF-8\'\'' + encodeURIComponent(f.nombre));
+  if (f.mime !== 'application/pdf') res.setHeader('Content-Security-Policy', "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox");
+  fs.createReadStream(f.ruta).on('error', () => res.end()).pipe(res);
+}
+
+/* ---------- 1.4.8: biblioteca de recursos (la editan los administradores; el equipo la usa al adjuntar) ---------- */
+function idRecurso(req) { const id = String(req.params.id || ''); if (!recursos.idValido(id)) throw Object.assign(new Error('El recurso no existe.'), { publico: true, codigo: 404 }); return id; }
+app.get('/api/recursos', requiere(['admin', 'asesor']), (req, res) => res.json({ lista: recursos.listar(), envio: estadoEnvio() }));
+app.post('/api/recursos', requiere(['admin']), leerBinario, (req, res) => {
+  try {
+    const d = datosDeCabecera(req, 'x-recurso');
+    const r = recursos.crear(d, req.body, d.archivo, quienEs(req));
+    console.log('Panel: ' + quienEs(req) + ' subió «' + r.nombre + '» a la biblioteca de recursos');
+    res.json({ ok: true, recurso: r, lista: recursos.listar() });
+  } catch (e) { responderError(res, e); }
+});
+app.put('/api/recursos/:id', requiere(['admin']), (req, res) => {
+  try {
+    const r = recursos.editar(idRecurso(req), req.body || {}, null, null, quienEs(req));
+    console.log('Panel: ' + quienEs(req) + ' modificó el recurso «' + r.nombre + '»');
+    res.json({ ok: true, recurso: r, lista: recursos.listar() });
+  } catch (e) { responderError(res, e); }
+});
+app.post('/api/recursos/:id/archivo', requiere(['admin']), leerBinario, (req, res) => {
+  try {
+    const d = datosDeCabecera(req, 'x-recurso');
+    const r = recursos.editar(idRecurso(req), d, req.body, d.archivo, quienEs(req));
+    console.log('Panel: ' + quienEs(req) + ' reemplazó el archivo del recurso «' + r.nombre + '»');
+    res.json({ ok: true, recurso: r, lista: recursos.listar() });
+  } catch (e) { responderError(res, e); }
+});
+app.delete('/api/recursos/:id', requiere(['admin']), (req, res) => {
+  try {
+    const r = recursos.quitar(idRecurso(req));
+    console.log('Panel: ' + quienEs(req) + ' quitó «' + r.nombre + '» de la biblioteca de recursos');
+    res.json({ ok: true, lista: recursos.listar() });
+  } catch (e) { responderError(res, e); }
+});
+app.get('/api/recursos/:id/archivo', requiere(['admin', 'asesor']), (req, res) => {
+  try {
+    const f = recursos.paraServir(idRecurso(req));
+    if (!f) return res.status(404).json({ error: 'El archivo del recurso no está disponible.' });
+    servirArchivo(res, f, req.query.guardar === '1');
+  } catch (e) { responderError(res, e); }
+});
+
+/* ---------- 1.4.8: enviar un archivo desde el panel (desde la computadora o desde la biblioteca) ---------- */
+async function enviarArchivoDelPanel(req, res, clave, archivo) {
+  const d = detalleConversacion(clave);
+  if (!d) return res.status(404).json({ error: 'La conversación no existe.' });
+  if (!d360Configurado()) return res.status(503).json({ error: 'La conexión con WhatsApp (360dialog) no está configurada en el servidor.' });
+  if (!puedeEnviarArchivos()) return res.status(409).json({ error: 'En el modo de prueba de 360dialog no se pueden enviar archivos. Se podrán enviar al conectar el número definitivo.' });
+  if (!d.puedeResponder) return res.status(409).json({ error: d.motivoNoResponder });
+  let texto = String(archivo.texto || '').replace(/\r\n/g, '\n').trim();
+  if (texto.length > 1000) return res.status(400).json({ error: 'El texto que acompaña al archivo puede tener hasta 1000 caracteres.' });
+  const u = req.usuario;
+  const firma = u && u.firma ? String(u.firma).trim() : '';
+  if (firma && !texto.endsWith(firma)) texto = texto ? texto + '\n' + firma : firma;
+  // La pausa se pone antes de enviar, como con los mensajes de texto: si Verde estaba preparando una respuesta, la descarta.
+  const habiaPausa = bot.estaPausado(clave);
+  bot.pausar(clave, PAUSA_HORAS);
+  try {
+    const mediaId = await envios.subir(archivo.buf, archivo.mime, archivo.nombre, conexion360());
+    const ok = await enviar360(envios.cuerpoMedia(baseDestino(d.destino), mediaId, archivo.mime, archivo.nombre, texto));
+    if (!ok) throw Object.assign(new Error('WhatsApp no aceptó el archivo. Probar de nuevo en unos segundos.'), { publico: true, codigo: 502 });
+  } catch (e) {
+    if (!habiaPausa) bot.quitarPausa(clave);
+    return responderError(res, e);
+  }
+  const a = archivos.registrarEnviado(archivo.buf, archivo.mime, archivo.nombre, quienEs(req));
+  if (archivo.origen === 'biblioteca') a.biblioteca = true;
+  bot.registrarMensaje(clave, 'assistant', '[Asesor humano] [Archivo enviado: «' + archivo.nombre + '»]' + (texto ? ' ' + texto : ''));
+  conversaciones.registrar({ clave, tipo: 'equipo', texto, autor: quienEs(req), origen: 'panel', firma: !!firma, archivo: a });
+  const cerrada = atencion.respuestaEquipo({ clave, texto: texto || '[Archivo] ' + archivo.nombre, firma: u ? { usuarioId: u.id, nombre: u.nombre, firma } : null, origen: 'panel' });
+  console.log('Panel: ' + quienEs(req) + ' envió el archivo «' + archivo.nombre + '» a ' + clave + (archivo.origen === 'biblioteca' ? ' (desde la biblioteca)' : '') + (cerrada && cerrada.estado === 'respondido' ? ' · el chat pasa a «Chats respondidos»' : ''));
+  res.json({ ok: true, conversacion: conDatosDelPanel(detalleConversacion(clave), req) });
+}
+app.post('/api/conversaciones/:clave/archivo', requiere(['admin', 'asesor']), leerBinario, async (req, res) => {
+  try {
+    const d = datosDeCabecera(req, 'x-archivo');
+    const f = recursos.validarArchivo(req.body, d.nombre);
+    await enviarArchivoDelPanel(req, res, claveDeRuta(req), { buf: req.body, mime: f.mime, nombre: f.nombre, texto: d.texto, origen: 'computadora' });
+  } catch (e) { responderError(res, e); }
+});
+app.post('/api/conversaciones/:clave/recurso', requiere(['admin', 'asesor']), async (req, res) => {
+  try {
+    const id = String((req.body && req.body.recursoId) || '');
+    const f = recursos.idValido(id) ? recursos.paraEnviar(id) : null;
+    if (!f) return res.status(404).json({ error: 'El recurso ya no está en la biblioteca.' });
+    await enviarArchivoDelPanel(req, res, claveDeRuta(req), { buf: f.buf, mime: f.mime, nombre: f.nombre, texto: req.body && req.body.texto, origen: 'biblioteca' });
   } catch (e) { responderError(res, e); }
 });
 

@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.4.7';
+const VERSION_ESPERADA = '1.4.8';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -27,6 +27,8 @@ const envios360 = [];
 let modoIA = 'ok';
 let contadorIA = 0;
 let contadorEnvio = 0;
+const subidas360 = [];   // 1.4.8: archivos subidos a 360dialog (/media)
+let falloSubida = false;
 
 global.fetch = async (url, opts = {}) => {
   url = String(url);
@@ -45,6 +47,9 @@ global.fetch = async (url, opts = {}) => {
     if (/garantía/i.test(ult)) return respuestaIA('Lamento el inconveniente 🙏 ¿Tenés la boleta de garantía?\n[RECLAMO]{"boleta":"4582","producto":"Cambio de pantalla hace 2 semanas","mismo":"sí","falla":"El touch no responde a veces","desde":"ayer","reinicio":"forzado hecho"}\n[DERIVAR]');
     if (/actualizar ficha/i.test(ult)) return respuestaIA('Anotado, gracias.\n[RECLAMO]{"golpes":"no","notas":"video recibido"}');
     if (/ficha rota/i.test(ult)) return respuestaIA('Te paso con un asesor.\n[RECLAMO]{boleta: 1}\n[DERIVAR]');
+    if (/código inexistente/i.test(ult)) return respuestaIA('Te lo paso.\n[ENVIAR:R9]');
+    if (/solo el archivo/i.test(ult)) return respuestaIA('[ENVIAR:R1]');
+    if (/mandame los términos/i.test(ult)) return respuestaIA('Acá tenés los términos y condiciones 📄\n[ENVIAR:R1]');
     if (/actualizar consulta/i.test(ult)) return respuestaIA('Anotado, gracias.\n[CONSULTA]{"tipo":"reparación","3":"Se cayó ayer","4":"Sí","notas":"prefiere la más económica"}');
     if (/consulta rota/i.test(ult)) return respuestaIA('Te paso con un asesor.\n[CONSULTA]{tipo: x}\n[DERIVAR]');
     if (/consulta de reparación/i.test(ult)) return respuestaIA('El precio te lo confirma un asesor. ¿Qué le pasó a la pantalla?\n[CONSULTA]{"tipo":"reparación","1":"iPhone 13 Pro Max","2":"Cambio de pantalla"}\n[DERIVAR]');
@@ -68,6 +73,13 @@ global.fetch = async (url, opts = {}) => {
     if (paso === 'info') return new Response(JSON.stringify({ messaging_product: 'whatsapp', url: 'https://lookaside.fbsbx.com/whatsapp_business/attachments/?mid=' + encodeURIComponent(mid) + '&ext=1&hash=x', mime_type: m.mime, file_size: m.tamanoInformado || m.datos.length, id: mid }), { status: 200 });
     const cuerpo = m.alterado ? Buffer.from('otro contenido') : m.datos;
     return new Response(cuerpo, { status: 200, headers: { 'Content-Type': m.mime, 'Content-Length': String(cuerpo.length) } });
+  }
+  if (url.includes('360dialog.io') && new URL(url).pathname === '/media' && String(opts.method || '').toUpperCase() === 'POST') {
+    // 1.4.8: subida de un archivo para enviarlo (formulario con «messaging_product» y «file»).
+    const fd = opts.body, f = fd && typeof fd.get === 'function' ? fd.get('file') : null;
+    subidas360.push({ url, clave: opts.headers && opts.headers['D360-API-KEY'], producto: fd && fd.get ? fd.get('messaging_product') : null, nombre: f && f.name, tipo: f && f.type, tamano: f && f.size });
+    if (falloSubida) return new Response(JSON.stringify({ error: { message: 'media upload failed' } }), { status: 400 });
+    return new Response(JSON.stringify({ id: 'media-subida-' + subidas360.length }), { status: 200 });
   }
   if (url.includes('360dialog.io')) {
     contadorEnvio++;
@@ -421,7 +433,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(rr.status === 401, 'sin sesión no se puede ver ningún archivo');
   rr = await api('/api/ayuda', 'GET', null, galletaCarla);
   const ayC = await json(rr);
-  verificar(rr.status === 200 && ayC.rol === 'asesor' && !ayC.articulos.some(a => a.soloAdmin) && ayC.articulos.map(a => a.id).join(',') === 'chats-por-responder,conversaciones,chats-respondidos,garantia,consultas,apariencia', 'un asesor ve solo los 6 temas para atender los chats');
+  verificar(rr.status === 200 && ayC.rol === 'asesor' && !ayC.articulos.some(a => a.soloAdmin) && ayC.articulos.map(a => a.id).join(',') === 'chats-por-responder,conversaciones,chats-respondidos,garantia,consultas,archivos-enviados,apariencia', 'un asesor ve solo los 7 temas para atender los chats');
   rr = await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Cómo devuelvo un chat a Verde?' }, galletaCarla);
   const pC = await json(rr);
   const sysC = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system);
@@ -886,7 +898,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
 
   mostrar('55) Centro de ayuda: manual y guías según el rol');
   const ay55 = await json(await api('/api/ayuda', 'GET'));
-  verificar(ay55.rol === 'admin' && ay55.articulos.filter(a => a.grupo === 'manual').length === 10 && ay55.articulos.filter(a => a.grupo === 'meta').length === 6 && ay55.revisionMeta === '2026-10-24', 'el administrador ve los 10 temas del manual y las 6 guías de Meta');
+  verificar(ay55.rol === 'admin' && ay55.articulos.filter(a => a.grupo === 'manual').length === 11 && ay55.articulos.filter(a => a.grupo === 'meta').length === 6 && ay55.revisionMeta === '2026-10-24', 'el administrador ve los 11 temas del manual y las 6 guías de Meta');
   verificar(ay55.articulos.every(a => a.titulo && a.resumen && a.bloques && a.bloques.length), 'cada tema tiene título, resumen y contenido');
 
   mostrar('56) Asistente de ayuda');
@@ -1278,6 +1290,131 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(fC.texto === 'Hola' && fC.ficha && fC.ficha.tipo === 'reparación' && fC.ficha.campos.length === 1 && fC.ficha.campos[0].dato === 'Color del equipo' && fC.ficha.campos[0].valor === 'Negro', 'la ficha usa los nombres de la lista configurada e ignora números que no están en ella');
   const sim64 = await json(await api('/api/simulate', 'POST', { message: 'consulta de reparación de pantalla', from: 'consulta-sim-64' }));
   verificar(/\(Ficha de la consulta que vería el asesor: tipo: reparación · Marca y modelo del equipo: iPhone 13 Pro Max/.test(sim64.reply) && !/\[CONSULTA\]/.test(sim64.reply), 'en «Probar a Verde» se ve la ficha de la consulta que armaría Verde');
+
+
+  mostrar('65) Biblioteca de recursos: subir, controlar, editar y quitar');
+  const subirBin = (ruta, buf, cabecera, datos) => realFetch(BASE + ruta, { method: 'POST', headers: { 'Content-Type': 'application/octet-stream', [cabecera]: encodeURIComponent(JSON.stringify(datos)) }, body: buf });
+  const pdfPrueba = Buffer.concat([Buffer.from('%PDF-1.4\n% prueba de Verde\n'), Buffer.alloc(300, 66), Buffer.from('\n%%EOF')]);
+  const pngPrueba = Buffer.concat([Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]), Buffer.alloc(200, 1)]);
+  const jpgPrueba = Buffer.concat([Buffer.from([0xFF, 0xD8, 0xFF, 0xE0]), Buffer.alloc(150, 2)]);
+  let r65 = await subirBin('/api/recursos', pdfPrueba, 'X-Recurso', { nombre: 'Términos y condiciones', cuando: 'Cuando el cliente pregunte por las condiciones del servicio.', verde: true, archivo: 'Terminos-y-condiciones.pdf' });
+  let j65 = await json(r65);
+  verificar(r65.status === 200 && j65.recurso && j65.recurso.archivo.tipo === 'PDF' && j65.recurso.archivo.nombre === 'Terminos-y-condiciones.pdf' && j65.lista.length === 1, 'un administrador sube un PDF a la biblioteca');
+  const idTerminos = j65.recurso.id;
+  r65 = await subirBin('/api/recursos', pngPrueba, 'X-Recurso', { nombre: 'Foto del local', cuando: 'Cuando el cliente pregunte dónde queda la tienda.', archivo: 'frente.png' });
+  j65 = await json(r65);
+  const idFoto = j65.recurso && j65.recurso.id;
+  verificar(r65.status === 200 && j65.recurso.archivo.tipo === 'PNG' && j65.recurso.verde === true, 'también sube una imagen PNG, que Verde puede ofrecer');
+  r65 = await subirBin('/api/recursos', pngPrueba, 'X-Recurso', { nombre: 'Plantilla de presupuesto', verde: false, archivo: 'plantilla.png' });
+  j65 = await json(r65);
+  verificar(r65.status === 200 && j65.recurso.verde === false, 'un recurso solo para el equipo no necesita indicación para Verde');
+  r65 = await subirBin('/api/recursos', pdfPrueba, 'X-Recurso', { nombre: 'Borrador', cuando: 'Nunca.', archivo: 'borrador.pdf' });
+  const idBorrador = (await json(r65)).recurso.id;
+  r65 = await subirBin('/api/recursos', Buffer.from('esto no es un pdf, es un texto cualquiera'), 'X-Recurso', { nombre: 'Falso', cuando: 'x', archivo: 'falso.pdf' });
+  verificar(r65.status === 400 && /Solo se pueden enviar archivos PDF, JPG o PNG/.test((await json(r65)).error), 'un archivo que no es PDF, JPG ni PNG se rechaza aunque su nombre termine en «.pdf»');
+  r65 = await subirBin('/api/recursos', Buffer.concat([pngPrueba, Buffer.alloc(5 * 1024 * 1024)]), 'X-Recurso', { nombre: 'Grande', cuando: 'x', archivo: 'grande.png' });
+  verificar(r65.status === 413 && /supera 5 MB/.test((await json(r65)).error), 'una imagen de más de 5 MB se rechaza');
+  r65 = await subirBin('/api/recursos', Buffer.concat([pdfPrueba, Buffer.alloc(27 * 1024 * 1024)]), 'X-Recurso', { nombre: 'Enorme', cuando: 'x', archivo: 'enorme.pdf' });
+  verificar(r65.status === 413 && /tamaño máximo/.test((await json(r65)).error), 'un archivo de más de 26 MB se corta antes de leerlo, con un mensaje claro');
+  r65 = await subirBin('/api/recursos', pdfPrueba, 'X-Recurso', { nombre: 'Sin indicación', verde: true, archivo: 'x.pdf' });
+  verificar(r65.status === 400 && /Escribir cuándo usarlo/.test((await json(r65)).error), 'si Verde lo puede ofrecer, la indicación de cuándo usarlo es obligatoria');
+  r65 = await api('/api/recursos/' + idFoto, 'PUT', { cuando: 'Cuando el cliente pregunte cómo llegar a la tienda.' });
+  j65 = await json(r65);
+  verificar(r65.status === 200 && j65.recurso.cuando === 'Cuando el cliente pregunte cómo llegar a la tienda.' && j65.recurso.nombre === 'Foto del local', 'se puede cambiar la indicación sin tocar el resto');
+  r65 = await subirBin('/api/recursos/' + idFoto + '/archivo', jpgPrueba, 'X-Recurso', { archivo: 'frente-nuevo.jpg' });
+  j65 = await json(r65);
+  verificar(r65.status === 200 && j65.recurso.archivo.tipo === 'JPG' && j65.recurso.archivo.nombre === 'frente-nuevo.jpg', 'se puede reemplazar el archivo de un recurso');
+  const sv65 = await api('/api/recursos/' + idTerminos + '/archivo');
+  verificar(sv65.status === 200 && sv65.headers.get('content-type') === 'application/pdf' && Buffer.from(await sv65.arrayBuffer()).slice(0, 5).toString() === '%PDF-', 'el panel puede abrir el archivo de un recurso');
+  r65 = await api('/api/recursos/' + idBorrador, 'DELETE');
+  verificar(r65.status === 200 && (await json(r65)).lista.length === 3, 'se puede quitar un recurso de la biblioteca');
+  verificar((await api('/api/recursos/r000000000000', 'DELETE')).status === 404, 'un recurso que no existe responde que no existe');
+
+  mostrar('66) Enviar archivos desde el panel');
+  await post360(aviso([{ id: 'ar66-1', from: '59879000091', type: 'text', text: { body: 'hola, necesito un presupuesto' } }]));
+  await espera(600);
+  const ruta66 = '/api/conversaciones/' + encodeURIComponent('wa:59879000091');
+  let r66 = await subirBin(ruta66 + '/archivo', pdfPrueba, 'X-Archivo', { nombre: 'Presupuesto.pdf', texto: 'Te paso el presupuesto.' });
+  verificar(r66.status === 409 && /modo de prueba de 360dialog no se pueden enviar archivos/.test((await json(r66)).error) && subidas360.length === 0, 'en el modo de prueba de 360dialog no se envía nada y se explica por qué');
+  let det66 = await json(await api(ruta66));
+  verificar(det66.envioArchivos && det66.envioArchivos.disponible === false && det66.envioArchivos.modoPrueba === true && det66.envioArchivos.pdfMB === 25 && det66.envioArchivos.imagenMB === 5, 'la conversación informa al panel que en modo de prueba no se envían archivos, y los límites');
+  const urlPrevia66 = process.env.D360_MESSAGES_URL;
+  process.env.D360_MESSAGES_URL = 'https://waba-v2.360dialog.io/messages';
+  let antes66 = envios360.length, sub66 = subidas360.length;
+  r66 = await subirBin(ruta66 + '/archivo', pdfPrueba, 'X-Archivo', { nombre: 'Presupuesto.pdf', texto: 'Te paso el presupuesto.' });
+  let j66 = await json(r66);
+  const s66 = subidas360[sub66], e66 = envios360.slice(antes66).find(x => x.body.to === '59879000091');
+  verificar(r66.status === 200 && s66 && s66.url === 'https://waba-v2.360dialog.io/media' && s66.producto === 'whatsapp' && s66.tipo === 'application/pdf' && s66.nombre === 'Presupuesto.pdf' && s66.clave === 'clave-360-de-prueba', 'con el número real, el PDF se sube a 360dialog con su tipo y su nombre');
+  verificar(e66 && e66.body.messaging_product === 'whatsapp' && e66.body.type === 'document' && e66.body.document.id === 'media-subida-' + (sub66 + 1) && e66.body.document.filename === 'Presupuesto.pdf' && /^Te paso el presupuesto\./.test(e66.body.document.caption), 'y se envía como documento, con su nombre y el texto como comentario');
+  const m66 = (j66.conversacion.mensajes || []).filter(m => m.tipo === 'equipo').pop();
+  verificar(m66 && m66.archivo && m66.archivo.estado === 'guardado' && m66.archivo.enviado === true && m66.archivo.tipo === 'document' && m66.origen === 'panel' && /Te paso el presupuesto/.test(m66.texto), 'el archivo enviado queda en la conversación, guardado para abrirlo desde el panel');
+  verificar(!!j66.conversacion.pausaHasta, 'como cualquier respuesta del equipo, Verde queda en pausa en ese chat');
+  const sv66 = await api('/api/archivos/' + m66.archivo.id);
+  verificar(sv66.status === 200 && sv66.headers.get('content-type') === 'application/pdf', 'la copia del archivo enviado se puede abrir desde el panel');
+  antes66 = envios360.length; sub66 = subidas360.length;
+  r66 = await api(ruta66 + '/recurso', 'POST', { recursoId: idFoto, texto: '' });
+  j66 = await json(r66);
+  const e66b = envios360.slice(antes66).find(x => x.body.to === '59879000091');
+  verificar(r66.status === 200 && subidas360[sub66] && subidas360[sub66].tipo === 'image/jpeg' && e66b && e66b.body.type === 'image' && e66b.body.image.id && !('filename' in e66b.body.image) && !('caption' in e66b.body.image), 'desde la biblioteca, la imagen se envía como imagen, sin texto si no se escribió');
+  const m66b = (j66.conversacion.mensajes || []).filter(m => m.tipo === 'equipo').pop();
+  verificar(m66b && m66b.archivo && m66b.archivo.biblioteca === true && m66b.archivo.tipo === 'image', 'en la conversación queda marcado que salió de la biblioteca');
+  r66 = await api(ruta66 + '/recurso', 'POST', { recursoId: idTerminos, texto: 'x'.repeat(1001) });
+  verificar(r66.status === 400 && /hasta 1000 caracteres/.test((await json(r66)).error), 'el texto que acompaña al archivo tiene un máximo de 1000 caracteres');
+  r66 = await api(ruta66 + '/recurso', 'POST', { recursoId: 'r000000000000' });
+  verificar(r66.status === 404 && /ya no está en la biblioteca/.test((await json(r66)).error), 'un recurso que ya no está en la biblioteca no se envía');
+  falloSubida = true; antes66 = envios360.length;
+  r66 = await api(ruta66 + '/recurso', 'POST', { recursoId: idTerminos, texto: 'otro' });
+  falloSubida = false;
+  verificar(r66.status === 502 && /WhatsApp no aceptó el archivo/.test((await json(r66)).error) && !envios360.slice(antes66).some(x => x.body.to === '59879000091'), 'si WhatsApp rechaza el archivo, no se envía nada y se explica');
+  conversacionesMod._usarReloj(() => Date.now() + 25 * 3600000);
+  r66 = await api(ruta66 + '/recurso', 'POST', { recursoId: idTerminos });
+  conversacionesMod._usarReloj(null);
+  verificar(r66.status === 409 && /24 horas/.test((await json(r66)).error || ''), 'pasadas 24 horas del último mensaje del cliente, tampoco se pueden enviar archivos');
+
+  mostrar('67) Verde ofrece y envía recursos de la biblioteca');
+  let antes67 = envios360.length, sub67 = subidas360.length;
+  await post360(aviso([{ id: 've67-1', from: '59879000092', type: 'text', text: { body: 'hola, mandame los términos y condiciones' } }]));
+  await espera(700);
+  const sys67 = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system);
+  verificar(sys67.includes('== BIBLIOTECA DE RECURSOS ==') && sys67.includes('R1 · «Términos y condiciones» (PDF)') && sys67.includes('R2 · «Foto del local» (imagen)') && !sys67.includes('Plantilla de presupuesto') && sys67.includes('primero ofrecelo y envialo solo si acepta'), 'con el número real, Verde recibe la biblioteca, sin los recursos solo para el equipo, y la regla de ofrecer antes de enviar');
+  const e67 = envios360.slice(antes67).filter(x => x.body.to === '59879000092');
+  verificar(e67.length === 1 && e67[0].body.type === 'document' && e67[0].body.document.filename === 'Terminos-y-condiciones.pdf' && /^Acá tenés los términos y condiciones/.test(e67[0].body.document.caption) && /Soy Verde/.test(e67[0].body.document.caption) && !/ENVIAR/.test(e67[0].body.document.caption) && subidas360.length === sub67 + 1, 'Verde envía el PDF con su mensaje como comentario (con la presentación, por ser el primero) y sin la marca interna');
+  const d67 = await json(await api('/api/conversaciones/' + encodeURIComponent('wa:59879000092')));
+  const mv67 = d67.mensajes.filter(m => m.tipo === 'verde').pop();
+  verificar(mv67 && mv67.archivo && mv67.archivo.enviado === true && mv67.archivo.biblioteca === true && mv67.origen === 'biblioteca', 'en el panel, la respuesta de Verde muestra el archivo que envió desde la biblioteca');
+  await post360(aviso([{ id: 've67-2', from: '59879000092', type: 'text', text: { body: 'gracias' } }]));
+  await espera(600);
+  verificar((llamadasIA[llamadasIA.length - 1].body.messages || []).some(m => m.role === 'assistant' && /\[Archivo enviado: «Términos y condiciones»\]/.test(JSON.stringify(m.content))), 'Verde recuerda qué archivo ya envió, para no repetirlo');
+  antes67 = envios360.length;
+  await post360(aviso([{ id: 've67-3', from: '59879000093', type: 'text', text: { body: 'solo el archivo por favor' } }]));
+  await espera(700);
+  const e67b = envios360.slice(antes67).filter(x => x.body.to === '59879000093');
+  verificar(e67b.length === 1 && e67b[0].body.type === 'document', 'si Verde solo envía el archivo, sale un único mensaje con el archivo');
+  antes67 = envios360.length; sub67 = subidas360.length;
+  await post360(aviso([{ id: 've67-4', from: '59879000094', type: 'text', text: { body: 'un código inexistente' } }]));
+  await espera(600);
+  const e67c = envios360.slice(antes67).filter(x => x.body.to === '59879000094');
+  verificar(e67c.length === 1 && e67c[0].body.type === 'text' && !/ENVIAR/.test(e67c[0].body.text.body) && subidas360.length === sub67, 'una marca con un código que no existe se quita y no se envía ningún archivo');
+  falloSubida = true; antes67 = envios360.length;
+  await post360(aviso([{ id: 've67-5', from: '59879000095', type: 'text', text: { body: 'mandame los términos y condiciones' } }]));
+  await espera(700);
+  falloSubida = false;
+  const e67d = envios360.slice(antes67).filter(x => x.body.to === '59879000095');
+  const p67 = (await json(await api('/api/chats/pendientes'))).lista.find(x => x.numero === '59879000095');
+  const av67 = envios360.slice(antes67).filter(x => x.body.to === '59899000102');
+  verificar(e67d.length === 1 && e67d[0].body.type === 'text' && /Acá tenés los términos/.test(e67d[0].body.text.body), 'si el archivo no sale, el mensaje de Verde sale igual como texto');
+  verificar(p67 && av67.length === 1 && /Verde no pudo enviar un archivo/.test(av67[0].body.text.body), 'y el chat pasa a «Chats por responder» con aviso al equipo, para que una persona envíe el archivo');
+  const d67b = await json(await api('/api/conversaciones/' + encodeURIComponent('wa:59879000095')));
+  verificar(d67b.mensajes.some(m => m.tipo === 'sistema' && /no pudo enviar el archivo «Términos y condiciones»/.test(m.texto)), 'en la conversación queda anotado qué archivo no se pudo enviar');
+  process.env.D360_MESSAGES_URL = urlPrevia66;
+  await post360(aviso([{ id: 've67-6', from: '59879000096', type: 'text', text: { body: 'hola' } }]));
+  await espera(600);
+  verificar(!JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system).includes('BIBLIOTECA DE RECURSOS'), 'en el modo de prueba de 360dialog Verde no recibe la biblioteca: no ofrece archivos que no puede enviar');
+  const sim67 = await json(await api('/api/simulate', 'POST', { message: 'mandame los términos y condiciones', from: 'sim-67' }));
+  verificar(/\(Verde enviaría el archivo «Términos y condiciones» \(PDF\) junto con este mensaje; en el modo de prueba de 360dialog no se envían archivos\.\)/.test(sim67.reply) && !/\[ENVIAR/.test(sim67.reply), 'en «Probar a Verde» se ve qué archivo enviaría, aun en modo de prueba');
+  const botE = require('./bot.js');
+  const e67e = botE.separarEnvio('Hola\n[ENVIAR:R2]', [{ id: 'a', nombre: 'A', mime: 'application/pdf' }, { id: 'b', nombre: 'B', mime: 'image/png' }]);
+  verificar(e67e.texto === 'Hola' && e67e.recurso && e67e.recurso.id === 'b' && botE.bloqueBiblioteca([]) === '', 'la marca elige el recurso por su código; sin recursos para Verde no se agrega el bloque');
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }
