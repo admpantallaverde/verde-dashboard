@@ -32,6 +32,8 @@ const MODELOS_REEMPLAZO = {
   'claude-sonnet-4-20250514': 'claude-sonnet-5-5'
 };
 const ESFUERZOS_VALIDOS = ['low', 'medium', 'high'];
+// 1.4.11: niveles de esfuerzo del asistente del equipo (con razonamiento adaptativo acepta los cinco).
+const ESFUERZOS_ASISTENTE = ['low', 'medium', 'high', 'xhigh', 'max'];
 // IA que se pueden elegir en el panel, con los ajustes que indica la documentación oficial
 // para responder rápido en un chat:
 //  - Sonnet 5.5: sin razonamiento previo (between_tools) y esfuerzo medio.
@@ -249,6 +251,32 @@ function paraMemoria(reply, recurso) {
   return (reply || '') + (recurso ? (reply ? '\n' : '') + '[Archivo enviado: «' + recurso.nombre + '»]' : '');
 }
 
+// 1.4.11: asistente del equipo (Centro de ayuda): modelo y esfuerzo elegidos en la sección H, con valores seguros.
+function configAsistente(v) {
+  const a = (v && v.asistente) || {};
+  return { modelo: modeloPermitido(a.modelo) ? a.modelo : 'claude-sonnet-5-5', esfuerzo: ESFUERZOS_ASISTENTE.includes(a.esfuerzo) ? a.esfuerzo : 'high' };
+}
+// 1.4.11: resumen de la empresa para el asistente del equipo, armado con lo configurado en el panel.
+function resumenEmpresa(v, recursosLista) {
+  v = v || {};
+  const t = x => String(x == null ? '' : x).trim();
+  const L = ['Empresa: ' + (t(v.empresa) || 'Pantalla Verde') + (t(v.rubro) ? ' · Rubro: ' + t(v.rubro) : '')];
+  if (t(v.nombre)) L.push('Bot de WhatsApp: ' + t(v.nombre) + (t(v.rol) ? ' (' + t(v.rol) + ')' : '') + '. Habla en ' + (t(v.idioma) || 'español rioplatense') + ', con trato de ' + (t(v.trato) || 'vos') + '.');
+  const ventajas = (v.ventajas || []).map(x => t(x && x.texto)).filter(Boolean);
+  if (ventajas.length) L.push('Ventajas que destaca la tienda: ' + ventajas.join(' · '));
+  const pasos = (v.pasos || []).filter(p => p && p.activo !== false && t(p.titulo));
+  if (pasos.length) L.push('Pasos de venta configurados:\n' + pasos.map((p, i) => '  ' + (i + 1) + '. ' + t(p.titulo) + (t(p.desc) ? ': ' + t(p.desc) : '') + (t(p.ejemplo) ? ' (ejemplo: «' + t(p.ejemplo) + '»)' : '')).join('\n'));
+  const obj = (v.objeciones || []).filter(o => o && t(o.obj));
+  if (obj.length) L.push('Objeciones frecuentes y cómo se responden:\n' + obj.map(o => '  - «' + t(o.obj) + '» → ' + t(o.resp)).join('\n'));
+  const reglas = (v.reglas || []).map(t).filter(Boolean);
+  if (reglas.length) L.push('Reglas de oro de la tienda:\n' + reglas.map(r => '  - ' + r).join('\n'));
+  const g = v.garantia || {};
+  if (t(g.requisitos) || t(g.condiciones)) L.push('Garantía:' + (t(g.requisitos) ? '\n  Requisitos indispensables: ' + t(g.requisitos) : '') + (t(g.condiciones) ? '\n  Cobertura y condiciones: ' + t(g.condiciones) : '') + '\n  Regla interna: por chat nunca se confirma ni se rechaza una garantía; la decide el equipo con el equipo a la vista.');
+  const rec = (recursosLista || []).filter(r => r && t(r.nombre));
+  if (rec.length) L.push('Biblioteca de recursos (archivos que el equipo puede enviar desde el panel):\n' + rec.map(r => '  - ' + t(r.nombre) + (t(r.cuando) ? ' — ' + t(r.cuando) : '')).join('\n'));
+  return L.join('\n');
+}
+
 // 1.4.10: corrección del texto que un asesor escribió para el cliente (ortografía y claridad, sin agregar nada).
 const TONOS_CORRECCION = {
   rioplatense: 'español rioplatense con voseo (vos, tenés, probá, traelo), cercano y respetuoso, como le habla la tienda a sus clientes',
@@ -457,8 +485,16 @@ function resolverModelo(v) {
 // Arma el pedido a la IA. En Claude Sonnet 5.5 se desactiva el razonamiento previo
 // (thinking "between_tools") y se fija el esfuerzo, como indica la documentación oficial
 // para conversaciones que deben responder rápido.
-function armarPedido(model, system, messages, max_tokens) {
+function armarPedido(model, system, messages, max_tokens, opciones) {
   const pedido = { model, max_tokens, system, messages };
+  // 1.4.11: el asistente del equipo razona de forma adaptativa con el esfuerzo elegido en el panel
+  // (sin herramientas, el ajuste «between_tools» de Verde no razonaría, y no acepta «xhigh» ni «max»).
+  if (opciones && ESFUERZOS_ASISTENTE.includes(opciones.esfuerzo)) {
+    pedido.thinking = { type: 'adaptive' };
+    pedido.output_config = { effort: opciones.esfuerzo };
+    pedido.max_tokens = Math.max(max_tokens, opciones.esfuerzo === 'xhigh' || opciones.esfuerzo === 'max' ? 16000 : 6000);
+    return pedido;
+  }
   const conf = MODELOS.find(m => m.id === model);
   if (!conf) return pedido;   // otro modelo: pedido básico de siempre
   if (conf.thinking) pedido.thinking = conf.thinking;
@@ -472,12 +508,12 @@ function armarPedido(model, system, messages, max_tokens) {
   return pedido;
 }
 // «origen»: 'whatsapp' (clientes) o 'pruebas' (simulador del panel), para el consumo de IA.
-async function callClaude(system, messages, v, modeloPuntual, origen) {
+async function callClaude(system, messages, v, modeloPuntual, origen, opciones) {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error('Falta la clave ANTHROPIC_API_KEY (configurala en el archivo .env).');
   const model = modeloPuntual && modeloPermitido(modeloPuntual) ? modeloPuntual : resolverModelo(v);
   const max_tokens = (v.tecnico && v.tecnico.maxTokens) || 1000;
-  const pedido = armarPedido(model, system, messages, max_tokens);
+  const pedido = armarPedido(model, system, messages, max_tokens, opciones);
 
   const ctrl = new AbortController();
   const limite = setTimeout(() => ctrl.abort(), 60000);
@@ -703,7 +739,7 @@ module.exports = {
   ADJUNTO_POR_DEFECTO, instruccionesArchivo, notaAtencion,
   GARANTIA_DATOS_DEFECTO, GARANTIA_SINTOMAS_DEFECTO, GARANTIA_REQUISITOS_DEFECTO, GARANTIA_COBERTURA_DEFECTO, garantiaDe, bloqueGarantia, separarReclamo,
   CONSULTA_REPARACION_DEFECTO, CONSULTA_COMPRA_DEFECTO, consultasDe, bloqueConsultas, separarConsulta, notaPresentacion,
-  bloqueBiblioteca, separarEnvio, notaSinArchivos, corregirEnvioFallido, TONOS_CORRECCION, instruccionesCorreccion, limpiarCorreccion,
+  bloqueBiblioteca, separarEnvio, notaSinArchivos, corregirEnvioFallido, TONOS_CORRECCION, instruccionesCorreccion, limpiarCorreccion, ESFUERZOS_ASISTENTE, configAsistente, resumenEmpresa,
   tieneRespuestas,
   modeloEnUso,
   responderPendiente,

@@ -149,6 +149,15 @@ const ARTICULOS = [
     ]
   },
   {
+    id: 'asistente', grupo: 'manual', soloAdmin: false, titulo: 'Asistente del equipo',
+    resumen: 'El asistente del Centro de ayuda apoya al equipo con los clientes: qué responder, cómo cerrar una venta, cómo tratar un reclamo, y escribe textos listos para enviar.',
+    bloques: [
+      { tipo: 'p', texto: 'En «Centro de ayuda › Asistente» se le puede preguntar qué responderle a un cliente, cómo cerrar una venta, cómo salir bien de una conversación difícil, cómo armar un presupuesto o cómo explicar la garantía. Conoce la configuración de Verde (identidad, pasos de venta, objeciones, reglas de oro, condiciones de garantía y biblioteca de recursos) y este manual. Solo responde sobre el trabajo de la empresa y sus clientes; ante otros temas, lo dice y no contesta.' },
+      { tipo: 'p', texto: 'Desde un chat, el botón «Ayuda con este chat» abre el asistente con esa conversación adjunta (los últimos 20 mensajes del cliente, Verde y el equipo; nunca los archivos). Cuando el asistente propone un texto para el cliente, aparece como «Texto listo para enviar» con los botones «Copiar» y «Usar en el chat», que lo lleva a la caja de mensaje de esa conversación sin enviarlo. El asistente no inventa precios, plazos ni promesas, y nunca confirma ni rechaza una garantía.' },
+      { tipo: 'p', texto: 'El administrador elige el modelo y el esfuerzo del asistente en «Comportamiento del bot › H», aparte de los de Verde. Límite de 30 preguntas por hora por usuario; el gasto se ve en «Consumo de IA» como «Ayuda».' }
+    ]
+  },
+  {
     id: 'apariencia', grupo: 'manual', soloAdmin: false, titulo: 'Modo claro, oscuro y menú',
     resumen: 'Cómo cambiar entre modo claro y oscuro, achicar el menú y cerrar la sesión.',
     bloques: [
@@ -256,21 +265,37 @@ function textoArticulo(a) {
 }
 
 // Instrucciones del asistente para un rol y una configuración del panel.
-function instrucciones(rol, config) {
+// 1.4.11: texto de una conversación para adjuntar al asistente (últimos 20 mensajes del cliente, Verde y el equipo; nunca los archivos).
+function textoConversacion(d) {
+  if (!d) return '';
+  const quien = { cliente: 'Cliente', verde: 'Verde (bot)', equipo: 'Equipo' };
+  const ms = (d.mensajes || []).filter(m => m && quien[m.tipo]).slice(-20);
+  if (!ms.length) return '';
+  const cab = 'Cliente: ' + (String(d.nombre || '').trim() || 'sin nombre') + (d.numero ? ' · +' + d.numero : '');
+  return cab + '\n' + ms.map(m => (m.tipo === 'equipo' && m.autor ? 'Equipo (' + m.autor + ')' : quien[m.tipo]) + ': ' + (m.archivo ? '[envió un archivo] ' : '') + String(m.texto || '').replace(/\s+/g, ' ').trim().slice(0, 600)).join('\n');
+}
+// 1.4.11: el asistente del equipo. «extra»: { empresa: resumen configurado, conversacion: texto adjunto, nombreEmpresa }.
+function instrucciones(rol, config, extra) {
   const esAdmin = rol === 'admin';
+  const ex = extra || {};
+  const empresa = String(ex.nombreEmpresa || '').trim() || 'Pantalla Verde';
   const base = articulosPara(rol).map(a => '### [' + a.id + '] ' + a.titulo + '\n' + textoArticulo(a)).join('\n\n');
   const conf = Object.entries(config || {}).map(([k, v]) => '- ' + k + ': ' + v).join('\n');
   return [
-    'ASISTENTE DE AYUDA DEL PANEL DE VERDE (Pantalla Verde)',
-    'Función: responder preguntas de las personas que usan el panel sobre cómo funciona el panel, el chatbot Verde y las reglas de WhatsApp y Meta.',
+    'ASISTENTE DEL EQUIPO DE ' + empresa.toUpperCase() + ' (panel de Verde)',
+    'Función: ser el apoyo de las personas del equipo que atienden a los clientes por WhatsApp: qué responder, cómo cerrar una venta, cómo salir bien de un cliente difícil o conflictivo, cómo armar un presupuesto atractivo, cómo explicar la garantía, y también cómo usar el panel y las reglas de WhatsApp y Meta.',
     '',
     'Reglas obligatorias:',
-    '1. Responder solo con la información de la BASE DE CONOCIMIENTO y de la CONFIGURACIÓN ACTUAL. No inventar funciones, menús, precios ni datos.',
-    '2. Si la respuesta no está en esa información, decirlo con claridad y sugerir consultar a un administrador.',
-    '3. Si la pregunta no tiene relación con el panel, Verde, WhatsApp o Meta, indicar con amabilidad que solo se puede ayudar con esos temas.',
-    '4. Escribir en español neutro y profesional, sin voseo. Respuestas breves (hasta 6 oraciones); usar pasos numerados cuando se explique un procedimiento. No usar formato Markdown (ni asteriscos ni almohadillas).',
-    '5. Rol de la persona que pregunta: ' + (esAdmin ? 'Administrador.' : 'Asesor. No dar instrucciones de pantallas de administración (configuración de Verde, avisos, usuarios, consumo, Meta); si pregunta por ellas, indicar que esas tareas las realiza un administrador.'),
-    '6. Responder SOLO con un objeto JSON válido, sin texto antes ni después: {"respuesta": "texto de la respuesta", "fuentes": ["id-del-tema"]}. En «fuentes» van los id (entre corchetes en la base) de los temas usados, como máximo 3.',
+    '1. Responder solo sobre el trabajo de ' + empresa + ' y sus clientes: ventas, reparaciones, productos, atención, el panel, Verde, WhatsApp y Meta. Ante cualquier otro tema (salud, política, vida personal, tareas ajenas al trabajo, etc.), responder exactamente: «Eso ya no es algo con lo que pueda ayudarte: solo doy apoyo con el trabajo de ' + empresa + ' y sus clientes.» y nada más.',
+    '2. Usar la INFORMACIÓN DE LA EMPRESA, la CONFIGURACIÓN ACTUAL y la BASE DE CONOCIMIENTO. No inventar precios, plazos, promesas, políticas ni funciones del panel: si falta un dato, pedírselo a la persona o indicar que lo decide un administrador.',
+    '3. Cuando pidan un texto para un cliente, entregarlo listo para enviar en «textos» (hasta 3 variantes): completo, sin corchetes de relleno salvo que falte un dato imprescindible, en español rioplatense con voseo, cordial y respetuoso, salvo que pidan otro tono. En esos textos nunca confirmar ni rechazar una garantía, ni prometer precios o plazos que no estén en la conversación o en la información de la empresa.',
+    '4. Si hay una CONVERSACIÓN ADJUNTA, basarse en ella: qué dijo el cliente, qué ya respondió Verde o el equipo y qué falta resolver.',
+    '5. En «respuesta», hablarle a la persona del equipo de forma cercana (español rioplatense), concreta y breve: qué hacer, qué evitar y por qué; hasta 8 oraciones; usar pasos numerados cuando se explique un procedimiento. No usar formato Markdown (ni asteriscos ni almohadillas).',
+    '6. Rol de la persona que pregunta: ' + (esAdmin ? 'Administrador.' : 'Asesor. No dar instrucciones de pantallas de administración (configuración de Verde, avisos, usuarios, consumo, Meta); si pregunta por ellas, indicar que esas tareas las realiza un administrador.'),
+    '7. Responder SOLO con un objeto JSON válido, sin texto antes ni después: {"respuesta": "texto para la persona del equipo", "fuentes": ["id-del-tema"], "textos": ["texto listo para enviar al cliente"]}. En «fuentes» van los id (entre corchetes en la base) de los temas del manual usados, como máximo 3 (lista vacía si no se usó ninguno). «textos» va vacío cuando no corresponde un texto para el cliente.',
+    '',
+    'INFORMACIÓN DE LA EMPRESA (configurada por el administrador en el panel):',
+    String(ex.empresa || '').trim() || '(sin configurar)',
     '',
     'CONFIGURACIÓN ACTUAL DEL PANEL (en el momento de la pregunta):',
     conf,
@@ -278,24 +303,26 @@ function instrucciones(rol, config) {
     'BASE DE CONOCIMIENTO (reglas de Meta revisadas el ' + REVISION_META.split('-').reverse().join('/') + '):',
     base,
     '',
-    'OTRAS PANTALLAS: «Fuentes de datos», «Rastreador Web», «Multimedia» y «Recursos enviables» están en revisión; algunas de sus funciones todavía son de demostración.'
+    'OTRAS PANTALLAS: «Fuentes de datos», «Rastreador Web», «Multimedia» y «Recursos enviables» están en revisión; algunas de sus funciones todavía son de demostración.',
+    String(ex.conversacion || '').trim() ? '\nCONVERSACIÓN ADJUNTA (últimos mensajes del chat abierto, del más viejo al más nuevo):\n' + String(ex.conversacion).trim() : ''
   ].join('\n');
 }
 
 // Interpreta la respuesta de la IA: objeto JSON con «respuesta» y «fuentes». Solo acepta fuentes visibles para el rol.
 function interpretar(texto, rol) {
   const limpio = String(texto || '').replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
-  let respuesta = limpio, fuentes = [];
+  let respuesta = limpio, fuentes = [], textos = [];
   try {
     const j = JSON.parse(limpio.slice(limpio.indexOf('{'), limpio.lastIndexOf('}') + 1));
-    if (j && typeof j.respuesta === 'string') { respuesta = j.respuesta; fuentes = Array.isArray(j.fuentes) ? j.fuentes : []; }
+    if (j && typeof j.respuesta === 'string') { respuesta = j.respuesta; fuentes = Array.isArray(j.fuentes) ? j.fuentes : []; textos = Array.isArray(j.textos) ? j.textos : []; }
   } catch (e) { /* sin JSON: se usa el texto tal cual */ }
   const vistos = new Set();
   const validas = fuentes.map(String).filter(id => !vistos.has(id) && vistos.add(id))
     .map(id => ARTICULOS.find(a => a.id === id)).filter(a => a && visible(a, rol)).slice(0, 3)
     .map(a => ({ id: a.id, titulo: a.titulo, grupo: a.grupo }));
   respuesta = respuesta.replace(/\*\*/g, '').trim().slice(0, 2500);
-  return { respuesta: respuesta || 'No se pudo obtener una respuesta. Intentar de nuevo.', fuentes: validas };
+  textos = textos.filter(t => typeof t === 'string').map(t => t.replace(/\*\*/g, '').trim().slice(0, 1500)).filter(Boolean).slice(0, 3);   // 1.4.11
+  return { respuesta: respuesta || 'No se pudo obtener una respuesta. Intentar de nuevo.', fuentes: validas, textos };
 }
 
-module.exports = { ARTICULOS, REVISION_META, articulosPara, articulo, instrucciones, interpretar };
+module.exports = { ARTICULOS, REVISION_META, articulosPara, articulo, instrucciones, interpretar, textoConversacion };

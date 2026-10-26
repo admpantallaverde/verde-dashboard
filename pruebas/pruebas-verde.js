@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.4.10';
+const VERSION_ESPERADA = '1.4.11';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -38,8 +38,8 @@ global.fetch = async (url, opts = {}) => {
     await new Promise(r => setTimeout(r, 150));
     if (modoIA === 'error400') return new Response('{"error":"bad request"}', { status: 400 });
     if (modoIA === 'vacio') return new Response(JSON.stringify({ content: [], stop_reason: 'refusal', usage: { input_tokens: 1000, output_tokens: 0 } }), { status: 200 });
-    if (JSON.stringify(JSON.parse(opts.body).system || '').includes('ASISTENTE DE AYUDA')) {
-      return new Response(JSON.stringify({ content: [{ type: 'text', text: '{"respuesta":"Para devolver un chat a Verde, usar el botón «Devolver a Verde» del encabezado.","fuentes":["conversaciones","portafolio"]}' }], stop_reason: 'end_turn', usage: { input_tokens: 3000, output_tokens: 80 } }), { status: 200 });
+    if (JSON.stringify(JSON.parse(opts.body).system || '').includes('ASISTENTE DEL EQUIPO')) {
+      return new Response(JSON.stringify({ content: [{ type: 'text', text: '{"respuesta":"Para devolver un chat a Verde, usar el botón «Devolver a Verde» del encabezado.","fuentes":["conversaciones","portafolio"],"textos":["Hola, te escribo de la tienda: ¿a qué hora podés pasar?"," ","Segunda variante"]}' }], stop_reason: 'end_turn', usage: { input_tokens: 3000, output_tokens: 80 } }), { status: 200 });
     }
     const ultimo = (JSON.parse(opts.body).messages || []).slice(-1)[0] || {};
     const ult = String(ultimo.content || '');
@@ -434,7 +434,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(rr.status === 401, 'sin sesión no se puede ver ningún archivo');
   rr = await api('/api/ayuda', 'GET', null, galletaCarla);
   const ayC = await json(rr);
-  verificar(rr.status === 200 && ayC.rol === 'asesor' && !ayC.articulos.some(a => a.soloAdmin) && ayC.articulos.map(a => a.id).join(',') === 'chats-por-responder,conversaciones,chats-respondidos,garantia,consultas,archivos-enviados,corregir,apariencia', 'un asesor ve solo los 8 temas para atender los chats');
+  verificar(rr.status === 200 && ayC.rol === 'asesor' && !ayC.articulos.some(a => a.soloAdmin) && ayC.articulos.map(a => a.id).join(',') === 'chats-por-responder,conversaciones,chats-respondidos,garantia,consultas,archivos-enviados,corregir,asistente,apariencia', 'un asesor ve solo los 9 temas para atender los chats');
   rr = await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Cómo devuelvo un chat a Verde?' }, galletaCarla);
   const pC = await json(rr);
   const sysC = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system);
@@ -899,7 +899,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
 
   mostrar('55) Centro de ayuda: manual y guías según el rol');
   const ay55 = await json(await api('/api/ayuda', 'GET'));
-  verificar(ay55.rol === 'admin' && ay55.articulos.filter(a => a.grupo === 'manual').length === 12 && ay55.articulos.filter(a => a.grupo === 'meta').length === 6 && ay55.revisionMeta === '2026-10-24', 'el administrador ve los 12 temas del manual y las 6 guías de Meta');
+  verificar(ay55.rol === 'admin' && ay55.articulos.filter(a => a.grupo === 'manual').length === 13 && ay55.articulos.filter(a => a.grupo === 'meta').length === 6 && ay55.revisionMeta === '2026-10-24', 'el administrador ve los 13 temas del manual y las 6 guías de Meta');
   verificar(ay55.articulos.every(a => a.titulo && a.resumen && a.bloques && a.bloques.length), 'cada tema tiene título, resumen y contenido');
 
   mostrar('56) Asistente de ayuda');
@@ -909,7 +909,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   const sys56 = JSON.stringify(ped56.system);
   verificar(rr.status === 200 && /Devolver a Verde/.test(pa56.respuesta) && pa56.fuentes.some(f => f.id === 'conversaciones' && f.titulo), 'responde con el contenido del manual e indica la fuente');
   verificar(ped56.model === 'claude-sonnet-5-5', 'usa siempre Sonnet 5.5, el modelo más económico');
-  verificar(sys56.includes('ASISTENTE DE AYUDA') && sys56.includes('12 horas') && sys56.includes('Conversaciones y «Devolver a Verde»') && sys56.includes('Portafolio comercial de Meta'), 'el asistente conoce el manual, las guías y la configuración real');
+  verificar(sys56.includes('ASISTENTE DEL EQUIPO') && sys56.includes('12 horas') && sys56.includes('Conversaciones y «Devolver a Verde»') && sys56.includes('Portafolio comercial de Meta'), 'el asistente conoce el manual, las guías y la configuración real');
   const c56 = await json(await api('/api/consumo-ia', 'GET'));
   verificar(c56.porOrigen.ayuda && c56.porOrigen.ayuda.consultas >= 1, 'la consulta se registra en «Consumo de IA» como origen «Ayuda»');
   rr = await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿y si no responde?', historial: [{ pregunta: '¿Cómo devuelvo un chat a Verde?', respuesta: pa56.respuesta }] });
@@ -1467,6 +1467,41 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(tope69 === 28 && /límite de 30 correcciones por hora/.test((await json(await api('/api/corregir', 'POST', { texto: 'otra', tono: 'neutro' }))).error), 'después de 30 correcciones en una hora, se frena con un aviso claro');
   const botK = require('./bot.js');
   verificar(botK.limpiarCorreccion('```\nTexto corregido: «Hola, buenas.»\n```') === 'Hola, buenas.' && botK.limpiarCorreccion('  ') === '', 'si la IA envuelve la respuesta con comillas, títulos o marcas de código, se limpian');
+
+
+  mostrar('70) Asistente del equipo: empresa, conversación adjunta, modelo y esfuerzo');
+  const estado70 = await json(await api('/api/state'));
+  const guardar70 = async st => { const r = await api('/api/state', 'PUT', { state: st }); if (r.status !== 200) throw new Error('No se pudo guardar el estado de prueba'); };
+  const st70 = JSON.parse(JSON.stringify(estado70.state || estado70));
+  st70.verde = Object.assign({}, st70.verde, { reglas: ['Nunca prometer plazos de reparación por chat'], garantia: Object.assign({}, (st70.verde || {}).garantia, { requisitos: 'Orden de trabajo o boleta', condiciones: '30 días sobre la reparación; no cubre golpes ni humedad' }), asistente: { modelo: 'claude-opus-5-5', esfuerzo: 'xhigh' } });
+  await guardar70(st70);
+  const claves70 = (await json(await api('/api/conversaciones'))).lista || [];
+  const clave70 = claves70.length ? (claves70[0].clave || ('wa:' + claves70[0].numero)) : '';
+  let a70 = await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Qué le respondo a este cliente para cerrar la venta?', clave: clave70 });
+  let j70 = await json(a70);
+  const pedido70 = llamadasIA[llamadasIA.length - 1].body;
+  const sys70 = JSON.stringify(pedido70.system);
+  verificar(a70.status === 200 && j70.respuesta && Array.isArray(j70.textos) && j70.textos.length === 2 && j70.textos[0] === 'Hola, te escribo de la tienda: ¿a qué hora podés pasar?', 'el asistente devuelve la respuesta y los textos listos para enviar, sin los vacíos');
+  verificar(sys70.includes('ASISTENTE DEL EQUIPO DE') && sys70.includes('INFORMACIÓN DE LA EMPRESA') && sys70.includes('Nunca prometer plazos de reparación por chat') && sys70.includes('no cubre golpes ni humedad') && sys70.includes('BASE DE CONOCIMIENTO'), 'conoce las reglas de oro, la garantía y el manual');
+  verificar(sys70.includes('Eso ya no es algo con lo que pueda ayudarte') && sys70.includes('No inventar precios, plazos, promesas'), 'tiene la regla de responder solo sobre la empresa y la de no inventar datos');
+  verificar(!!clave70 && sys70.includes('CONVERSACIÓN ADJUNTA (últimos mensajes') && /Cliente: /.test(sys70), 'con una clave de chat, recibe la conversación adjunta');
+  verificar(pedido70.model === 'claude-opus-5-5' && pedido70.output_config && pedido70.output_config.effort === 'xhigh' && pedido70.thinking && pedido70.thinking.type === 'adaptive' && pedido70.max_tokens >= 16000, 'usa el modelo y el esfuerzo de la sección H, con razonamiento adaptativo y margen de tokens');
+  a70 = await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Cómo marco un chat como atendido?' });
+  const pedido70b = llamadasIA[llamadasIA.length - 1].body;
+  verificar(a70.status === 200 && !JSON.stringify(pedido70b.system).includes('CONVERSACIÓN ADJUNTA (últimos mensajes'), 'sin clave de chat, no adjunta ninguna conversación');
+  st70.verde.asistente = { modelo: 'claude-inventado', esfuerzo: 'altísimo' };
+  await guardar70(st70);
+  await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Qué le digo a un cliente que pide descuento?' });
+  const pedido70c = llamadasIA[llamadasIA.length - 1].body;
+  verificar(pedido70c.model === 'claude-sonnet-5-5' && pedido70c.output_config.effort === 'high' && pedido70c.thinking.type === 'adaptive' && pedido70c.max_tokens >= 6000, 'una configuración inválida cae a Sonnet 5.5 con esfuerzo alto');
+  delete st70.verde.asistente;
+  await guardar70(st70);
+  await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Cómo armo un presupuesto?' });
+  const pedido70d = llamadasIA[llamadasIA.length - 1].body;
+  verificar(pedido70d.model === 'claude-sonnet-5-5' && pedido70d.output_config.effort === 'high', 'sin configurar, el asistente usa Sonnet 5.5 con esfuerzo alto');
+  await guardar70(estado70.state || estado70);
+  const botK70 = require('./bot.js');
+  verificar(botK70.resumenEmpresa({ empresa: 'Tienda X', pasos: [{ titulo: 'Saludar', desc: 'Con el nombre', activo: true }, { titulo: 'Oculto', activo: false }], objeciones: [{ obj: 'Está caro', resp: 'Explicar la garantía' }] }, [{ nombre: 'Términos', cuando: 'Si preguntan' }]).includes('1. Saludar: Con el nombre') && !botK70.resumenEmpresa({ pasos: [{ titulo: 'Oculto', activo: false }] }).includes('Oculto') && botK70.resumenEmpresa({}, [{ nombre: 'Términos', cuando: 'Si preguntan' }]).includes('Términos — Si preguntan'), 'el resumen de la empresa incluye los pasos activos, las objeciones y la biblioteca, y omite los pasos apagados');
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }

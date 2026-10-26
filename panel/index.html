@@ -1485,6 +1485,37 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 .ia-barra .btn-mini:hover,.ia-barra .btn-mini:focus-visible{border-color:var(--accent-borde);outline:none}
 .ia-barra .btn-mini svg{width:14px;height:14px}
 
+/* ===================== 1.4.11: asistente del equipo ===================== */
+.asis-bloque{margin-top:18px;padding:14px 16px;border:1px solid var(--accent-borde);border-radius:12px;background:var(--surface)}
+.asis-cab{margin-bottom:10px}
+.asis-cab label{display:block;font-size:13px;font-weight:700;color:var(--text)}
+.asis-cab p{margin:4px 0 0;font-size:12.5px;color:var(--muted);line-height:1.45}
+.esf-opciones{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.esf-op{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:56px;padding:8px 6px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface);cursor:pointer;text-align:center;font:inherit;color:var(--text)}
+.esf-op:hover{border-color:var(--accent-borde)}
+.esf-op.sel{border-color:var(--accent-borde);background:var(--accent-suave,rgba(159,212,0,.14))}
+.esf-op:focus-visible{outline:2px solid var(--accent-borde);outline-offset:2px}
+.esf-op b{font-size:13px}
+.esf-op span{font-size:11.5px;color:var(--muted)}
+.asis-nota{margin:10px 0 0;font-size:12px;color:var(--muted);line-height:1.45}
+.conv-ayuda{color:var(--text)}
+.ay-adjunto{display:flex;align-items:center;gap:10px;margin:0 0 10px;padding:8px 12px;border-radius:10px;background:rgba(245,158,11,.16);color:var(--text);font-size:12.5px}
+.ay-adjunto svg{width:15px;height:15px;flex:none}
+.ay-adjunto span{flex:1 1 auto;min-width:0}
+.ay-adjunto button{border:none;background:transparent;color:var(--text);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;padding:4px 6px;border-radius:6px}
+.ay-adjunto button:hover{background:rgba(0,0,0,.06)}
+.ay-atajos{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.ay-atajos button{padding:7px 12px;border-radius:18px;border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+.ay-atajos button:hover{border-color:var(--accent-borde)}
+.ay-texto{margin:8px 0 4px;padding:12px 14px;border:1px solid var(--accent-borde);border-left:3px solid var(--accent-borde);border-radius:10px;background:var(--accent-suave,rgba(159,212,0,.1));display:flex;flex-direction:column;gap:8px}
+.ay-texto-tit{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
+.ay-texto-cuerpo{font-size:13.5px;line-height:1.5;white-space:pre-wrap;color:var(--text)}
+.ay-texto-btns{display:flex;flex-wrap:wrap;gap:8px}
+.ay-texto-btns button{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:6px 12px;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+.ay-texto-btns button.ay-usar{background:var(--accent);border-color:var(--accent);color:#111b21;font-weight:700}
+.ay-texto-btns button svg{width:14px;height:14px}
+@media(max-width:600px){.esf-opciones{grid-template-columns:repeat(2,minmax(0,1fr))}.conv-ayuda span{display:none}.conv-ayuda{padding:0 11px}}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -1953,6 +1984,16 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
               <div class="field"><label for="v_espera">Tiempo de espera antes de responder (segundos)</label><input type="number" id="v_espera" min="0" max="60" step="1"></div>
               </div>
               <div class="note" style="margin-top:12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span><b>Cómo funciona la espera:</b> Verde cuenta ese tiempo desde el último mensaje del cliente. Si el cliente sigue escribiendo, vuelve a contar y al final responde a todo junto, en un solo mensaje. Con <b>0</b> responde de inmediato. Máximo 60 segundos. No se aplica en «Probar a Verde», que responde al instante.</span></div>
+              <div class="asis-bloque" id="asisBloque">
+                <div class="asis-cab"><label>Asistente del equipo (Centro de ayuda)</label><p>La IA que apoya a los asesores: qué responder, cómo cerrar ventas, cómo tratar a un cliente difícil. Se configura aparte de Verde, y su gasto se ve por separado en «Consumo de IA».</p></div>
+                <div class="field" style="margin-bottom:6px"><label>Modelo</label></div>
+                <input type="hidden" id="v_asModelo">
+                <div class="ia-cards" id="asisCards" role="radiogroup" aria-label="Modelo del asistente del equipo"></div>
+                <div class="field" style="margin:14px 0 6px"><label>Esfuerzo (cuánto razona antes de responder)</label></div>
+                <input type="hidden" id="v_asEsfuerzo">
+                <div class="esf-opciones" id="asisEsfuerzo" role="radiogroup" aria-label="Esfuerzo del asistente del equipo"></div>
+                <p class="asis-nota">A más esfuerzo, respuestas más cuidadas pero más lentas y con más tokens. Conviene empezar en «Alto» y subir solo si las respuestas no alcanzan.</p>
+              </div>
             </div>
           </div>
 
@@ -2024,6 +2065,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
             <button class="conv-volver" type="button" onclick="cerrarConversacion()" aria-label="Volver a la lista de chats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
             <span class="chat-av conv-av" id="convAvatar" aria-hidden="true"></span>
             <div class="conv-cab-tx"><h3 id="convTitulo"><span class="c-nom" id="convNombre">Conversación</span><span class="c-num" id="convNumero"></span></h3><div class="conv-estados" id="convEstados"></div></div><button type="button" class="sw sw-mini" id="convSwitch" role="switch" aria-checked="true" aria-label="Verde en este chat" data-clave="" onclick="tocarInterruptor(this)"><span class="pista" aria-hidden="true"><span class="bola"></span></span><span class="sw-tx">Verde</span></button><button type="button" class="btn-devolver oculto" id="convDevolver" data-clave="" onclick="reanudarVerde(this)">Devolver a Verde</button>
+            <button class="pill-btn conv-ayuda" type="button" id="convAyuda" onclick="ayudaConEsteChat()" title="Ayuda con este chat" aria-label="Ayuda con este chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M4.93 4.93l4.24 4.24M14.83 14.83l4.24 4.24M14.83 9.17l4.24-4.24M9.17 14.83l-4.24 4.24"/></svg><span>Ayuda con este chat</span></button>
             <button class="pill-btn conv-marcar oculto" type="button" id="convMarcar" data-id="" onclick="marcarDesdeConversacion()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Marcar atendido</button>
           </div>
           <div class="conv-franja oculto" id="convFranja" role="status"></div>
@@ -2182,11 +2224,13 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
       </div>
       <div class="ay-grid" id="ayGrid" data-tab="asistente">
         <section class="panel ay-asistente" aria-labelledby="ayTitAsistente">
-          <div class="panel-head"><div><h3 id="ayTitAsistente"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> Asistente de ayuda</h3><p>Responde preguntas sobre el panel, Verde y las reglas de WhatsApp.</p></div><button class="btn btn-ghost" type="button" id="ayLimpiar" onclick="limpiarAyuda()">Nueva conversación</button></div>
+          <div class="panel-head"><div><h3 id="ayTitAsistente"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> Asistente del equipo</h3><p>Apoyo para atender y vender: qué responder, cómo cerrar una venta, cómo salir bien de un cliente difícil, cómo armar un presupuesto. Solo temas de la empresa.</p></div><button class="btn btn-ghost" type="button" id="ayLimpiar" onclick="limpiarAyuda()">Nueva conversación</button></div>
+          <div class="ay-adjunto oculto" id="ayAdjunto"></div>
+          <div class="ay-atajos" id="ayAtajos"></div>
           <div class="ay-chat" id="ayChat" aria-live="polite"></div>
           <div class="ay-pie">
-            <div class="ay-input"><textarea id="ayPregunta" rows="1" maxlength="500" placeholder="Escribir una pregunta sobre el panel o las reglas de WhatsApp…" aria-label="Pregunta para el asistente" onkeydown="teclaAyuda(event)" oninput="ajustarAlto(this)"></textarea><button class="ay-enviar" type="button" id="ayEnviar" onclick="preguntarAyuda()" aria-label="Enviar la pregunta"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button></div>
-            <span class="faint" id="ayNota">Responde con el manual del panel, la configuración actual y las reglas de Meta. Si no sabe algo, lo indica.</span>
+            <div class="ay-input"><textarea id="ayPregunta" rows="1" maxlength="500" placeholder="Escribir la consulta: un cliente, una venta, un presupuesto, el panel o las reglas de WhatsApp…" aria-label="Pregunta para el asistente" onkeydown="teclaAyuda(event)" oninput="ajustarAlto(this)"></textarea><button class="ay-enviar" type="button" id="ayEnviar" onclick="preguntarAyuda()" aria-label="Enviar la pregunta"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button></div>
+            <span class="faint" id="ayNota">Conoce la configuración de Verde, el manual del panel y las reglas de Meta. No inventa precios ni promesas; si no sabe algo, lo indica.</span>
           </div>
         </section>
         <div class="ay-temas">
@@ -3962,6 +4006,7 @@ function renderVerde(){
   vConsultas=consultasUI(v.consultas);renderConsultas();
   const tc=v.tecnico||{};
   document.getElementById('v_modelo').value=modeloUI(tc.modelo||'');pintarSelectorIA();
+  const as=v.asistente||{};document.getElementById('v_asModelo').value=modeloUI(as.modelo||'');document.getElementById('v_asEsfuerzo').value=esfuerzoUI(as.esfuerzo||'');pintarAsistenteIA();
   document.getElementById('v_tokens').value=tc.maxTokens||1000;
   document.getElementById('v_memoria').value=tc.memoria||20;
   document.getElementById('v_espera').value=parseInt(tc.espera,10)||0;
@@ -4190,6 +4235,7 @@ function saveVerde(section){
     const esp=parseInt(document.getElementById('v_espera').value,10);
     if(isNaN(esp)||esp<0||esp>60){showVerdeErr('El tiempo de espera debe estar entre 0 y 60 segundos.');flashField('v_espera');return;}
     v.tecnico={modelo,maxTokens:tk,memoria:mem,espera:esp};
+    v.asistente=asistenteDesdePanel();
     persist();toast('Parámetros guardados','Modelo: '+modelo,'success');
   }
 }
@@ -4209,7 +4255,8 @@ function snapVerde(src){
       frases:{bienvenida:(g('v_fBien').value||'').trim(),derivacion:(g('v_fDeriv').value||'').trim(),error:(g('v_fError').value||'').trim(),adjunto:(g('v_fAdjunto').value||'').trim()},
       garantia:normGarantia(Object.assign({},vGarantia,{requisitos:(g('v_gReq')||{}).value||'',condiciones:(g('v_gCond')||{}).value||''})),
       consultas:normConsultas(vConsultas),
-      tecnico:{modelo:(g('v_modelo').value||'').trim(),maxTokens:parseInt(g('v_tokens').value,10)||0,memoria:parseInt(g('v_memoria').value,10)||0,espera:parseInt(g('v_espera').value,10)||0}
+      tecnico:{modelo:(g('v_modelo').value||'').trim(),maxTokens:parseInt(g('v_tokens').value,10)||0,memoria:parseInt(g('v_memoria').value,10)||0,espera:parseInt(g('v_espera').value,10)||0},
+      asistente:asistenteDesdePanel()
     });
   }
   const v=DB.verde||{},fr=v.frases||{},tc=v.tecnico||{};
@@ -4225,7 +4272,8 @@ function snapVerde(src){
     frases:{bienvenida:(fr.bienvenida||'').trim(),derivacion:(fr.derivacion||'').trim(),error:(fr.error||'').trim(),adjunto:instruccionesArchivoUI(fr)},
     garantia:normGarantia(v.garantia),
     consultas:normConsultas(v.consultas),
-    tecnico:{modelo:modeloUI((tc.modelo||'').trim()),maxTokens:tc.maxTokens||0,memoria:tc.memoria||0,espera:parseInt(tc.espera,10)||0}
+    tecnico:{modelo:modeloUI((tc.modelo||'').trim()),maxTokens:tc.maxTokens||0,memoria:tc.memoria||0,espera:parseInt(tc.espera,10)||0},
+    asistente:{modelo:modeloUI(((v.asistente||{}).modelo||'').trim()),esfuerzo:esfuerzoUI((v.asistente||{}).esfuerzo||'')}
   });
 }
 function verdeHasUnsaved(){
@@ -5569,7 +5617,7 @@ async function cargarAyuda(){
   const hayMeta=AYUDA.articulos.some(a=>a.grupo==='meta');
   document.getElementById('ayMetaPanel').classList.toggle('oculto',!hayMeta);
   document.getElementById('ayTabMeta').classList.toggle('oculto',!hayMeta);
-  if(AYUDA.revision)document.getElementById('ayNota').textContent='Responde con el manual del panel, la configuración actual y las reglas de Meta revisadas el '+fechaDMA(AYUDA.revision)+'. Si no sabe algo, lo indica.';
+  if(AYUDA.revision)document.getElementById('ayNota').textContent='Conoce la configuración de Verde, el manual del panel y las reglas de Meta revisadas el '+fechaDMA(AYUDA.revision)+'. No inventa precios ni promesas; si no sabe algo, lo indica.';
   const ta=document.getElementById('ayPregunta');
   ta.placeholder=(window.matchMedia&&window.matchMedia('(max-width: 600px)').matches)?'Escribir una pregunta…':'Escribir una pregunta sobre el panel o las reglas de WhatsApp…';
   pintarTemasAyuda();pintarChatAyuda();
@@ -5636,16 +5684,17 @@ function sugerenciasAyuda(){
 }
 function pintarChatAyuda(){
   const box=document.getElementById('ayChat');
+  pintarAdjuntoAyuda();
   if(!AYUDA.hilo.length){
-    box.innerHTML='<div class="ay-vacio"><span>Escribir una pregunta o elegir una de estas:</span><div class="ay-sug">'+sugerenciasAyuda().map(s=>'<button type="button" onclick="preguntarAyuda(this.textContent)">'+escH(s)+'</button>').join('')+'</div></div>';
+    box.innerHTML='<div class="ay-vacio"><span>Escribir una consulta o elegir una de estas:</span><div class="ay-sug">'+sugerenciasAyuda().map(s=>'<button type="button" onclick="preguntarAyuda(this.textContent)">'+escH(s)+'</button>').join('')+'</div></div>';
     return;
   }
-  box.innerHTML=AYUDA.hilo.map(x=>{
+  box.innerHTML=AYUDA.hilo.map((x,hi)=>{
     let h='<div class="ay-preg">'+escH(x.pregunta)+'</div>';
     if(x.pendiente)return h+'<div class="ay-pensando" role="status">Buscando la respuesta…</div>';
     if(x.error)return h+'<div class="ay-resp error"><span class="ay-txt">'+escH(x.error)+'</span></div>';
     const f=(x.fuentes||[]).length?'<div class="ay-fuentes"><span>Fuente:</span>'+x.fuentes.map(s=>'<button type="button" class="ay-fuente" onclick="abrirArticulo(\''+escH(s.id)+'\')">'+escH((s.grupo==='meta'?'Guías de Meta':'Manual')+' › '+s.titulo)+'</button>').join('')+'</div>':'';
-    return h+'<div class="ay-resp"><span class="ay-quien">Asistente de ayuda</span><span class="ay-txt">'+escH(x.respuesta)+'</span>'+f+'</div>';
+    return h+'<div class="ay-resp"><span class="ay-quien">Asistente</span><span class="ay-txt">'+escH(x.respuesta)+'</span>'+htmlTextosAyuda(x,hi)+f+'</div>';
   }).join('');
   box.scrollTop=box.scrollHeight;
 }
@@ -5660,9 +5709,9 @@ async function preguntarAyuda(texto){
   ta.value='';ajustarAlto(ta);
   const btn=document.getElementById('ayEnviar');btn.disabled=true;
   pintarChatAyuda();
-  const r=await api('/api/ayuda/preguntar',{method:'POST',body:{pregunta:q,historial}});
+  const r=await api('/api/ayuda/preguntar',{method:'POST',body:{pregunta:q,historial,clave:AYUDA.chat?AYUDA.chat.clave:''}});
   item.pendiente=false;AYUDA.cargando=false;btn.disabled=false;
-  if(r.ok){item.respuesta=r.json.respuesta;item.fuentes=r.json.fuentes||[];}
+  if(r.ok){item.respuesta=r.json.respuesta;item.fuentes=r.json.fuentes||[];item.textos=r.json.textos||[];}
   else item.error=r.json.error||'No se pudo obtener la respuesta. Intentar de nuevo.';
   pintarChatAyuda();ta.focus();
 }
@@ -6266,5 +6315,67 @@ document.addEventListener('keydown',e=>{
   }
 },true);
 document.addEventListener('click',e=>{const w=document.querySelector('.ia-wrap');if(w&&!w.contains(e.target))cerrarMenuIA();});
+
+
+/* ===================== 1.4.11: asistente del equipo (modelo y esfuerzo, conversación adjunta, textos listos) ===================== */
+const ESFUERZO_OPCIONES=[{id:'low',nombre:'Bajo',sub:'Más rápido y barato'},{id:'medium',nombre:'Medio',sub:'Ahorra sin perder mucho'},{id:'high',nombre:'Alto',sub:'Predeterminado'},{id:'xhigh',nombre:'Muy alto',sub:'Casos exigentes'},{id:'max',nombre:'Máximo',sub:'Sin límite: el más caro'}];
+const ATAJOS_AYUDA=[['¿Qué le respondo?','¿Qué le respondo a este cliente? Dame el texto listo para enviar.'],['Calmar al cliente','El cliente está enojado. ¿Cómo lo calmo y qué le escribo?'],['Cerrar la venta','¿Cómo cierro esta venta? Dame el texto para enviarle.'],['Armar un presupuesto','Ayudame a armar un presupuesto atractivo para enviarle al cliente.'],['Explicar la garantía','¿Cómo le explico la garantía a este cliente, sin confirmar ni rechazar nada?']];
+const IC1411={
+  salva:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M4.93 4.93l4.24 4.24M14.83 14.83l4.24 4.24M14.83 9.17l4.24-4.24M9.17 14.83l-4.24 4.24"/></svg>',
+  copiar:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+  enviar:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>'
+};
+function esfuerzoUI(id){return ESFUERZO_OPCIONES.some(o=>o.id===id)?id:'high';}
+function pintarAsistenteIA(){
+  const m=document.getElementById('v_asModelo').value,e=document.getElementById('v_asEsfuerzo').value;
+  document.getElementById('asisCards').innerHTML=IA_OPCIONES.map(o=>
+    '<label class="ia-card'+(o.id===m?' sel':'')+'"><span class="ia-top"><input type="radio" name="asisModelo" value="'+o.id+'"'+(o.id===m?' checked':'')+' onchange="elegirAsistenteIA(this.value)"><span class="ia-nom">'+o.nombre+'</span></span>'
+    +'<span class="ia-tag '+o.clase+'">'+o.tag+'</span><span class="ia-desc">'+o.desc+'</span></label>').join('');
+  document.getElementById('asisEsfuerzo').innerHTML=ESFUERZO_OPCIONES.map(o=>'<button type="button" class="esf-op'+(o.id===e?' sel':'')+'" role="radio" aria-checked="'+(o.id===e)+'" data-esfuerzo="'+o.id+'" onclick="elegirAsistenteEsfuerzo(\''+o.id+'\')"><b>'+o.nombre+'</b><span>'+o.sub+'</span></button>').join('');
+}
+function elegirAsistenteIA(id){document.getElementById('v_asModelo').value=modeloUI(id);pintarAsistenteIA();}
+function elegirAsistenteEsfuerzo(id){document.getElementById('v_asEsfuerzo').value=esfuerzoUI(id);pintarAsistenteIA();}
+function asistenteDesdePanel(){return {modelo:modeloUI(document.getElementById('v_asModelo').value),esfuerzo:esfuerzoUI(document.getElementById('v_asEsfuerzo').value)};}
+// Conversación adjunta al asistente
+function ayudaConEsteChat(){
+  if(!CONV.clave)return;
+  const dts=CONV.datos||{};
+  AYUDA.chat={clave:CONV.clave,nombre:dts.nombre||'',numero:dts.numero||String(CONV.clave).replace(/^wa:/,'')};
+  go('ayuda');
+  if(typeof tabAyuda==='function')tabAyuda('asistente');
+  pintarAdjuntoAyuda();
+  const ta=document.getElementById('ayPregunta');if(ta)ta.focus();
+}
+function quitarAdjuntoAyuda(){AYUDA.chat=null;pintarAdjuntoAyuda();pintarChatAyuda();}
+function nombreChatAyuda(){const c=AYUDA.chat;if(!c)return '';return (c.nombre||'').trim()||(c.numero?'+'+c.numero:'el chat');}
+function pintarAdjuntoAyuda(){
+  const box=document.getElementById('ayAdjunto'),at=document.getElementById('ayAtajos');if(!box)return;
+  if(!AYUDA.chat){box.classList.add('oculto');box.innerHTML='';}
+  else{box.innerHTML=IC1411.salva+'<span><b>Conversación adjunta:</b> '+escH(nombreChatAyuda())+(AYUDA.chat.numero&&(AYUDA.chat.nombre||'').trim()?' · +'+escH(AYUDA.chat.numero):'')+' · últimos 20 mensajes</span><button type="button" onclick="quitarAdjuntoAyuda()">Quitar</button>';box.classList.remove('oculto');}
+  if(at)at.innerHTML=ATAJOS_AYUDA.map((a,i)=>'<button type="button" onclick="preguntarAyuda(ATAJOS_AYUDA['+i+'][1])">'+escH(a[0])+'</button>').join('');
+}
+function textoAyuda(h,i){const x=AYUDA.hilo[h];return x&&Array.isArray(x.textos)?String(x.textos[i]||''):'';}
+async function copiarTextoAyuda(h,i){
+  const t=textoAyuda(h,i);if(!t)return;
+  try{await navigator.clipboard.writeText(t);toast('Texto copiado','Listo para pegar en el chat.','success');}
+  catch(e){toast('No se pudo copiar','Seleccioná el texto y copialo a mano.','error');}
+}
+async function usarTextoEnChat(h,i){
+  const t=textoAyuda(h,i);if(!t||!AYUDA.chat)return;
+  const clave=AYUDA.chat.clave;
+  go('conversaciones');
+  await abrirConversacion(clave);
+  if(CONV.clave!==clave)return;
+  const ta=document.getElementById('convTexto');if(!ta)return;
+  if(ta.disabled){toast('No se puede responder ahora','La ventana de 24 horas de este chat está cerrada.','error');return;}
+  const previo=ta.value.trim();
+  ta.value=previo?ta.value.replace(/\s+$/,'')+'\n'+t:t;
+  ajustarAlto(ta);ta.focus();
+  toast('Texto en la caja de mensaje','Revisalo y enviá cuando quieras.','success');
+}
+function htmlTextosAyuda(x,h){
+  if(!x||!Array.isArray(x.textos)||!x.textos.length)return '';
+  return x.textos.map((t,i)=>'<div class="ay-texto"><span class="ay-texto-tit">Texto listo para enviar</span><span class="ay-texto-cuerpo">'+escH(t)+'</span><span class="ay-texto-btns"><button type="button" onclick="copiarTextoAyuda('+h+','+i+')">'+IC1411.copiar+'Copiar</button>'+(AYUDA.chat?'<button type="button" class="ay-usar" onclick="usarTextoEnChat('+h+','+i+')">'+IC1411.enviar+'Usar en el chat de '+escH(nombreChatAyuda())+'</button>':'')+'</span></div>').join('');
+}
 
 </script>

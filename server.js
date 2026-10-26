@@ -35,7 +35,7 @@ const usuarios = require('./usuarios.js');
 const atencion = require('./atencion.js');
 const conversaciones = require('./conversaciones.js');
 
-const VERSION = '1.4.10';
+const VERSION = '1.4.11';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -900,8 +900,14 @@ app.post('/api/ayuda/preguntar', requiere(['admin', 'asesor']), async (req, res)
       if (p && r) mensajes.push({ role: 'user', content: p }, { role: 'assistant', content: JSON.stringify({ respuesta: r, fuentes: [] }) });
     }
     mensajes.push({ role: 'user', content: pregunta });
+    // 1.4.11: asistente del equipo: conoce la empresa, puede recibir la conversación abierta y usa el modelo y esfuerzo de la sección H.
+    const claveChat = String((req.body && req.body.clave) || '').trim();
+    const conversacion = claveChat ? ayuda.textoConversacion(detalleConversacion(claveChat)) : '';
+    const v = bot.getVerde();
+    const asis = bot.configAsistente(v);
+    const sistema = ayuda.instrucciones(rol, configAyuda(), { empresa: bot.resumenEmpresa(v, recursos.listar()), conversacion, nombreEmpresa: v.empresa });
     let crudo;
-    try { crudo = await bot.callClaude(ayuda.instrucciones(rol, configAyuda()), mensajes, bot.getVerde(), 'claude-sonnet-5-5', 'ayuda'); }
+    try { crudo = await bot.callClaude(sistema, mensajes, v, asis.modelo, 'ayuda', { esfuerzo: asis.esfuerzo }); }
     catch (e) { console.error('Centro de ayuda: la IA no respondió:', e.message); return res.status(502).json({ error: 'El asistente no está disponible en este momento. Intentar de nuevo en unos minutos.' }); }
     res.json(ayuda.interpretar(crudo, rol));
   } catch (e) { responderError(res, e); }
