@@ -1155,10 +1155,9 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 .ay-buscar svg{width:16px;height:16px;flex:none}
 .ay-buscar input{flex:1 1 auto;min-width:0;border:none;background:none;outline:none;color:var(--text);font:inherit;font-size:14px}
 .ay-buscar:focus-within{border-color:var(--accent-borde)}
-.ay-tabs{display:none}
-.ay-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start}
-.ay-asistente{display:flex;flex-direction:column;min-height:560px;margin-bottom:0}
-.ay-chat{flex:1 1 auto;padding:16px 18px;display:flex;flex-direction:column;gap:12px;max-height:62vh;overflow-y:auto}
+.ay-grid{display:block}
+.ay-asistente{display:flex;flex-direction:column;height:calc(100vh - 196px);min-height:480px;margin-bottom:0}
+.ay-chat{flex:1 1 auto;padding:16px 18px;display:flex;flex-direction:column;gap:12px;min-height:0;overflow-y:auto}
 .ay-pie{padding:12px 18px 14px;border-top:1px solid var(--border-soft);display:flex;flex-direction:column;gap:8px}
 .ay-input{display:flex;gap:10px;align-items:flex-end}
 .ay-input textarea{flex:1 1 auto;min-height:44px;max-height:140px;box-sizing:border-box;resize:none;padding:11px 14px;border-radius:22px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font:inherit;font-size:14px}
@@ -1212,15 +1211,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 .ay-indice ol{margin:0;padding-left:18px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
 @media print{#view-ayuda{display:none!important}}
 @media(max-width:900px){
-  .ay-tabs{display:flex;padding:3px;border-radius:10px;background:var(--surface-3);margin-bottom:12px}
-  .ay-tabs button{flex:1 1 0;font:inherit;font-size:13px;font-weight:600;min-height:38px;border-radius:8px;border:none;background:none;color:var(--muted);cursor:pointer}
-  .ay-tabs button[aria-selected="true"]{background:var(--surface);color:var(--text);font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.15)}
-  .ay-grid{grid-template-columns:1fr}
-  .ay-grid[data-tab="asistente"] .ay-temas{display:none}
-  .ay-grid[data-tab="manual"] .ay-asistente,.ay-grid[data-tab="meta"] .ay-asistente{display:none}
-  .ay-grid[data-tab="manual"] .ay-grupo[data-grupo="meta"],.ay-grid[data-tab="meta"] .ay-grupo[data-grupo="manual"]{display:none}
-  .ay-asistente{min-height:0}
-  .ay-chat{max-height:none}
+  .ay-asistente{height:auto;min-height:calc(100vh - 190px)}
   .ay-articulo{grid-template-columns:1fr}
   .ay-art-lado{position:static}
   .ay-art{padding:18px}
@@ -1516,6 +1507,24 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 .ay-texto-btns button svg{width:14px;height:14px}
 @media(max-width:600px){.esf-opciones{grid-template-columns:repeat(2,minmax(0,1fr))}.conv-ayuda span{display:none}.conv-ayuda{padding:0 11px}}
 
+/* ===================== 1.4.12: Centro de ayuda a una columna, manual y guías en un cajón ===================== */
+.ay-cajon-fondo{position:fixed;inset:0;background:rgba(17,27,33,.38);z-index:70}
+.ay-cajon{position:fixed;top:0;right:0;bottom:0;width:440px;max-width:100vw;background:var(--surface-2,var(--surface));box-shadow:-12px 0 32px rgba(0,0,0,.28);z-index:71;display:flex;flex-direction:column;overflow:hidden}
+.ay-cajon-cab{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--surface)}
+.ay-cajon-cab h3{margin:0;font-size:16px;display:flex;align-items:center;gap:8px}
+.ay-cajon-cab h3 svg{width:18px;height:18px}
+.ay-cajon-cuerpo{flex:1 1 auto;overflow-y:auto;padding:14px 18px 18px;display:flex;flex-direction:column;gap:14px}
+.ay-cajon .ay-buscar{margin-bottom:0}
+.ay-cerrar{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--muted);display:inline-grid;place-items:center;cursor:pointer;flex:none}
+.ay-cerrar svg{width:18px;height:18px}
+.ay-cerrar:hover{color:var(--text);border-color:var(--accent-borde)}
+.ay-cab{align-items:center}
+.ay-cab-acc{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.ay-cab .ay-adjunto{margin:0;max-width:440px}
+.ay-cab .ay-adjunto span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btn-manual svg{width:16px;height:16px}
+@media(max-width:600px){.btn-manual span{display:none}.btn-manual{padding:0 11px}.ay-cab{flex-wrap:wrap}.ay-cab-acc{width:100%;justify-content:space-between}.ay-cab .ay-adjunto{max-width:100%;flex:1 1 auto}.ay-cajon{width:100vw}}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -1621,6 +1630,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
       </div>
       <div class="topbar-right">
         <button class="btn btn-primary oculto" type="button" id="btnCerebro" onclick="abrirCerebro()"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Ver cerebro de Verde</button>
+        <button class="btn btn-ghost btn-manual oculto" type="button" id="btnManualAyuda" aria-haspopup="dialog" aria-expanded="false" onclick="alternarCajonAyuda()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span>Manual y guías</span></button>
         <div class="badge" id="botBadge"><span class="pulse"></span> Chatbot · No vinculado</div>
       </div>
     </div>
@@ -2216,16 +2226,9 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
     </div>
     <!-- ===== VIEW: CENTRO DE AYUDA (1.3.8) ===== -->
     <div class="view" id="view-ayuda">
-      <label class="ay-buscar"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="search" id="ayBuscar" placeholder="Buscar en el manual y las guías…" aria-label="Buscar en el manual y las guías" oninput="filtrarAyuda()"></label>
-      <div class="ay-tabs" role="tablist" aria-label="Secciones del Centro de ayuda">
-        <button type="button" role="tab" data-tab="asistente" aria-selected="true" onclick="tabAyuda('asistente')">Asistente</button>
-        <button type="button" role="tab" data-tab="manual" aria-selected="false" onclick="tabAyuda('manual')">Manual</button>
-        <button type="button" role="tab" data-tab="meta" aria-selected="false" id="ayTabMeta" onclick="tabAyuda('meta')">Guías de Meta</button>
-      </div>
-      <div class="ay-grid" id="ayGrid" data-tab="asistente">
+      <div class="ay-grid" id="ayGrid">
         <section class="panel ay-asistente" aria-labelledby="ayTitAsistente">
-          <div class="panel-head"><div><h3 id="ayTitAsistente"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> Asistente del equipo</h3><p>Apoyo para atender y vender: qué responder, cómo cerrar una venta, cómo salir bien de un cliente difícil, cómo armar un presupuesto. Solo temas de la empresa.</p></div><button class="btn btn-ghost" type="button" id="ayLimpiar" onclick="limpiarAyuda()">Nueva conversación</button></div>
-          <div class="ay-adjunto oculto" id="ayAdjunto"></div>
+          <div class="panel-head ay-cab"><div><h3 id="ayTitAsistente"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> Asistente del equipo</h3><p>Apoyo para atender y vender. Solo temas de la empresa.</p></div><div class="ay-cab-acc"><div class="ay-adjunto oculto" id="ayAdjunto"></div><button class="btn btn-ghost" type="button" id="ayLimpiar" onclick="limpiarAyuda()">Nueva conversación</button></div></div>
           <div class="ay-atajos" id="ayAtajos"></div>
           <div class="ay-chat" id="ayChat" aria-live="polite"></div>
           <div class="ay-pie">
@@ -2233,12 +2236,19 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
             <span class="faint" id="ayNota">Conoce la configuración de Verde, el manual del panel y las reglas de Meta. No inventa precios ni promesas; si no sabe algo, lo indica.</span>
           </div>
         </section>
+      </div>
+      <div class="ay-cajon-fondo oculto" id="ayCajonFondo" onclick="cerrarCajonAyuda()"></div>
+      <aside class="ay-cajon oculto" id="ayCajon" role="dialog" aria-modal="true" aria-labelledby="ayCajonTit">
+        <div class="ay-cajon-cab"><h3 id="ayCajonTit"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Manual y guías</h3><button class="ay-cerrar" type="button" aria-label="Cerrar" onclick="cerrarCajonAyuda()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+        <div class="ay-cajon-cuerpo">
+      <label class="ay-buscar"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="search" id="ayBuscar" placeholder="Buscar en el manual y las guías…" aria-label="Buscar en el manual y las guías" oninput="filtrarAyuda()"></label>
         <div class="ay-temas">
           <section class="panel ay-grupo" data-grupo="manual"><div class="panel-head"><div><h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> Manual del panel</h3></div></div><ul class="ay-lista" id="ayManual"></ul></section>
           <section class="panel ay-grupo" data-grupo="meta" id="ayMetaPanel"><div class="panel-head"><div><h3><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Guías de Meta <span class="ay-tag">Solo administradores</span></h3></div></div><ul class="ay-lista" id="ayMeta"></ul></section>
           <div class="empty oculto" id="aySinResultados"><p>Sin resultados en el manual. Se puede preguntar al asistente.</p></div>
         </div>
-      </div>
+        </div>
+      </aside>
       <div class="ay-articulo oculto" id="ayArticulo">
         <article class="panel ay-art"><div class="ay-art-cab"><span class="ay-crumb" id="ayArtCrumb"></span><h2 id="ayArtTitulo"></h2><span class="faint" id="ayArtFecha"></span></div><div class="ay-art-cuerpo" id="ayArtCuerpo"></div></article>
         <aside class="ay-art-lado"><div class="panel ay-indice"><b>En este tema</b><ol id="ayArtIndice"></ol></div><button class="btn btn-primary" type="button" onclick="preguntarSobreTema()">Preguntar al asistente sobre este tema</button><button class="btn btn-ghost" type="button" onclick="cerrarArticulo()">Volver al Centro de ayuda</button></aside>
@@ -2878,6 +2888,8 @@ function _doGo(view){
   else{crumb.innerHTML=CRUMB_ORIGINAL;document.getElementById('crumbLeaf').textContent=meta[0];}
   document.getElementById('app').classList.toggle('vista-chat',VISTAS_CLARAS.includes(view));document.getElementById('app').classList.toggle('vista-split',view==='chats'||view==='conversaciones');
   document.getElementById('btnCerebro').classList.toggle('oculto',view!=='verde');
+  const bmy=document.getElementById('btnManualAyuda');if(bmy)bmy.classList.toggle('oculto',view!=='ayuda');
+  if(view!=='ayuda'&&typeof cerrarCajonAyuda==='function')cerrarCajonAyuda();
   if(view==='chats')actualizarContador(true);
   if(view==='respondidos')cargarRespondidos();
   if(view==='avisos')cargarAvisos();
@@ -5616,10 +5628,9 @@ async function cargarAyuda(){
   }
   const hayMeta=AYUDA.articulos.some(a=>a.grupo==='meta');
   document.getElementById('ayMetaPanel').classList.toggle('oculto',!hayMeta);
-  document.getElementById('ayTabMeta').classList.toggle('oculto',!hayMeta);
   if(AYUDA.revision)document.getElementById('ayNota').textContent='Conoce la configuración de Verde, el manual del panel y las reglas de Meta revisadas el '+fechaDMA(AYUDA.revision)+'. No inventa precios ni promesas; si no sabe algo, lo indica.';
   const ta=document.getElementById('ayPregunta');
-  ta.placeholder=(window.matchMedia&&window.matchMedia('(max-width: 600px)').matches)?'Escribir una pregunta…':'Escribir una pregunta sobre el panel o las reglas de WhatsApp…';
+  ta.placeholder=(window.matchMedia&&window.matchMedia('(max-width: 600px)').matches)?'Escribir la consulta…':'Escribir la consulta: un cliente, una venta, un presupuesto, el panel o las reglas de WhatsApp…';
   pintarTemasAyuda();pintarChatAyuda();
 }
 function pintarTemasAyuda(){
@@ -5642,11 +5653,6 @@ function filtrarAyuda(){
     total+=vis;
   });
   document.getElementById('aySinResultados').classList.toggle('oculto',!q||total>0);
-  if(q&&document.getElementById('ayGrid').dataset.tab==='asistente')tabAyuda('manual');
-}
-function tabAyuda(t){
-  document.getElementById('ayGrid').dataset.tab=t;
-  document.querySelectorAll('.ay-tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===t)));
 }
 function abrirArticulo(id){
   const a=AYUDA.articulos.find(x=>x.id===id);if(!a)return;
@@ -5662,6 +5668,7 @@ function abrirArticulo(id){
     return '<p>'+escH(b.texto)+'</p>';
   }).join('');
   document.getElementById('ayArtIndice').innerHTML=indice.length?indice.map(t=>'<li>'+escH(t)+'</li>').join(''):'<li>'+escH(a.resumen)+'</li>';
+  cerrarCajonAyuda();
   document.getElementById('ayGrid').classList.add('oculto');
   document.getElementById('ayArticulo').classList.remove('oculto');
   window.scrollTo(0,0);
@@ -5673,20 +5680,15 @@ function cerrarArticulo(){
 }
 function preguntarSobreTema(){
   const a=AYUDA.articulos.find(x=>x.id===AYUDA.actual);
-  cerrarArticulo();tabAyuda('asistente');
+  cerrarArticulo();
   const ta=document.getElementById('ayPregunta');
   ta.value=a?'Sobre «'+a.titulo+'»: ':'';ta.focus();
-}
-function sugerenciasAyuda(){
-  return AYUDA.rol==='admin'
-    ?['¿Cómo devuelvo un chat a Verde?','¿Qué es la ventana de 24 horas?','¿Cómo creo un usuario asesor?']
-    :['¿Cómo devuelvo un chat a Verde?','¿Cómo marco un chat como atendido?','¿Qué significa «Verde en pausa»?'];
 }
 function pintarChatAyuda(){
   const box=document.getElementById('ayChat');
   pintarAdjuntoAyuda();
   if(!AYUDA.hilo.length){
-    box.innerHTML='<div class="ay-vacio"><span>Escribir una consulta o elegir una de estas:</span><div class="ay-sug">'+sugerenciasAyuda().map(s=>'<button type="button" onclick="preguntarAyuda(this.textContent)">'+escH(s)+'</button>').join('')+'</div></div>';
+    box.innerHTML='<div class="ay-vacio"><span>Escribí tu consulta o usá un acceso rápido.</span></div>';
     return;
   }
   box.innerHTML=AYUDA.hilo.map((x,hi)=>{
@@ -6342,7 +6344,6 @@ function ayudaConEsteChat(){
   const dts=CONV.datos||{};
   AYUDA.chat={clave:CONV.clave,nombre:dts.nombre||'',numero:dts.numero||String(CONV.clave).replace(/^wa:/,'')};
   go('ayuda');
-  if(typeof tabAyuda==='function')tabAyuda('asistente');
   pintarAdjuntoAyuda();
   const ta=document.getElementById('ayPregunta');if(ta)ta.focus();
 }
@@ -6377,5 +6378,24 @@ function htmlTextosAyuda(x,h){
   if(!x||!Array.isArray(x.textos)||!x.textos.length)return '';
   return x.textos.map((t,i)=>'<div class="ay-texto"><span class="ay-texto-tit">Texto listo para enviar</span><span class="ay-texto-cuerpo">'+escH(t)+'</span><span class="ay-texto-btns"><button type="button" onclick="copiarTextoAyuda('+h+','+i+')">'+IC1411.copiar+'Copiar</button>'+(AYUDA.chat?'<button type="button" class="ay-usar" onclick="usarTextoEnChat('+h+','+i+')">'+IC1411.enviar+'Usar en el chat de '+escH(nombreChatAyuda())+'</button>':'')+'</span></div>').join('');
 }
+
+
+/* ===================== 1.4.12: cajón «Manual y guías» ===================== */
+function abrirCajonAyuda(){
+  const c=document.getElementById('ayCajon'),f=document.getElementById('ayCajonFondo'),b=document.getElementById('btnManualAyuda');
+  if(!c)return;
+  c.classList.remove('oculto');if(f)f.classList.remove('oculto');if(b)b.setAttribute('aria-expanded','true');
+  const q=document.getElementById('ayBuscar');if(q&&window.matchMedia&&window.matchMedia('(pointer: fine)').matches)q.focus();
+}
+function cerrarCajonAyuda(){
+  const c=document.getElementById('ayCajon'),f=document.getElementById('ayCajonFondo'),b=document.getElementById('btnManualAyuda');
+  if(c)c.classList.add('oculto');if(f)f.classList.add('oculto');if(b)b.setAttribute('aria-expanded','false');
+}
+function alternarCajonAyuda(){const c=document.getElementById('ayCajon');if(c&&c.classList.contains('oculto'))abrirCajonAyuda();else cerrarCajonAyuda();}
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  const c=document.getElementById('ayCajon');
+  if(c&&!c.classList.contains('oculto')){e.preventDefault();e.stopImmediatePropagation();cerrarCajonAyuda();const b=document.getElementById('btnManualAyuda');if(b)b.focus();}
+},true);
 
 </script>
