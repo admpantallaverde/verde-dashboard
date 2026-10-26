@@ -25,7 +25,7 @@ const PRECIOS = {
   'claude-fable-5-1': { nombre: 'Claude Fable 5.1', entrada: 10, salida: 50 }
 };
 const PRECIOS_VERIFICADOS = '2026-10-24';
-const ORIGENES = ['whatsapp', 'pruebas', 'ayuda'];
+const ORIGENES = ['whatsapp', 'pruebas', 'ayuda', 'correccion'];   // 1.4.10: corrección de mensajes del asesor
 
 let relojPrueba = null;                       // solo para las pruebas automáticas
 function ahora() { return relojPrueba ? relojPrueba() : Date.now(); }
@@ -127,7 +127,7 @@ function resumen(filtro) {
   if (p.error) return { error: p.error };
   const d = cargar();
   const total = { consultas: 0, entrada: 0, salida: 0, costo: 0, sinPrecio: 0 };
-  const porOrigen = { whatsapp: { consultas: 0, costo: 0 }, pruebas: { consultas: 0, costo: 0 }, ayuda: { consultas: 0, costo: 0 } };
+  const porOrigen = { whatsapp: { consultas: 0, costo: 0 }, pruebas: { consultas: 0, costo: 0 }, ayuda: { consultas: 0, costo: 0 }, correccion: { consultas: 0, costo: 0 } };
   const porModelo = {};
   const dias = [];
   for (const dia of Object.keys(d.dias).sort().reverse()) {

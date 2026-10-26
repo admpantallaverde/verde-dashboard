@@ -141,6 +141,14 @@ const ARTICULOS = [
     ]
   },
   {
+    id: 'corregir', grupo: 'manual', soloAdmin: false, titulo: 'Corregir el texto con la IA',
+    resumen: 'El botón de IA de la caja de mensaje corrige la ortografía y escribe el texto más claro, en el tono que se elija.',
+    bloques: [
+      { tipo: 'p', texto: 'En la caja de mensaje de cada chat, el botón con el ícono de IA (o el atajo Shift + la tecla a la izquierda del 1, en la computadora) abre un menú con tres tonos: rioplatense, neutro y formal. Al elegir uno, la IA corrige la ortografía y reescribe el texto para que el cliente lo entienda mejor, manteniendo todas las ideas de quien lo escribió. El texto corregido reemplaza al original en la caja, con el botón «Deshacer» para recuperarlo. Nada se envía solo: se puede editar antes de enviar.' },
+      { tipo: 'p', texto: 'La IA no agrega información, precios ni promesas que no estén en el texto, respeta los emojis y no toca la firma, que se agrega al enviar. Cada corrección queda registrada en «Consumo de IA» como «Corrección», con un límite de 30 por hora por usuario.' }
+    ]
+  },
+  {
     id: 'apariencia', grupo: 'manual', soloAdmin: false, titulo: 'Modo claro, oscuro y menú',
     resumen: 'Cómo cambiar entre modo claro y oscuro, achicar el menú y cerrar la sesión.',
     bloques: [

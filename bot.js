@@ -249,6 +249,32 @@ function paraMemoria(reply, recurso) {
   return (reply || '') + (recurso ? (reply ? '\n' : '') + '[Archivo enviado: «' + recurso.nombre + '»]' : '');
 }
 
+// 1.4.10: corrección del texto que un asesor escribió para el cliente (ortografía y claridad, sin agregar nada).
+const TONOS_CORRECCION = {
+  rioplatense: 'español rioplatense con voseo (vos, tenés, probá, traelo), cercano y respetuoso, como le habla la tienda a sus clientes',
+  neutro: 'español neutro, sin voseo (tuteo: tú, tienes, prueba, tráelo), claro y cordial',
+  formal: 'español formal con trato de usted (usted, tiene, pruebe, tráigalo), cordial y profesional'
+};
+function instruccionesCorreccion(tono, v) {
+  const empresa = (v && String(v.empresa || '').trim()) || 'la tienda';
+  return 'Sos el corrector de mensajes de ' + empresa + '. Recibís el texto que una persona del equipo escribió para responderle a un cliente por WhatsApp. Devolvé únicamente el texto corregido, sin comillas, sin títulos y sin explicaciones.\n'
+    + 'Reglas:\n'
+    + '1. Corregí la ortografía, los acentos y la puntuación.\n'
+    + '2. Reescribilo para que el cliente lo entienda fácil: frases cortas y claras, en orden lógico.\n'
+    + '3. Mantené todas las ideas, datos y condiciones que escribió la persona. No agregues información, precios, plazos, promesas ni saludos que no estén en el texto. No quites datos.\n'
+    + '4. Respetá los emojis que haya y no agregues otros.\n'
+    + '5. Mantené un largo parecido; solo acortá lo redundante.\n'
+    + '6. Tono: ' + (TONOS_CORRECCION[tono] || TONOS_CORRECCION.rioplatense) + '.\n'
+    + '7. Si el texto ya está bien, devolvelo igual, con los cambios mínimos.';
+}
+function limpiarCorreccion(crudo) {
+  let t = String(crudo == null ? '' : crudo).trim();
+  t = t.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/, '').trim();
+  t = t.replace(/^(texto corregido|corrección|versión corregida)\s*:\s*/i, '').trim();
+  if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith('«') && t.endsWith('»'))) t = t.slice(1, -1).trim();
+  return t;
+}
+
 // 1.4.7: en la primera respuesta, el sistema agrega la línea de presentación; Verde no debe presentarse por su cuenta.
 function notaPresentacion(linea) {
   const l = String(linea || '').trim();
@@ -677,7 +703,7 @@ module.exports = {
   ADJUNTO_POR_DEFECTO, instruccionesArchivo, notaAtencion,
   GARANTIA_DATOS_DEFECTO, GARANTIA_SINTOMAS_DEFECTO, GARANTIA_REQUISITOS_DEFECTO, GARANTIA_COBERTURA_DEFECTO, garantiaDe, bloqueGarantia, separarReclamo,
   CONSULTA_REPARACION_DEFECTO, CONSULTA_COMPRA_DEFECTO, consultasDe, bloqueConsultas, separarConsulta, notaPresentacion,
-  bloqueBiblioteca, separarEnvio, notaSinArchivos, corregirEnvioFallido,
+  bloqueBiblioteca, separarEnvio, notaSinArchivos, corregirEnvioFallido, TONOS_CORRECCION, instruccionesCorreccion, limpiarCorreccion,
   tieneRespuestas,
   modeloEnUso,
   responderPendiente,

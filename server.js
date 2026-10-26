@@ -35,7 +35,7 @@ const usuarios = require('./usuarios.js');
 const atencion = require('./atencion.js');
 const conversaciones = require('./conversaciones.js');
 
-const VERSION = '1.4.9';
+const VERSION = '1.4.10';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -904,6 +904,33 @@ app.post('/api/ayuda/preguntar', requiere(['admin', 'asesor']), async (req, res)
     try { crudo = await bot.callClaude(ayuda.instrucciones(rol, configAyuda()), mensajes, bot.getVerde(), 'claude-sonnet-5-5', 'ayuda'); }
     catch (e) { console.error('Centro de ayuda: la IA no respondió:', e.message); return res.status(502).json({ error: 'El asistente no está disponible en este momento. Intentar de nuevo en unos minutos.' }); }
     res.json(ayuda.interpretar(crudo, rol));
+  } catch (e) { responderError(res, e); }
+});
+/* ---------- 1.4.10: corregir y aclarar el texto del asesor con la IA ---------- */
+const correcciones = new Map();      // usuario → momentos de sus últimas correcciones
+const LIMITE_CORRECCIONES = 30;      // por hora y por usuario
+app.post('/api/corregir', requiere(['admin', 'asesor']), async (req, res) => {
+  try {
+    const texto = String((req.body && req.body.texto) || '').replace(/\r\n/g, '\n').trim();
+    const tono = String((req.body && req.body.tono) || 'rioplatense');
+    if (!texto) return res.status(400).json({ error: 'Escribir el mensaje antes de corregirlo.' });
+    if (texto.length > 3900) return res.status(400).json({ error: 'El mensaje es demasiado largo (máximo 3900 caracteres).' });
+    if (!bot.TONOS_CORRECCION[tono]) return res.status(400).json({ error: 'El tono no es válido.' });
+    const clave = req.usuario ? req.usuario.id : 'general';
+    const hace1h = Date.now() - 3600000;
+    const previas = (correcciones.get(clave) || []).filter(t => t > hace1h);
+    if (previas.length >= LIMITE_CORRECCIONES) return res.status(429).json({ error: 'Se alcanzó el límite de ' + LIMITE_CORRECCIONES + ' correcciones por hora. Intentar más tarde.' });
+    previas.push(Date.now());
+    correcciones.set(clave, previas);
+    const v = bot.getVerde();
+    const vc = Object.assign({}, v, { tecnico: Object.assign({}, v.tecnico || {}, { maxTokens: Math.max(2000, (v.tecnico && v.tecnico.maxTokens) || 0) }) });
+    let crudo;
+    try { crudo = await bot.callClaude(bot.instruccionesCorreccion(tono, v), [{ role: 'user', content: texto }], vc, null, 'correccion'); }
+    catch (e) { console.error('Corrección: la IA no respondió:', e.message); return res.status(502).json({ error: 'La IA no está disponible en este momento. El texto quedó como estaba.' }); }
+    const corregido = bot.limpiarCorreccion(crudo);
+    if (!corregido) return res.status(502).json({ error: 'La IA no devolvió un texto. El texto quedó como estaba.' });
+    console.log('Panel: ' + quienEs(req) + ' corrigió un mensaje con la IA (' + tono + ')');
+    res.json({ ok: true, texto: corregido.slice(0, 3900), tono });
   } catch (e) { responderError(res, e); }
 });
 app.put('/api/privacidad', requiere(['admin']), (req, res) => {

@@ -1454,6 +1454,37 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 .rec-directo.rec-apagado{opacity:.55}
 .rec-sinpreg{display:inline-block;margin-top:6px;white-space:nowrap;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(59,130,246,.16);color:var(--text)}
 
+/* ===================== 1.4.10: corregir el texto del asesor con la IA ===================== */
+.ia-wrap{position:relative;flex:none}
+.btn-ia{flex:none;width:48px;height:48px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--muted);display:inline-grid;place-items:center;cursor:pointer;transition:color .15s,border-color .15s,background .15s}
+.btn-ia svg{width:20px;height:20px}
+.btn-ia:hover:not(:disabled){color:var(--text);border-color:var(--accent-borde)}
+.btn-ia[aria-expanded="true"]{color:var(--text);border-color:var(--accent-borde);background:var(--accent-suave,rgba(159,212,0,.14))}
+.btn-ia:focus-visible{outline:2px solid var(--accent-borde);outline-offset:2px}
+.btn-ia:disabled{opacity:.45;cursor:not-allowed}
+.ia-menu{position:absolute;right:0;bottom:58px;z-index:30;width:320px;max-width:calc(100vw - 40px);background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 10px 28px rgba(0,0,0,.18);padding:6px;display:flex;flex-direction:column;gap:2px}
+.ia-menu-tit{display:flex;align-items:center;gap:8px;padding:8px 12px 6px;font-size:13px;font-weight:700;color:var(--text)}
+.ia-menu-tit svg{width:16px;height:16px;color:var(--accent-ink,var(--text))}
+.ia-menu button{display:flex;align-items:center;gap:12px;width:100%;min-height:50px;padding:8px 12px;border:none;border-radius:10px;background:transparent;color:var(--text);text-align:left;cursor:pointer;font:inherit}
+.ia-menu button:hover,.ia-menu button:focus-visible{background:var(--surface-3);outline:none}
+.ia-menu button.ia-marcado{background:var(--accent-suave,rgba(159,212,0,.14))}
+.ia-k{flex:none;width:22px;height:22px;border-radius:6px;background:var(--surface-3);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--muted)}
+.ia-menu button>span.ia-tx{display:flex;flex-direction:column;gap:1px;flex:1 1 auto;min-width:0}
+.ia-menu b{font-size:13.5px}
+.ia-menu .ia-tx>span{font-size:12px;color:var(--muted)}
+.ia-ultimo{display:none;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--text);opacity:.75}
+.ia-menu button.ia-marcado .ia-ultimo{display:inline}
+.ia-menu-pie{display:block;padding:6px 12px 4px;font-size:11.5px;color:var(--faint);line-height:1.4}
+.ia-barra{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;background:rgba(59,130,246,.14);color:var(--text);font-size:13px}
+.ia-barra>svg{width:16px;height:16px;flex:none}
+.ia-barra-tx{flex:1 1 auto;line-height:1.4}
+.ia-giro{width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--text);border-radius:50%;display:inline-block;margin-right:6px;vertical-align:-2px;animation:iagiro .8s linear infinite}
+@keyframes iagiro{to{transform:rotate(360deg)}}
+@media(max-width:600px){.btn-ia{width:44px;height:44px}.ia-menu{bottom:52px}}
+.ia-barra .btn-mini{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;flex:none;min-height:32px;padding:6px 12px;border-radius:17px;border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+.ia-barra .btn-mini:hover,.ia-barra .btn-mini:focus-visible{border-color:var(--accent-borde);outline:none}
+.ia-barra .btn-mini svg{width:14px;height:14px}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -1999,10 +2030,12 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
           <div class="conv-mensajes" id="convMensajes" aria-live="polite"></div>
           <div class="conv-composer">
       <div class="conv-aviso ambar oculto" id="convNoResp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="txt" id="convNoRespTx"></span></div>
+      <div class="ia-barra oculto" id="iaBarra" role="status" aria-live="polite"></div>
       <div class="adj-vista oculto" id="adjVista" role="status" aria-live="polite"></div>
       <div class="fila">
         <div class="adj-wrap"><button type="button" class="btn-adjuntar" id="convAdjuntar" aria-label="Adjuntar un archivo" aria-haspopup="menu" aria-expanded="false" onclick="alternarAdjuntar()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></button><div class="adj-menu oculto" id="adjMenu" role="menu" aria-label="Adjuntar un archivo"><button type="button" role="menuitem" onclick="adjDesdeCompu()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg><span><b>Desde la computadora</b><span id="adjLimites">PDF hasta 25 MB · JPG o PNG hasta 5 MB</span></span></button><button type="button" role="menuitem" onclick="abrirBiblioteca()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span><b>Desde la biblioteca</b><span>Recursos cargados por el administrador</span></span></button></div><input type="file" id="adjArchivo" class="oculto" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" onchange="adjElegido(this)" tabindex="-1" aria-hidden="true"></div>
         <textarea id="convTexto" rows="1" placeholder="Escribir un mensaje…" aria-label="Mensaje para el cliente" maxlength="3900" onkeydown="teclaComposer(event)" oninput="ajustarAlto(this)"></textarea>
+        <div class="ia-wrap"><button type="button" class="btn-ia" id="convIA" aria-label="Corregir y aclarar el texto con la IA" aria-haspopup="menu" aria-expanded="false" title="Corregir con la IA (Shift + |)" onclick="alternarIA()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.6L18.5 9.5l-4.7 1.9L12 16l-1.8-4.6L5.5 9.5l4.7-1.9z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/><path d="M5 2l.6 1.4L7 4l-1.4.6L5 6l-.6-1.4L3 4l1.4-.6z"/></svg></button><div class="ia-menu oculto" id="iaMenu" role="menu" aria-label="Corregir y aclarar el texto"><div class="ia-menu-tit"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.6L18.5 9.5l-4.7 1.9L12 16l-1.8-4.6L5.5 9.5l4.7-1.9z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/><path d="M5 2l.6 1.4L7 4l-1.4.6L5 6l-.6-1.4L3 4l1.4-.6z"/></svg>Corregir y aclarar el texto</div><button type="button" role="menuitem" data-tono="rioplatense" onclick="corregirConIA('rioplatense')"><span class="ia-k" aria-hidden="true">1</span><span class="ia-tx"><b>Rioplatense (vos)</b><span>Como le hablamos al cliente</span></span><span class="ia-ultimo">Última vez</span></button><button type="button" role="menuitem" data-tono="neutro" onclick="corregirConIA('neutro')"><span class="ia-k" aria-hidden="true">2</span><span class="ia-tx"><b>Neutro</b><span>Sin voseo</span></span><span class="ia-ultimo">Última vez</span></button><button type="button" role="menuitem" data-tono="formal" onclick="corregirConIA('formal')"><span class="ia-k" aria-hidden="true">3</span><span class="ia-tx"><b>Formal</b><span>Trato de usted</span></span><span class="ia-ultimo">Última vez</span></button><span class="ia-menu-pie">Corrige la ortografía y lo escribe más claro, sin agregar información. Elegir con 1, 2 o 3.</span></div></div>
         <button class="btn-enviar" type="button" id="convEnviar" aria-label="Enviar el mensaje" onclick="enviarRespuesta()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
       </div>
       <span class="conv-error oculto" id="convError" role="alert"></span>
@@ -5031,7 +5064,7 @@ async function abrirConversacion(clave){
 }
 function cerrarConversacion(){
   guardarBorrador();
-  quitarAdjunto(true);cerrarMenuAdjuntar();
+  quitarAdjunto(true);cerrarMenuAdjuntar();limpiarIA();
   clearInterval(CONV.timer);CONV.timer=null;
   document.getElementById('convPane').classList.add('oculto');
   ['splitChats','splitConv'].forEach(id=>{const sp=document.getElementById(id);sp.classList.remove('abierta');const v=sp.querySelector('.split-vacio');if(v)v.classList.remove('oculto');});
@@ -5040,7 +5073,7 @@ function cerrarConversacion(){
 }
 function marcarDesdeConversacion(){const id=document.getElementById('convMarcar').dataset.id;if(id)abrirAtendido(id);}
 // Escape cierra la conversación abierta (si no hay una ventana encima).
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&CONV.clave&&!document.querySelector('.overlay.show')&&document.getElementById('visorImg').classList.contains('oculto')&&document.getElementById('cuentaMenu').classList.contains('oculto')&&document.getElementById('adjMenu').classList.contains('oculto'))cerrarConversacion();},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&CONV.clave&&!document.querySelector('.overlay.show')&&document.getElementById('visorImg').classList.contains('oculto')&&document.getElementById('cuentaMenu').classList.contains('oculto')&&document.getElementById('adjMenu').classList.contains('oculto')&&document.getElementById('iaMenu').classList.contains('oculto'))cerrarConversacion();},true);
 async function refrescarConversacion(primera){
   const clave=CONV.clave;if(!clave)return;
   const r=await api('/api/conversaciones/'+encodeURIComponent(clave));
@@ -5066,7 +5099,7 @@ async function enviarRespuesta(){
   const r=await api('/api/conversaciones/'+encodeURIComponent(CONV.clave)+'/responder',{method:'POST',body:{texto}});
   btn.disabled=false;ta.disabled=false;
   if(!r.ok){err.textContent=r.json.error||'No se pudo enviar el mensaje.';err.classList.remove('oculto');if(r.json&&r.status===409)refrescarConversacion(false);return;}
-  ta.value='';ajustarAlto(ta);err.classList.add('oculto');delete BORRADORES[CONV.clave];
+  ta.value='';ajustarAlto(ta);err.classList.add('oculto');delete BORRADORES[CONV.clave];limpiarIA();
   pintarConversacion(r.json.conversacion,true);
   refrescarListas();
   if(!ta.disabled)ta.focus();
@@ -5285,7 +5318,7 @@ function pintarFranja(c){
 }
 function pintarConversacion(c,primera){
   const anterior=CONV.datos;CONV.datos=c;
-  if(!anterior||anterior.clave!==c.clave){quitarAdjunto(true);cerrarMenuAdjuntar();}   // 1.4.8: el archivo listo es de cada chat
+  if(!anterior||anterior.clave!==c.clave){quitarAdjunto(true);cerrarMenuAdjuntar();limpiarIA();}   // 1.4.8: el archivo listo es de cada chat
   document.getElementById('convNombre').textContent=c.nombre||(c.numero?'+'+c.numero:'Cliente sin número visible');
   document.getElementById('convNumero').textContent=c.nombre&&c.numero?'+'+c.numero:'';
   document.getElementById('convEstados').innerHTML=pillsConversacion(c);
@@ -5313,6 +5346,7 @@ function pintarConversacion(c,primera){
   document.getElementById('convNoRespTx').textContent=puede?'':(motivo||'');
   ta.disabled=!puede;btn.disabled=!puede;
   const ba=document.getElementById('convAdjuntar');if(ba)ba.disabled=!puede;
+  const bi=document.getElementById('convIA');if(bi)bi.disabled=!puede||!!(IA&&IA.ocupado);
   if(!puede&&adjActivo()){quitarAdjunto(true);cerrarMenuAdjuntar();}
   const firma=String(c.firmaUsuario||'').trim();
   const chico=!!(window.matchMedia&&window.matchMedia('(max-width: 600px)').matches);
@@ -5323,6 +5357,7 @@ function pintarConversacion(c,primera){
   ta.setAttribute('aria-label','Mensaje para '+(c.nombre||(c.numero?'+'+c.numero:'el cliente')));
   let pista=firma?'Sale desde el WhatsApp de la tienda con la firma «'+firma+'».':'Sale desde el WhatsApp de la tienda sin firma'+(SESION.usuario?' (este usuario no tiene una firma configurada).':'.');
   if(!c.apagado)pista+=' Al enviar, Verde queda en pausa en este chat.';
+  if(window.matchMedia&&window.matchMedia('(pointer: fine)').matches)pista+=' Shift + | corrige el texto con la IA.';
   const p=document.getElementById('convPista');p.textContent=puede?pista:'';
   ta.setAttribute('aria-describedby','convPista');
   ta.title=puede?pista:'';
@@ -5412,8 +5447,8 @@ function pintarConsumo(c){
   const mesDato=c.desde.slice(0,7);
   document.getElementById('consCostoSub').textContent=c.tipo==='mes'?(etiquetaMes(mesDato,false)+(mesDato===actual?', hasta hoy':'')):textoPeriodo(c.desde,c.hasta);
   document.getElementById('consConsultas').textContent=_consEnt.format(c.total.consultas);
-  const w=((c.porOrigen||{}).whatsapp||{}).consultas||0,pr=((c.porOrigen||{}).pruebas||{}).consultas||0,ay=((c.porOrigen||{}).ayuda||{}).consultas||0;
-  document.getElementById('consOrigen').textContent='WhatsApp: '+_consEnt.format(w)+' · Pruebas en el panel: '+_consEnt.format(pr)+' · Ayuda: '+_consEnt.format(ay);
+  const w=((c.porOrigen||{}).whatsapp||{}).consultas||0,pr=((c.porOrigen||{}).pruebas||{}).consultas||0,ay=((c.porOrigen||{}).ayuda||{}).consultas||0,co=((c.porOrigen||{}).correccion||{}).consultas||0;
+  document.getElementById('consOrigen').textContent='WhatsApp: '+_consEnt.format(w)+' · Pruebas en el panel: '+_consEnt.format(pr)+' · Ayuda: '+_consEnt.format(ay)+' · Corrección: '+_consEnt.format(co);
   document.getElementById('consPromedio').textContent=c.total.consultas?'US$ '+_cons4.format(c.promedio):'—';
   const m=c.modeloActual||{};
   const mv=document.getElementById('consModelo');
@@ -6032,7 +6067,7 @@ async function enviarAdjunto(){
   btn.disabled=false;ta.disabled=false;if(ba)ba.disabled=false;
   if(clave!==CONV.clave)return;
   if(!r.ok){pintarAdjunto(false);errorComposer(r.json.error||'No se pudo enviar el archivo.');if(r.status===409)refrescarConversacion(false);return;}
-  quitarAdjunto(true);ta.value='';ajustarAlto(ta);err.classList.add('oculto');delete BORRADORES[CONV.clave];
+  quitarAdjunto(true);ta.value='';ajustarAlto(ta);err.classList.add('oculto');delete BORRADORES[CONV.clave];limpiarIA();
   pintarConversacion(r.json.conversacion,true);
   refrescarListas();
   if(!ta.disabled)ta.focus();
@@ -6165,5 +6200,71 @@ function sincronizarDirecto(){
   const caja=d.closest('.rec-directo');if(caja)caja.classList.toggle('rec-apagado',!on);
 }
 function alternarDirectoNuevo(b){if(b.disabled)return;b.setAttribute('aria-checked',String(b.getAttribute('aria-checked')!=='true'));}
+
+
+/* ===================== 1.4.10: corregir y aclarar el texto del asesor con la IA ===================== */
+var IA={orig:null,tono:null,ocupado:false};
+const NOMBRE_TONO={rioplatense:'rioplatense',neutro:'neutro',formal:'formal'};
+const TECLA_TONO={'1':'rioplatense','2':'neutro','3':'formal'};
+const IC1410={
+  ia:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.6L18.5 9.5l-4.7 1.9L12 16l-1.8-4.6L5.5 9.5l4.7-1.9z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/><path d="M5 2l.6 1.4L7 4l-1.4.6L5 6l-.6-1.4L3 4l1.4-.6z"/></svg>',
+  deshacer:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/></svg>'
+};
+function tonoUltimo(){try{return localStorage.getItem('verde_tono_ia')||'rioplatense';}catch(e){return 'rioplatense';}}
+function cerrarMenuIA(){const m=document.getElementById('iaMenu'),b=document.getElementById('convIA');if(m)m.classList.add('oculto');if(b)b.setAttribute('aria-expanded','false');}
+function alternarIA(){
+  const b=document.getElementById('convIA'),ta=document.getElementById('convTexto'),m=document.getElementById('iaMenu');
+  if(!b||b.disabled||!CONV.clave||IA.ocupado||!m)return;
+  if(!m.classList.contains('oculto')){cerrarMenuIA();return;}
+  if(!ta.value.trim()){errorComposer('Escribir el mensaje antes de corregirlo.');ta.focus();return;}
+  cerrarMenuAdjuntar();
+  const u=tonoUltimo();
+  m.querySelectorAll('[data-tono]').forEach(x=>x.classList.toggle('ia-marcado',x.dataset.tono===u));
+  m.classList.remove('oculto');b.setAttribute('aria-expanded','true');
+  const sel=m.querySelector('[data-tono="'+u+'"]')||m.querySelector('[data-tono]');if(sel)sel.focus();
+}
+function pintarBarraIA(html,boton){
+  const bar=document.getElementById('iaBarra');if(!bar)return;
+  if(!html){bar.classList.add('oculto');bar.innerHTML='';return;}
+  bar.innerHTML=IC1410.ia+'<span class="ia-barra-tx">'+html+'</span>'+(boton||'');bar.classList.remove('oculto');
+}
+async function corregirConIA(tono){
+  const ta=document.getElementById('convTexto'),btn=document.getElementById('convEnviar'),b=document.getElementById('convIA');
+  cerrarMenuIA();
+  if(!CONV.clave||IA.ocupado||!ta||ta.disabled||!NOMBRE_TONO[tono])return;
+  const texto=ta.value.trim();
+  if(!texto){errorComposer('Escribir el mensaje antes de corregirlo.');ta.focus();return;}
+  try{localStorage.setItem('verde_tono_ia',tono);}catch(e){}
+  IA.ocupado=true;const clave=CONV.clave,original=ta.value;
+  pintarBarraIA('<span class="ia-giro" aria-hidden="true"></span>Corrigiendo el texto…');
+  ta.disabled=true;btn.disabled=true;b.disabled=true;
+  const r=await api('/api/corregir',{method:'POST',body:{texto,tono}});
+  IA.ocupado=false;ta.disabled=false;btn.disabled=false;b.disabled=false;
+  if(clave!==CONV.clave)return;
+  if(!r.ok||!r.json.texto){pintarBarraIA(null);errorComposer(r.json.error||'No se pudo corregir el texto. Quedó como estaba.');ta.focus();return;}
+  IA.orig=original;IA.tono=tono;
+  ta.value=r.json.texto;ajustarAlto(ta);
+  const err=document.getElementById('convError');if(err)err.classList.add('oculto');
+  pintarBarraIA('<b>Texto corregido</b> en '+NOMBRE_TONO[tono]+'. Revisalo y editalo si querés antes de enviar.','<button type="button" class="btn-mini" id="iaDeshacer" onclick="deshacerIA()">'+IC1410.deshacer+'Deshacer</button>');
+  ta.focus();
+}
+function deshacerIA(){const ta=document.getElementById('convTexto');if(IA.orig==null||!ta)return;ta.value=IA.orig;IA.orig=null;IA.tono=null;ajustarAlto(ta);pintarBarraIA(null);ta.focus();}
+function limpiarIA(){IA={orig:null,tono:null,ocupado:false};pintarBarraIA(null);cerrarMenuIA();}
+// Atajo: Shift + la tecla a la izquierda del 1 (por posición física, en cualquier distribución). Con el menú abierto, 1, 2 o 3 eligen el tono.
+document.addEventListener('keydown',e=>{
+  const m=document.getElementById('iaMenu');
+  if(m&&!m.classList.contains('oculto')){
+    if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();e.stopPropagation();cerrarMenuIA();const b=document.getElementById('convIA');if(b)b.focus();return;}
+    const t=TECLA_TONO[e.key];
+    if(t){e.preventDefault();e.stopPropagation();corregirConIA(t);return;}
+    if(e.key==='Enter'&&document.activeElement&&document.activeElement.dataset&&document.activeElement.dataset.tono){e.preventDefault();e.stopPropagation();corregirConIA(document.activeElement.dataset.tono);}
+    return;
+  }
+  if(e.shiftKey&&!e.ctrlKey&&!e.altKey&&!e.metaKey&&(e.code==='Backquote'||['|','°','¬','~','`','º','ª'].includes(e.key))&&CONV.clave){
+    const ta=document.getElementById('convTexto');if(!ta||ta.disabled)return;
+    e.preventDefault();alternarIA();
+  }
+},true);
+document.addEventListener('click',e=>{const w=document.querySelector('.ia-wrap');if(w&&!w.contains(e.target))cerrarMenuIA();});
 
 </script>

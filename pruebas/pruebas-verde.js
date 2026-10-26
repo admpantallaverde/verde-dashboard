@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.4.9';
+const VERSION_ESPERADA = '1.4.10';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -44,6 +44,7 @@ global.fetch = async (url, opts = {}) => {
     const ultimo = (JSON.parse(opts.body).messages || []).slice(-1)[0] || {};
     const ult = String(ultimo.content || '');
     const respuestaIA = t => new Response(JSON.stringify({ content: [{ type: 'text', text: t }], stop_reason: 'end_turn', usage: { input_tokens: 1000, output_tokens: 100 } }), { status: 200 });
+    if (/corrector de mensajes/i.test(JSON.stringify(JSON.parse(opts.body).system || ''))) return respuestaIA('"Hola, buenas. ' + ult.replace(/pantaya/g, 'pantalla') + '"');   // 1.4.10: corrección de mensajes
     if (/garantía/i.test(ult)) return respuestaIA('Lamento el inconveniente 🙏 ¿Tenés la boleta de garantía?\n[RECLAMO]{"boleta":"4582","producto":"Cambio de pantalla hace 2 semanas","mismo":"sí","falla":"El touch no responde a veces","desde":"ayer","reinicio":"forzado hecho"}\n[DERIVAR]');
     if (/actualizar ficha/i.test(ult)) return respuestaIA('Anotado, gracias.\n[RECLAMO]{"golpes":"no","notas":"video recibido"}');
     if (/ficha rota/i.test(ult)) return respuestaIA('Te paso con un asesor.\n[RECLAMO]{boleta: 1}\n[DERIVAR]');
@@ -433,7 +434,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(rr.status === 401, 'sin sesión no se puede ver ningún archivo');
   rr = await api('/api/ayuda', 'GET', null, galletaCarla);
   const ayC = await json(rr);
-  verificar(rr.status === 200 && ayC.rol === 'asesor' && !ayC.articulos.some(a => a.soloAdmin) && ayC.articulos.map(a => a.id).join(',') === 'chats-por-responder,conversaciones,chats-respondidos,garantia,consultas,archivos-enviados,apariencia', 'un asesor ve solo los 7 temas para atender los chats');
+  verificar(rr.status === 200 && ayC.rol === 'asesor' && !ayC.articulos.some(a => a.soloAdmin) && ayC.articulos.map(a => a.id).join(',') === 'chats-por-responder,conversaciones,chats-respondidos,garantia,consultas,archivos-enviados,corregir,apariencia', 'un asesor ve solo los 8 temas para atender los chats');
   rr = await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Cómo devuelvo un chat a Verde?' }, galletaCarla);
   const pC = await json(rr);
   const sysC = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system);
@@ -898,7 +899,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
 
   mostrar('55) Centro de ayuda: manual y guías según el rol');
   const ay55 = await json(await api('/api/ayuda', 'GET'));
-  verificar(ay55.rol === 'admin' && ay55.articulos.filter(a => a.grupo === 'manual').length === 11 && ay55.articulos.filter(a => a.grupo === 'meta').length === 6 && ay55.revisionMeta === '2026-10-24', 'el administrador ve los 11 temas del manual y las 6 guías de Meta');
+  verificar(ay55.rol === 'admin' && ay55.articulos.filter(a => a.grupo === 'manual').length === 12 && ay55.articulos.filter(a => a.grupo === 'meta').length === 6 && ay55.revisionMeta === '2026-10-24', 'el administrador ve los 12 temas del manual y las 6 guías de Meta');
   verificar(ay55.articulos.every(a => a.titulo && a.resumen && a.bloques && a.bloques.length), 'cada tema tiene título, resumen y contenido');
 
   mostrar('56) Asistente de ayuda');
@@ -1448,6 +1449,24 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(sys68b.includes('== ARCHIVOS ==') && sys68b.includes('En este momento no podés enviar archivos ni imágenes') && sys68b.includes('aunque otra instrucción lo indique') && !sys68b.includes('BIBLIOTECA DE RECURSOS'), 'en el modo de prueba, Verde sabe que no puede enviar archivos y no los promete, aunque una regla de oro lo indique');
   const botN = require('./bot.js');
   verificar(botN.bloqueBiblioteca([{ id: 'a', nombre: 'A', cuando: 'x', mime: 'image/png', directo: false }]).indexOf('salvo los marcados') === -1, 'sin recursos «sin preguntar», la regla de ofrecer primero queda como siempre');
+
+
+  mostrar('69) Corregir el texto del asesor con la IA');
+  let c69 = await api('/api/corregir', 'POST', { texto: 'hola buenas, la pantaya que te pusimos tiene garantia 30 dias', tono: 'rioplatense' });
+  let j69 = await json(c69);
+  const sys69 = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system);
+  verificar(c69.status === 200 && j69.texto === 'Hola, buenas. hola buenas, la pantalla que te pusimos tiene garantia 30 dias' && j69.tono === 'rioplatense', 'la IA devuelve el texto corregido y el panel lo recibe limpio, sin comillas');
+  verificar(sys69.includes('corrector de mensajes') && sys69.includes('No agregues información, precios, plazos, promesas') && sys69.includes('voseo (vos, tenés, probá, traelo)'), 'la IA recibe las reglas: corregir y aclarar sin agregar nada, en el tono elegido');
+  c69 = await api('/api/corregir', 'POST', { texto: 'texto formal', tono: 'formal' });
+  verificar(c69.status === 200 && JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system).includes('trato de usted'), 'el tono formal pide trato de usted');
+  verificar((await api('/api/corregir', 'POST', { texto: '   ', tono: 'neutro' })).status === 400 && (await api('/api/corregir', 'POST', { texto: 'hola', tono: 'gracioso' })).status === 400 && (await api('/api/corregir', 'POST', { texto: 'x'.repeat(3901), tono: 'neutro' })).status === 400, 'un texto vacío, un tono inválido o un texto demasiado largo se rechazan');
+  const cons69 = await json(await api('/api/consumo-ia'));
+  verificar(cons69.porOrigen && cons69.porOrigen.correccion && cons69.porOrigen.correccion.consultas >= 2, 'cada corrección queda en «Consumo de IA» como «Corrección»');
+  let tope69 = 0;
+  for (let i = 0; i < 30; i++) { const r = await api('/api/corregir', 'POST', { texto: 'prueba ' + i, tono: 'neutro' }); if (r.status === 429) { tope69 = i; break; } }
+  verificar(tope69 === 28 && /límite de 30 correcciones por hora/.test((await json(await api('/api/corregir', 'POST', { texto: 'otra', tono: 'neutro' }))).error), 'después de 30 correcciones en una hora, se frena con un aviso claro');
+  const botK = require('./bot.js');
+  verificar(botK.limpiarCorreccion('```\nTexto corregido: «Hola, buenas.»\n```') === 'Hola, buenas.' && botK.limpiarCorreccion('  ') === '', 'si la IA envuelve la respuesta con comillas, títulos o marcas de código, se limpian');
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }
