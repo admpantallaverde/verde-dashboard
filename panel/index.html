@@ -1546,6 +1546,86 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 .ay-volver svg{width:15px;height:15px}
 @media(min-width:881px){.topbar{padding-right:76px}.app.vista-split .conv-cab{padding-right:80px}}
 
+/* ===================== 1.4.15: verificación en 2 pasos, registro de accesos y respaldos ===================== */
+.login-screen{align-items:flex-start}
+.login-box{margin:auto}
+.dp-cab{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.dp-cab>div{display:flex;flex-direction:column;gap:2px}
+.dp-cab b{font-size:15px}
+.dp-cab span:not(.dp-ic){font-size:12.5px;color:var(--muted)}
+.dp-ic{flex:none;width:36px;height:36px;border-radius:10px;background:rgba(201,242,77,.14);color:var(--accent-text,var(--text));display:inline-grid;place-items:center}
+.dp-ic svg{width:18px;height:18px}
+.dp-ic-ok{background:rgba(70,211,154,.14);color:var(--green)}
+.dp-txt{font-size:13.5px;line-height:1.45;color:var(--muted);margin:0 0 12px}
+.dp-tit{font-size:15px}
+.dp-cajas{position:relative;display:flex;gap:8px;justify-content:center;margin:2px 0 14px}
+.dp-caja{width:46px;height:54px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);display:inline-flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:24px;font-weight:600;color:var(--text);transition:border-color .12s,box-shadow .12s}
+.dp-caja.llena{border-color:var(--accent-borde)}
+.dp-caja.actual{border-color:var(--accent-borde);box-shadow:0 0 0 3px rgba(201,242,77,.22)}
+.dp-input{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:none;padding:0;margin:0;font-size:16px;cursor:text;background:transparent;color:transparent;caret-color:transparent}
+.dp-links{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px}
+.dp-link{border:none;background:none;padding:6px 0;font:inherit;font-size:13px;font-weight:600;color:var(--blue);cursor:pointer;text-align:left}
+.dp-link:hover{text-decoration:underline}
+.dp-link-gris{color:var(--muted)}
+.dp-pasos{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.dp-pasos li{display:flex;gap:10px;font-size:13px;line-height:1.45;color:var(--text)}
+.dp-num{flex:none;width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--accent-ink,#111b21);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.dp-qr{align-self:center;margin:12px auto 6px;padding:10px;border-radius:12px;background:#ffffff;border:1px solid var(--border);line-height:0}
+.dp-qr svg{display:block;width:184px;height:184px}
+.dp-clave{text-align:center;font-size:12px;color:var(--muted);margin:2px 0 12px;line-height:1.5}
+.dp-clave b{display:inline-block;margin-top:4px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:13.5px;letter-spacing:1px;color:var(--text);user-select:all}
+.dp-clave b span{display:block;white-space:nowrap}
+.dp-aviso{padding:10px 12px;border-radius:10px;background:rgba(244,193,82,.14);color:var(--text);font-size:12.5px;line-height:1.45;margin-bottom:12px}
+.dp-codigos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.dp-codigos span{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:14px;font-weight:600;padding:8px 10px;border-radius:8px;background:var(--surface-2);border:1px solid var(--border);text-align:center;letter-spacing:.5px;user-select:all}
+.dp-acciones{display:flex;gap:8px;margin-bottom:12px}
+.dp-acciones .btn{flex:1 1 0;justify-content:center}
+.dp-acciones svg{width:15px;height:15px}
+.dp-check{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:12px;cursor:pointer}
+.dp-check input{width:18px;height:18px;accent-color:var(--accent);margin:0}
+.dp-estado{display:flex;align-items:center;gap:5px;margin-top:6px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.dp-estado svg{width:12px;height:12px}
+.dp-estado.ok{color:var(--green)}
+.dp-estado.pend{color:var(--amber)}
+.usr-dp{margin-top:14px;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2);display:flex;flex-direction:column;gap:8px}
+.usr-dp-cab{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.usr-dp-cab b{display:flex;align-items:center;gap:8px;font-size:13.5px}
+.usr-dp-cab svg{width:16px;height:16px}
+.usr-dp p{margin:0;line-height:1.45}
+.usr-dp .btn{align-self:flex-start}
+.acc-filtro{padding:14px 18px}
+.acc-fila{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.acc-fila select{min-width:190px}
+.acc-rojo{color:var(--red)}
+.acc-ev{display:inline-flex;align-items:center;gap:8px;font-weight:500}
+.acc-ev svg{width:15px;height:15px;flex:none}
+.acc-ev.ev-verde svg{color:var(--green)}
+.acc-ev.ev-rojo svg{color:var(--red)}
+.acc-ev.ev-ambar svg{color:var(--amber)}
+.acc-ev.ev-azul svg{color:var(--blue)}
+.acc-ev.ev-gris svg{color:var(--muted)}
+.acc-ip{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12.5px}
+.acc-noexiste{color:var(--red)}
+.acc-pie{padding:10px 18px 14px}
+.rsp-barra{display:flex;justify-content:flex-end;margin-bottom:14px}
+.rsp-barra .btn svg{width:15px;height:15px}
+.rsp-alerta{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:12px;margin-bottom:16px;font-size:13px;line-height:1.45;background:rgba(244,193,82,.14);border:1px solid rgba(244,193,82,.45);color:var(--text)}
+.rsp-alerta>svg{width:18px;height:18px;flex:none;color:var(--amber)}
+.rsp-alerta>span{flex:1 1 auto}
+.rsp-alerta .btn{flex:none}
+.rsp-alerta .btn svg{width:15px;height:15px}
+.rsp-alerta.rsp-sinclave{background:rgba(247,114,114,.12);border-color:rgba(247,114,114,.4)}
+.rsp-alerta.rsp-sinclave>svg{color:var(--red)}
+.rsp-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+.rsp-stats .v{font-size:24px}
+.rsp-notas{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.rsp-notas .note span{line-height:1.5}
+.rsp-giro{width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;display:inline-block;animation:rspgiro .8s linear infinite}
+@keyframes rspgiro{to{transform:rotate(360deg)}}
+@media(max-width:900px){.rsp-stats{grid-template-columns:1fr}.rsp-alerta{flex-wrap:wrap}.rsp-alerta .btn{width:100%;justify-content:center}}
+@media(max-width:600px){.acc-fila select{min-width:0;width:100%}.acc-fila .cons-campo{flex:1 1 100%}}
+@media(max-width:420px){.dp-caja{width:40px;height:50px;font-size:22px}.dp-cajas{gap:6px}.dp-qr svg{width:164px;height:164px}}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -1618,6 +1698,8 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
       <div class="nav-label">Sistema</div>
       <button class="tree-leaf" id="leaf-usuarios" onclick="go('usuarios')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Usuarios</button>
       <button class="tree-leaf" id="leaf-consumo" onclick="go('consumo')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Consumo de IA</button>
+      <button class="tree-leaf" id="leaf-accesos" onclick="go('accesos')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Registro de accesos</button>
+      <button class="tree-leaf" id="leaf-respaldos" onclick="go('respaldos')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>Respaldos</button>
     </div>
     <div id="navAyuda">
       <div class="nav-label">Ayuda</div>
@@ -2214,6 +2296,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
         </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px">
+        <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span><b>Verificación en 2 pasos:</b> obligatoria para todos. Su estado se ve debajo de «Activo»: «pendiente» significa que la persona la configura en su próximo ingreso, con una app autenticadora, y recibe 10 códigos de recuperación. Si alguien pierde el celular, un administrador la restablece desde «Editar».</span></div>
         <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span><b>Administrador:</b> acceso a todo el panel, incluidos la configuración de Verde, los usuarios y la supervisión. <b>Asesor:</b> atiende los chats por responder y consulta el historial; no puede cambiar la configuración.</span></div>
         <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Los usuarios no se eliminan: se desactivan, para que el historial siga mostrando quién atendió cada chat. Las contraseñas se guardan cifradas y nadie puede verlas.</span></div>
       </div>
@@ -2244,6 +2327,38 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
       </div>
       <div class="note oculto" id="consSinPrecio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span id="consSinPrecioTx"></span></div>
       <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span><b>Cómo se calcula.</b> Cada consulta a la IA informa cuánto texto procesó (tokens de entrada y de salida). Verde multiplica esas cantidades por el precio publicado por Anthropic para el modelo usado, vigente al momento de la consulta. Es un valor estimado, en dólares estadounidenses y sin impuestos; el monto facturado se consulta en platform.claude.com, en «Cost». Incluye las pruebas hechas en «Probar a Verde» y las preguntas del Centro de ayuda.</span></div>
+    </div>
+    <!-- ===== VIEW: REGISTRO DE ACCESOS (1.4.15) ===== -->
+    <div class="view" id="view-accesos">
+      <div class="panel acc-filtro"><div class="acc-fila">
+        <label class="cons-campo" for="accUsuario">Usuario<select id="accUsuario" onchange="cargarAccesos()"><option value="">Todos los usuarios</option></select></label>
+        <label class="cons-campo" for="accEvento">Evento<select id="accEvento" onchange="cargarAccesos()"><option value="">Todos los eventos</option><option value="ingresos">Ingresos correctos</option><option value="fallidos">Intentos fallidos</option><option value="bloqueos">Bloqueos</option><option value="salidas">Cierres de sesión</option><option value="dos_pasos">Verificación en 2 pasos</option><option value="descargas">Descargas de respaldos</option></select></label>
+        <label class="cons-campo" for="accDias">Período<select id="accDias" onchange="cargarAccesos()"><option value="7">Últimos 7 días</option><option value="30">Últimos 30 días</option><option value="90">Últimos 90 días</option></select></label>
+      </div></div>
+      <div class="stats">
+        <div class="stat"><div class="k">Ingresos correctos</div><div class="v" id="accIngresos">—</div><div class="s" id="accPeriodo">Últimos 7 días</div></div>
+        <div class="stat"><div class="k">Intentos fallidos</div><div class="v acc-rojo" id="accFallidos">—</div><div class="s">Contraseñas y códigos incorrectos</div></div>
+        <div class="stat"><div class="k">Bloqueos</div><div class="v acc-rojo" id="accBloqueos">—</div><div class="s">15 minutos tras 5 intentos fallidos</div></div>
+        <div class="stat"><div class="k">Descargas de respaldos</div><div class="v" id="accDescargas">—</div><div class="s">Copias de todos los datos</div></div>
+      </div>
+      <div class="panel"><div style="overflow-x:auto"><table style="min-width:820px"><thead><tr><th>Fecha y hora</th><th>Usuario</th><th>Evento</th><th>Dirección IP</th><th>Dispositivo</th></tr></thead><tbody id="accTabla"></tbody></table></div><div class="acc-pie faint" id="accPie"></div></div>
+      <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>El registro se conserva 90 días. Si aparecen intentos fallidos o bloqueos que nadie del equipo reconoce, conviene cambiar las contraseñas y revisar quién tiene acceso.</span></div>
+    </div>
+    <!-- ===== VIEW: RESPALDOS (1.4.15) ===== -->
+    <div class="view" id="view-respaldos">
+      <div class="rsp-barra"><button class="btn btn-primary" type="button" id="rspAhora" onclick="respaldarAhora()">Hacer respaldo ahora</button></div>
+      <div class="rsp-alerta rsp-sinclave oculto" id="rspSinClave" role="alert"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg><span><b>Falta configurar la clave de cifrado en el servidor.</b> Mientras tanto, los respaldos no se hacen. Se configura con un comando en el servidor, con guía.</span></div>
+      <div class="rsp-alerta oculto" id="rspAviso" role="status"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg><span id="rspAvisoTxt"></span><button class="btn btn-primary" type="button" onclick="descargarUltimoRespaldo()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>Descargar el último</button></div>
+      <div class="stats rsp-stats">
+        <div class="stat"><div class="k">Último respaldo</div><div class="v" id="rspUltimo">—</div><div class="s" id="rspUltimoSub">—</div></div>
+        <div class="stat"><div class="k">Última descarga</div><div class="v" id="rspDescarga">—</div><div class="s" id="rspDescargaSub">—</div></div>
+        <div class="stat"><div class="k">Próximo respaldo</div><div class="v" id="rspProximo">—</div><div class="s">Automático, todas las noches a las 03:30</div></div>
+      </div>
+      <div class="panel"><div class="panel-head"><div><h3>En el servidor</h3><p>Se guardan los últimos 14, cifrados.</p></div></div><div style="overflow-x:auto"><table style="min-width:720px"><thead><tr><th>Fecha</th><th>Tamaño</th><th>Resultado</th><th>Descargado por</th><th style="text-align:right">Acciones</th></tr></thead><tbody id="rspTabla"></tbody></table></div></div>
+      <div class="rsp-notas">
+        <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span><b>Cifrados:</b> los respaldos se guardan y se descargan cifrados porque contienen datos de clientes. Para abrir o restaurar uno hace falta la clave de cifrado, guardada también fuera del servidor. La restauración se hace con un comando en el servidor, con guía.</span></div>
+        <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span><b>Copia fuera del servidor:</b> descargar el último respaldo al menos una vez por semana y guardarlo fuera de la computadora de la tienda (disco externo o nube personal). Cada descarga queda en el registro de accesos. Las claves del archivo .env no se incluyen en ningún respaldo.</span></div>
+      </div>
     </div>
     <!-- ===== VIEW: CENTRO DE AYUDA (1.3.8) ===== -->
     <div class="view" id="view-ayuda">
@@ -2342,6 +2457,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
       <div class="field"><label for="usrUsuario">Usuario para entrar al panel</label><input type="text" id="usrUsuario" maxlength="30" autocomplete="off" autocapitalize="none"><p class="faint" style="margin-top:5px" id="usrUsuarioAyuda">Letras sin acentos, números, punto, guion o guion bajo (de 3 a 30).</p></div>
       <div class="field"><label>Rol</label><div id="usrRoles" role="radiogroup" aria-label="Rol"></div></div>
       <div class="field"><label for="usrFirma">Firma en WhatsApp</label><input type="text" id="usrFirma" maxlength="40" placeholder="por ejemplo: — Carla"><p class="faint" style="margin-top:5px">Cada mensaje que envíe desde el celular debe terminar con esta firma. Así el historial sabe quién respondió.</p></div>
+      <div class="usr-dp oculto" id="usrDosPasos"><div class="usr-dp-cab"><b><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>Verificación en 2 pasos</b><span class="pill" id="usrDpEstado"></span></div><p class="faint" id="usrDpTexto"></p><button class="btn btn-ghost" type="button" id="usrDpBtn" onclick="restablecerDosPasosUsuario()">Restablecer verificación en 2 pasos</button></div>
       <div class="note" id="usrNotaClave"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>Al guardar se genera una <b>contraseña temporal</b> que se muestra una sola vez. La persona la cambia por una propia en su primer ingreso.</span></div>
       <div class="login-err" id="usrErr" style="margin-top:10px"></div>
     </div>
@@ -2389,6 +2505,32 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
       <div class="field"><label for="liClave">Contraseña</label><div class="ojo-fila"><input type="password" id="liClave" autocomplete="current-password"><button type="button" class="ojo-btn" aria-label="Mostrar la contraseña" onclick="verClave('liClave',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
       <button class="btn btn-primary" type="submit" id="liOk">Ingresar</button>
     </form>
+    <form class="login-form oculto" id="formCodigo" onsubmit="event.preventDefault();enviarCodigoDP()">
+      <div class="dp-cab"><span class="dp-ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></span><div><b>Verificación en 2 pasos</b><span id="dpUsuarioCodigo">Usuario:</span></div></div>
+      <div class="login-err" id="dpErrCodigo" role="alert"></div>
+      <div id="dpModoApp"><p class="dp-txt">Ingresar el código de 6 dígitos que muestra la app autenticadora del celular.</p><div class="dp-cajas"><input class="dp-input" id="dpCodigo" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" aria-label="Código de 6 dígitos" oninput="cajasDP(this)"><span class="dp-caja" aria-hidden="true"></span><span class="dp-caja" aria-hidden="true"></span><span class="dp-caja" aria-hidden="true"></span><span class="dp-caja" aria-hidden="true"></span><span class="dp-caja" aria-hidden="true"></span><span class="dp-caja" aria-hidden="true"></span></div><button class="btn btn-primary" type="submit" id="dpOkCodigo" style="width:100%">Verificar</button></div>
+      <div id="dpModoRecuperacion" class="oculto"><p class="dp-txt">Escribir uno de los códigos de recuperación (por ejemplo, 4F7K-9QZ2). Cada código sirve una sola vez.</p><div class="field"><label for="dpRecuperacion">Código de recuperación</label><input type="text" id="dpRecuperacion" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="11"></div><button class="btn btn-primary" type="submit" id="dpOkRecuperacion" style="width:100%">Ingresar</button></div>
+      <div class="dp-links"><button type="button" class="dp-link" id="dpCambiarModo" onclick="alternarModoDP()">Usar un código de recuperación</button><button type="button" class="dp-link dp-link-gris" onclick="volverAlIngreso()">Volver</button></div>
+    </form>
+    <form class="login-form oculto" id="formConfigurar" onsubmit="event.preventDefault();activarDP()">
+      <div><b class="dp-tit">Configurar la verificación en 2 pasos</b><p class="faint" style="margin-top:4px">Es obligatoria para todos los usuarios. Se hace una sola vez.</p></div>
+      <div class="login-err" id="dpErrConfigurar" role="alert" style="margin-top:10px"></div>
+      <ol class="dp-pasos"><li><span class="dp-num">1</span><span>Instalar en el celular una app autenticadora: <b>Google Authenticator</b> o <b>Microsoft Authenticator</b>.</span></li><li><span class="dp-num">2</span><span>En la app, agregar una cuenta y escanear este código:</span></li></ol>
+      <div class="dp-qr" id="dpQr" role="img" aria-label="Código QR para la app autenticadora"></div>
+      <p class="dp-clave">¿No se puede escanear? Ingresar esta clave a mano:<br><b id="dpClave"></b></p>
+      <ol class="dp-pasos" style="margin:0 0 12px"><li><span class="dp-num">3</span><span>Ingresar el código de 6 dígitos que muestra la app:</span></li></ol>
+      <div class="dp-cajas"><input class="dp-input" id="dpCodigoConfig" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" aria-label="Código de 6 dígitos" oninput="cajasDP(this)"><span class="dp-caja" aria-hidden="true"></span><span class="dp-caja" aria-hidden="true"></span><span class="dp-caja" aria-hidden="true"></span><span class="dp-caja" aria-hidden="true"></span><span class="dp-caja" aria-hidden="true"></span><span class="dp-caja" aria-hidden="true"></span></div>
+      <button class="btn btn-primary" type="submit" id="dpOkConfig">Activar la verificación</button>
+      <div class="dp-links"><span></span><button type="button" class="dp-link dp-link-gris" onclick="volverAlIngreso()">Volver</button></div>
+    </form>
+    <div class="login-form oculto" id="formRecuperacionDP">
+      <div class="dp-cab"><span class="dp-ic dp-ic-ok"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><div><b>Verificación activada</b><span>Códigos de recuperación</span></div></div>
+      <div class="dp-aviso">Cada código sirve una sola vez. Guardarlos en un lugar seguro: son la forma de entrar si se pierde o se cambia el celular. No se vuelven a mostrar.</div>
+      <div class="dp-codigos" id="dpCodigos"></div>
+      <div class="dp-acciones"><button type="button" class="btn btn-ghost" onclick="copiarCodigosDP()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copiar</button><button type="button" class="btn btn-ghost" onclick="descargarCodigosDP()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>Descargar (.txt)</button></div>
+      <label class="dp-check"><input type="checkbox" id="dpGuardados" onchange="document.getElementById('dpEntrar').disabled=!this.checked">Guardé los códigos en un lugar seguro</label>
+      <button class="btn btn-primary" type="button" id="dpEntrar" disabled onclick="entrarTrasCodigosDP()">Entrar al panel</button>
+    </div>
     <form class="login-form oculto" id="formCambio" onsubmit="event.preventDefault();cambiarClavePanel()">
       <div style="margin-bottom:8px"><b style="font-size:15px">Crear una contraseña propia</b><p class="faint" style="margin-top:4px">La contraseña actual es temporal. Elegir una nueva de al menos 8 caracteres.</p></div>
       <div class="login-err" id="cambioErr"></div>
@@ -2899,6 +3041,8 @@ function _doGo(view){
     conversaciones:['Conversaciones','Todos los chats que atiende Verde. Desde aquí se puede responder a un cliente o apagar a Verde en un chat puntual.','<b>Atención</b> › Conversaciones'],
     usuarios:['Usuarios','Personas que pueden entrar al panel. Cada acción queda registrada con su usuario.','<b>Sistema</b> › Usuarios'],
     consumo:['Consumo de IA','Costo estimado de las consultas a la IA de Verde. Solo lo ven los administradores.','<b>Sistema</b> › Consumo de IA'],
+    accesos:['Registro de accesos','Ingresos, intentos fallidos, cierres de sesión y descargas de respaldos, con la dirección y el dispositivo. Se conservan 90 días. Solo lo ven los administradores.','<b>Sistema</b> › Registro de accesos'],
+    respaldos:['Respaldos','Copia diaria de los datos de Verde: configuración, conversaciones, usuarios, consumo, archivos guardados y biblioteca. Solo lo ven los administradores.','<b>Sistema</b> › Respaldos'],
     ayuda:['Centro de ayuda','Manual del panel, guías de Meta y un asistente para resolver dudas.','<b>Ayuda</b> › Centro de ayuda']
   }[view];
   if(view==='verde'){renderVerde();cargarCumplimiento();cargarSeccionRecursos();}
@@ -2916,6 +3060,8 @@ function _doGo(view){
   if(view==='avisos')cargarAvisos();
   if(view==='usuarios')cargarUsuarios();
   if(view==='consumo')cargarConsumo();
+  if(view==='accesos')cargarAccesos();
+  if(view==='respaldos')cargarRespaldos();
   if(view==='ayuda')cargarAyuda();
   if(view==='conversaciones')cargarConversaciones();
 }
@@ -4449,6 +4595,7 @@ function mostrarLogin(msg){
   document.getElementById('boot').style.display='none';
   document.getElementById('formIngreso').classList.remove('oculto');
   document.getElementById('formCambio').classList.add('oculto');
+  if(typeof ocultarFormsDP==='function')ocultarFormsDP();
   const e=document.getElementById('loginErr');e.textContent=msg||'';e.classList.toggle('show',!!msg);
   document.getElementById('loginScreen').classList.add('show');
   setTimeout(()=>{const u=document.getElementById('liUsuario');if(u)u.focus();},50);
@@ -4456,6 +4603,7 @@ function mostrarLogin(msg){
 function mostrarCambio(){
   document.getElementById('boot').style.display='none';
   document.getElementById('formIngreso').classList.add('oculto');
+  if(typeof ocultarFormsDP==='function')ocultarFormsDP();
   document.getElementById('formCambio').classList.remove('oculto');
   document.getElementById('campoActual').classList.toggle('oculto',!!_claveTemporalIngresada);
   ['ccActual','ccNueva','ccRepetir'].forEach(id=>{document.getElementById(id).value='';});
@@ -4478,9 +4626,9 @@ async function ingresarPanel(){
   btn.disabled=false;
   if(!r.ok)return fallo(r.json.error||'No se pudo ingresar.');
   document.getElementById('liClave').value='';
-  SESION.loginActivo=true;SESION.usuario=r.json.usuario;
-  if(SESION.usuario.debeCambiar){_claveTemporalIngresada=clave;mostrarCambio();return;}
-  await entrarTrasIngreso();
+  // 1.4.15: la contraseña abre el segundo paso (código de la app o, la primera vez, su configuración)
+  _claveTemporalIngresada=clave;
+  iniciarSegundoPasoDP(r.json);
 }
 async function cambiarClavePanel(){
   const actual=_claveTemporalIngresada||document.getElementById('ccActual').value;
@@ -4710,7 +4858,7 @@ function pintarUsuarios(){
     const rol=u.rol==='admin'
       ?'<span class="pill" style="background:rgba(201,242,77,.14);color:var(--accent-text)">Administrador</span>'
       :'<span class="pill" style="background:rgba(107,155,255,.14);color:var(--blue)">Asesor</span>';
-    const est=u.activo?'<span class="pill ok"><span class="d"></span>Activo</span>':'<span class="pill off"><span class="d"></span>Inactivo</span>';
+    const est=(u.activo?'<span class="pill ok"><span class="d"></span>Activo</span>':'<span class="pill off"><span class="d"></span>Inactivo</span>')+(u.activo?'<span class="dp-estado '+(u.dosPasos?'ok':'pend')+'">'+IC1415.escudoMini+'2 pasos: '+(u.dosPasos?'activa':'pendiente')+'</span>':'');
     const acc='<button class="btn btn-ghost" type="button" data-id="'+escH(u.id)+'" onclick="abrirUsuario(this.dataset.id)">Editar</button> '
       +'<button class="btn btn-ghost" type="button" data-id="'+escH(u.id)+'" onclick="restablecerUsuario(this.dataset.id)">Restablecer contraseña</button> '
       +'<button class="btn btn-ghost" type="button" data-id="'+escH(u.id)+'" data-activo="'+(!u.activo)+'" onclick="cambiarActivo(this.dataset.id,this.dataset.activo===\'true\')">'+(u.activo?'Desactivar':'Activar')+'</button>';
@@ -4730,6 +4878,7 @@ function abrirUsuario(id){
   document.getElementById('usrFirma').value=u?(u.firma||''):'';
   _usrRol=u?u.rol:'asesor';pintarRoles();
   document.getElementById('usrNotaClave').classList.toggle('oculto',!!u);
+  pintarDosPasosUsuario(u);
   document.getElementById('usrOk').textContent=u?'Guardar cambios':'Crear usuario';
   const e=document.getElementById('usrErr');e.textContent='';e.classList.remove('show');
   show('usrOverlay');
@@ -6429,4 +6578,313 @@ async function volverAlChatAyuda(){
   await abrirConversacion(clave);
 }
 
+
+
+/* ===================== 1.4.15: verificación en 2 pasos, registro de accesos y respaldos ===================== */
+const IC1415={
+  escudo:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>',
+  escudoMini:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+  ok:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>',
+  x:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+  candado:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+  salida:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>',
+  llave:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="M21 2l-9.6 9.6M15.5 7.5l3 3L22 7l-3-3"/></svg>',
+  baja:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>',
+  copiar:'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>'
+};
+
+/* ---------- ingreso en dos pasos ---------- */
+var DP={desafio:null,usuario:null,paso:null,modo:'app',codigos:null,usuarioFinal:null,enviando:false};
+function reiniciarDP(){DP={desafio:null,usuario:null,paso:null,modo:'app',codigos:null,usuarioFinal:null,enviando:false};}
+function ocultarFormsDP(){['formCodigo','formConfigurar','formRecuperacionDP'].forEach(id=>{const f=document.getElementById(id);if(f)f.classList.add('oculto');});}
+function errDP(id,msg){const e=document.getElementById(id);if(!e)return;e.textContent=msg||'';e.classList.toggle('show',!!msg);}
+function pintarCajasDP(inp){
+  const v=inp.value,foco=document.activeElement===inp;
+  inp.parentElement.querySelectorAll('.dp-caja').forEach((c,i)=>{c.textContent=v[i]||'';c.classList.toggle('llena',i<v.length);c.classList.toggle('actual',foco&&i===Math.min(v.length,5));});
+}
+function cajasDP(inp){
+  const v=inp.value.replace(/\D/g,'').slice(0,6);
+  if(inp.value!==v)inp.value=v;
+  pintarCajasDP(inp);
+  if(v.length===6&&inp.id==='dpCodigo'&&!DP.enviando)enviarCodigoDP();
+}
+function limpiarCajasDP(id){const i=document.getElementById(id);if(!i)return;i.value='';pintarCajasDP(i);}
+function enfocarDP(id){setTimeout(()=>{const i=document.getElementById(id);if(i){try{i.focus();}catch(e){}pintarCajasDP(i);}},60);}
+document.addEventListener('focusin',e=>{if(e.target&&e.target.classList&&e.target.classList.contains('dp-input'))pintarCajasDP(e.target);});
+document.addEventListener('focusout',e=>{if(e.target&&e.target.classList&&e.target.classList.contains('dp-input'))setTimeout(()=>pintarCajasDP(e.target),0);});
+function iniciarSegundoPasoDP(j){
+  reiniciarDP();
+  DP.desafio=j.desafio;DP.usuario=j.usuario||null;DP.paso=j.paso;
+  document.getElementById('formIngreso').classList.add('oculto');
+  document.getElementById('formCambio').classList.add('oculto');
+  if(j.paso==='configurar')mostrarConfigurarDP(j);else mostrarCodigoDP();
+}
+function mostrarCodigoDP(msg){
+  ocultarFormsDP();
+  document.getElementById('formCodigo').classList.remove('oculto');
+  document.getElementById('dpUsuarioCodigo').textContent='Usuario: '+(DP.usuario?DP.usuario.usuario:'');
+  modoDP('app');
+  errDP('dpErrCodigo',msg||'');
+  limpiarCajasDP('dpCodigo');
+  enfocarDP('dpCodigo');
+}
+function mostrarConfigurarDP(j){
+  ocultarFormsDP();
+  document.getElementById('formConfigurar').classList.remove('oculto');
+  const grupos=String(j.claveEnGrupos||'').split(' ');   // en dos líneas de 4 grupos, para que no quede un carácter suelto
+  document.getElementById('dpClave').innerHTML='<span>'+escH(grupos.slice(0,4).join(' '))+'</span> <span>'+escH(grupos.slice(4).join(' '))+'</span>';
+  const caja=document.getElementById('dpQr');
+  try{
+    const q=qrcode(0,'M');q.addData(String(j.direccion||''),'Byte');q.make();
+    caja.innerHTML=q.createSvgTag({cellSize:4,margin:2,scalable:true,alt:'Código QR para la app autenticadora'});
+  }catch(e){caja.innerHTML='<span class="faint" style="line-height:1.4;display:block;padding:20px 10px;color:#54656f">No se pudo dibujar el código QR. Ingresar la clave a mano.</span>';}
+  errDP('dpErrConfigurar','');
+  limpiarCajasDP('dpCodigoConfig');
+  enfocarDP('dpCodigoConfig');
+}
+function modoDP(m){
+  DP.modo=m;
+  document.getElementById('dpModoApp').classList.toggle('oculto',m!=='app');
+  document.getElementById('dpModoRecuperacion').classList.toggle('oculto',m==='app');
+  document.getElementById('dpCambiarModo').textContent=m==='app'?'Usar un código de recuperación':'Usar el código de la app';
+  errDP('dpErrCodigo','');
+  if(m==='app'){limpiarCajasDP('dpCodigo');enfocarDP('dpCodigo');}
+  else{const r=document.getElementById('dpRecuperacion');r.value='';setTimeout(()=>{try{r.focus();}catch(e){}},60);}
+}
+function alternarModoDP(){modoDP(DP.modo==='app'?'recuperacion':'app');}
+function volverAlIngreso(msg){reiniciarDP();mostrarLogin(msg||'');}
+async function enviarCodigoDP(){
+  if(DP.modo==='recuperacion')return enviarRecuperacionDP();
+  if(DP.enviando)return;
+  const codigo=document.getElementById('dpCodigo').value.replace(/\D/g,'');
+  if(codigo.length!==6)return errDP('dpErrCodigo','Escribir los 6 dígitos del código.');
+  DP.enviando=true;const btn=document.getElementById('dpOkCodigo');btn.disabled=true;
+  const r=await api('/api/login/codigo',{method:'POST',body:{desafio:DP.desafio,codigo}});
+  DP.enviando=false;btn.disabled=false;
+  if(!r.ok){
+    if(r.json.vencido)return volverAlIngreso(r.json.error);
+    limpiarCajasDP('dpCodigo');enfocarDP('dpCodigo');
+    return errDP('dpErrCodigo',r.json.error||'No se pudo verificar el código.');
+  }
+  await completarIngresoDP(r.json.usuario);
+}
+async function enviarRecuperacionDP(){
+  if(DP.enviando)return;
+  const codigo=document.getElementById('dpRecuperacion').value.trim();
+  if(codigo.replace(/[^A-Za-z0-9]/g,'').length!==8)return errDP('dpErrCodigo','Escribir un código de recuperación de 8 caracteres (por ejemplo, 4F7K-9QZ2).');
+  DP.enviando=true;const btn=document.getElementById('dpOkRecuperacion');btn.disabled=true;
+  const r=await api('/api/login/recuperacion',{method:'POST',body:{desafio:DP.desafio,codigo}});
+  DP.enviando=false;btn.disabled=false;
+  if(!r.ok){
+    if(r.json.vencido)return volverAlIngreso(r.json.error);
+    return errDP('dpErrCodigo',r.json.error||'No se pudo verificar el código.');
+  }
+  const n=r.json.restantes;
+  await completarIngresoDP(r.json.usuario);
+  if(typeof n==='number')toast(n===1?'Queda 1 código de recuperación':'Quedan '+n+' códigos de recuperación','Si se perdió o se cambió el celular, pedir a un administrador que restablezca la verificación en 2 pasos.',n<=3?'error':'info');
+}
+async function activarDP(){
+  if(DP.enviando)return;
+  const codigo=document.getElementById('dpCodigoConfig').value.replace(/\D/g,'');
+  if(codigo.length!==6)return errDP('dpErrConfigurar','Escribir los 6 dígitos que muestra la app.');
+  DP.enviando=true;const btn=document.getElementById('dpOkConfig');btn.disabled=true;
+  const r=await api('/api/login/activar',{method:'POST',body:{desafio:DP.desafio,codigo}});
+  DP.enviando=false;btn.disabled=false;
+  if(!r.ok){
+    if(r.json.vencido)return volverAlIngreso(r.json.error);
+    limpiarCajasDP('dpCodigoConfig');enfocarDP('dpCodigoConfig');
+    return errDP('dpErrConfigurar',r.json.error||'No se pudo activar la verificación.');
+  }
+  DP.codigos=r.json.codigos||[];DP.usuarioFinal=r.json.usuario;
+  mostrarCodigosDP();
+}
+function mostrarCodigosDP(){
+  ocultarFormsDP();
+  document.getElementById('formRecuperacionDP').classList.remove('oculto');
+  document.getElementById('dpCodigos').innerHTML=(DP.codigos||[]).map(c=>'<span>'+escH(c)+'</span>').join('');
+  const ch=document.getElementById('dpGuardados');ch.checked=false;
+  document.getElementById('dpEntrar').disabled=true;
+}
+function textoCodigosDP(){
+  const u=DP.usuarioFinal||DP.usuario||{};
+  return 'Códigos de recuperación de Verde · Pantalla Verde\nUsuario: '+(u.usuario||'')+'\nCreados: '+new Date().toLocaleString('es-UY',{timeZone:'America/Montevideo'})+'\n\n'+(DP.codigos||[]).join('\n')+'\n\nCada código sirve una sola vez. Guardarlos en un lugar seguro.\n';
+}
+async function copiarCodigosDP(){
+  try{await navigator.clipboard.writeText(textoCodigosDP());toast('Códigos copiados','Pegarlos en un lugar seguro, por ejemplo el gestor de contraseñas.','success');}
+  catch(e){toast('No se pudieron copiar','Seleccionar los códigos y copiarlos a mano, o usar «Descargar».','error');}
+}
+function descargarCodigosDP(){
+  try{
+    const u=DP.usuarioFinal||DP.usuario||{};
+    const url=URL.createObjectURL(new Blob([textoCodigosDP()],{type:'text/plain;charset=utf-8'}));
+    const a=document.createElement('a');a.href=url;a.download='codigos-recuperacion-verde-'+(u.usuario||'usuario')+'.txt';
+    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
+  }catch(e){toast('No se pudo descargar','Copiar los códigos con «Copiar» o anotarlos a mano.','error');}
+}
+async function entrarTrasCodigosDP(){
+  if(!document.getElementById('dpGuardados').checked)return;
+  const u=DP.usuarioFinal;DP.codigos=null;
+  document.getElementById('dpCodigos').innerHTML='';
+  await completarIngresoDP(u);
+}
+async function completarIngresoDP(usuario){
+  ocultarFormsDP();reiniciarDP();
+  SESION.loginActivo=true;SESION.usuario=usuario;
+  if(usuario&&usuario.debeCambiar){mostrarCambio();return;}
+  _claveTemporalIngresada=null;
+  await entrarTrasIngreso();
+}
+
+/* ---------- Usuarios: estado y restablecimiento de la verificación ---------- */
+function pintarDosPasosUsuario(u){
+  const box=document.getElementById('usrDosPasos');if(!box)return;
+  box.classList.toggle('oculto',!u);
+  if(!u)return;
+  const est=document.getElementById('usrDpEstado');
+  est.className='pill '+(u.dosPasos?'ok':'warn');
+  est.innerHTML='<span class="d"></span>'+(u.dosPasos?'Activa':'Pendiente');
+  document.getElementById('usrDpTexto').textContent=u.dosPasos
+    ?'Restablecerla solo si perdió o cambió el celular: se cierran sus sesiones y en el próximo ingreso la configura de nuevo.'
+    :'Todavía no la configuró: el panel se la pide en su próximo ingreso.';
+  document.getElementById('usrDpBtn').disabled=!u.dosPasos;
+}
+function restablecerDosPasosUsuario(){
+  const u=USUARIOS.find(x=>x.id===_usrId);if(!u)return;
+  close_('usrOverlay');
+  askConfirm({title:'Restablecer verificación en 2 pasos',message:'Se cierran las sesiones abiertas de «'+u.nombre+'» y, en su próximo ingreso, tendrá que configurar la verificación de nuevo con la app autenticadora. Usarlo solo si perdió o cambió el celular.',okLabel:'Restablecer',icon:'warn'},async()=>{
+    const r=await api('/api/usuarios/'+encodeURIComponent(u.id)+'/restablecer-2pasos',{method:'POST'});
+    if(!r.ok){toast('No se pudo restablecer',r.json.error||'','error');return;}
+    toast('Verificación restablecida','En su próximo ingreso, '+u.nombre+' la configura de nuevo.','success');
+    await cargarUsuarios();
+  });
+}
+
+/* ---------- Registro de accesos ---------- */
+var ACC={cargando:false};
+const ACC_EVENTO={ingreso:['ok','ev-verde'],ingreso_recuperacion:['llave','ev-ambar'],clave_incorrecta:['x','ev-rojo'],codigo_incorrecto:['x','ev-rojo'],bloqueo:['candado','ev-rojo'],salida:['salida','ev-gris'],dos_pasos_activada:['escudo','ev-verde'],dos_pasos_restablecida:['escudo','ev-ambar'],descarga_respaldo:['baja','ev-azul']};
+async function cargarAccesos(){
+  const tb=document.getElementById('accTabla');if(!tb)return;
+  const q='?usuario='+encodeURIComponent(document.getElementById('accUsuario').value)+'&evento='+encodeURIComponent(document.getElementById('accEvento').value)+'&dias='+encodeURIComponent(document.getElementById('accDias').value);
+  if(!tb.children.length)tb.innerHTML='<tr><td colspan="5"><div class="empty"><p>Cargando el registro…</p></div></td></tr>';
+  ACC.cargando=true;
+  const r=await api('/api/accesos'+q);
+  ACC.cargando=false;
+  if(!r.ok){tb.innerHTML='<tr><td colspan="5"><div class="empty"><p>No se pudo cargar el registro de accesos.</p></div></td></tr>';toast('No se pudo cargar el registro',r.json.error||'','error');return;}
+  pintarAccesos(r.json);
+}
+function pintarAccesos(j){
+  const sel=document.getElementById('accUsuario'),actual=sel.value;
+  sel.innerHTML='<option value="">Todos los usuarios</option>'+(j.usuarios||[]).map(u=>'<option value="'+escH(u.id)+'">'+escH(u.nombre)+' ('+escH(u.usuario)+')</option>').join('');
+  sel.value=(j.usuarios||[]).some(u=>u.id===actual)?actual:'';
+  const res=j.resumen||{},fmt=n=>new Intl.NumberFormat('es-UY').format(n||0);
+  document.getElementById('accIngresos').textContent=fmt(res.ingresos);
+  document.getElementById('accFallidos').textContent=fmt(res.fallidos);
+  document.getElementById('accBloqueos').textContent=fmt(res.bloqueos);
+  document.getElementById('accDescargas').textContent=fmt(res.descargas);
+  document.getElementById('accPeriodo').textContent='Últimos '+(j.dias||7)+' días';
+  const tb=document.getElementById('accTabla'),ev=j.eventos||[];
+  if(!ev.length){tb.innerHTML='<tr><td colspan="5"><div class="empty"><p>No hay eventos para estos filtros.</p></div></td></tr>';document.getElementById('accPie').textContent='';return;}
+  tb.innerHTML=ev.map(e=>{
+    const t=ACC_EVENTO[e.tipo]||['ok','ev-gris'];
+    const quien=e.existe?'<b>'+escH(e.nombre||e.usuario)+'</b>':(e.usuario?'<span class="acc-noexiste"><i>'+escH(e.usuario)+'</i> (no existe)</span>':'<b>'+escH(e.nombre||'Acceso general')+'</b>');
+    return '<tr><td style="white-space:nowrap">'+escH(horaCorta(e.fecha))+'</td><td>'+quien+'</td><td><span class="acc-ev '+t[1]+'">'+IC1415[t[0]]+escH(e.texto)+'</span></td><td class="acc-ip">'+escH(e.ip||'—')+'</td><td>'+escH(e.dispositivo||'—')+'</td></tr>';
+  }).join('');
+  document.getElementById('accPie').textContent=j.total>ev.length?'Se muestran los '+ev.length+' eventos más recientes de '+j.total+'. Usar los filtros para acotar.':'';
+}
+
+/* ---------- Respaldos ---------- */
+var RSP={estado:null,poll:null};
+function tamLegible(b){
+  const n=Number(b)||0;
+  if(n<1024*1024)return new Intl.NumberFormat('es-UY',{maximumFractionDigits:0}).format(Math.max(1,Math.round(n/1024)))+' KB';
+  return new Intl.NumberFormat('es-UY',{maximumFractionDigits:1}).format(n/1024/1024)+' MB';
+}
+function diaRelativo(ms){
+  const f=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Montevideo',year:'numeric',month:'2-digit',day:'2-digit'});
+  const d=f.format(new Date(ms)),hoy=f.format(new Date()),man=f.format(new Date(Date.now()+86400000));
+  const hora=new Intl.DateTimeFormat('es-UY',{timeZone:'America/Montevideo',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(ms));
+  if(d===hoy)return 'Hoy '+hora;
+  if(d===man)return 'Mañana '+hora;
+  return horaCorta(ms);
+}
+async function cargarRespaldos(){
+  const r=await api('/api/respaldos');
+  if(!r.ok){toast('No se pudieron cargar los respaldos',r.json.error||'','error');return;}
+  RSP.estado=r.json;pintarRespaldos();
+  if(r.json.enCurso)esperarRespaldo();
+}
+function pintarRespaldos(){
+  const e=RSP.estado;if(!e)return;
+  const lista=e.respaldos||[];
+  document.getElementById('rspSinClave').classList.toggle('oculto',!!e.claveConfigurada);
+  const btn=document.getElementById('rspAhora');
+  btn.disabled=!e.claveConfigurada||!!e.enCurso;
+  btn.innerHTML=e.enCurso?'<span class="rsp-giro" aria-hidden="true"></span>Respaldo en curso…':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Hacer respaldo ahora';
+  const aviso=document.getElementById('rspAviso');
+  const hayDescargable=lista.some(x=>x.ok&&x.disponible);
+  aviso.classList.toggle('oculto',!(e.aviso&&e.aviso.mostrar&&hayDescargable));
+  document.getElementById('rspAvisoTxt').innerHTML=e.aviso&&e.aviso.nuncaDescargado
+    ?'<b>Todavía no se descargó ningún respaldo.</b> La única copia fuera del servidor es la que se descarga desde acá.'
+    :'<b>Hace '+((e.aviso&&e.aviso.dias)||0)+' días que no se descarga un respaldo.</b> La única copia fuera del servidor es la que se descarga desde acá.';
+  const u=e.ultimo;
+  document.getElementById('rspUltimo').textContent=u?horaCorta(u.fecha):'Todavía no hay';
+  document.getElementById('rspUltimoSub').textContent=u?(u.ok?tamLegible(u.tamano)+' · Correcto · cifrado':'Con error: '+(u.error||'sin detalle')):(e.claveConfigurada?'El primero se hace esta noche o con «Hacer respaldo ahora»':'Falta la clave de cifrado');
+  const d=e.ultimaDescarga;
+  if(d){
+    const dias=Math.floor((Date.now()-d.fecha)/86400000);
+    document.getElementById('rspDescarga').textContent=dias<=0?'Hoy':dias===1?'Ayer':'Hace '+dias+' días';
+    const hc=horaCorta(d.fechaRespaldo);
+    document.getElementById('rspDescargaSub').textContent=d.nombre+' · respaldo '+(/^(Hoy|Ayer) /.test(hc)?'de '+hc[0].toLowerCase()+hc.slice(1):'del '+hc);
+  }else{
+    document.getElementById('rspDescarga').textContent='Nunca';
+    document.getElementById('rspDescargaSub').textContent='Todavía no se descargó ningún respaldo';
+  }
+  document.getElementById('rspProximo').textContent=!e.claveConfigurada?'—':(e.proximo<=Date.now()+90000?'En unos minutos':diaRelativo(e.proximo));
+  const tb=document.getElementById('rspTabla');
+  if(!lista.length){tb.innerHTML='<tr><td colspan="5"><div class="empty"><p>'+(e.claveConfigurada?'Todavía no hay respaldos. El primero se hace automáticamente a las 03:30, o ahora con «Hacer respaldo ahora».':'Sin la clave de cifrado no se hacen respaldos.')+'</p></div></td></tr>';return;}
+  tb.innerHTML=lista.map(x=>{
+    const res=x.ok?'<span class="pill ok"><span class="d"></span>Correcto</span>':'<span class="pill off" title="'+escH(x.error||'')+'"><span class="d"></span>Con error</span>';
+    const por=x.descargadoPor?escH(x.descargadoPor.nombre)+' · '+escH(horaCorta(x.descargadoPor.fecha)):'—';
+    const acc=x.ok&&x.disponible?'<button class="btn btn-ghost" type="button" data-archivo="'+escH(x.archivo)+'" onclick="descargarRespaldo(this.dataset.archivo)">'+IC1415.baja+'Descargar</button>':'—';
+    return '<tr><td style="white-space:nowrap"><b>'+escH(horaCorta(x.fecha))+'</b>'+(x.automatico?'':'<br><span class="faint">Manual'+(x.porNombre?' · '+escH(x.porNombre):'')+'</span>')+'</td><td>'+(x.ok?escH(tamLegible(x.tamano)):'—')+'</td><td>'+res+'</td><td>'+por+'</td><td style="text-align:right">'+acc+'</td></tr>';
+  }).join('');
+}
+async function respaldarAhora(){
+  const r=await api('/api/respaldos',{method:'POST'});
+  if(!r.ok){toast('No se pudo hacer el respaldo',r.json.error||'','error');return;}
+  RSP.estado=r.json.estado;pintarRespaldos();
+  toast('Respaldo en curso','Puede tardar unos segundos.','info');
+  esperarRespaldo(true);
+}
+function esperarRespaldo(avisar){
+  if(RSP.poll)return;
+  let vueltas=0;
+  RSP.poll=setInterval(async()=>{
+    vueltas++;
+    const r=await api('/api/respaldos');
+    if(r.ok){RSP.estado=r.json;if(currentView==='respaldos')pintarRespaldos();}
+    if((r.ok&&!r.json.enCurso)||vueltas>120){
+      clearInterval(RSP.poll);RSP.poll=null;
+      if(avisar&&r.ok){const u=r.json.ultimo;if(u&&u.ok)toast('Respaldo listo',tamLegible(u.tamano)+' · cifrado','success');else if(u)toast('El respaldo tuvo un error',u.error||'','error');}
+    }
+  },1500);
+}
+function descargarRespaldo(archivo){
+  if(!archivo)return;
+  const a=document.createElement('a');a.href='/api/respaldos/'+encodeURIComponent(archivo);a.setAttribute('download',archivo);
+  document.body.appendChild(a);
+  try{a.click();}catch(e){}
+  a.remove();
+  toast('Descarga iniciada','Guardar el archivo fuera de la computadora de la tienda.','success');
+  setTimeout(()=>{if(currentView==='respaldos')cargarRespaldos();},2500);
+}
+function descargarUltimoRespaldo(){
+  const x=((RSP.estado&&RSP.estado.respaldos)||[]).find(y=>y.ok&&y.disponible);
+  if(x)descargarRespaldo(x.archivo);
+}
+
+</script>
+<script>
+/*! qrcode-generator 1.4.4 · Copyright (c) 2009 Kazuhiko Arase · MIT License · https://github.com/kazuhikoarase/qrcode-generator */
+var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],f={},c=function(t,r){o=function(t){for(var r=new Array(t),e=0;e<t;e+=1){r[e]=new Array(t);for(var n=0;n<t;n+=1)r[e][n]=null}return r}(i=4*e+17),l(0,0),l(i-7,0),l(0,i-7),s(),h(),d(t,r),e>=7&&v(t),null==a&&(a=p(e,n,u)),w(a,r)},l=function(t,r){for(var e=-1;e<=7;e+=1)if(!(t+e<=-1||i<=t+e))for(var n=-1;n<=7;n+=1)r+n<=-1||i<=r+n||(o[t+e][r+n]=0<=e&&e<=6&&(0==n||6==n)||0<=n&&n<=6&&(0==e||6==e)||2<=e&&e<=4&&2<=n&&n<=4)},h=function(){for(var t=8;t<i-8;t+=1)null==o[t][6]&&(o[t][6]=t%2==0);for(var r=8;r<i-8;r+=1)null==o[6][r]&&(o[6][r]=r%2==0)},s=function(){for(var t=B.getPatternPosition(e),r=0;r<t.length;r+=1)for(var n=0;n<t.length;n+=1){var i=t[r],a=t[n];if(null==o[i][a])for(var u=-2;u<=2;u+=1)for(var f=-2;f<=2;f+=1)o[i+u][a+f]=-2==u||2==u||-2==f||2==f||0==u&&0==f}},v=function(t){for(var r=B.getBCHTypeNumber(e),n=0;n<18;n+=1){var a=!t&&1==(r>>n&1);o[Math.floor(n/3)][n%3+i-8-3]=a}for(n=0;n<18;n+=1){a=!t&&1==(r>>n&1);o[n%3+i-8-3][Math.floor(n/3)]=a}},d=function(t,r){for(var e=n<<3|r,a=B.getBCHTypeInfo(e),u=0;u<15;u+=1){var f=!t&&1==(a>>u&1);u<6?o[u][8]=f:u<8?o[u+1][8]=f:o[i-15+u][8]=f}for(u=0;u<15;u+=1){f=!t&&1==(a>>u&1);u<8?o[8][i-u-1]=f:u<9?o[8][15-u-1+1]=f:o[8][15-u-1]=f}o[i-8][8]=!t},w=function(t,r){for(var e=-1,n=i-1,a=7,u=0,f=B.getMaskFunction(r),c=i-1;c>0;c-=2)for(6==c&&(c-=1);;){for(var g=0;g<2;g+=1)if(null==o[n][c-g]){var l=!1;u<t.length&&(l=1==(t[u]>>>a&1)),f(n,c-g)&&(l=!l),o[n][c-g]=l,-1==(a-=1)&&(u+=1,a=7)}if((n+=e)<0||i<=n){n-=e,e=-e;break}}},p=function(t,r,e){for(var n=A.getRSBlocks(t,r),o=b(),i=0;i<e.length;i+=1){var a=e[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var u=0;for(i=0;i<n.length;i+=1)u+=n[i].dataCount;if(o.getLengthInBits()>8*u)throw"code length overflow. ("+o.getLengthInBits()+">"+8*u+")";for(o.getLengthInBits()+4<=8*u&&o.put(0,4);o.getLengthInBits()%8!=0;)o.putBit(!1);for(;!(o.getLengthInBits()>=8*u||(o.put(236,8),o.getLengthInBits()>=8*u));)o.put(17,8);return function(t,r){for(var e=0,n=0,o=0,i=new Array(r.length),a=new Array(r.length),u=0;u<r.length;u+=1){var f=r[u].dataCount,c=r[u].totalCount-f;n=Math.max(n,f),o=Math.max(o,c),i[u]=new Array(f);for(var g=0;g<i[u].length;g+=1)i[u][g]=255&t.getBuffer()[g+e];e+=f;var l=B.getErrorCorrectPolynomial(c),h=k(i[u],l.getLength()-1).mod(l);for(a[u]=new Array(l.getLength()-1),g=0;g<a[u].length;g+=1){var s=g+h.getLength()-a[u].length;a[u][g]=s>=0?h.getAt(s):0}}var v=0;for(g=0;g<r.length;g+=1)v+=r[g].totalCount;var d=new Array(v),w=0;for(g=0;g<n;g+=1)for(u=0;u<r.length;u+=1)g<i[u].length&&(d[w]=i[u][g],w+=1);for(g=0;g<o;g+=1)for(u=0;u<r.length;u+=1)g<a[u].length&&(d[w]=a[u][g],w+=1);return d}(o,n)};f.addData=function(t,r){var e=null;switch(r=r||"Byte"){case"Numeric":e=M(t);break;case"Alphanumeric":e=x(t);break;case"Byte":e=m(t);break;case"Kanji":e=L(t);break;default:throw"mode:"+r}u.push(e),a=null},f.isDark=function(t,r){if(t<0||i<=t||r<0||i<=r)throw t+","+r;return o[t][r]},f.getModuleCount=function(){return i},f.make=function(){if(e<1){for(var t=1;t<40;t++){for(var r=A.getRSBlocks(t,n),o=b(),i=0;i<u.length;i++){var a=u[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var g=0;for(i=0;i<r.length;i++)g+=r[i].dataCount;if(o.getLengthInBits()<=8*g)break}e=t}c(!1,function(){for(var t=0,r=0,e=0;e<8;e+=1){c(!0,e);var n=B.getLostPoint(f);(0==e||t>n)&&(t=n,r=e)}return r}())},f.createTableTag=function(t,r){t=t||2;var e="";e+='<table style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: "+(r=void 0===r?4*t:r)+"px;",e+='">',e+="<tbody>";for(var n=0;n<f.getModuleCount();n+=1){e+="<tr>";for(var o=0;o<f.getModuleCount();o+=1)e+='<td style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: 0px;",e+=" width: "+t+"px;",e+=" height: "+t+"px;",e+=" background-color: ",e+=f.isDark(n,o)?"#000000":"#ffffff",e+=";",e+='"/>';e+="</tr>"}return e+="</tbody>",e+="</table>"},f.createSvgTag=function(t,r,e,n){var o={};"object"==typeof arguments[0]&&(t=(o=arguments[0]).cellSize,r=o.margin,e=o.alt,n=o.title),t=t||2,r=void 0===r?4*t:r,(e="string"==typeof e?{text:e}:e||{}).text=e.text||null,e.id=e.text?e.id||"qrcode-description":null,(n="string"==typeof n?{text:n}:n||{}).text=n.text||null,n.id=n.text?n.id||"qrcode-title":null;var i,a,u,c,g=f.getModuleCount()*t+2*r,l="";for(c="l"+t+",0 0,"+t+" -"+t+",0 0,-"+t+"z ",l+='<svg version="1.1" xmlns="http://www.w3.org/2000/svg"',l+=o.scalable?"":' width="'+g+'px" height="'+g+'px"',l+=' viewBox="0 0 '+g+" "+g+'" ',l+=' preserveAspectRatio="xMinYMin meet"',l+=n.text||e.text?' role="img" aria-labelledby="'+y([n.id,e.id].join(" ").trim())+'"':"",l+=">",l+=n.text?'<title id="'+y(n.id)+'">'+y(n.text)+"</title>":"",l+=e.text?'<description id="'+y(e.id)+'">'+y(e.text)+"</description>":"",l+='<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>',l+='<path d="',a=0;a<f.getModuleCount();a+=1)for(u=a*t+r,i=0;i<f.getModuleCount();i+=1)f.isDark(a,i)&&(l+="M"+(i*t+r)+","+u+c);return l+='" stroke="transparent" fill="black"/>',l+="</svg>"},f.createDataURL=function(t,r){t=t||2,r=void 0===r?4*t:r;var e=f.getModuleCount()*t+2*r,n=r,o=e-r;return I(e,e,(function(r,e){if(n<=r&&r<o&&n<=e&&e<o){var i=Math.floor((r-n)/t),a=Math.floor((e-n)/t);return f.isDark(a,i)?0:1}return 1}))},f.createImgTag=function(t,r,e){t=t||2,r=void 0===r?4*t:r;var n=f.getModuleCount()*t+2*r,o="";return o+="<img",o+=' src="',o+=f.createDataURL(t,r),o+='"',o+=' width="',o+=n,o+='"',o+=' height="',o+=n,o+='"',e&&(o+=' alt="',o+=y(e),o+='"'),o+="/>"};var y=function(t){for(var r="",e=0;e<t.length;e+=1){var n=t.charAt(e);switch(n){case"<":r+="&lt;";break;case">":r+="&gt;";break;case"&":r+="&amp;";break;case'"':r+="&quot;";break;default:r+=n}}return r};return f.createASCII=function(t,r){if((t=t||1)<2)return function(t){t=void 0===t?2:t;var r,e,n,o,i,a=1*f.getModuleCount()+2*t,u=t,c=a-t,g={"██":"█","█ ":"▀"," █":"▄","  ":" "},l={"██":"▀","█ ":"▀"," █":" ","  ":" "},h="";for(r=0;r<a;r+=2){for(n=Math.floor((r-u)/1),o=Math.floor((r+1-u)/1),e=0;e<a;e+=1)i="█",u<=e&&e<c&&u<=r&&r<c&&f.isDark(n,Math.floor((e-u)/1))&&(i=" "),u<=e&&e<c&&u<=r+1&&r+1<c&&f.isDark(o,Math.floor((e-u)/1))?i+=" ":i+="█",h+=t<1&&r+1>=c?l[i]:g[i];h+="\n"}return a%2&&t>0?h.substring(0,h.length-a-1)+Array(a+1).join("▀"):h.substring(0,h.length-1)}(r);t-=1,r=void 0===r?2*t:r;var e,n,o,i,a=f.getModuleCount()*t+2*r,u=r,c=a-r,g=Array(t+1).join("██"),l=Array(t+1).join("  "),h="",s="";for(e=0;e<a;e+=1){for(o=Math.floor((e-u)/t),s="",n=0;n<a;n+=1)i=1,u<=n&&n<c&&u<=e&&e<c&&f.isDark(o,Math.floor((n-u)/t))&&(i=0),s+=i?g:l;for(o=0;o<t;o+=1)h+=s+"\n"}return h.substring(0,h.length-1)},f.renderTo2dContext=function(t,r){r=r||2;for(var e=f.getModuleCount(),n=0;n<e;n++)for(var o=0;o<e;o++)t.fillStyle=f.isDark(n,o)?"black":"white",t.fillRect(n*r,o*r,r,r)},f};t.stringToBytes=(t.stringToBytesFuncs={default:function(t){for(var r=[],e=0;e<t.length;e+=1){var n=t.charCodeAt(e);r.push(255&n)}return r}}).default,t.createStringToBytes=function(t,r){var e=function(){for(var e=S(t),n=function(){var t=e.read();if(-1==t)throw"eof";return t},o=0,i={};;){var a=e.read();if(-1==a)break;var u=n(),f=n()<<8|n();i[String.fromCharCode(a<<8|u)]=f,o+=1}if(o!=r)throw o+" != "+r;return i}(),n="?".charCodeAt(0);return function(t){for(var r=[],o=0;o<t.length;o+=1){var i=t.charCodeAt(o);if(i<128)r.push(i);else{var a=e[t.charAt(o)];"number"==typeof a?(255&a)==a?r.push(a):(r.push(a>>>8),r.push(255&a)):r.push(n)}}return r}};var r,e,n,o,i,a=1,u=2,f=4,c=8,g={L:1,M:0,Q:3,H:2},l=0,h=1,s=2,v=3,d=4,w=5,p=6,y=7,B=(r=[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],e=1335,n=7973,i=function(t){for(var r=0;0!=t;)r+=1,t>>>=1;return r},(o={}).getBCHTypeInfo=function(t){for(var r=t<<10;i(r)-i(e)>=0;)r^=e<<i(r)-i(e);return 21522^(t<<10|r)},o.getBCHTypeNumber=function(t){for(var r=t<<12;i(r)-i(n)>=0;)r^=n<<i(r)-i(n);return t<<12|r},o.getPatternPosition=function(t){return r[t-1]},o.getMaskFunction=function(t){switch(t){case l:return function(t,r){return(t+r)%2==0};case h:return function(t,r){return t%2==0};case s:return function(t,r){return r%3==0};case v:return function(t,r){return(t+r)%3==0};case d:return function(t,r){return(Math.floor(t/2)+Math.floor(r/3))%2==0};case w:return function(t,r){return t*r%2+t*r%3==0};case p:return function(t,r){return(t*r%2+t*r%3)%2==0};case y:return function(t,r){return(t*r%3+(t+r)%2)%2==0};default:throw"bad maskPattern:"+t}},o.getErrorCorrectPolynomial=function(t){for(var r=k([1],0),e=0;e<t;e+=1)r=r.multiply(k([1,C.gexp(e)],0));return r},o.getLengthInBits=function(t,r){if(1<=r&&r<10)switch(t){case a:return 10;case u:return 9;case f:case c:return 8;default:throw"mode:"+t}else if(r<27)switch(t){case a:return 12;case u:return 11;case f:return 16;case c:return 10;default:throw"mode:"+t}else{if(!(r<41))throw"type:"+r;switch(t){case a:return 14;case u:return 13;case f:return 16;case c:return 12;default:throw"mode:"+t}}},o.getLostPoint=function(t){for(var r=t.getModuleCount(),e=0,n=0;n<r;n+=1)for(var o=0;o<r;o+=1){for(var i=0,a=t.isDark(n,o),u=-1;u<=1;u+=1)if(!(n+u<0||r<=n+u))for(var f=-1;f<=1;f+=1)o+f<0||r<=o+f||0==u&&0==f||a==t.isDark(n+u,o+f)&&(i+=1);i>5&&(e+=3+i-5)}for(n=0;n<r-1;n+=1)for(o=0;o<r-1;o+=1){var c=0;t.isDark(n,o)&&(c+=1),t.isDark(n+1,o)&&(c+=1),t.isDark(n,o+1)&&(c+=1),t.isDark(n+1,o+1)&&(c+=1),0!=c&&4!=c||(e+=3)}for(n=0;n<r;n+=1)for(o=0;o<r-6;o+=1)t.isDark(n,o)&&!t.isDark(n,o+1)&&t.isDark(n,o+2)&&t.isDark(n,o+3)&&t.isDark(n,o+4)&&!t.isDark(n,o+5)&&t.isDark(n,o+6)&&(e+=40);for(o=0;o<r;o+=1)for(n=0;n<r-6;n+=1)t.isDark(n,o)&&!t.isDark(n+1,o)&&t.isDark(n+2,o)&&t.isDark(n+3,o)&&t.isDark(n+4,o)&&!t.isDark(n+5,o)&&t.isDark(n+6,o)&&(e+=40);var g=0;for(o=0;o<r;o+=1)for(n=0;n<r;n+=1)t.isDark(n,o)&&(g+=1);return e+=Math.abs(100*g/r/r-50)/5*10},o),C=function(){for(var t=new Array(256),r=new Array(256),e=0;e<8;e+=1)t[e]=1<<e;for(e=8;e<256;e+=1)t[e]=t[e-4]^t[e-5]^t[e-6]^t[e-8];for(e=0;e<255;e+=1)r[t[e]]=e;var n={glog:function(t){if(t<1)throw"glog("+t+")";return r[t]},gexp:function(r){for(;r<0;)r+=255;for(;r>=256;)r-=255;return t[r]}};return n}();function k(t,r){if(void 0===t.length)throw t.length+"/"+r;var e=function(){for(var e=0;e<t.length&&0==t[e];)e+=1;for(var n=new Array(t.length-e+r),o=0;o<t.length-e;o+=1)n[o]=t[o+e];return n}(),n={getAt:function(t){return e[t]},getLength:function(){return e.length},multiply:function(t){for(var r=new Array(n.getLength()+t.getLength()-1),e=0;e<n.getLength();e+=1)for(var o=0;o<t.getLength();o+=1)r[e+o]^=C.gexp(C.glog(n.getAt(e))+C.glog(t.getAt(o)));return k(r,0)},mod:function(t){if(n.getLength()-t.getLength()<0)return n;for(var r=C.glog(n.getAt(0))-C.glog(t.getAt(0)),e=new Array(n.getLength()),o=0;o<n.getLength();o+=1)e[o]=n.getAt(o);for(o=0;o<t.getLength();o+=1)e[o]^=C.gexp(C.glog(t.getAt(o))+r);return k(e,0).mod(t)}};return n}var A=function(){var t=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12,7,37,13],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],r=function(t,r){var e={};return e.totalCount=t,e.dataCount=r,e},e={};return e.getRSBlocks=function(e,n){var o=function(r,e){switch(e){case g.L:return t[4*(r-1)+0];case g.M:return t[4*(r-1)+1];case g.Q:return t[4*(r-1)+2];case g.H:return t[4*(r-1)+3];default:return}}(e,n);if(void 0===o)throw"bad rs block @ typeNumber:"+e+"/errorCorrectionLevel:"+n;for(var i=o.length/3,a=[],u=0;u<i;u+=1)for(var f=o[3*u+0],c=o[3*u+1],l=o[3*u+2],h=0;h<f;h+=1)a.push(r(c,l));return a},e}(),b=function(){var t=[],r=0,e={getBuffer:function(){return t},getAt:function(r){var e=Math.floor(r/8);return 1==(t[e]>>>7-r%8&1)},put:function(t,r){for(var n=0;n<r;n+=1)e.putBit(1==(t>>>r-n-1&1))},getLengthInBits:function(){return r},putBit:function(e){var n=Math.floor(r/8);t.length<=n&&t.push(0),e&&(t[n]|=128>>>r%8),r+=1}};return e},M=function(t){var r=a,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+2<r.length;)t.put(o(r.substring(n,n+3)),10),n+=3;n<r.length&&(r.length-n==1?t.put(o(r.substring(n,n+1)),4):r.length-n==2&&t.put(o(r.substring(n,n+2)),7))}},o=function(t){for(var r=0,e=0;e<t.length;e+=1)r=10*r+i(t.charAt(e));return r},i=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);throw"illegal char :"+t};return n},x=function(t){var r=u,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+1<r.length;)t.put(45*o(r.charAt(n))+o(r.charAt(n+1)),11),n+=2;n<r.length&&t.put(o(r.charAt(n)),6)}},o=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);if("A"<=t&&t<="Z")return t.charCodeAt(0)-"A".charCodeAt(0)+10;switch(t){case" ":return 36;case"$":return 37;case"%":return 38;case"*":return 39;case"+":return 40;case"-":return 41;case".":return 42;case"/":return 43;case":":return 44;default:throw"illegal char :"+t}};return n},m=function(r){var e=f,n=t.stringToBytes(r),o={getMode:function(){return e},getLength:function(t){return n.length},write:function(t){for(var r=0;r<n.length;r+=1)t.put(n[r],8)}};return o},L=function(r){var e=c,n=t.stringToBytesFuncs.SJIS;if(!n)throw"sjis not supported.";!function(){var t=n("友");if(2!=t.length||38726!=(t[0]<<8|t[1]))throw"sjis not supported."}();var o=n(r),i={getMode:function(){return e},getLength:function(t){return~~(o.length/2)},write:function(t){for(var r=o,e=0;e+1<r.length;){var n=(255&r[e])<<8|255&r[e+1];if(33088<=n&&n<=40956)n-=33088;else{if(!(57408<=n&&n<=60351))throw"illegal char at "+(e+1)+"/"+n;n-=49472}n=192*(n>>>8&255)+(255&n),t.put(n,13),e+=2}if(e<r.length)throw"illegal char at "+(e+1)}};return i},D=function(){var t=[],r={writeByte:function(r){t.push(255&r)},writeShort:function(t){r.writeByte(t),r.writeByte(t>>>8)},writeBytes:function(t,e,n){e=e||0,n=n||t.length;for(var o=0;o<n;o+=1)r.writeByte(t[o+e])},writeString:function(t){for(var e=0;e<t.length;e+=1)r.writeByte(t.charCodeAt(e))},toByteArray:function(){return t},toString:function(){var r="";r+="[";for(var e=0;e<t.length;e+=1)e>0&&(r+=","),r+=t[e];return r+="]"}};return r},S=function(t){var r=t,e=0,n=0,o=0,i={read:function(){for(;o<8;){if(e>=r.length){if(0==o)return-1;throw"unexpected end of file./"+o}var t=r.charAt(e);if(e+=1,"="==t)return o=0,-1;t.match(/^\s$/)||(n=n<<6|a(t.charCodeAt(0)),o+=6)}var i=n>>>o-8&255;return o-=8,i}},a=function(t){if(65<=t&&t<=90)return t-65;if(97<=t&&t<=122)return t-97+26;if(48<=t&&t<=57)return t-48+52;if(43==t)return 62;if(47==t)return 63;throw"c:"+t};return i},I=function(t,r,e){for(var n=function(t,r){var e=t,n=r,o=new Array(t*r),i={setPixel:function(t,r,n){o[r*e+t]=n},write:function(t){t.writeString("GIF87a"),t.writeShort(e),t.writeShort(n),t.writeByte(128),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(255),t.writeByte(255),t.writeByte(255),t.writeString(","),t.writeShort(0),t.writeShort(0),t.writeShort(e),t.writeShort(n),t.writeByte(0);var r=a(2);t.writeByte(2);for(var o=0;r.length-o>255;)t.writeByte(255),t.writeBytes(r,o,255),o+=255;t.writeByte(r.length-o),t.writeBytes(r,o,r.length-o),t.writeByte(0),t.writeString(";")}},a=function(t){for(var r=1<<t,e=1+(1<<t),n=t+1,i=u(),a=0;a<r;a+=1)i.add(String.fromCharCode(a));i.add(String.fromCharCode(r)),i.add(String.fromCharCode(e));var f,c,g,l=D(),h=(f=l,c=0,g=0,{write:function(t,r){if(t>>>r!=0)throw"length over";for(;c+r>=8;)f.writeByte(255&(t<<c|g)),r-=8-c,t>>>=8-c,g=0,c=0;g|=t<<c,c+=r},flush:function(){c>0&&f.writeByte(g)}});h.write(r,n);var s=0,v=String.fromCharCode(o[s]);for(s+=1;s<o.length;){var d=String.fromCharCode(o[s]);s+=1,i.contains(v+d)?v+=d:(h.write(i.indexOf(v),n),i.size()<4095&&(i.size()==1<<n&&(n+=1),i.add(v+d)),v=d)}return h.write(i.indexOf(v),n),h.write(e,n),h.flush(),l.toByteArray()},u=function(){var t={},r=0,e={add:function(n){if(e.contains(n))throw"dup key:"+n;t[n]=r,r+=1},size:function(){return r},indexOf:function(r){return t[r]},contains:function(r){return void 0!==t[r]}};return e};return i}(t,r),o=0;o<r;o+=1)for(var i=0;i<t;i+=1)n.setPixel(i,o,e(i,o));var a=D();n.write(a);for(var u=function(){var t=0,r=0,e=0,n="",o={},i=function(t){n+=String.fromCharCode(a(63&t))},a=function(t){if(t<0);else{if(t<26)return 65+t;if(t<52)return t-26+97;if(t<62)return t-52+48;if(62==t)return 43;if(63==t)return 47}throw"n:"+t};return o.writeByte=function(n){for(t=t<<8|255&n,r+=8,e+=1;r>=6;)i(t>>>r-6),r-=6},o.flush=function(){if(r>0&&(i(t<<6-r),t=0,r=0),e%3!=0)for(var o=3-e%3,a=0;a<o;a+=1)n+="="},o.toString=function(){return n},o}(),f=a.toByteArray(),c=0;c<f.length;c+=1)u.writeByte(f[c]);return u.flush(),"data:image/gif;base64,"+u};return t}();qrcode.stringToBytesFuncs["UTF-8"]=function(t){return function(t){for(var r=[],e=0;e<t.length;e++){var n=t.charCodeAt(e);n<128?r.push(n):n<2048?r.push(192|n>>6,128|63&n):n<55296||n>=57344?r.push(224|n>>12,128|n>>6&63,128|63&n):(e++,n=65536+((1023&n)<<10|1023&t.charCodeAt(e)),r.push(240|n>>18,128|n>>12&63,128|n>>6&63,128|63&n))}return r}(t)},function(t){"function"==typeof define&&define.amd?define([],t):"object"==typeof exports&&(module.exports=t())}((function(){return qrcode}));
 </script>

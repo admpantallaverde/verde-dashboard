@@ -102,10 +102,33 @@ const ARTICULOS = [
       { tipo: 'pasos', items: [
         { titulo: 'Crear el usuario', texto: 'En «Sistema › Usuarios», tocar «Nuevo usuario» y completar nombre, usuario, rol y firma (por ejemplo, «— Ana»).' },
         { titulo: 'Entregar la contraseña temporal', texto: 'El panel la muestra una sola vez. Entregarla en privado, nunca en un grupo.' },
-        { titulo: 'Primer ingreso', texto: 'La persona ingresa con la contraseña temporal y el panel le pide cambiarla por una propia, de al menos 8 caracteres.' }
+        { titulo: 'Primer ingreso', texto: 'La persona ingresa con la contraseña temporal, configura la verificación en 2 pasos con una app autenticadora y después el panel le pide cambiar la contraseña por una propia, de al menos 8 caracteres.' }
       ] },
-      { tipo: 'p', texto: 'Si alguien olvida su contraseña, un administrador usa «Restablecer contraseña» en «Sistema › Usuarios». Los usuarios no se eliminan: se desactivan, para conservar el historial de quién atendió cada chat.' },
+      { tipo: 'p', texto: 'Si alguien olvida su contraseña, un administrador usa «Restablecer contraseña» en «Sistema › Usuarios». Si perdió o cambió el celular de la app autenticadora, usa «Restablecer verificación en 2 pasos» dentro de «Editar»: se cierran sus sesiones y en el próximo ingreso la configura de nuevo. Debajo de «Activo» se ve si cada persona ya la configuró. Los usuarios no se eliminan: se desactivan, para conservar el historial de quién atendió cada chat.' },
       { tipo: 'nota', texto: 'La firma se agrega al final de los mensajes enviados desde el panel, para que el cliente sepa quién le respondió.' }
+    ]
+  },
+  {
+    id: 'registro-accesos', grupo: 'manual', soloAdmin: true, titulo: 'Registro de accesos',
+    resumen: 'Quién entró al panel, desde dónde, los intentos fallidos y las descargas de respaldos.',
+    bloques: [
+      { tipo: 'p', texto: 'En «Sistema › Registro de accesos» se ven los ingresos correctos, las contraseñas y los códigos incorrectos, los bloqueos por intentos, los cierres de sesión, los cambios en la verificación en 2 pasos y las descargas de respaldos. Cada evento muestra la fecha y hora, el usuario, la dirección IP y el dispositivo (navegador y sistema).' },
+      { tipo: 'p', texto: 'Se puede filtrar por usuario, por tipo de evento y por período (últimos 7, 30 o 90 días). Arriba hay un resumen del período. Los intentos con un usuario que no existe aparecen marcados como «(no existe)».' },
+      { tipo: 'nota', texto: 'El registro se conserva 90 días. Si aparecen intentos fallidos o bloqueos que nadie del equipo reconoce, conviene cambiar las contraseñas y revisar quién tiene acceso.' }
+    ]
+  },
+  {
+    id: 'respaldos', grupo: 'manual', soloAdmin: true, titulo: 'Respaldos',
+    resumen: 'El respaldo diario de los datos, cómo descargarlo y cómo se restaura.',
+    bloques: [
+      { tipo: 'p', texto: 'Todas las noches a las 03:30 Verde guarda un respaldo de sus datos: configuración, conversaciones, usuarios, consumo, archivos guardados y biblioteca. Si a esa hora el servidor estaba apagado, lo hace apenas vuelve a funcionar. Se conservan los últimos 14, cifrados porque contienen datos de clientes.' },
+      { tipo: 'pasos', items: [
+        { titulo: 'Descargar una copia cada semana', texto: 'En «Sistema › Respaldos», tocar «Descargar» en el más reciente. Es la única copia fuera del servidor: guardarla fuera de la computadora de la tienda (disco externo o nube personal).' },
+        { titulo: 'Atender el aviso', texto: 'Si pasan más de 7 días sin descargar un respaldo, la sección muestra un aviso con el botón «Descargar el último».' },
+        { titulo: 'Guardar la clave de cifrado', texto: 'Sin la clave, un respaldo no se puede abrir. Tiene que estar guardada también fuera del servidor, por ejemplo en el gestor de contraseñas.' }
+      ] },
+      { tipo: 'p', texto: '«Hacer respaldo ahora» crea uno en el momento, por ejemplo antes de un cambio grande. Cada descarga queda en el registro de accesos.' },
+      { tipo: 'nota', texto: 'Restaurar un respaldo reemplaza los datos actuales: se hace con un comando en el servidor, con Verde detenido y con guía. Los datos que había quedan guardados aparte.' }
     ]
   },
   {
@@ -158,11 +181,28 @@ const ARTICULOS = [
     ]
   },
   {
+    id: 'ingreso-dos-pasos', grupo: 'manual', soloAdmin: false, titulo: 'Verificación en 2 pasos para entrar al panel',
+    resumen: 'Cómo configurar la app autenticadora, entrar con el código y qué hacer si se pierde el celular.',
+    bloques: [
+      { tipo: 'p', texto: 'Para entrar al panel, además de la contraseña, hace falta el código de 6 dígitos que muestra una app autenticadora en el celular (Google Authenticator o Microsoft Authenticator). El código cambia cada 30 segundos. Es obligatoria para todos los usuarios.' },
+      { tipo: 'h', texto: 'Configurarla (la primera vez)' },
+      { tipo: 'pasos', items: [
+        { titulo: 'Instalar la app', texto: 'Instalar Google Authenticator o Microsoft Authenticator en el celular.' },
+        { titulo: 'Escanear el código QR', texto: 'En la app, agregar una cuenta y escanear el código que muestra el panel. Si no se puede escanear, escribir a mano la clave que aparece debajo.' },
+        { titulo: 'Confirmar con un código', texto: 'Escribir el código de 6 dígitos que muestra la app y tocar «Activar la verificación».' },
+        { titulo: 'Guardar los códigos de recuperación', texto: 'El panel muestra 10 códigos de un solo uso. Copiarlos o descargarlos y guardarlos en un lugar seguro: no se vuelven a mostrar.' }
+      ] },
+      { tipo: 'p', texto: 'Después, en cada ingreso el panel pide el código. La sesión se cierra tras 8 horas sin uso y, siempre, a los 7 días.' },
+      { tipo: 'p', texto: 'Si se pierde o se cambia el celular: entrar con uno de los códigos de recuperación («Usar un código de recuperación») y pedir a un administrador que restablezca la verificación en «Sistema › Usuarios › Editar». En el próximo ingreso se configura de nuevo.' },
+      { tipo: 'nota', texto: 'Después de 5 intentos fallidos, entre contraseñas y códigos, el ingreso se bloquea 15 minutos.' }
+    ]
+  },
+  {
     id: 'apariencia', grupo: 'manual', soloAdmin: false, titulo: 'Modo claro, oscuro y menú',
     resumen: 'Cómo cambiar entre modo claro y oscuro, achicar el menú y cerrar la sesión.',
     bloques: [
-      { tipo: 'p', texto: 'Arriba a la derecha está el interruptor de modo, con un sol (modo claro) o una luna (modo oscuro). La primera vez, el panel usa el modo configurado en la computadora o el celular; después recuerda la elección en cada equipo.' },
-      { tipo: 'p', texto: 'Al lado están las iniciales del usuario. Al tocarlas se ven el nombre y el rol, y la opción «Cerrar sesión».' },
+      { tipo: 'p', texto: 'Abajo a la izquierda, en la tarjeta «Conexión», junto a «Ver estado de conexión», está el interruptor de modo, con un sol (modo claro) o una luna (modo oscuro). Con el menú achicado, queda como un ícono de sol o luna al pie del menú. La primera vez, el panel usa el modo configurado en la computadora o el celular; después recuerda la elección en cada equipo.' },
+      { tipo: 'p', texto: 'Arriba a la derecha están las iniciales del usuario. Al tocarlas se ven el nombre y el rol, y la opción «Cerrar sesión».' },
       { tipo: 'p', texto: 'En la computadora, el botón junto al logo achica el menú para dejar solo los íconos y ganar espacio. Al pasar el mouse sobre un ícono aparece su nombre. El mismo botón vuelve a abrir el menú completo. La rama «Agentes IA» aparece cerrada al abrir el panel y se despliega al tocarla.' }
     ]
   },

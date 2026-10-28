@@ -9,7 +9,7 @@ PROD="${VERDE_PROD:-/root/verde-comportamiento}"
 TMP="$(mktemp -d /tmp/verde-pruebas-XXXXXX)"
 trap 'rm -rf "$TMP"' EXIT
 
-for f in server.js bot.js usuarios.js atencion.js conversaciones.js consumo.js cumplimiento.js ayuda.js archivos.js recursos.js envios.js usuarios-cli.js configurar-360.js pruebas/pruebas-verde.js; do
+for f in server.js bot.js usuarios.js atencion.js conversaciones.js consumo.js cumplimiento.js ayuda.js archivos.js recursos.js envios.js dospasos.js accesos.js respaldos.js usuarios-cli.js respaldos-cli.js configurar-360.js pruebas/pruebas-verde.js; do
   if [ ! -f "$ORIGEN/$f" ]; then echo "✘ FALLÓ: falta el archivo $f"; echo "Pruebas OK: 0 · con fallas: 1"; exit 1; fi
 done
 if [ ! -d "$PROD/node_modules" ]; then
@@ -17,7 +17,7 @@ if [ ! -d "$PROD/node_modules" ]; then
 fi
 
 mkdir -p "$TMP/data" "$TMP/public"
-cp "$ORIGEN/server.js" "$ORIGEN/bot.js" "$ORIGEN/usuarios.js" "$ORIGEN/atencion.js" "$ORIGEN/conversaciones.js" "$ORIGEN/consumo.js" "$ORIGEN/cumplimiento.js" "$ORIGEN/ayuda.js" "$ORIGEN/archivos.js" "$ORIGEN/recursos.js" "$ORIGEN/envios.js" "$ORIGEN/usuarios-cli.js" "$ORIGEN/configurar-360.js" "$ORIGEN/pruebas/pruebas-verde.js" "$TMP/"
+cp "$ORIGEN/server.js" "$ORIGEN/bot.js" "$ORIGEN/usuarios.js" "$ORIGEN/atencion.js" "$ORIGEN/conversaciones.js" "$ORIGEN/consumo.js" "$ORIGEN/cumplimiento.js" "$ORIGEN/ayuda.js" "$ORIGEN/archivos.js" "$ORIGEN/recursos.js" "$ORIGEN/envios.js" "$ORIGEN/dospasos.js" "$ORIGEN/accesos.js" "$ORIGEN/respaldos.js" "$ORIGEN/usuarios-cli.js" "$ORIGEN/respaldos-cli.js" "$ORIGEN/configurar-360.js" "$ORIGEN/pruebas/pruebas-verde.js" "$TMP/"
 ln -s "$PROD/node_modules" "$TMP/node_modules"
 echo "<html>panel de prueba</html>" > "$TMP/public/index.html"
 cat > "$TMP/.env" <<'FIN'
@@ -26,6 +26,7 @@ PORT=39871
 D360_API_KEY=clave-360-de-prueba
 D360_MESSAGES_URL=https://waba-sandbox.360dialog.io/v1/messages
 D360_WEBHOOK_SECRET=secreto123abc
+VERDE_RESPALDOS_AUTOMATICOS=no
 FIN
 cat > "$TMP/data/state.json" <<'FIN'
 { "verde": { "nombre": "Verde", "empresa": "Pantalla Verde", "encendido": true,
@@ -38,4 +39,5 @@ FIN
 echo "Probando Verde en una carpeta temporal (no toca nada real)..."
 cd "$TMP" && env -u ANTHROPIC_API_KEY -u PORT -u HOST -u D360_API_KEY -u D360_MESSAGES_URL -u D360_WEBHOOK_SECRET \
   -u VERDE_ESFUERZO -u VERDE_PAUSA_HORAS -u VERDE_LOGIN -u ANTHROPIC_VERSION -u PUBLIC_URL -u D360_CONFIG_URL \
+  -u VERDE_RESPALDO_CLAVE -u VERDE_RESPALDOS_DIR -u VERDE_RESPALDOS_AUTOMATICOS -u VERDE_BASE_DIR \
   node pruebas-verde.js "$@"

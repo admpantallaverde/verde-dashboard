@@ -7,6 +7,7 @@
  * Uso, dentro de la carpeta de Verde:
  *   node usuarios-cli.js crear-admin <usuario> "<Nombre y apellido>"
  *   node usuarios-cli.js restablecer <usuario>
+ *   node usuarios-cli.js restablecer-2pasos <usuario>   (1.4.15: si perdió el celular de la app autenticadora)
  *   node usuarios-cli.js listar
  *
  * La contraseña temporal se muestra UNA sola vez: anotarla y cambiarla al ingresar.
@@ -32,16 +33,24 @@ try {
     const temporal = usuarios.restablecerClave(u.id);
     console.log('Contraseña restablecida para ' + u.usuario + '. Sus sesiones abiertas se cerraron.');
     console.log('Contraseña temporal (se muestra una sola vez): ' + temporal);
+  } else if (comando === 'restablecer-2pasos') {
+    if (!arg1) throw new Error('Falta el usuario. Ejemplo: node usuarios-cli.js restablecer-2pasos adrian');
+    const u = usuarios.buscarPorUsuario(arg1);
+    if (!u) throw new Error('No existe el usuario «' + arg1 + '».');
+    usuarios.restablecerDosPasos(u.id);
+    console.log('Verificación en 2 pasos restablecida para ' + u.usuario + '. Sus sesiones abiertas se cerraron.');
+    console.log('En su próximo ingreso tendrá que configurarla de nuevo con la app autenticadora.');
   } else if (comando === 'listar') {
     const lista = usuarios.listar();
     if (!lista.length) console.log('Todavía no hay usuarios. Crear el primero con: node usuarios-cli.js crear-admin <usuario> "<Nombre>"');
     for (const u of lista) {
-      console.log([u.usuario, u.nombre, u.rolNombre, u.activo ? 'activo' : 'inactivo', 'último ingreso: ' + fecha(u.ultimoIngreso)].join(' · '));
+      console.log([u.usuario, u.nombre, u.rolNombre, u.activo ? 'activo' : 'inactivo', '2 pasos: ' + (u.dosPasos ? 'activa' : 'pendiente'), 'último ingreso: ' + fecha(u.ultimoIngreso)].join(' · '));
     }
   } else {
     console.log('Uso:');
     console.log('  node usuarios-cli.js crear-admin <usuario> "<Nombre y apellido>"');
     console.log('  node usuarios-cli.js restablecer <usuario>');
+    console.log('  node usuarios-cli.js restablecer-2pasos <usuario>');
     console.log('  node usuarios-cli.js listar');
     process.exitCode = 1;
   }

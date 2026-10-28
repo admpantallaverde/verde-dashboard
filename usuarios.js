@@ -4,6 +4,10 @@
  *  - Las contraseñas se guardan cifradas (scrypt con sal propia): nadie puede verlas.
  *  - La sesión vence tras 8 horas sin uso y, siempre, a los 7 días.
  *  - Después de 5 intentos fallidos, ese usuario queda bloqueado 15 minutos.
+ *  - 1.4.15: verificación en 2 pasos obligatoria con app autenticadora. La contraseña
+ *    sola ya no abre sesión: abre un «desafío» de 10 minutos que se completa con el
+ *    código de 6 dígitos (o, la primera vez, configurando la app). Las sesiones
+ *    anteriores a esta versión dejan de valer.
  *  - Los usuarios no se eliminan: se desactivan, para que el historial
  *    siga mostrando quién atendió cada chat.
  *  - Cada usuario tiene una firma para WhatsApp (por ejemplo "— Carla"):
@@ -15,6 +19,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const dosPasos = require('./dospasos.js');
 
 const DATA_DIR = path.join(__dirname, 'data');
 const USUARIOS_FILE = path.join(DATA_DIR, 'usuarios.json');
@@ -27,6 +32,8 @@ const MAX_FALLOS = 5;
 const MAX_FALLOS_IP = 20;
 const BLOQUEO_MS = 15 * 60 * 1000;
 const LARGO_MINIMO = 8;
+const DESAFIO_MS = 10 * 60 * 1000;      // 1.4.15: tiempo para completar el segundo paso
+const MAX_INTENTOS_DESAFIO = 5;
 
 let reloj = () => Date.now();
 function _usarReloj(f) { reloj = f || (() => Date.now()); }   // solo para las pruebas
@@ -76,7 +83,8 @@ function publico(u) {
   return {
     id: u.id, nombre: u.nombre, usuario: u.usuario, rol: u.rol, rolNombre: ROLES[u.rol] || u.rol,
     firma: u.firma || '', activo: u.activo !== false, debeCambiar: !!u.debeCambiar,
-    creadoEn: u.creadoEn || null, ultimoIngreso: u.ultimoIngreso || null
+    creadoEn: u.creadoEn || null, ultimoIngreso: u.ultimoIngreso || null,
+    dosPasos: !!(u.dosPasos && u.dosPasos.secreto)   // 1.4.15: verificación en 2 pasos activa
   };
 }
 function adminsActivosSalvo(lista, id) { return lista.filter(u => u.rol === 'admin' && u.activo !== false && u.id !== id).length; }
@@ -173,31 +181,111 @@ function registrarFallo(k, maximo) {
   const ahora = reloj();
   const f = fallos.get(k) || { n: 0, desde: ahora, hasta: 0 };
   if (ahora - f.desde > BLOQUEO_MS) { f.n = 0; f.desde = ahora; }
+  const antes = f.hasta > ahora;
   f.n++;
   if (f.n >= maximo) f.hasta = ahora + BLOQUEO_MS;
   fallos.set(k, f);
+  return !antes && f.hasta > ahora;   // 1.4.15: true si este intento produjo el bloqueo
 }
 function bloqueado(k) { const f = fallos.get(k); return !!(f && f.hasta > reloj()); }
 
+/* ---------- 1.4.15: ingreso en dos pasos ---------- */
+// Desafíos pendientes: la contraseña ya se verificó y falta el segundo paso. Viven en memoria.
+const desafios = new Map();
+function limpiarDesafios() { const ahora = reloj(); for (const [k, x] of desafios) if (ahora - x.creado > DESAFIO_MS) desafios.delete(k); }
+function crearDesafio(u) {
+  limpiarDesafios();
+  for (const [k, x] of desafios) if (x.usuarioId === u.id) desafios.delete(k);   // un desafío por persona
+  const token = crypto.randomBytes(32).toString('hex');
+  const x = { usuarioId: u.id, creado: reloj(), intentos: 0, tipo: u.dosPasos && u.dosPasos.secreto ? 'codigo' : 'configurar' };
+  if (x.tipo === 'configurar') x.secreto = dosPasos.nuevoSecreto();
+  desafios.set(huella(token), x);
+  return { token, x };
+}
+
+// Paso 1: usuario y contraseña. Si están bien, NO abre sesión: devuelve el desafío del segundo paso.
 function ingresar(usuarioTexto, clave, ip) {
   const usuario = normalizarUsuario(usuarioTexto);
   const ku = 'u:' + usuario;
   const ki = 'ip:' + String(ip || '');
-  if (bloqueado(ku) || bloqueado(ki)) return { ok: false, motivo: 'bloqueado' };
+  if (bloqueado(ku) || bloqueado(ki)) return { ok: false, motivo: 'bloqueado', usuarioTexto: usuario, existe: false, nuevoBloqueo: false };
   const d = cargarUsuarios();
   const u = d.usuarios.find(x => x.usuario === usuario);
   let valido = false;
   if (u) valido = u.activo !== false && igualSeguro(cifrar(clave, u.sal), u.hash);
   else cifrar(clave, 'relleno');   // mismo tiempo de respuesta exista o no el usuario
   if (!valido) {
-    registrarFallo(ku, MAX_FALLOS);
-    registrarFallo(ki, MAX_FALLOS_IP);
-    return { ok: false, motivo: bloqueado(ku) || bloqueado(ki) ? 'bloqueado' : 'incorrecto' };
+    const b1 = registrarFallo(ku, MAX_FALLOS);
+    const b2 = registrarFallo(ki, MAX_FALLOS_IP);
+    return { ok: false, motivo: bloqueado(ku) || bloqueado(ki) ? 'bloqueado' : 'incorrecto', usuarioTexto: usuario, existe: !!u, usuarioPublico: u ? publico(u) : null, nuevoBloqueo: b1 || b2 };
   }
+  // Los fallos se borran recién cuando se completa el segundo paso.
+  const { token, x } = crearDesafio(u);
+  const r = { ok: true, paso: x.tipo, desafio: token, usuario: publico(u) };
+  if (x.tipo === 'configurar') { r.secreto = x.secreto; r.claveEnGrupos = dosPasos.enGrupos(x.secreto); r.direccion = dosPasos.direccion(u.usuario, x.secreto); }
+  return r;
+}
+
+// Paso 2: «codigo» (app), «recuperacion» (código de un solo uso) o «activar» (primera configuración).
+function segundoPaso(desafio, codigo, ip, modo) {
+  limpiarDesafios();
+  const hd = typeof desafio === 'string' && /^[0-9a-f]{64}$/.test(desafio) ? huella(desafio) : null;
+  const x = hd ? desafios.get(hd) : null;
+  const esperado = modo === 'activar' ? 'configurar' : 'codigo';
+  if (!x || x.tipo !== esperado) return { ok: false, motivo: 'vencido' };
+  const d = cargarUsuarios();
+  const u = d.usuarios.find(y => y.id === x.usuarioId);
+  if (!u || u.activo === false) { desafios.delete(hd); return { ok: false, motivo: 'vencido' }; }
+  const ku = 'u:' + u.usuario;
+  const ki = 'ip:' + String(ip || '');
+  if (bloqueado(ku) || bloqueado(ki)) { desafios.delete(hd); return { ok: false, motivo: 'bloqueado', usuarioPublico: publico(u), nuevoBloqueo: false }; }
+  const ahora = reloj();
+  let paso = null, restantes = null, codigos = null;
+  if (modo === 'recuperacion') {
+    restantes = dosPasos.usarRecuperacion(u.recuperacion, codigo, ahora);
+  } else {
+    const secreto = modo === 'activar' ? x.secreto : u.dosPasos.secreto;
+    const ultimo = modo === 'activar' ? null : u.dosPasos.ultimoPaso;
+    const v = dosPasos.verificar(secreto, codigo, ahora, Number.isInteger(ultimo) ? ultimo : null);
+    if (v.ok) paso = v.paso;
+  }
+  const valido = modo === 'recuperacion' ? restantes >= 0 : paso !== null;
+  if (!valido) {
+    x.intentos++;
+    if (x.intentos >= MAX_INTENTOS_DESAFIO) desafios.delete(hd);
+    const b1 = registrarFallo(ku, MAX_FALLOS);
+    const b2 = registrarFallo(ki, MAX_FALLOS_IP);
+    return { ok: false, motivo: bloqueado(ku) || bloqueado(ki) ? 'bloqueado' : 'incorrecto', usuarioPublico: publico(u), nuevoBloqueo: b1 || b2 };
+  }
+  if (modo === 'activar') {
+    const nuevos = dosPasos.nuevosCodigosRecuperacion();
+    u.dosPasos = { secreto: x.secreto, activadoEn: ahora, ultimoPaso: paso };
+    u.recuperacion = nuevos.guardar;
+    codigos = nuevos.codigos;
+  } else if (modo === 'codigo') {
+    u.dosPasos.ultimoPaso = paso;
+  }
+  desafios.delete(hd);
   fallos.delete(ku);
-  u.ultimoIngreso = reloj();
+  u.ultimoIngreso = ahora;
   guardarUsuarios(d);
-  return { ok: true, usuario: publico(u), token: crearSesion(u.id) };
+  const r = { ok: true, usuario: publico(u), token: crearSesion(u.id) };
+  if (codigos) r.codigos = codigos;
+  if (restantes !== null) r.restantes = restantes;
+  return r;
+}
+
+// Para cuando alguien perdió o cambió el celular: borra la verificación y cierra sus sesiones.
+function restablecerDosPasos(id) {
+  const d = cargarUsuarios();
+  const u = d.usuarios.find(x => x.id === id);
+  if (!u) throw error('El usuario no existe.', 404);
+  delete u.dosPasos;
+  delete u.recuperacion;
+  u.sesionesDesde = reloj() + 1;   // cierra sus sesiones abiertas
+  for (const [k, x] of desafios) if (x.usuarioId === u.id) desafios.delete(k);
+  guardarUsuarios(d);
+  return publico(u);
 }
 
 /* ---------- sesiones ---------- */
@@ -226,7 +314,7 @@ function crearSesion(usuarioId) {
   const ahora = reloj();
   const mapa = mapaSesiones();
   for (const [h, s] of mapa) if (vencida(s, ahora)) mapa.delete(h);
-  mapa.set(huella(token), { usuarioId, creada: ahora, ultima: ahora });
+  mapa.set(huella(token), { usuarioId, creada: ahora, ultima: ahora, dp: true });   // 1.4.15: dp = abierta con el segundo paso
   persistirSesiones(true);
   return token;
 }
@@ -238,7 +326,7 @@ function validarSesion(token) {
   if (!ses) return null;
   const ahora = reloj();
   const u = cargarUsuarios().usuarios.find(x => x.id === ses.usuarioId);
-  if (vencida(ses, ahora) || !u || u.activo === false || ses.creada < (u.sesionesDesde || 0)) {
+  if (!ses.dp || vencida(ses, ahora) || !u || u.activo === false || ses.creada < (u.sesionesDesde || 0)) {
     mapa.delete(h);
     persistirSesiones(true);
     return null;
@@ -275,5 +363,5 @@ function detectarFirma(texto) {
 
 module.exports = {
   ROLES, LARGO_MINIMO, hayUsuarios, listar, buscarPorId, buscarPorUsuario, crear, actualizar, restablecerClave,
-  cambiarClave, ingresar, validarSesion, cerrarSesion, detectarFirma, _usarReloj
+  cambiarClave, ingresar, segundoPaso, restablecerDosPasos, validarSesion, cerrarSesion, detectarFirma, _usarReloj
 };

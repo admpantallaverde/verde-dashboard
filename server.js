@@ -15,6 +15,8 @@
  *      con ese cliente y avisa a los celulares del equipo. Guarda el historial
  *      de cómo se atendió cada chat (3 meses) para la supervisión.
  *   7. Usuarios propios para el panel (se activa con VERDE_LOGIN=activo en .env).
+ *   8. 1.4.15: verificación en 2 pasos obligatoria, registro de accesos y respaldo
+ *      diario cifrado de los datos (clave VERDE_RESPALDO_CLAVE en .env).
  *
  * Las claves (IA y WhatsApp) viven en el archivo .env, NUNCA en la pantalla.
  */
@@ -34,8 +36,10 @@ const envios = require('./envios');       // 1.4.8: envío de archivos por Whats
 const usuarios = require('./usuarios.js');
 const atencion = require('./atencion.js');
 const conversaciones = require('./conversaciones.js');
+const accesos = require('./accesos.js');       // 1.4.15: registro de accesos
+const respaldos = require('./respaldos.js');   // 1.4.15: respaldo diario cifrado
 
-const VERSION = '1.4.14';
+const VERSION = '1.4.15';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -103,6 +107,7 @@ function borrarCookie(res) {
   res.setHeader('Set-Cookie', COOKIE + '=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0');
 }
 function ipDe(req) { return String(req.headers['x-real-ip'] || (req.socket && req.socket.remoteAddress) || ''); }
+function agenteDe(req) { return String(req.headers['user-agent'] || '').slice(0, 300); }
 function responderError(res, e) {
   if (e && e.publico) return res.status(e.codigo || 400).json({ error: e.message });
   console.error('Error inesperado:', e);
@@ -131,18 +136,57 @@ function requiere(roles) {
   };
 }
 
+// 1.4.15: anota un intento fallido (y el bloqueo, si este intento lo produjo) en el registro de accesos.
+function anotarFallo(req, tipo, r) {
+  if (r.motivo !== 'incorrecto' && !r.nuevoBloqueo) return;   // los intentos durante un bloqueo no se anotan uno por uno
+  const up = r.usuarioPublico;
+  const base = { usuarioId: up ? up.id : null, usuario: up ? up.usuario : r.usuarioTexto, nombre: up ? up.nombre : '', ip: ipDe(req), agente: agenteDe(req) };
+  accesos.registrar(Object.assign({ tipo }, base));
+  if (r.nuevoBloqueo) accesos.registrar(Object.assign({ tipo: 'bloqueo' }, base));
+}
+const ERROR_BLOQUEO = 'Demasiados intentos fallidos. Probar de nuevo en 15 minutos.';
+
+// Paso 1: usuario y contraseña. Ya no abre sesión: devuelve el segundo paso (código o configuración).
 app.post('/api/login', (req, res) => {
   const b = req.body || {};
   const r = usuarios.ingresar(b.usuario, b.clave, ipDe(req));
   if (!r.ok) {
+    anotarFallo(req, 'clave_incorrecta', r);
     const bloqueado = r.motivo === 'bloqueado';
-    return res.status(bloqueado ? 429 : 401).json({ error: bloqueado ? 'Demasiados intentos fallidos. Probar de nuevo en 15 minutos.' : 'Usuario o contraseña incorrectos.' });
+    return res.status(bloqueado ? 429 : 401).json({ error: bloqueado ? ERROR_BLOQUEO : 'Usuario o contraseña incorrectos.' });
   }
-  ponerCookie(res, r.token);
-  res.json({ ok: true, usuario: r.usuario });
+  const out = { ok: true, paso: r.paso, desafio: r.desafio, usuario: { nombre: r.usuario.nombre, usuario: r.usuario.usuario } };
+  if (r.paso === 'configurar') { out.secreto = r.secreto; out.claveEnGrupos = r.claveEnGrupos; out.direccion = r.direccion; }
+  res.json(out);
 });
+// Paso 2: código de la app, código de recuperación o activación de la verificación (primera vez).
+function rutaSegundoPaso(modo) {
+  return (req, res) => {
+    const b = req.body || {};
+    const r = usuarios.segundoPaso(b.desafio, b.codigo, ipDe(req), modo);
+    if (!r.ok) {
+      anotarFallo(req, 'codigo_incorrecto', r);
+      if (r.motivo === 'vencido') return res.status(410).json({ error: 'El ingreso venció. Volver a escribir el usuario y la contraseña.', vencido: true });
+      if (r.motivo === 'bloqueado') return res.status(429).json({ error: ERROR_BLOQUEO, vencido: true });
+      return res.status(401).json({ error: modo === 'recuperacion' ? 'El código de recuperación no es válido o ya se usó.' : 'El código no es correcto. Escribir el código que muestra la app en este momento.' });
+    }
+    ponerCookie(res, r.token);
+    const base = { usuarioId: r.usuario.id, usuario: r.usuario.usuario, nombre: r.usuario.nombre, ip: ipDe(req), agente: agenteDe(req) };
+    if (modo === 'activar') accesos.registrar(Object.assign({ tipo: 'dos_pasos_activada' }, base));
+    if (modo === 'recuperacion') accesos.registrar(Object.assign({ tipo: 'ingreso_recuperacion', detalle: r.restantes === 1 ? 'queda 1' : 'quedan ' + r.restantes }, base));
+    else accesos.registrar(Object.assign({ tipo: 'ingreso' }, base));
+    const out = { ok: true, usuario: r.usuario };
+    if (r.codigos) out.codigos = r.codigos;
+    if (r.restantes !== undefined) out.restantes = r.restantes;
+    res.json(out);
+  };
+}
+app.post('/api/login/codigo', rutaSegundoPaso('codigo'));
+app.post('/api/login/recuperacion', rutaSegundoPaso('recuperacion'));
+app.post('/api/login/activar', rutaSegundoPaso('activar'));
 app.post('/api/logout', (req, res) => {
   const token = leerCookie(req);
+  if (req.usuario) accesos.registrar({ tipo: 'salida', usuarioId: req.usuario.id, usuario: req.usuario.usuario, nombre: req.usuario.nombre, ip: ipDe(req), agente: agenteDe(req) });
   if (token) usuarios.cerrarSesion(token);
   borrarCookie(res);
   res.json({ ok: true });
@@ -175,6 +219,47 @@ app.put('/api/usuarios/:id', requiere(['admin']), (req, res) => {
 app.post('/api/usuarios/:id/restablecer', requiere(['admin']), (req, res) => {
   try { res.json({ ok: true, claveTemporal: usuarios.restablecerClave(req.params.id) }); }
   catch (e) { responderError(res, e); }
+});
+// 1.4.15: si alguien perdió o cambió el celular. Cierra sus sesiones; en el próximo ingreso la configura de nuevo.
+app.post('/api/usuarios/:id/restablecer-2pasos', requiere(['admin']), (req, res) => {
+  try {
+    const u = usuarios.restablecerDosPasos(req.params.id);
+    accesos.registrar({ tipo: 'dos_pasos_restablecida', usuarioId: u.id, usuario: u.usuario, nombre: u.nombre, ip: ipDe(req), agente: agenteDe(req), porNombre: quienEs(req) });
+    console.log('Panel: ' + quienEs(req) + ' restableció la verificación en 2 pasos de ' + u.usuario);
+    res.json({ ok: true, usuario: u });
+  } catch (e) { responderError(res, e); }
+});
+
+/* ---------- 1.4.15: registro de accesos (solo administradores) ---------- */
+app.get('/api/accesos', requiere(['admin']), (req, res) => {
+  try {
+    const q = req.query || {};
+    const r = accesos.consultar({ usuario: q.usuario, grupo: q.evento, dias: q.dias });
+    r.usuarios = usuarios.listar().map(u => ({ id: u.id, nombre: u.nombre, usuario: u.usuario }));
+    res.json(r);
+  } catch (e) { responderError(res, e); }
+});
+
+/* ---------- 1.4.15: respaldos (solo administradores) ---------- */
+app.get('/api/respaldos', requiere(['admin']), (req, res) => {
+  try { res.json(respaldos.estado()); } catch (e) { responderError(res, e); }
+});
+app.post('/api/respaldos', requiere(['admin']), (req, res) => {
+  if (!respaldos.claveConfigurada()) return res.status(400).json({ error: 'Falta configurar la clave de cifrado de los respaldos en el servidor.' });
+  if (respaldos.estado().enCurso) return res.status(409).json({ error: 'Ya hay un respaldo en curso.' });
+  respaldos.crear({ automatico: false, porNombre: quienEs(req) }).catch(e => console.error('Respaldo manual:', e.message));
+  console.log('Panel: ' + quienEs(req) + ' pidió un respaldo ahora');
+  res.json({ ok: true, estado: respaldos.estado() });
+});
+const DIA_LARGO = new Intl.DateTimeFormat('es-UY', { timeZone: 'America/Montevideo', weekday: 'long', day: '2-digit', month: '2-digit' });
+app.get('/api/respaldos/:archivo', requiere(['admin']), (req, res) => {
+  try {
+    const d = respaldos.prepararDescarga(req.params.archivo, { id: req.usuario ? req.usuario.id : null, nombre: quienEs(req) });
+    if (!d) return res.status(404).json({ error: 'Ese respaldo no existe.' });
+    accesos.registrar({ tipo: 'descarga_respaldo', usuarioId: req.usuario ? req.usuario.id : null, usuario: req.usuario ? req.usuario.usuario : '', nombre: quienEs(req), ip: ipDe(req), agente: agenteDe(req), detalle: DIA_LARGO.format(new Date(d.fechaRespaldo)).replace(',', '') });
+    console.log('Panel: ' + quienEs(req) + ' descargó el respaldo ' + d.nombre);
+    res.download(d.ruta, d.nombre);
+  } catch (e) { responderError(res, e); }
 });
 
 /* ---------- IA disponibles para elegir en el panel ---------- */
@@ -227,6 +312,7 @@ app.get('/api/health', (req, res) => {
     ia: !!process.env.ANTHROPIC_API_KEY,          // ¿hay clave de IA cargada?
     bot: (bot.getVerde().encendido !== false),    // ¿el bot está encendido?
     wa360: d360Configurado(),                     // ¿están los datos de 360dialog en .env?
+    respaldos: respaldos.claveConfigurada(),     // 1.4.15: ¿está la clave de cifrado de los respaldos?
     login: loginActivo()                          // ¿está activo el ingreso con usuario propio?
   });
 });
@@ -1276,6 +1362,8 @@ app.post('/webhook/360/:clave', (req, res) => {
   procesarAviso360(req.body).catch(err => console.error('Error al procesar un aviso de 360dialog:', err));
 });
 
+respaldos.programar();   // 1.4.15: respaldo automático todas las noches a las 03:30
+
 app.listen(PORT, HOST, () => {
   console.log('====================================================');
   console.log('  Dashboard + Bot Verde funcionando ✅ (versión ' + VERSION + ')');
@@ -1284,7 +1372,8 @@ app.listen(PORT, HOST, () => {
   console.log('  Webhook 360dialog:  ' + (d360Configurado() ? 'configurado' : 'pendiente (faltan datos en .env)'));
   console.log('  Clave de IA cargada: ' + (process.env.ANTHROPIC_API_KEY ? 'SÍ' : 'NO (configurá .env)'));
   console.log('  Pausa cuando responde una persona del equipo: ' + PAUSA_HORAS + ' horas');
-  console.log('  Ingreso con usuario propio: ' + (loginActivo() ? 'ACTIVO' : 'inactivo (el panel lo protege Nginx)'));
+  console.log('  Ingreso con usuario propio: ' + (loginActivo() ? 'ACTIVO, con verificación en 2 pasos' : 'inactivo (el panel lo protege Nginx)'));
+  console.log('  Respaldos automáticos (03:30): ' + (respaldos.claveConfigurada() ? 'ACTIVOS, cifrados' : 'pendientes (falta VERDE_RESPALDO_CLAVE en .env)'));
   console.log('====================================================');
 });
 

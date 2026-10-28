@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.4.14';
+const VERSION_ESPERADA = '1.4.15';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -112,7 +112,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   mostrar('1) Estado del servidor');
   const h = await (await realFetch(BASE + '/api/health')).json();
   verificar(h.version === VERSION_ESPERADA, 'versión ' + VERSION_ESPERADA);
-  verificar(h.ok && h.ia && h.bot && h.wa360 && h.login === false, 'responde ok, IA, bot encendido, 360dialog configurado e ingreso propio inactivo');
+  verificar(h.ok && h.ia && h.bot && h.wa360 && h.login === false && h.respaldos === false, 'responde ok, IA, bot encendido, 360dialog configurado, ingreso propio inactivo y sin clave de respaldos');
 
   mostrar('2) Modelo de IA y ajustes oficiales');
   let r = await simular('hola', 'dashboard');
@@ -264,6 +264,28 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
     body: cuerpo ? JSON.stringify(cuerpo) : undefined
   });
   const json = async r => { try { return await r.json(); } catch (e) { return {}; } };
+  // 1.4.15: ingreso en dos pasos para las pruebas (calcula el código de la app como lo haría el celular)
+  const dpPrueba = require('./dospasos.js');
+  const secretos = {}, ultimosPasos = {};
+  const codigoTotp = async u => {
+    let paso = dpPrueba.pasoDe(Date.now());
+    if (ultimosPasos[u] !== undefined && paso <= ultimosPasos[u]) paso = ultimosPasos[u] + 1;
+    if (paso > dpPrueba.pasoDe(Date.now()) + 1) {   // ya se usaron el actual y el siguiente: esperar al próximo
+      await espera(((Math.floor(Date.now() / 30000) + 1) * 30000) - Date.now() + 200);
+      paso = Math.max(dpPrueba.pasoDe(Date.now()), ultimosPasos[u] + 1);
+    }
+    ultimosPasos[u] = paso;
+    return dpPrueba.codigoPara(dpPrueba.deBase32(secretos[u]), paso);
+  };
+  const ingresar2 = async (usuario, clave, extra) => {
+    const r1 = await api('/api/login', 'POST', { usuario, clave }, null, extra);
+    const j1 = await json(r1);
+    if (r1.status !== 200) return { rr: r1, j: j1, galleta: '' };
+    const u = String(usuario).toLowerCase();
+    if (j1.paso === 'configurar') secretos[u] = j1.secreto;
+    const r2 = await api(j1.paso === 'configurar' ? '/api/login/activar' : '/api/login/codigo', 'POST', { desafio: j1.desafio, codigo: await codigoTotp(u) }, null, extra);
+    return { rr: r2, j: await json(r2), galleta: (r2.headers.get('set-cookie') || '').split(';')[0], paso1: j1 };
+  };
   const avisoDe = (numero, nombre, texto, id) => ({ entry: [{ changes: [{ field: 'messages', value: { contacts: nombre ? [{ wa_id: numero, profile: { name: nombre } }] : [], messages: [{ id, from: numero, type: 'text', text: { body: texto } }] } }] }] });
   const eco = (cliente, texto, id) => aviso([{ id, from: '59893319060', to: cliente, type: 'text', text: { body: texto } }], 'smb_message_echoes');
   const atencionMod = require('./atencion.js');
@@ -402,9 +424,17 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   rr = await api('/api/login', 'POST', { usuario: 'jefe', clave: 'equivocada' });
   verificar(rr.status === 401 && /incorrectos/.test((await json(rr)).error), 'una contraseña equivocada se rechaza');
   rr = await api('/api/login', 'POST', { usuario: 'JEFE', clave: jefe.claveTemporal });
+  const j28 = await json(rr);
+  verificar(rr.status === 200 && !rr.headers.get('set-cookie') && j28.paso === 'configurar' && /^[A-Z2-7]{32}$/.test(j28.secreto) && j28.direccion.startsWith('otpauth://totp/') && /^[0-9a-f]{64}$/.test(j28.desafio), 'con la contraseña correcta todavía no hay sesión: primero se configura la verificación en 2 pasos');
+  rr = await api('/api/login/activar', 'POST', { desafio: j28.desafio, codigo: '000000' });
+  verificar(rr.status === 401 && /no es correcto/.test((await json(rr)).error), 'un código equivocado no activa la verificación');
+  secretos.jefe = j28.secreto;
+  rr = await api('/api/login/activar', 'POST', { desafio: j28.desafio, codigo: await codigoTotp('jefe') });
+  const j28b = await json(rr);
   const galletaJefe = (rr.headers.get('set-cookie') || '').split(';')[0];
   const cab = rr.headers.get('set-cookie') || '';
-  verificar(rr.status === 200 && /HttpOnly/.test(cab) && /Secure/.test(cab) && /SameSite=Strict/.test(cab), 'ingresa y recibe una sesión protegida (HttpOnly, Secure, SameSite)');
+  verificar(rr.status === 200 && /HttpOnly/.test(cab) && /Secure/.test(cab) && /SameSite=Strict/.test(cab), 'al activar la verificación ingresa y recibe una sesión protegida (HttpOnly, Secure, SameSite)');
+  verificar(Array.isArray(j28b.codigos) && j28b.codigos.length === 10 && j28b.usuario.dosPasos === true, 'recibe 10 códigos de recuperación y la verificación queda activa');
   rr = await api('/api/state', 'GET', null, galletaJefe);
   verificar(rr.status === 403 && (await json(rr)).debeCambiar === true, 'con contraseña temporal, primero debe cambiarla');
   rr = await api('/api/clave', 'POST', { actual: jefe.claveTemporal, nueva: 'corta' }, galletaJefe);
@@ -415,8 +445,8 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(rr.status === 200, 'con la contraseña propia, el administrador accede a la configuración');
   rr = await api('/api/usuarios/' + carlaAlta.usuario.id + '/restablecer', 'POST', {}, galletaJefe);
   const claveCarla = (await json(rr)).claveTemporal;
-  rr = await api('/api/login', 'POST', { usuario: 'carla', clave: claveCarla });
-  const galletaCarla = (rr.headers.get('set-cookie') || '').split(';')[0];
+  const ingCarla = await ingresar2('carla', claveCarla);
+  const galletaCarla = ingCarla.galleta;
   await api('/api/clave', 'POST', { actual: claveCarla, nueva: 'CarlaSegura2026' }, galletaCarla);
   rr = await api('/api/usuarios', 'GET', null, galletaCarla);
   verificar(rr.status === 403, 'un asesor no puede administrar usuarios');
@@ -434,7 +464,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(rr.status === 401, 'sin sesión no se puede ver ningún archivo');
   rr = await api('/api/ayuda', 'GET', null, galletaCarla);
   const ayC = await json(rr);
-  verificar(rr.status === 200 && ayC.rol === 'asesor' && !ayC.articulos.some(a => a.soloAdmin) && ayC.articulos.map(a => a.id).join(',') === 'chats-por-responder,conversaciones,chats-respondidos,garantia,consultas,archivos-enviados,corregir,asistente,apariencia', 'un asesor ve solo los 9 temas para atender los chats');
+  verificar(rr.status === 200 && ayC.rol === 'asesor' && !ayC.articulos.some(a => a.soloAdmin) && ayC.articulos.map(a => a.id).join(',') === 'chats-por-responder,conversaciones,chats-respondidos,garantia,consultas,archivos-enviados,corregir,asistente,ingreso-dos-pasos,apariencia', 'un asesor ve solo los 10 temas para atender los chats y entrar al panel');
   rr = await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Cómo devuelvo un chat a Verde?' }, galletaCarla);
   const pC = await json(rr);
   const sysC = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system);
@@ -461,8 +491,9 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   rr = await api('/api/state', 'GET', null, galletaJefe);
   usuariosMod._usarReloj(null);
   verificar(rr.status === 401, 'la sesión vence tras 8 horas sin uso');
-  rr = await api('/api/login', 'POST', { usuario: 'jefe', clave: 'ClaveNueva2026' });
-  const galleta2 = (rr.headers.get('set-cookie') || '').split(';')[0];
+  const ingJefe2 = await ingresar2('jefe', 'ClaveNueva2026');
+  verificar(ingJefe2.paso1.paso === 'codigo' && !ingJefe2.paso1.secreto && ingJefe2.rr.status === 200, 'en los ingresos siguientes se pide solo el código (sin volver a mostrar la clave)');
+  const galleta2 = ingJefe2.galleta;
   rr = await api('/api/usuarios/' + jefe.usuario.id, 'PUT', { activo: false }, galleta2);
   verificar(rr.status === 400 && /administrador activo/.test((await json(rr)).error), 'no se puede desactivar al único administrador');
   const archivoU = fs.readFileSync(path.join(__dirname, 'data', 'usuarios.json'), 'utf8');
@@ -494,7 +525,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   cli = spawnSync(process.execPath, ['usuarios-cli.js', 'restablecer', 'noexiste'], { cwd: __dirname, encoding: 'utf8' });
   verificar(cli.status === 1 && /No existe el usuario/.test(cli.stdout), 'avisa si el usuario no existe');
   cli = spawnSync(process.execPath, ['usuarios-cli.js', 'listar'], { cwd: __dirname, encoding: 'utf8' });
-  verificar(cli.status === 0 && /dueno/.test(cli.stdout) && /carla/.test(cli.stdout), 'lista los usuarios');
+  verificar(cli.status === 0 && /dueno/.test(cli.stdout) && /carla/.test(cli.stdout) && /carla · Carla[^\n]*2 pasos: activa/.test(cli.stdout) && /dueno[^\n]*2 pasos: pendiente/.test(cli.stdout), 'lista los usuarios con el estado de su verificación en 2 pasos');
 
   mostrar('32) Conversaciones: cada chat queda registrado para el panel');
   const conversacionesMod = require('./conversaciones.js');
@@ -553,8 +584,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
 
   mostrar('35) Responder desde el panel');
   process.env.VERDE_LOGIN = 'activo';
-  rr = await api('/api/login', 'POST', { usuario: 'carla', clave: 'CarlaSegura2026' });
-  const galletaC = (rr.headers.get('set-cookie') || '').split(';')[0];
+  const galletaC = (await ingresar2('carla', 'CarlaSegura2026')).galleta;
   antesEnvN = envios360.length;
   rr = await api('/api/conversaciones/' + claveV + '/responder', 'POST', { texto: 'Hola Valeria, sí tenemos en negro.' }, galletaC);
   let respP = await json(rr);
@@ -899,7 +929,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
 
   mostrar('55) Centro de ayuda: manual y guías según el rol');
   const ay55 = await json(await api('/api/ayuda', 'GET'));
-  verificar(ay55.rol === 'admin' && ay55.articulos.filter(a => a.grupo === 'manual').length === 13 && ay55.articulos.filter(a => a.grupo === 'meta').length === 6 && ay55.revisionMeta === '2026-10-24', 'el administrador ve los 13 temas del manual y las 6 guías de Meta');
+  verificar(ay55.rol === 'admin' && ay55.articulos.filter(a => a.grupo === 'manual').length === 16 && ay55.articulos.filter(a => a.grupo === 'meta').length === 6 && ay55.revisionMeta === '2026-10-24', 'el administrador ve los 16 temas del manual y las 6 guías de Meta');
   verificar(ay55.articulos.every(a => a.titulo && a.resumen && a.bloques && a.bloques.length), 'cada tema tiene título, resumen y contenido');
 
   mostrar('56) Asistente de ayuda');
@@ -1502,6 +1532,182 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   await guardar70(estado70.state || estado70);
   const botK70 = require('./bot.js');
   verificar(botK70.resumenEmpresa({ empresa: 'Tienda X', pasos: [{ titulo: 'Saludar', desc: 'Con el nombre', activo: true }, { titulo: 'Oculto', activo: false }], objeciones: [{ obj: 'Está caro', resp: 'Explicar la garantía' }] }, [{ nombre: 'Términos', cuando: 'Si preguntan' }]).includes('1. Saludar: Con el nombre') && !botK70.resumenEmpresa({ pasos: [{ titulo: 'Oculto', activo: false }] }).includes('Oculto') && botK70.resumenEmpresa({}, [{ nombre: 'Términos', cuando: 'Si preguntan' }]).includes('Términos — Si preguntan'), 'el resumen de la empresa incluye los pasos activos, las objeciones y la biblioteca, y omite los pasos apagados');
+
+
+  mostrar('71) Verificación en 2 pasos (1.4.15)');
+  process.env.VERDE_LOGIN = 'activo';
+  const crypto71 = require('crypto');
+  // Las sesiones abiertas antes de la 1.4.15 (sin segundo paso) dejan de valer
+  const sesF71 = path.join(__dirname, 'data', 'sesiones.json');
+  const tokenViejo = crypto71.randomBytes(32).toString('hex');
+  const mapa71 = fs.existsSync(sesF71) ? JSON.parse(fs.readFileSync(sesF71, 'utf8') || '{}') : {};
+  mapa71[crypto71.createHash('sha256').update(tokenViejo).digest('hex')] = { usuarioId: jefe.usuario.id, creada: Date.now(), ultima: Date.now() };
+  fs.writeFileSync(sesF71, JSON.stringify(mapa71));
+  const claveMod71 = require.resolve('./usuarios.js'), original71 = require.cache[claveMod71];
+  delete require.cache[claveMod71];
+  verificar(require('./usuarios.js').validarSesion(tokenViejo) === null, 'las sesiones abiertas antes de esta versión dejan de valer: hay que volver a ingresar con el código');
+  require.cache[claveMod71] = original71;
+  const segura = usuariosMod.crear({ nombre: 'Segura Prueba', usuario: 'segura', rol: 'admin', firma: '' });
+  let r71 = await api('/api/login', 'POST', { usuario: 'segura', clave: segura.claveTemporal });
+  let j71 = await json(r71);
+  rr = await api('/api/state', 'GET', null, 'verde_sesion=' + j71.desafio);
+  verificar(rr.status === 401, 'el desafío del segundo paso no sirve como sesión');
+  rr = await api('/api/login/codigo', 'POST', { desafio: j71.desafio, codigo: '123456' });
+  verificar(rr.status === 410 && (await json(rr)).vencido === true, 'el desafío de configuración no sirve para ingresar con código');
+  secretos.segura = j71.secreto;
+  const codActivacion = await codigoTotp('segura');
+  rr = await api('/api/login/activar', 'POST', { desafio: j71.desafio, codigo: codActivacion });
+  const codigosSegura = (await json(rr)).codigos;
+  let galletaS = (rr.headers.get('set-cookie') || '').split(';')[0];
+  verificar(rr.status === 200 && codigosSegura.length === 10, 'activa la verificación con el primer código');
+  rr = await api('/api/login/activar', 'POST', { desafio: j71.desafio, codigo: codActivacion });
+  verificar(rr.status === 410, 'un desafío ya usado no sirve otra vez');
+  const archivoU71 = fs.readFileSync(path.join(__dirname, 'data', 'usuarios.json'), 'utf8');
+  verificar(!archivoU71.includes(codigosSegura[0]) && !archivoU71.includes(codigosSegura[0].replace('-', '')), 'los códigos de recuperación se guardan cifrados');
+  await api('/api/logout', 'POST', {}, galletaS);
+  r71 = await api('/api/login', 'POST', { usuario: 'segura', clave: segura.claveTemporal });
+  j71 = await json(r71);
+  verificar(j71.paso === 'codigo' && !j71.secreto && !j71.direccion, 'en el siguiente ingreso pide el código y no vuelve a mostrar la clave');
+  rr = await api('/api/login/codigo', 'POST', { desafio: j71.desafio, codigo: codActivacion });
+  verificar(rr.status === 401, 'el mismo código no sirve dos veces');
+  rr = await api('/api/login/codigo', 'POST', { desafio: j71.desafio, codigo: await codigoTotp('segura') });
+  galletaS = (rr.headers.get('set-cookie') || '').split(';')[0];
+  verificar(rr.status === 200 && (await api('/api/state', 'GET', null, galletaS)).status === 403, 'con el código correcto ingresa (y después pide cambiar la contraseña temporal)');
+  await api('/api/clave', 'POST', { actual: segura.claveTemporal, nueva: 'SeguraClave2026' }, galletaS);
+  await api('/api/logout', 'POST', {}, galletaS);
+  r71 = await api('/api/login', 'POST', { usuario: 'segura', clave: 'SeguraClave2026' });
+  j71 = await json(r71);
+  rr = await api('/api/login/recuperacion', 'POST', { desafio: j71.desafio, codigo: codigosSegura[2].toLowerCase().replace('-', ' ') });
+  const jRec = await json(rr);
+  galletaS = (rr.headers.get('set-cookie') || '').split(';')[0];
+  verificar(rr.status === 200 && jRec.restantes === 9, 'ingresa con un código de recuperación (sin importar mayúsculas ni guion) y quedan 9');
+  await api('/api/logout', 'POST', {}, galletaS);
+  r71 = await api('/api/login', 'POST', { usuario: 'segura', clave: 'SeguraClave2026' });
+  j71 = await json(r71);
+  rr = await api('/api/login/recuperacion', 'POST', { desafio: j71.desafio, codigo: codigosSegura[2] });
+  verificar(rr.status === 401 && /ya se usó/.test((await json(rr)).error), 'un código de recuperación ya usado no sirve');
+  usuariosMod._usarReloj(() => Date.now() + 11 * 60 * 1000);
+  rr = await api('/api/login/codigo', 'POST', { desafio: j71.desafio, codigo: '000000' });
+  usuariosMod._usarReloj(null);
+  verificar(rr.status === 410 && /venció/.test((await json(rr)).error), 'el segundo paso vence a los 10 minutos');
+  // Bloqueo por códigos equivocados
+  const bloq = usuariosMod.crear({ nombre: 'Bloqueo Prueba', usuario: 'bloq', rol: 'asesor', firma: '' });
+  r71 = await api('/api/login', 'POST', { usuario: 'bloq', clave: bloq.claveTemporal });
+  j71 = await json(r71);
+  secretos.bloq = j71.secreto;
+  await api('/api/login/activar', 'POST', { desafio: j71.desafio, codigo: await codigoTotp('bloq') });
+  r71 = await api('/api/login', 'POST', { usuario: 'bloq', clave: bloq.claveTemporal });
+  j71 = await json(r71);
+  let est71 = [];
+  for (let i = 0; i < 5; i++) est71.push((await api('/api/login/codigo', 'POST', { desafio: j71.desafio, codigo: '00000' + i })).status);
+  verificar(est71.join(',') === '401,401,401,401,429', 'después de 5 códigos equivocados se bloquea el ingreso (' + est71.join(',') + ')');
+  rr = await api('/api/login', 'POST', { usuario: 'bloq', clave: bloq.claveTemporal });
+  verificar(rr.status === 429, 'durante el bloqueo tampoco se puede volver a ingresar la contraseña');
+  // Restablecer por un administrador
+  const galletaAdmin71 = (await ingresar2('segura', 'SeguraClave2026')).galleta;
+  const galletaCarla71 = (await ingresar2('carla', 'CarlaSegura2026')).galleta;
+  rr = await api('/api/usuarios/' + carlaAlta.usuario.id + '/restablecer-2pasos', 'POST', {}, galletaCarla71);
+  verificar(rr.status === 403, 'un asesor no puede restablecer la verificación de nadie');
+  rr = await api('/api/usuarios/' + carlaAlta.usuario.id + '/restablecer-2pasos', 'POST', {}, galletaAdmin71);
+  verificar(rr.status === 200 && (await json(rr)).usuario.dosPasos === false, 'el administrador restablece la verificación de Carla');
+  rr = await api('/api/chats/pendientes', 'GET', null, galletaCarla71);
+  verificar(rr.status === 401, 'al restablecerla se cierran las sesiones abiertas de esa persona');
+  const ingCarla71 = await ingresar2('carla', 'CarlaSegura2026');
+  verificar(ingCarla71.paso1.paso === 'configurar' && ingCarla71.rr.status === 200, 'en su próximo ingreso la configura de nuevo');
+  const lista71 = (await json(await api('/api/usuarios', 'GET', null, galletaAdmin71))).usuarios;
+  verificar(lista71.find(u => u.usuario === 'carla').dosPasos === true && lista71.find(u => u.usuario === 'dueno').dosPasos === false, 'la lista de usuarios indica quién tiene la verificación activa');
+  cli = spawnSync(process.execPath, ['usuarios-cli.js', 'restablecer-2pasos', 'segura'], { cwd: __dirname, encoding: 'utf8' });
+  verificar(cli.status === 0 && /restablecida para segura/.test(cli.stdout), 'desde la terminal también se puede restablecer (emergencia)');
+  verificar(!usuariosMod.buscarPorUsuario('segura').dosPasos, 'y queda pendiente de configurar');
+
+  mostrar('72) Registro de accesos (1.4.15)');
+  const UA_WIN = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36';
+  const ingAdmin72 = await ingresar2('jefe', 'ClaveNueva2026', { 'User-Agent': UA_WIN });
+  const galletaA = ingAdmin72.galleta;
+  let ac = await json(await api('/api/accesos?dias=7', 'GET', null, galletaA));
+  const tipos72 = new Set(ac.eventos.map(e => e.tipo));
+  verificar(['ingreso', 'ingreso_recuperacion', 'clave_incorrecta', 'codigo_incorrecto', 'bloqueo', 'salida', 'dos_pasos_activada', 'dos_pasos_restablecida'].every(t => tipos72.has(t)), 'registra ingresos, intentos fallidos, bloqueos, cierres de sesión y cambios en la verificación');
+  const evIntruso = ac.eventos.find(e => e.tipo === 'bloqueo' && e.usuario === 'intruso');
+  verificar(evIntruso && evIntruso.existe === false, 'los intentos con un usuario que no existe quedan marcados');
+  verificar(ac.eventos[0].tipo === 'ingreso' && ac.eventos[0].nombre === 'Jefe Prueba' && ac.eventos[0].dispositivo === 'Chrome en Windows' && ac.eventos[0].ip, 'el evento más reciente es el ingreso del administrador, con IP y «Chrome en Windows»');
+  verificar(ac.eventos.some(e => e.tipo === 'dos_pasos_restablecida' && /por Segura Prueba/.test(e.texto)) && ac.eventos.some(e => e.tipo === 'ingreso_recuperacion' && /quedan 9/.test(e.texto)), 'describe quién restableció la verificación y cuántos códigos de recuperación quedan');
+  verificar(ac.resumen.ingresos > 0 && ac.resumen.fallidos > 0 && ac.resumen.bloqueos >= 2 && ac.usuarios.length >= 4, 'trae el resumen del período y la lista de usuarios para el filtro');
+  let ac2 = await json(await api('/api/accesos?dias=7&evento=fallidos', 'GET', null, galletaA));
+  verificar(ac2.eventos.length > 0 && ac2.eventos.every(e => e.tipo === 'clave_incorrecta' || e.tipo === 'codigo_incorrecto'), 'filtra por tipo de evento');
+  ac2 = await json(await api('/api/accesos?dias=30&usuario=' + carlaAlta.usuario.id, 'GET', null, galletaA));
+  verificar(ac2.eventos.length > 0 && ac2.eventos.every(e => e.usuarioId === carlaAlta.usuario.id) && ac2.dias === 30, 'filtra por usuario y por período');
+  rr = await api('/api/accesos', 'GET', null, ingCarla71.galleta);
+  verificar(rr.status === 403, 'un asesor no ve el registro de accesos');
+  const accesosMod = require('./accesos.js');
+  accesosMod._usarReloj(() => Date.now() + 91 * 86400000);
+  accesosMod.registrar({ tipo: 'salida', usuario: 'jefe', nombre: 'Jefe Prueba' });
+  const quedan72 = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'accesos.json'), 'utf8')).eventos.length;
+  accesosMod._usarReloj(null);
+  verificar(quedan72 === 1, 'los eventos de más de 90 días se borran solos');
+  verificar(accesosMod.dispositivo('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1') === 'Safari en iPhone' && accesosMod.dispositivo('Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 Chrome/141.0 Safari/537.36 Edg/141.0') === 'Edge en Windows', 'reconoce Safari en iPhone y Edge en Windows');
+
+  mostrar('73) Respaldos (1.4.15)');
+  const respaldosMod = require('./respaldos.js');
+  rr = await api('/api/respaldos', 'POST', {}, galletaA);
+  verificar(rr.status === 400 && /clave de cifrado/.test((await json(rr)).error), 'sin clave de cifrado no se pueden hacer respaldos');
+  process.env.VERDE_RESPALDO_CLAVE = crypto71.randomBytes(32).toString('base64');
+  process.env.VERDE_RESPALDOS_DIR = path.join(__dirname, 'respaldos-prueba');
+  verificar((await json(await realFetch(BASE + '/api/health'))).respaldos === true, 'con la clave cargada, el estado del servidor lo indica');
+  rr = await api('/api/respaldos', 'POST', {}, galletaA);
+  verificar(rr.status === 200 && (await json(rr)).estado.enCurso === true, '«Hacer respaldo ahora» lo empieza en el momento');
+  let er = {};
+  for (let i = 0; i < 60; i++) { er = await json(await api('/api/respaldos', 'GET', null, galletaA)); if (!er.enCurso) break; await espera(250); }
+  const resp73 = er.respaldos[0];
+  verificar(!er.enCurso && resp73 && resp73.ok && resp73.disponible && resp73.porNombre === 'Jefe Prueba' && respaldosMod.NOMBRE_RE.test(resp73.archivo) && resp73.tamano > 100, 'el respaldo queda hecho, con nombre, tamaño y quién lo pidió');
+  verificar(er.aviso.mostrar === false && er.aviso.nuncaDescargado === true && er.maximo === 14, 'recién hecho, todavía no hay aviso de descarga');
+  rr = await api('/api/respaldos', 'GET', null, ingCarla71.galleta);
+  verificar(rr.status === 403 && (await api('/api/respaldos/' + resp73.archivo, 'GET', null, ingCarla71.galleta)).status === 403, 'un asesor no ve ni descarga respaldos');
+  rr = await api('/api/respaldos/' + encodeURIComponent('../data/usuarios.json'), 'GET', null, galletaA);
+  verificar(rr.status === 404, 'no se puede pedir otro archivo del servidor');
+  rr = await api('/api/respaldos/' + resp73.archivo, 'GET', null, galletaA);
+  const cuerpo73 = Buffer.from(await rr.arrayBuffer());
+  verificar(rr.status === 200 && /attachment/.test(rr.headers.get('content-disposition') || '') && cuerpo73.subarray(0, 5).toString() === 'VRSP1' && !cuerpo73.includes(Buffer.from('Jefe Prueba')), 'la descarga entrega el archivo cifrado');
+  er = await json(await api('/api/respaldos', 'GET', null, galletaA));
+  verificar(er.respaldos[0].descargadoPor.nombre === 'Jefe Prueba' && er.ultimaDescarga.nombre === 'Jefe Prueba', 'queda registrado quién lo descargó');
+  ac = await json(await api('/api/accesos?evento=descargas', 'GET', null, galletaA));
+  verificar(ac.eventos.length === 1 && /^Descarga del respaldo del [a-záéíóúñ]+ \d{2}\/\d{2}$/.test(ac.eventos[0].texto), 'la descarga queda en el registro de accesos: «' + (ac.eventos[0] || {}).texto + '»');
+  respaldosMod._usarReloj(() => Date.now() + 9 * 86400000);
+  const aviso73 = respaldosMod.estado().aviso;
+  respaldosMod._usarReloj(null);
+  verificar(aviso73.mostrar && aviso73.dias === 9, 'a los 9 días sin descargar aparece el aviso');
+  const archivoR = path.join(process.env.VERDE_RESPALDOS_DIR, resp73.archivo);
+  cli = spawnSync(process.execPath, ['respaldos-cli.js', 'verificar', archivoR], { cwd: __dirname, encoding: 'utf8', env: process.env });
+  verificar(cli.status === 0 && /Respaldo válido/.test(cli.stdout), 'desde la terminal se verifica que el respaldo se abre con la clave');
+  // Sin bloquear el proceso: el servidor de prueba corre acá mismo y tiene que poder responder al control.
+  cli = await new Promise(ok => require('child_process').execFile(process.execPath, ['respaldos-cli.js', 'restaurar', archivoR], { cwd: __dirname, encoding: 'utf8', env: process.env }, (err, stdout) => ok({ status: err ? (err.code || 1) : 0, stdout })));
+  verificar(cli.status === 1 && /Verde está funcionando/.test(cli.stdout) && fs.existsSync(path.join(__dirname, 'data', 'state.json')) && !fs.readdirSync(__dirname).some(f => f.startsWith('data-antes-de-restaurar-')), 'no deja restaurar con Verde funcionando (y no toca los datos)');
+  const caja73 = path.join(__dirname, 'restaurar-prueba');
+  fs.mkdirSync(path.join(caja73, 'data'), { recursive: true });
+  fs.writeFileSync(path.join(caja73, 'data', 'state.json'), '{"viejo":true}');
+  cli = spawnSync(process.execPath, ['respaldos-cli.js', 'restaurar', archivoR], { cwd: __dirname, encoding: 'utf8', env: Object.assign({}, process.env, { VERDE_BASE_DIR: caja73, PORT: '39997' }) });
+  const restaurado = fs.readFileSync(path.join(caja73, 'data', 'state.json'), 'utf8');
+  verificar(cli.status === 0 && /Datos restaurados/.test(cli.stdout) && restaurado === fs.readFileSync(path.join(__dirname, 'data', 'state.json'), 'utf8') && fs.existsSync(path.join(caja73, 'data', 'usuarios.json')) && fs.readdirSync(caja73).some(f => f.startsWith('data-antes-de-restaurar-')), 'con Verde detenido, restaura los datos y guarda los que había');
+  fs.writeFileSync(path.join(caja73, '.env'), 'PORT=39997\n');
+  const sinClave = Object.assign({}, process.env, { VERDE_BASE_DIR: caja73 }); delete sinClave.VERDE_RESPALDO_CLAVE;
+  cli = spawnSync(process.execPath, ['respaldos-cli.js', 'clave'], { cwd: __dirname, encoding: 'utf8', env: sinClave });
+  const envCaja = fs.readFileSync(path.join(caja73, '.env'), 'utf8');
+  verificar(cli.status === 0 && /^PORT=39997\nVERDE_RESPALDO_CLAVE=[A-Za-z0-9+/]{43}=\n$/.test(envCaja), 'genera la clave de cifrado y la agrega a .env sin tocar lo demás');
+  cli = spawnSync(process.execPath, ['respaldos-cli.js', 'clave'], { cwd: __dirname, encoding: 'utf8', env: sinClave });
+  verificar(/Ya hay una clave/.test(cli.stdout) && fs.readFileSync(path.join(caja73, '.env'), 'utf8') === envCaja, 'si ya hay una clave, no la reemplaza');
+  respaldosMod._usarReloj(() => Date.UTC(2030, 0, 15, 5, 0));   // 02:00 de Montevideo
+  verificar(respaldosMod.revisarProgramado() === null, 'antes de las 03:30 no hace el respaldo automático');
+  respaldosMod._usarReloj(() => Date.UTC(2030, 0, 15, 15, 0));  // 12:00 de Montevideo
+  const programado = respaldosMod.revisarProgramado();
+  verificar(programado !== null, 'después de las 03:30, si ese día no hubo uno automático, lo hace');
+  await programado;
+  verificar(respaldosMod.revisarProgramado() === null, 'y no se repite el mismo día');
+  respaldosMod._usarReloj(() => Date.UTC(2030, 0, 16, 15, 0));  // al día siguiente, 12:00 de Montevideo
+  await respaldosMod.crear({ porNombre: 'Jefe Prueba' });
+  verificar(respaldosMod.revisarProgramado() === null && respaldosMod.estado().proximo === Date.UTC(2030, 0, 17, 6, 30), 'un respaldo manual hecho después de las 03:30 cuenta como el del día: el próximo es mañana a las 03:30');
+  respaldosMod._usarReloj(null);
+  fs.rmSync(caja73, { recursive: true, force: true });
+  delete process.env.VERDE_RESPALDO_CLAVE;
+  process.env.VERDE_LOGIN = '';
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }
