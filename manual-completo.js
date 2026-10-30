@@ -1,0 +1,137 @@
+/*
+ * manual-completo.js — Manual completo de uso del panel (1.5.3)
+ * -------------------------------------------------------------
+ *  Pantalla por pantalla: qué hay, qué hace cada botón y qué ve cada rol. Lo usa el asistente
+ *  del Centro de ayuda para explicar cualquier detalle del panel, y se muestra en «Manual y guías»
+ *  como «Manual completo». Las secciones con soloAdmin: true no se muestran a los asesores.
+ *
+ *  Cuando cambie una pantalla, actualizar acá su sección.
+ */
+'use strict';
+
+const SECCIONES = [
+  {
+    id: 'menu', titulo: 'El menú y la navegación', soloAdmin: false, texto: [
+      'El menú de la izquierda tiene cuatro grupos. «Ventas»: Leads, Tareas y, para administradores, Proceso de ventas. Debajo: Chats por responder (con el número de chats que esperan a una persona), Conversaciones y Chats respondidos. «Categorías» y «Sistema» (Usuarios, Consumo de IA, Registro de accesos, Respaldos) solo los ven los administradores. «Ayuda»: Centro de ayuda.',
+      'El botón con el ícono de panel, arriba a la derecha del logo, colapsa el menú para dejarlo solo con íconos; en el celular el menú se abre y se cierra con ese mismo botón. Al pie del menú está la tarjeta «Conexión» con el estado de WhatsApp, el botón «Ver estado de conexión» (solo administradores) y el interruptor de modo claro u oscuro (ícono de sol o luna), que se recuerda en cada equipo.',
+      'Arriba a la derecha de cada pantalla está el estado de WhatsApp («Conectado» o el aviso correspondiente) y las iniciales del usuario: al tocarlas se ven el nombre, el rol y el botón «Cerrar sesión». La contraseña se cambia pidiéndole a un administrador que la restablezca.'
+    ]
+  },
+  {
+    id: 'ingreso', titulo: 'Ingreso, verificación en 2 pasos y contraseña', soloAdmin: false, texto: [
+      'Se ingresa con el usuario y la contraseña que creó el administrador. La primera vez la contraseña es temporal y el panel pide crear una propia. Después de la contraseña, siempre se pide la verificación en 2 pasos: un código de 6 dígitos de la app autenticadora del celular (Google Authenticator o Microsoft Authenticator). La primera vez el panel muestra un código QR para agregar la cuenta en la app, o una clave para escribir a mano, y después entrega 10 códigos de recuperación que hay que guardar: cada uno sirve una sola vez para entrar si no se tiene el celular.',
+      'Después de 5 intentos fallidos, el ingreso se bloquea 15 minutos. Si alguien pierde el celular, un administrador le restablece la verificación desde Usuarios › Editar y la configura de nuevo en su próximo ingreso. La sesión dura 8 horas sin uso y como máximo 7 días; al vencer, el panel vuelve a pedir el ingreso donde se estaba.'
+    ]
+  },
+  {
+    id: 'leads', titulo: 'Ventas › Leads', soloAdmin: false, texto: [
+      'Muestra todas las conversaciones de los últimos 30 días clasificadas por la IA y ordenadas por prioridad: primero las de prioridad alta y, dentro de cada nivel, la que más espera. Arriba, los filtros: Etapa (Nuevo, Con Verde, Derivado, En atención, Presupuesto enviado, Esperando al cliente, Sin respuesta o Cerrado), Tipo (Reparación, Compra, Garantía, Consulta general, Otro), Vendedor y un buscador por cliente, producto o número. Debajo, el conteo por prioridad y cuántas conversaciones están sin clasificar todavía o cerradas.',
+      'Cada fila tiene: prioridad (punto rojo = alta, ámbar = media, gris = normal), cliente con su número, tipo y producto, etapa, espera (desde el último mensaje del cliente, o desde el último mensaje nuestro cuando se espera al cliente), vendedor y la traba con la frase textual del cliente entre comillas. En el celular cada lead es una tarjeta. Al tocar un lead se abre el chat con la franja «Lead» arriba.',
+      'La IA clasifica cada conversación 10 minutos después del último mensaje: tipo, producto, intención de compra (alta, media o baja), si ya se dio un presupuesto, la traba (precio, demora, desconfianza, distancia, lo piensa u otra, con la frase textual), un resumen y el próximo paso sugerido. La etapa y la prioridad no las decide la IA: salen de reglas. Prioridad alta: reclamos de garantía, compras con intención alta y chats derivados sin respuesta hace más de 2 horas. Media: intención alta o media, derivados recientes, presupuestos enviados y chats esperando al cliente. Normal: el resto.'
+    ]
+  },
+  {
+    id: 'franja-lead', titulo: 'La franja «Lead» dentro del chat', soloAdmin: false, texto: [
+      'Al abrir un chat, arriba de los mensajes aparece la franja «Lead» con tres líneas. Primera: prioridad, tipo y producto, etapa, intención y el enlace «Corregir», que abre un formulario para cambiar el tipo, el producto, la intención y la traba; lo corregido queda fijo aunque la IA vuelva a clasificar. Si todavía no está clasificado, el enlace se llama «Clasificar a mano». Segunda: resumen, próximo paso sugerido y traba con la frase textual.',
+      'Tercera: «Vendedor» (quien respondió último; «Asignar» abre una lista de usuarios del panel para elegir a otro o dejarlo sin asignar), la tarea pendiente con su vencimiento y el enlace «Hecho», y el enlace «Cerrar lead». Si la IA detecta que el cliente compró o desistió, debajo aparece su propuesta («La IA propone cerrar este lead como ganado/perdido») con los botones «Confirmar» y «No»: nada se cierra sin la persona. Con «No», la IA no insiste con esos mismos mensajes.',
+      '«Cerrar lead» abre un formulario: resultado Ganado o Perdido; si es perdido, el motivo (Precio, Demora, Desconfianza, Distancia, Lo piensa, Compró en otro lado u Otro) y una nota opcional. Al cerrar, queda anotado en el chat como mensaje interno, el lead sale de la lista de Leads (se ve con el filtro «Cerrado»), su tarea desaparece y, si el chat estaba en «Chats por responder», se marca como atendido con el motivo «Lead cerrado». Un lead cerrado muestra el resultado, el motivo, quién lo cerró y cuándo, y el enlace «Reabrir».'
+    ]
+  },
+  {
+    id: 'tareas', titulo: 'Ventas › Tareas', soloAdmin: false, texto: [
+      'Lista lo que tiene que hacer cada vendedor, en tres grupos: Vencidas, Para hoy y Próximas. Cada tarea muestra la prioridad y el cliente, la etapa, la acción a hacer, cuándo vence o hace cuánto venció, y el vendedor. «Abrir chat» abre la conversación; «Hecho» marca la tarea como hecha. El asesor ve solo sus tareas; el administrador ve todas y tiene un filtro por vendedor. El número junto a «Tareas» en el menú es la cantidad de tareas vencidas.',
+      'Las tareas nacen solas: cada etapa del proceso de ventas tiene una próxima acción y un plazo, y cuando un lead entra en la etapa la tarea empieza a correr. Con los valores iniciales: Derivado y En atención, responder al cliente en 2 horas; Presupuesto enviado, hacer seguimiento a las 24 horas; Esperando al cliente, volver a contactar a las 48 horas; Sin respuesta, último intento o cerrar como perdido a las 72 horas. Nuevo, Con Verde y Cerrado no tienen tarea.',
+      '«Hecho» abre un formulario con una nota corta opcional (por ejemplo, «llamé, no atendió») y cuándo volver a ver el lead: mañana a las 10:00, en 2 días, en una semana o sin seguimiento. El seguimiento queda como nueva tarea a las 10:00 del día elegido y la nota se anota en el chat como mensaje interno. Si el cliente vuelve a escribir, la tarea de la etapa nueva reemplaza al seguimiento. Las tareas no mandan mensajes a los clientes: son recordatorios para el equipo. Para contactar a un cliente que no escribió en las últimas 24 horas, hay que llamarlo o escribirle desde el celular de la tienda.'
+    ]
+  },
+  {
+    id: 'proceso', titulo: 'Ventas › Proceso de ventas (administradores)', soloAdmin: true, texto: [
+      'Una tabla con las cinco etapas que tienen tarea (Derivado, En atención, Presupuesto enviado, Esperando al cliente y Sin respuesta). Para cada una: la próxima acción (texto de hasta 80 caracteres), el plazo en horas (de 1 a 720) y la casilla «Aviso al celular», que manda un aviso al equipo cuando la tarea vence, por el mismo sistema que los avisos de chats por responder. «Guardar cambios» aplica los valores a las tareas desde ese momento; una tarea ya vencida no se reabre por cambiar el plazo.'
+    ]
+  },
+  {
+    id: 'chats-por-responder', titulo: 'Chats por responder', soloAdmin: false, texto: [
+      'Lista los chats que Verde derivó a una persona del equipo: porque el cliente pidió un precio exacto, porque hay un reclamo de garantía, porque envió un archivo para revisar, porque alguien del equipo había respondido y el cliente volvió a escribir sin que nadie contestara en 5 minutos, o porque Verde está apagado en ese chat. Van ordenados por la prioridad del lead (alta primero) y, dentro de cada nivel, el más viejo primero. Cada fila muestra el cliente, el último mensaje y el tiempo de espera, en rojo cuando pasa de 5 minutos. El buscador filtra por nombre, número o mensaje; el botón de recargar actualiza la lista y la campana (solo administradores) abre «Avisos a celulares del equipo».',
+      'Mientras un chat está por responder, Verde sigue conversando con el cliente sin dar precios, salvo que esté en pausa porque alguien del equipo ya respondió. Al tocar un chat se abre la conversación. «Marcar atendido» lo saca de la lista cuando se resolvió por otro lado: por llamada, en el local, porque ya no necesita atención u otro motivo (con detalle). Los chats con reclamo de garantía o consulta de reparación o compra muestran una etiqueta y una ficha con los datos que juntó Verde («Ver ficha»).'
+    ]
+  },
+  {
+    id: 'chat-abierto', titulo: 'Un chat abierto: encabezado, interruptor y franjas', soloAdmin: false, texto: [
+      'El encabezado muestra el cliente con su número y las etiquetas del chat. El interruptor de Verde: encendido («Verde», en verde) significa que Verde atiende este chat; al tocarlo pide confirmar y lo apaga para ese chat (gris: Verde no responde hasta que se lo vuelva a encender tocándolo otra vez). Cuando alguien del equipo respondió, el interruptor muestra «Verde en pausa» (ámbar): Verde no contesta durante 12 horas, y al lado aparece el botón «Devolver a Verde», que termina la pausa. El botón redondo con el ícono de ayuda es «Ayuda con este chat»: abre el Centro de ayuda con la conversación adjunta, para pedirle al asistente qué responder. «Marcar atendido» aparece cuando el chat está por responder.',
+      'Debajo del encabezado puede haber una franja de estado: roja «Por responder» (dice si Verde sigue conversando o si está en pausa y hasta cuándo), azul «Archivo para revisar», «Reclamo de garantía» con el botón «Ver ficha», o gris «Verde apagado en este chat» con quién lo apagó y cuándo. Luego viene la franja «Lead» (ver su sección). Los mensajes del cliente van a la izquierda; los de Verde y del equipo a la derecha, con el nombre de quien escribió. Los mensajes internos (por ejemplo, «Lead cerrado…» o «Tarea hecha…») aparecen centrados en ámbar y el cliente no los ve.'
+    ]
+  },
+  {
+    id: 'escribir', titulo: 'Un chat abierto: escribir, adjuntar y corregir con la IA', soloAdmin: false, texto: [
+      'La caja de mensaje de abajo escribe al cliente por WhatsApp. En la computadora, Enter envía y Shift + Enter hace un salto de línea; en el celular se envía con el botón. Cada mensaje sale con la firma del usuario («- Nombre -»), que se ve en el texto de la caja. Al responder desde el panel, Verde hace su pausa de 12 horas en ese chat. WhatsApp solo permite responder desde el panel dentro de las 24 horas del último mensaje del cliente; pasado ese plazo, la caja lo avisa y hay que retomar desde el celular de la tienda. Lo que se escribe y no se envía queda como borrador de ese chat.',
+      'El botón del clip adjunta un archivo para el cliente (PDF, JPG o PNG); antes de enviarlo se ve el nombre y se puede quitar. El botón con el ícono de estrellas es la corrección con IA: pide el tono (rioplatense, neutro o formal, con las teclas 1, 2 y 3) y reemplaza el mensaje por una versión corregida (ortografía, claridad), sin agregar datos ni tocar la firma; «Deshacer» recupera el original. Hay un límite de 30 correcciones por hora por usuario. Si el cliente envió un archivo, aparece en el chat y se puede abrir.'
+    ]
+  },
+  {
+    id: 'conversaciones', titulo: 'Conversaciones', soloAdmin: false, texto: [
+      'Todas las conversaciones de los últimos 3 meses, con la última de cada cliente arriba. El buscador encuentra por nombre, número o texto de un mensaje. Los filtros: Todas, Verde atendiendo, Atiende una persona (Verde en pausa), Verde apagado y Por responder, con la cantidad de cada uno. Al tocar una conversación se abre a la derecha con la lista a la vista (en el celular ocupa la pantalla y el botón «Volver» regresa a la lista). Las conversaciones se guardan 3 meses y después se borran.'
+    ]
+  },
+  {
+    id: 'chats-respondidos', titulo: 'Chats respondidos', soloAdmin: false, texto: [
+      'El historial de los chats que ya se atendieron: cuándo se derivaron, cuánto esperaron y cómo se cerraron (respondidos desde el panel o desde el celular de la tienda, marcados como atendidos con su motivo, o cerrados por un lead cerrado). Los filtros muestran todos, los respondidos por WhatsApp, los marcados a mano y los clientes que volvieron a escribir después. Al tocar uno se abre la conversación.'
+    ]
+  },
+  {
+    id: 'comportamiento-a-g', titulo: 'Comportamiento del bot: secciones A a G (administradores)', soloAdmin: true, texto: [
+      'Es la configuración de Verde. Cada sección se guarda por separado con su botón «Guardar», y arriba se puede ver la vista previa de las instrucciones completas que recibe la IA. A, Identidad del bot: nombre de Verde, rol, empresa y presentación (lo primero que dice, una sola vez por conversación). B, Personalidad y tono: cómo habla. C, Ventajas / diferenciales: lo que destaca de la tienda. D, Pasos del proceso de venta: las etapas que Verde sigue para vender, con ejemplos, activables una por una. E, Manejo de objeciones: cada objeción típica («está caro», «lo pienso») con su respuesta. F, Reglas de oro: lo que Verde nunca hace (dar precios exactos, prometer plazos) y lo que siempre hace. G, Frases clave: frases que debe usar tal cual. En estas secciones se configura también qué hace Verde cuando un cliente envía un archivo.'
+    ]
+  },
+  {
+    id: 'comportamiento-h', titulo: 'Comportamiento del bot: sección H, parámetros técnicos (administradores)', soloAdmin: true, texto: [
+      'Modelo de IA de Verde (Claude Sonnet 5.5 recomendada; Opus 5.5 y Fable 5.1 son más capaces y más caras), tokens máximos por respuesta, memoria (cuántos mensajes recuerda) y tiempo de espera: los segundos que Verde espera desde el último mensaje del cliente antes de responder, para contestar todo junto si el cliente escribe en varios mensajes (hasta 60; con 0 responde de inmediato; no se aplica en Probar a Verde).',
+      'En la misma sección: «Clasificación de leads», el modelo que clasifica las conversaciones (Haiku 5.5 recomendada por económica), y «Asistente del equipo (Centro de ayuda)», con su modelo y su esfuerzo (cuánto razona antes de responder: bajo, medio, alto o máximo). Los gastos de cada uno se ven por separado en Consumo de IA.'
+    ]
+  },
+  {
+    id: 'comportamiento-i-k', titulo: 'Comportamiento del bot: secciones I, J y K (administradores)', soloAdmin: true, texto: [
+      'I, Reclamos y garantía: requisitos indispensables (orden de trabajo o boleta, reclamo de quien ingresó el equipo, plazo), qué cubre y qué no, sugerencias por síntoma (por ejemplo, reinicio forzado si falla el touch, preguntar por el cargador si no carga) y los datos que Verde junta para la ficha del reclamo. Verde nunca confirma ni rechaza una garantía: arma la ficha y deriva.',
+      'J, Fichas de consulta: los datos que Verde pide antes de derivar una consulta de reparación (hasta 7) o de compra (hasta 6), para que el asesor reciba la ficha completa. K, Biblioteca de recursos: archivos (PDF o imágenes) que Verde puede enviar, con un código, un nombre, «Cuándo usarlo» y la casilla «Puede enviarlo sin que lo pidan». En «Probar a Verde» no se envían archivos: figura entre paréntesis que lo enviaría.'
+    ]
+  },
+  {
+    id: 'probar-y-conexion', titulo: 'Probar a Verde y estado de conexión (administradores)', soloAdmin: true, texto: [
+      '«Probar a Verde», dentro de Comportamiento del bot, es un simulador: se escribe como un cliente y Verde responde con la configuración actual, sin WhatsApp. «Reiniciar charla» borra la memoria del simulador para empezar un caso nuevo. Las consultas del simulador se cuentan en Consumo de IA como «Pruebas en el panel».',
+      '«Ver estado de conexión» (al pie del menú) muestra la conexión con WhatsApp a través de 360dialog: si el número está conectado, la clave configurada y el resultado de la última prueba. «Avisos a celulares del equipo» (se abre con la campana de Chats por responder) tiene los números del equipo que reciben los avisos, el nombre y el idioma de la plantilla aprobada por Meta para avisar fuera de las 24 horas, y qué avisos se mandan: chats derivados, archivos para revisar, clientes que vuelven a escribir y tareas vencidas.'
+    ]
+  },
+  {
+    id: 'usuarios', titulo: 'Sistema › Usuarios (administradores)', soloAdmin: true, texto: [
+      'La lista de personas que entran al panel: nombre, usuario, rol (Administrador: todo el panel; Asesor: chats, leads, tareas y Centro de ayuda, sin configuración), firma en WhatsApp, estado (Activo o Inactivo, y debajo si tiene la verificación en 2 pasos activa o pendiente) y último ingreso. «Nuevo usuario» crea uno y muestra su contraseña temporal una sola vez. En cada fila: «Editar» (nombre, rol, firma y, si corresponde, «Restablecer verificación en 2 pasos», que cierra sus sesiones), «Restablecer contraseña» (nueva contraseña temporal) y «Desactivar» (no se elimina: queda el historial de lo que hizo). Un usuario inactivo no puede entrar.'
+    ]
+  },
+  {
+    id: 'consumo', titulo: 'Sistema › Consumo de IA (administradores)', soloAdmin: true, texto: [
+      'Cuánto gastó Verde en IA: consultas y costo estimado del mes (o de un período elegido), separados por origen (WhatsApp, Pruebas en el panel, Ayuda, Corrección y Clasificación) y por modelo, con el costo por día y los precios de referencia de cada modelo. El costo es una estimación con los precios publicados por Anthropic; la factura real está en la Consola de Anthropic, donde también se cargan los créditos.'
+    ]
+  },
+  {
+    id: 'accesos-respaldos', titulo: 'Sistema › Registro de accesos y Respaldos (administradores)', soloAdmin: true, texto: [
+      'Registro de accesos: cada ingreso correcto, intento fallido, bloqueo, cierre de sesión, activación o restablecimiento de la verificación en 2 pasos y descarga de respaldos, con fecha, usuario, dirección IP y dispositivo. Filtros por usuario, evento y período (7, 30 o 90 días); se conserva 90 días.',
+      'Respaldos: todas las noches a las 03:30 Verde guarda una copia cifrada de sus datos (configuración, conversaciones, usuarios, consumo, archivos y biblioteca; las claves del archivo .env no se incluyen). Se guardan los últimos 14 en el servidor. «Hacer respaldo ahora» crea uno manual. «Descargar» baja el archivo cifrado para guardarlo fuera del servidor; cada descarga queda en el registro de accesos. Si pasan 7 días sin descargar uno, el panel avisa. Para abrir o restaurar un respaldo hace falta la clave de cifrado, que está en el servidor y en el gestor de contraseñas del administrador.'
+    ]
+  },
+  {
+    id: 'centro-de-ayuda', titulo: 'Centro de ayuda', soloAdmin: false, texto: [
+      'Es el asistente del equipo: responde cómo se usa cada parte del panel, qué decirle a un cliente, cómo armar un presupuesto o cómo tratar un reclamo, con la información de la empresa configurada por el administrador. Los accesos rápidos de arriba hacen preguntas frecuentes con un toque. Las respuestas que incluyen textos para el cliente los muestran listos para enviar, con «Copiar» y «Usar en el chat».',
+      'Cada usuario tiene sus propias conversaciones con el asistente, guardadas: al volver al Centro de ayuda sigue la última. «Conversaciones» lista las anteriores por título y fecha para reabrirlas, y «Nueva conversación» empieza otra. El botón del clip adjunta una imagen (JPG o PNG, hasta 5 MB), por ejemplo una captura de pantalla, para preguntar qué es algo o qué hacer con ello. «Ayuda con este chat», desde cualquier conversación de WhatsApp, adjunta los últimos 20 mensajes para que el asistente aconseje sobre ese cliente; «Volver al chat» regresa. «Manual y guías» abre el cajón con el manual por temas, este manual completo y las guías de Meta. El asistente responde solo sobre el trabajo de la empresa y el panel; hay un límite de preguntas por hora.'
+    ]
+  }
+];
+
+function seccionesPara(rol) { return SECCIONES.filter(s => rol === 'admin' || !s.soloAdmin); }
+// Texto para las instrucciones del asistente.
+function textoPara(rol) { return seccionesPara(rol).map(s => '## ' + s.titulo + '\n' + s.texto.join('\n')).join('\n\n'); }
+// Bloques para mostrarlo en «Manual y guías».
+function bloquesPara(rol) {
+  const out = [];
+  for (const s of seccionesPara(rol)) { out.push({ tipo: 'h', texto: s.titulo }); for (const p of s.texto) out.push({ tipo: 'p', texto: p }); }
+  return out;
+}
+
+module.exports = { SECCIONES, seccionesPara, textoPara, bloquesPara };

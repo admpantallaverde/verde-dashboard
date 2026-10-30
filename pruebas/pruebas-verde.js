@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.5.2';
+const VERSION_ESPERADA = '1.5.3';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -471,7 +471,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(rr.status === 401, 'sin sesión no se puede ver ningún archivo');
   rr = await api('/api/ayuda', 'GET', null, galletaCarla);
   const ayC = await json(rr);
-  verificar(rr.status === 200 && ayC.rol === 'asesor' && !ayC.articulos.some(a => a.soloAdmin) && ayC.articulos.map(a => a.id).join(',') === 'leads,tareas,chats-por-responder,conversaciones,chats-respondidos,garantia,consultas,archivos-enviados,corregir,asistente,ingreso-dos-pasos,apariencia', 'un asesor ve solo los 12 temas para atender los chats y entrar al panel');
+  verificar(rr.status === 200 && ayC.rol === 'asesor' && !ayC.articulos.some(a => a.soloAdmin) && ayC.articulos.map(a => a.id).join(',') === 'leads,tareas,chats-por-responder,conversaciones,chats-respondidos,garantia,consultas,archivos-enviados,corregir,asistente,ingreso-dos-pasos,apariencia,manual-completo', 'un asesor ve solo los 13 temas para atender los chats y entrar al panel');
   rr = await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Cómo devuelvo un chat a Verde?' }, galletaCarla);
   const pC = await json(rr);
   const sysC = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system);
@@ -936,7 +936,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
 
   mostrar('55) Centro de ayuda: manual y guías según el rol');
   const ay55 = await json(await api('/api/ayuda', 'GET'));
-  verificar(ay55.rol === 'admin' && ay55.articulos.filter(a => a.grupo === 'manual').length === 19 && ay55.articulos.filter(a => a.grupo === 'meta').length === 6 && ay55.revisionMeta === '2026-10-24', 'el administrador ve los 16 temas del manual y las 6 guías de Meta');
+  verificar(ay55.rol === 'admin' && ay55.articulos.filter(a => a.grupo === 'manual').length === 20 && ay55.articulos.filter(a => a.grupo === 'meta').length === 6 && ay55.revisionMeta === '2026-10-24', 'el administrador ve los 16 temas del manual y las 6 guías de Meta');
   verificar(ay55.articulos.every(a => a.titulo && a.resumen && a.bloques && a.bloques.length), 'cada tema tiene título, resumen y contenido');
 
   mostrar('56) Asistente de ayuda');
@@ -951,7 +951,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(c56.porOrigen.ayuda && c56.porOrigen.ayuda.consultas >= 1, 'la consulta se registra en «Consumo de IA» como origen «Ayuda»');
   rr = await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿y si no responde?', historial: [{ pregunta: '¿Cómo devuelvo un chat a Verde?', respuesta: pa56.respuesta }] });
   const msgs56 = llamadasIA[llamadasIA.length - 1].body.messages;
-  verificar(rr.status === 200 && msgs56.length === 3 && msgs56[0].content === '¿Cómo devuelvo un chat a Verde?' && msgs56[2].content === '¿y si no responde?', 'mantiene el hilo de la conversación');
+  verificar(rr.status === 200 && msgs56.length >= 3 && msgs56.some(m => m.role === 'user' && m.content === '¿Cómo devuelvo un chat a Verde?') && msgs56[msgs56.length - 1].content === '¿y si no responde?', 'mantiene el hilo de la conversación (1.5.3: guardado en el servidor)');
   rr = await api('/api/ayuda/preguntar', 'POST', { pregunta: '' });
   verificar(rr.status === 400, 'rechaza una pregunta vacía');
   rr = await api('/api/ayuda/preguntar', 'POST', { pregunta: 'x'.repeat(501) });
@@ -1867,6 +1867,51 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(dt.etapa === 'cerrado' && dt.cierre.resultado === 'ganado' && dt.cierre.porIA === true && dt.cierre.nota === 'Propuesto por la IA' && (await json(await api('/api/leads/' + comp.clave))).sugerencia === null, 'con un mensaje nuevo vuelve a proponer, y al confirmar se cierra como ganado');
   verificar((await api('/api/leads/wa:noexiste/cerrar', 'POST', { resultado: 'ganado' })).status === 404, 'cerrar un lead inexistente devuelve 404');
   leadsMod._usarReloj(null);
+
+  mostrar('77) Centro de ayuda personal (1.5.3)');
+  const hilosMod = require('./ayuda-hilos.js');
+  const ca77 = await json(await api('/api/ayuda/conversacion-actual'));
+  verificar(ca77.conversacion && ca77.conversacion.mensajes.some(m => m.rol === 'usuario' && m.texto === '¿y si no responde?') && ca77.conversacion.titulo.length > 0, 'la conversación con el asistente queda guardada en el servidor, con título');
+  const nueva77 = await json(await api('/api/ayuda/conversaciones', 'POST'));
+  verificar(nueva77.conversacion && nueva77.conversacion.mensajes.length === 0 && nueva77.conversacion.id !== ca77.conversacion.id, '«Nueva conversación» crea una vacía');
+  const nueva77b = await json(await api('/api/ayuda/conversaciones', 'POST'));
+  verificar(nueva77b.conversacion.id === nueva77.conversacion.id, 'no acumula conversaciones vacías');
+  let rr77 = await json(await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Cómo marco una tarea como hecha?', conversacionId: nueva77.conversacion.id }));
+  const msgs77 = llamadasIA[llamadasIA.length - 1].body.messages, sys77 = llamadasIA[llamadasIA.length - 1].body.system;
+  verificar(rr77.conversacionId === nueva77.conversacion.id && rr77.titulo === '¿Cómo marco una tarea como hecha?' && msgs77.length === 1, 'en la conversación nueva la IA recibe solo esa pregunta');
+  verificar(Array.isArray(sys77) && sys77.length === 2 && sys77[0].cache_control && sys77[0].cache_control.type === 'ephemeral' && /MANUAL COMPLETO DEL PANEL/.test(sys77[0].text) && /Ventas › Tareas/.test(sys77[0].text) && /INFORMACIÓN DE LA EMPRESA \(configurada/.test(sys77[1].text) && !/MANUAL COMPLETO DEL PANEL/.test(sys77[1].text), 'las instrucciones van en dos bloques: el fijo con el manual completo en caché, el variable con la empresa');
+  const lista77 = await json(await api('/api/ayuda/conversaciones'));
+  verificar(lista77.actual === nueva77.conversacion.id && lista77.conversaciones.length >= 2 && lista77.conversaciones[0].id === nueva77.conversacion.id && lista77.conversaciones[0].mensajes === 2, 'la lista muestra las conversaciones, la más reciente primero, con su cantidad de mensajes');
+  const ab77 = await json(await api('/api/ayuda/conversaciones/' + ca77.conversacion.id));
+  verificar(ab77.conversacion.id === ca77.conversacion.id && ab77.conversacion.mensajes.length === ca77.conversacion.mensajes.length && (await json(await api('/api/ayuda/conversaciones'))).actual === ca77.conversacion.id, 'abrir una conversación anterior la vuelve la actual');
+  verificar((await api('/api/ayuda/conversaciones/noexiste')).status === 404, 'una conversación inexistente devuelve 404');
+  const png77 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+  rr77 = await json(await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Qué es esta franja?', conversacionId: nueva77.conversacion.id, imagen: { datos: 'data:image/png;base64,' + png77, tipo: 'image/png', nombre: 'captura.png' } }));
+  const msgs77b = llamadasIA[llamadasIA.length - 1].body.messages, ult77 = msgs77b[msgs77b.length - 1];
+  verificar(rr77.respuesta && Array.isArray(ult77.content) && ult77.content[0].type === 'image' && ult77.content[0].source.media_type === 'image/png' && ult77.content[0].source.data === png77 && ult77.content[1].text === '¿Qué es esta franja?', 'una imagen adjunta llega a la IA junto con la pregunta');
+  const conv77 = (await json(await api('/api/ayuda/conversaciones/' + nueva77.conversacion.id))).conversacion;
+  const conImg = conv77.mensajes.find(m => m.imagen);
+  verificar(!!conImg && conImg.imagen.nombre === 'captura.png' && /\.png$/.test(conImg.imagen.archivo), 'la imagen queda guardada con la conversación');
+  const img77 = await realFetch(BASE + '/api/ayuda/imagen/' + conImg.imagen.archivo);
+  verificar(img77.status === 200 && /image\/png/.test(img77.headers.get('content-type') || '') && (await img77.arrayBuffer()).byteLength === Buffer.from(png77, 'base64').length, 'la imagen se puede ver desde el panel');
+  verificar((await realFetch(BASE + '/api/ayuda/imagen/otro-123-abcdef.png')).status === 404, 'una imagen que no es del usuario no se entrega');
+  rr77 = await json(await api('/api/ayuda/preguntar', 'POST', { pregunta: 'ver', imagen: { datos: png77, tipo: 'image/png', nombre: 'sola.png' } }));
+  const ult77c = llamadasIA[llamadasIA.length - 1].body.messages.slice(-1)[0];
+  verificar(rr77.respuesta && Array.isArray(ult77c.content) && ult77c.content[0].type === 'image', 'con una imagen alcanza una pregunta corta');
+  rr77 = await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿y esto?', imagen: { datos: png77, tipo: 'image/gif', nombre: 'x.gif' } });
+  verificar(rr77.status === 400 && /JPG o PNG/.test((await json(rr77)).error), 'solo acepta JPG o PNG');
+  rr77 = await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿y esto?', imagen: { datos: Buffer.alloc(hilosMod.MAX_IMAGEN + 1).toString('base64'), tipo: 'image/png', nombre: 'grande.png' } });
+  verificar(rr77.status === 400 && /5 MB/.test((await json(rr77)).error), 'rechaza una imagen de más de 5 MB');
+  const msgsPrev = llamadasIA[llamadasIA.length - 1].body.messages;
+  verificar(msgsPrev.filter(m => m.role === 'user').every((m, i, arr) => i === arr.length - 1 || typeof m.content === 'string'), 'las imágenes anteriores no se reenvían a la IA (solo la de la pregunta actual)');
+  // Cerrar un lead marca el chat como atendido
+  const lc77 = { clave: 'wa:59891000021', numero: '59891000021', nombre: 'Lead y chat' };
+  convMod.registrar(Object.assign({ tipo: 'cliente', texto: 'cuánto sale' }, lc77));
+  atenMod.derivar({ clave: lc77.clave, destino: 'whatsapp:+59891000021', numero: lc77.numero, nombre: lc77.nombre, mensajeCliente: 'cuánto sale', motivo: 'Pidió un precio' });
+  verificar(atenMod.tienePendiente(lc77.clave), 'el chat está por responder');
+  await json(await api('/api/leads/' + lc77.clave + '/cerrar', 'POST', { resultado: 'perdido', motivo: 'precio' }));
+  const at77 = atenMod.ultimaPorClave(lc77.clave);
+  verificar(!atenMod.tienePendiente(lc77.clave) && at77 && at77.estado === 'atendido' && at77.cierre.motivo === 'lead_cerrado' && at77.cierre.motivoTexto === 'Lead cerrado' && /Perdido · Precio/.test(at77.cierre.detalle), 'al cerrar el lead, el chat queda atendido con el motivo «Lead cerrado»');
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }

@@ -319,7 +319,7 @@ const ARTICULOS = [
 ];
 
 function visible(a, rol) { return !a.soloAdmin || rol === 'admin'; }
-function articulosPara(rol) { return ARTICULOS.filter(a => visible(a, rol)); }
+function articulosPara(rol) { return ARTICULOS.filter(a => visible(a, rol)).concat([articuloManualCompleto(rol)]); }
 function articulo(id, rol) {
   const a = ARTICULOS.find(x => x.id === id);
   if (!a) return { error: 'El tema no existe.', codigo: 404 };
@@ -362,7 +362,7 @@ function instrucciones(rol, config, extra) {
     '1. Responder solo sobre el trabajo de ' + empresa + ' y sus clientes: ventas, reparaciones, productos, atención, el panel, Verde, WhatsApp y Meta. Ante cualquier otro tema (salud, política, vida personal, tareas ajenas al trabajo, etc.), responder exactamente: «Eso ya no es algo con lo que pueda ayudarte: solo doy apoyo con el trabajo de ' + empresa + ' y sus clientes.» y nada más.',
     '2. Usar la INFORMACIÓN DE LA EMPRESA, la CONFIGURACIÓN ACTUAL y la BASE DE CONOCIMIENTO. No inventar precios, plazos, promesas, políticas ni funciones del panel: si falta un dato, pedírselo a la persona o indicar que lo decide un administrador.',
     '3. Cuando pidan un texto para un cliente, entregarlo listo para enviar en «textos» (hasta 3 variantes): completo, sin corchetes de relleno salvo que falte un dato imprescindible, en español rioplatense con voseo, cordial y respetuoso, salvo que pidan otro tono. En esos textos nunca confirmar ni rechazar una garantía, ni prometer precios o plazos que no estén en la conversación o en la información de la empresa.',
-    '4. Si hay una CONVERSACIÓN ADJUNTA, basarse en ella: qué dijo el cliente, qué ya respondió Verde o el equipo y qué falta resolver.',
+    '4. Si hay una CONVERSACIÓN ADJUNTA, basarse en ella: qué dijo el cliente, qué ya respondió Verde o el equipo y qué falta resolver. Si la persona adjunta una IMAGEN (por ejemplo, una captura del panel), describir qué muestra, decir qué es cada cosa y cómo se usa, con el MANUAL COMPLETO; si no es del panel ni del trabajo de la empresa, decirlo.',
     '5. En «respuesta», hablarle a la persona del equipo de forma cercana (español rioplatense), concreta y breve: qué hacer, qué evitar y por qué; hasta 8 oraciones; usar pasos numerados cuando se explique un procedimiento. No usar formato Markdown (ni asteriscos ni almohadillas).',
     '6. Rol de la persona que pregunta: ' + (esAdmin ? 'Administrador.' : 'Asesor. No dar instrucciones de pantallas de administración (configuración de Verde, avisos, usuarios, consumo, Meta); si pregunta por ellas, indicar que esas tareas las realiza un administrador.'),
     '7. Responder SOLO con un objeto JSON válido, sin texto antes ni después: {"respuesta": "texto para la persona del equipo", "fuentes": ["id-del-tema"], "textos": ["texto listo para enviar al cliente"]}. En «fuentes» van los id (entre corchetes en la base) de los temas del manual usados, como máximo 3 (lista vacía si no se usó ninguno). «textos» va vacío cuando no corresponde un texto para el cliente.',
@@ -373,6 +373,9 @@ function instrucciones(rol, config, extra) {
     'CONFIGURACIÓN ACTUAL DEL PANEL (en el momento de la pregunta):',
     conf,
     '',
+    'MANUAL COMPLETO DEL PANEL (pantalla por pantalla, para explicar cualquier botón o detalle; citar la fuente «manual-completo»):',
+    manualCompleto.textoPara(rol),
+    '',
     'BASE DE CONOCIMIENTO (reglas de Meta revisadas el ' + REVISION_META.split('-').reverse().join('/') + '):',
     base,
     '',
@@ -381,6 +384,22 @@ function instrucciones(rol, config, extra) {
   ].join('\n');
 }
 
+// 1.5.3: las instrucciones en dos bloques: el fijo (reglas, manual completo y base de conocimiento) se guarda en la
+// caché de Anthropic y se cobra una fracción al reutilizarse; el variable (empresa, configuración, conversación) va aparte.
+function instruccionesEnBloques(rol, config, extra) {
+  const todo = instrucciones(rol, config, extra);
+  const corte = todo.indexOf('\nINFORMACIÓN DE LA EMPRESA (configurada por el administrador en el panel):');
+  const fijoFin = todo.indexOf('\nOTRAS PANTALLAS:');
+  if (corte < 0 || fijoFin < 0) return todo;
+  const reglas = todo.slice(0, corte);
+  const variable = todo.slice(corte, todo.indexOf('\nMANUAL COMPLETO DEL PANEL'));
+  const conocimiento = todo.slice(todo.indexOf('\nMANUAL COMPLETO DEL PANEL'), fijoFin);
+  const cola = todo.slice(fijoFin);
+  return [
+    { type: 'text', text: reglas + '\n' + conocimiento, cache_control: { type: 'ephemeral' } },
+    { type: 'text', text: variable + cola }
+  ];
+}
 // Interpreta la respuesta de la IA: objeto JSON con «respuesta» y «fuentes». Solo acepta fuentes visibles para el rol.
 function interpretar(texto, rol) {
   const limpio = String(texto || '').replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
@@ -398,4 +417,9 @@ function interpretar(texto, rol) {
   return { respuesta: respuesta || 'No se pudo obtener una respuesta. Intentar de nuevo.', fuentes: validas, textos };
 }
 
-module.exports = { ARTICULOS, REVISION_META, articulosPara, articulo, instrucciones, interpretar, textoConversacion };
+// 1.5.3: el manual completo (pantalla por pantalla) como tema de «Manual y guías», según el rol.
+const manualCompleto = require('./manual-completo.js');
+function articuloManualCompleto(rol) {
+  return { id: 'manual-completo', grupo: 'manual', soloAdmin: false, titulo: 'Manual completo del panel', resumen: 'Pantalla por pantalla: qué hay, qué hace cada botón y qué ve cada rol.', bloques: manualCompleto.bloquesPara(rol) };
+}
+module.exports = { ARTICULOS, REVISION_META, articulosPara, articulo, instrucciones, instruccionesEnBloques, interpretar, textoConversacion, articuloManualCompleto };

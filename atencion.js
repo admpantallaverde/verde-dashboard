@@ -20,6 +20,7 @@ const DATA_DIR = path.join(__dirname, 'data');
 const ARCHIVO = path.join(DATA_DIR, 'atenciones.json');
 const RETENCION_DIAS = 90;
 const MOTIVOS = {
+  lead_cerrado: 'Lead cerrado',   // 1.5.3: al cerrar un lead desde la franja «Lead»
   llamada: 'Atendido por llamada',
   local: 'Atendido en el local',
   no_necesita: 'Ya no necesita atención',

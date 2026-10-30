@@ -39,8 +39,9 @@ const conversaciones = require('./conversaciones.js');
 const accesos = require('./accesos.js');       // 1.4.15: registro de accesos
 const respaldos = require('./respaldos.js');   // 1.4.15: respaldo diario cifrado
 const leads = require('./leads.js');           // 1.5.0: leads clasificados por prioridad
+const hilos = require('./ayuda-hilos.js');     // 1.5.3: conversaciones guardadas del Centro de ayuda
 
-const VERSION = '1.5.2';
+const VERSION = '1.5.3';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -975,7 +976,8 @@ app.post('/api/ayuda/preguntar', requiere(['admin', 'asesor']), async (req, res)
   try {
     const rol = rolDe(req);
     const pregunta = String((req.body && req.body.pregunta) || '').replace(/\s+/g, ' ').trim();
-    if (pregunta.length < 3) return res.status(400).json({ error: 'Escribir una pregunta.' });
+    const imagenEntrante = req.body && req.body.imagen && typeof req.body.imagen === 'object' ? req.body.imagen : null;
+    if (pregunta.length < 3 && !imagenEntrante) return res.status(400).json({ error: 'Escribir una pregunta.' });
     if (pregunta.length > 500) return res.status(400).json({ error: 'La pregunta puede tener hasta 500 caracteres.' });
     const clave = req.usuario ? req.usuario.id : 'general';
     const hace1h = Date.now() - 3600000;
@@ -983,24 +985,46 @@ app.post('/api/ayuda/preguntar', requiere(['admin', 'asesor']), async (req, res)
     if (previas.length >= limiteAyuda()) return res.status(429).json({ error: 'Se alcanzó el límite de ' + limiteAyuda() + ' preguntas por hora. Intentar más tarde.' });
     previas.push(Date.now());
     preguntasAyuda.set(clave, previas);
-    const historial = (Array.isArray(req.body.historial) ? req.body.historial : []).slice(-3);
-    const mensajes = [];
-    for (const h of historial) {
-      const p = String((h && h.pregunta) || '').trim().slice(0, 500), r = String((h && h.respuesta) || '').trim().slice(0, 2500);
-      if (p && r) mensajes.push({ role: 'user', content: p }, { role: 'assistant', content: JSON.stringify({ respuesta: r, fuentes: [] }) });
+    // 1.5.3: la conversación se guarda en el servidor, por usuario; la IA recibe los últimos intercambios.
+    const idConv = String((req.body && req.body.conversacionId) || '').trim();
+    let conv = (idConv && hilos.abrir(clave, idConv)) || hilos.actual(clave);
+    let imagenInfo = null, imagenBase64 = null;
+    if (imagenEntrante) {
+      try { imagenInfo = hilos.guardarImagen(clave, imagenEntrante); } catch (e) { return res.status(400).json({ error: e.message }); }
+      imagenBase64 = String(imagenEntrante.datos || '').replace(/^data:[^,]*,/, '');
     }
-    mensajes.push({ role: 'user', content: pregunta });
+    conv = hilos.agregar(clave, conv.id, { rol: 'usuario', texto: pregunta, imagen: imagenInfo });
+    const mensajes = hilos.paraIA(conv, imagenBase64);
     // 1.4.11: asistente del equipo: conoce la empresa, puede recibir la conversación abierta y usa el modelo y esfuerzo de la sección H.
     const claveChat = String((req.body && req.body.clave) || '').trim();
     const conversacion = claveChat ? ayuda.textoConversacion(detalleConversacion(claveChat)) : '';
     const v = bot.getVerde();
     const asis = bot.configAsistente(v);
-    const sistema = ayuda.instrucciones(rol, configAyuda(), { empresa: bot.resumenEmpresa(v, recursos.listar()), conversacion, nombreEmpresa: v.empresa });
+    const sistema = ayuda.instruccionesEnBloques(rol, configAyuda(), { empresa: bot.resumenEmpresa(v, recursos.listar()), conversacion, nombreEmpresa: v.empresa });
     let crudo;
     try { crudo = await bot.callClaude(sistema, mensajes, v, asis.modelo, 'ayuda', { esfuerzo: asis.esfuerzo }); }
-    catch (e) { console.error('Centro de ayuda: la IA no respondió:', e.message); return res.status(502).json({ error: 'El asistente no está disponible en este momento. Intentar de nuevo en unos minutos.' }); }
-    res.json(ayuda.interpretar(crudo, rol));
+    catch (e) { console.error('Centro de ayuda: la IA no respondió:', e.message); return res.status(502).json({ error: 'El asistente no está disponible en este momento. Intentar de nuevo en unos minutos.', conversacionId: conv.id }); }
+    const r = ayuda.interpretar(crudo, rol);
+    conv = hilos.agregar(clave, conv.id, { rol: 'asistente', texto: r.respuesta, fuentes: (r.fuentes || []).map(f => f.id), textos: r.textos });
+    res.json(Object.assign(r, { conversacionId: conv.id, titulo: conv.titulo }));
   } catch (e) { responderError(res, e); }
+});
+/* ---------- 1.5.3: conversaciones guardadas del Centro de ayuda ---------- */
+function conversacionPublica(c, rol) {
+  return { id: c.id, titulo: c.titulo, creadoEn: c.creadoEn, actualizadoEn: c.actualizadoEn, mensajes: (c.mensajes || []).map(m => Object.assign({ en: m.en, rol: m.rol, texto: m.texto }, m.imagen ? { imagen: { archivo: m.imagen.archivo, nombre: m.imagen.nombre } } : {}, m.textos ? { textos: m.textos } : {}, m.fuentes ? { fuentes: m.fuentes.map(id => ayuda.articulo(id, rol)).filter(Boolean).map(a => ({ id: a.id, titulo: a.titulo, grupo: a.grupo })) } : {})) };
+}
+app.get('/api/ayuda/conversaciones', requiere(['admin', 'asesor']), (req, res) => res.json(hilos.listar(req.usuario ? req.usuario.id : 'general')));
+app.post('/api/ayuda/conversaciones', requiere(['admin', 'asesor']), (req, res) => res.json({ conversacion: conversacionPublica(hilos.nueva(req.usuario ? req.usuario.id : 'general'), rolDe(req)) }));
+app.get('/api/ayuda/conversacion-actual', requiere(['admin', 'asesor']), (req, res) => res.json({ conversacion: conversacionPublica(hilos.actual(req.usuario ? req.usuario.id : 'general'), rolDe(req)) }));
+app.get('/api/ayuda/conversaciones/:id', requiere(['admin', 'asesor']), (req, res) => {
+  const c = hilos.abrir(req.usuario ? req.usuario.id : 'general', req.params.id);
+  if (!c) return res.status(404).json({ error: 'Esa conversación no existe.' });
+  res.json({ conversacion: conversacionPublica(c, rolDe(req)) });
+});
+app.get('/api/ayuda/imagen/:archivo', requiere(['admin', 'asesor']), (req, res) => {
+  const ruta = hilos.rutaImagen(req.usuario ? req.usuario.id : 'general', req.params.archivo);
+  if (!ruta) return res.status(404).json({ error: 'La imagen no existe.' });
+  res.sendFile(ruta);
 });
 /* ---------- 1.4.10: corregir y aclarar el texto del asesor con la IA ---------- */
 const correcciones = new Map();      // usuario → momentos de sus últimas correcciones
@@ -1076,6 +1100,7 @@ app.post('/api/leads/:clave/cerrar', requiere(['admin', 'asesor']), (req, res) =
   try {
     const l = leads.cerrar(c, req.body || {}, quienActua(req));
     conversaciones.anotarSistema(c.clave, leads.textoCierre(l));
+    cerrarPendientePorLead(c, l, req);
     res.json(leads.detalle(c, contexto()));
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
@@ -1092,7 +1117,7 @@ app.post('/api/leads/:clave/sugerencia', requiere(['admin', 'asesor']), (req, re
   try {
     const aceptar = !!(req.body || {}).aceptar;
     const l = leads.responderSugerencia(c, aceptar, quienActua(req));
-    if (aceptar) conversaciones.anotarSistema(c.clave, leads.textoCierre(l));
+    if (aceptar) { conversaciones.anotarSistema(c.clave, leads.textoCierre(l)); cerrarPendientePorLead(c, l, req); }
     res.json(leads.detalle(c, contexto()));
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
@@ -1105,6 +1130,14 @@ app.post('/api/leads/:clave/tarea-hecha', requiere(['admin', 'asesor']), (req, r
     res.json(leads.detalle(c, contexto()));
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
+// 1.5.3: un lead cerrado es un caso terminado: si el chat estaba por responder, queda atendido con el motivo «Lead cerrado».
+function cerrarPendientePorLead(c, l, req) {
+  const a = atencion.ultimaPorClave(c.clave);
+  if (!a || a.estado !== 'pendiente') return;
+  const u = req.usuario;
+  try { atencion.marcarAtendido(a.id, { motivo: 'lead_cerrado', detalle: leads.RESULTADOS[l.cierre.resultado] + (l.cierre.motivo ? ' · ' + leads.MOTIVOS_CIERRE[l.cierre.motivo] : ''), usuarioId: u ? u.id : null, usuarioNombre: u ? u.nombre : 'Acceso general' }); }
+  catch (e) { console.error('No se pudo marcar atendido el chat del lead cerrado:', e.message); }
+}
 // Aviso al celular del equipo cuando vence una tarea (mismo sistema que los avisos de chats por responder).
 async function avisarTarea(c, lead) {
   const cfg = leerAvisos();
