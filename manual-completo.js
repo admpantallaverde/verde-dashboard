@@ -13,7 +13,7 @@ const SECCIONES = [
   {
     id: 'menu', titulo: 'El menú y la navegación', soloAdmin: false, texto: [
       'El menú de la izquierda tiene cuatro grupos. «Ventas»: Leads, Tareas y, para administradores, Proceso de ventas. Debajo: Chats por responder (con el número de chats que esperan a una persona), Conversaciones y Chats respondidos. «Categorías» y «Sistema» (Usuarios, Consumo de IA, Registro de accesos, Respaldos) solo los ven los administradores. «Ayuda»: Centro de ayuda.',
-      'El botón con el ícono de panel, arriba a la derecha del logo, colapsa el menú para dejarlo solo con íconos; en el celular el menú se abre y se cierra con ese mismo botón. Al pie del menú está la tarjeta «Conexión» con el estado de WhatsApp, el botón «Ver estado de conexión» (solo administradores) y el interruptor de modo claro u oscuro (ícono de sol o luna), que se recuerda en cada equipo.',
+      'El botón con el ícono de panel, arriba a la derecha del logo, colapsa el menú para dejarlo solo con íconos; en el celular el menú se abre y se cierra con ese mismo botón. Al pie del menú está el estado de WhatsApp («WhatsApp conectado»), el enlace «Ver estado de conexión» (solo administradores) y el interruptor de modo claro u oscuro (ícono de sol o luna), que se recuerda en cada equipo.',
       'Arriba a la derecha de cada pantalla está el estado de WhatsApp («Conectado» o el aviso correspondiente) y las iniciales del usuario: al tocarlas se ven el nombre, el rol y el botón «Cerrar sesión». La contraseña se cambia pidiéndole a un administrador que la restablezca.'
     ]
   },
@@ -85,7 +85,7 @@ const SECCIONES = [
   {
     id: 'comportamiento-h', titulo: 'Comportamiento del bot: sección H, parámetros técnicos (administradores)', soloAdmin: true, texto: [
       'Modelo de IA de Verde (Claude Sonnet 5.5 recomendada; Opus 5.5 y Fable 5.1 son más capaces y más caras), tokens máximos por respuesta, memoria (cuántos mensajes recuerda) y tiempo de espera: los segundos que Verde espera desde el último mensaje del cliente antes de responder, para contestar todo junto si el cliente escribe en varios mensajes (hasta 60; con 0 responde de inmediato; no se aplica en Probar a Verde).',
-      'En la misma sección: «Clasificación de leads», el modelo que clasifica las conversaciones (Haiku 5.5 recomendada por económica), y «Asistente del equipo (Centro de ayuda)», con su modelo y su esfuerzo (cuánto razona antes de responder: bajo, medio, alto o máximo). Los gastos de cada uno se ven por separado en Consumo de IA.'
+      'En la misma sección: «Clasificación de leads», el modelo que clasifica las conversaciones (Haiku 5.5 recomendada por económica), y «Asistente IA (Centro de ayuda)», con su modelo y su esfuerzo (cuánto razona antes de responder: bajo, medio, alto o máximo). Los gastos de cada uno se ven por separado en Consumo de IA.'
     ]
   },
   {
@@ -118,7 +118,7 @@ const SECCIONES = [
   },
   {
     id: 'centro-de-ayuda', titulo: 'Centro de ayuda', soloAdmin: false, texto: [
-      'Es el asistente del equipo: responde cómo se usa cada parte del panel, qué decirle a un cliente, cómo armar un presupuesto o cómo tratar un reclamo, con la información de la empresa configurada por el administrador. Los accesos rápidos de arriba hacen preguntas frecuentes con un toque. Las respuestas que incluyen textos para el cliente los muestran listos para enviar, con «Copiar» y «Usar en el chat». Cuando se pregunta cómo hacer algo, el asistente responde con pasos numerados, los nombres de los botones en negrita y el resultado esperado.',
+      'Es el Asistente IA: responde cómo se usa cada parte del panel, qué decirle a un cliente, cómo armar un presupuesto o cómo tratar un reclamo, con la información de la empresa configurada por el administrador. Mientras la conversación está vacía, los accesos rápidos hacen preguntas frecuentes con un toque. Cada respuesta lleva arriba «Asistente IA» y el botón «Escuchar». Las respuestas que incluyen textos para el cliente los muestran listos para enviar, con «Copiar» y «Usar en el chat». Cuando se pregunta cómo hacer algo, el asistente responde con pasos numerados, los nombres de los botones en negrita y el resultado esperado.',
       'Cada usuario tiene sus propias conversaciones con el asistente, guardadas: al volver al Centro de ayuda sigue la última. «Conversaciones» lista las anteriores por título y fecha para reabrirlas, y «Nueva conversación» empieza otra. El botón del clip adjunta una imagen (JPG o PNG, hasta 5 MB), por ejemplo una captura de pantalla, para preguntar qué es algo o qué hacer con ello; también se puede pegar una captura directamente en la caja de la pregunta con Ctrl + V (en Windows, Shift + Windows + S copia un recorte de la pantalla). Cada respuesta tiene el botón «Escuchar», que la lee en voz alta con la voz del propio equipo o celular, sin costo; vuelve a tocarse para detenerla. «Ayuda con este chat», desde cualquier conversación de WhatsApp, adjunta los últimos 20 mensajes para que el asistente aconseje sobre ese cliente; «Volver al chat» regresa. «Manual y guías» abre el cajón con el manual por temas, este manual completo y las guías de Meta. El asistente responde solo sobre el trabajo de la empresa y el panel; hay un límite de preguntas por hora.'
     ]
   }
