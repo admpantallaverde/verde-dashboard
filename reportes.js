@@ -60,6 +60,13 @@ function guardar(d) {
   fs.renameSync(tmp, ARCHIVO);
 }
 const t = (v, max) => String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, max);
+// 1.5.8: corta al final de una palabra, con puntos suspensivos (antes cortaba a lo bruto)
+function recortar(v, max) {
+  const x = String(v == null ? '' : v).replace(/\s+/g, ' ').trim();
+  if (x.length <= max) return x;
+  const corte = x.lastIndexOf(' ', max - 1);
+  return x.slice(0, corte > max * 0.6 ? corte : max - 1).replace(/[\s,;:]+$/, '') + '…';
+}
 const en = (ms, s) => ms >= s.desde && ms < s.hasta;
 function mediana(a) { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : Math.round((s[m - 1] + s[m]) / 2); }
 function duracion(ms) {
@@ -110,7 +117,7 @@ function armarDatos(s, deps, ahora) {
       if (limite - ultimo.en > UMBRAL_LENTA_MS) {
         const lead = leadC;
         const ultEq = [...ms].reverse().find(m => m.tipo === 'equipo' && m.autor);
-        const quien = (lead && lead.vendedorAsignado && lead.vendedorAsignado.nombre) || (ultEq ? ultEq.autor : 'Sin vendedor');
+        const quien = (lead && lead.vendedorAsignado && lead.vendedorAsignado.nombre) || (ultEq ? ultEq.autor : 'Sin vendedor asignado');
         v(quien).colgados.push({ clave: c.clave, cliente: nombreCliente(c), en: ultimo.en, espera: duracion(limite - ultimo.en) });
       }
     }
@@ -119,15 +126,16 @@ function armarDatos(s, deps, ahora) {
   for (const c of deps.chats) {
     const l = deps.leads[c.clave];
     if (!l) continue;
-    if (l.seguimiento && en(l.seguimiento.hechaEn, s)) v(l.seguimiento.por || 'Sin vendedor').tareasHechas++;
+    if (l.seguimiento && en(l.seguimiento.hechaEn, s)) v(l.seguimiento.por || 'Sin vendedor asignado').tareasHechas++;
     if (deps.calcular && deps.tareaDe && !l.cierre) {
       const calc = deps.calcular(c, l, deps.ctx, Math.min(ahora, s.hasta));
       const ta = deps.tareaDe(calc, l, deps.proceso, Math.min(ahora, s.hasta));
-      if (ta && ta.estado === 'vencida' && en(ta.vence, s)) v(calc.vendedor || 'Sin vendedor').tareasVencidas++;
+      if (ta && ta.estado === 'vencida' && en(ta.vence, s)) v(calc.vendedor || 'Sin vendedor asignado').tareasVencidas++;
     }
   }
-  const atencion = Object.values(vendedores).filter(x => x.nombre !== 'Sin vendedor' || x.colgados.length || x.tareasVencidas).map(x => ({
-    nombre: x.nombre, chats: x.chats.size, respuestas: x.respuestas.length,
+  // «Sin vendedor asignado» solo aparece si tiene algo que mostrar (colgados o tareas vencidas)
+  const atencion = Object.values(vendedores).filter(x => x.nombre !== 'Sin vendedor asignado' || x.colgados.length || x.tareasVencidas).map(x => ({
+    nombre: x.nombre, sinVendedor: x.nombre === 'Sin vendedor asignado', chats: x.chats.size, respuestas: x.respuestas.length,
     medianaMs: mediana(x.respuestas), mediana: duracion(mediana(x.respuestas)), maximaMs: x.respuestas.length ? Math.max(...x.respuestas) : null, maxima: duracion(x.respuestas.length ? Math.max(...x.respuestas) : null),
     lentas: x.lentas.sort((a, b) => b.demora - a.demora).slice(0, 20), colgados: x.colgados.slice(0, 20), tareasHechas: x.tareasHechas, tareasVencidas: x.tareasVencidas
   })).sort((a, b) => b.chats - a.chats);
@@ -158,6 +166,15 @@ function armarDatos(s, deps, ahora) {
       }
     }
   }
+  // 1.5.8: cuánto resolvió Verde solo, cuántas se derivaron y cuántas atendió el equipo
+  const derivadasSemana = new Set((deps.derivaciones || []).filter(x => x && en(x.creadoEn, s)).map(x => x.clave));
+  let soloVerde = 0, conEquipo = 0;
+  for (const c of deps.chats) {
+    const ms = msVisibles(c);
+    if (!ms.some(m => m.tipo === 'cliente' && en(m.en, s))) continue;
+    if (ms.some(m => m.tipo === 'equipo' && en(m.en, s))) conEquipo++;
+    else if (!derivadasSemana.has(c.clave)) soloVerde++;
+  }
   const ganados = cerrados.filter(x => x.resultado === 'ganado'), perdidos = cerrados.filter(x => x.resultado === 'perdido');
   const motivosPerdida = {};
   for (const p of perdidos) if (p.motivoNombre) motivosPerdida[p.motivoNombre] = (motivosPerdida[p.motivoNombre] || 0) + 1;
@@ -167,6 +184,7 @@ function armarDatos(s, deps, ahora) {
     tipos: Object.entries(tipos).map(([k, n]) => ({ tipo: k, nombre: TIPOS[k] || k, veces: n })).sort((a, b) => b.veces - a.veces),
     trabas: Object.values(trabas).sort((a, b) => b.veces - a.veces),
     resultados: { nuevos: nuevos.length, ganados: ganados.length, perdidos: perdidos.length, abiertos: abiertos.length, motivosPerdida: Object.entries(motivosPerdida).map(([n, v]) => ({ motivo: n, veces: v })).sort((a, b) => b.veces - a.veces), cerrados: cerrados.slice(0, 50) },
+    verde: { soloVerde, derivadas: derivadasSemana.size, conEquipo },
     totales: { conversaciones: deps.chats.filter(c => msVisibles(c).some(m => en(m.en, s))).length, mensajesCliente: deps.chats.reduce((n, c) => n + msVisibles(c).filter(m => m.tipo === 'cliente' && en(m.en, s)).length, 0) }
   };
 }
@@ -181,7 +199,7 @@ function instruccionesEvaluacion(empresa) {
     'Reglas:',
     '1. Un elemento por cada persona del equipo que aparezca. Hasta 3 ejemplos por persona, con la «clave» exacta de la conversación y una «cita» literal.',
     '2. Puntaje: 5 excelente, 4 bueno, 3 correcto con cosas a mejorar, 2 flojo, 1 malo. Juzgá rapidez, claridad, tono, si resolvió lo que el cliente pedía y si siguió el proceso de venta.',
-    '3. Hasta 4 temas y exactamente 3 recomendaciones, concretas y accionables.',
+    '3. Hasta 4 temas (una frase cada uno) y exactamente 3 recomendaciones: cada una empieza con un verbo en infinitivo, es concreta y cabe en dos líneas (hasta 200 caracteres), por ejemplo «Preguntar qué falla tiene el equipo antes de dar un precio».',
     '4. Español rioplatense, directo, sin adulación. No inventes conversaciones ni citas.'
   ].join('\n');
 }
@@ -209,12 +227,12 @@ function normalizarEvaluacion(j, chats) {
       const cita = t(e.cita, 200);
       let enMs = null;
       if (c && cita) { const m = (c.mensajes || []).find(mm => mm && String(mm.texto || '').toLowerCase().includes(cita.toLowerCase().slice(0, 40))); if (m) enMs = m.en; }
-      return { clave: c ? c.clave : '', cliente: c ? nombreCliente(c) : '', cita, comentario: t(e.comentario, 240), en: enMs };
+      return { clave: c ? c.clave : '', cliente: c ? nombreCliente(c) : '', cita, comentario: recortar(e.comentario, 300), en: enMs };
     }).filter(e => e.clave);
     const p = Number(x.puntaje);
-    return { nombre: t(x.nombre, 80), puntaje: p >= 1 && p <= 5 ? Math.round(p) : null, fortalezas: t(x.fortalezas, 300), mejorar: t(x.mejorar, 300), ejemplos };
+    return { nombre: t(x.nombre, 80), puntaje: p >= 1 && p <= 5 ? Math.round(p) : null, fortalezas: recortar(x.fortalezas, 400), mejorar: recortar(x.mejorar, 400), ejemplos };
   }).filter(x => x.nombre);
-  return { vendedores, temas: (Array.isArray(o.temas) ? o.temas : []).slice(0, 4).map(x => t(x, 200)).filter(Boolean), recomendaciones: (Array.isArray(o.recomendaciones) ? o.recomendaciones : []).slice(0, 3).map(x => t(x, 240)).filter(Boolean) };
+  return { vendedores, temas: (Array.isArray(o.temas) ? o.temas : []).slice(0, 4).map(x => recortar(x, 240)).filter(Boolean), recomendaciones: (Array.isArray(o.recomendaciones) ? o.recomendaciones : []).slice(0, 3).map(x => recortar(x, 320)).filter(Boolean) };
 }
 async function evaluar(s, deps, bot) {
   const chats = chatsParaEvaluar(s, deps);
@@ -286,4 +304,4 @@ function programar(depsFn, bot, alAvisar) {
   if (temporizador.unref) temporizador.unref();
 }
 
-module.exports = { UMBRAL_LENTA_MS, MAX_CHATS_IA, semana, lunesDe, armarDatos, instruccionesEvaluacion, normalizarEvaluacion, evaluar, generar, reevaluar, listar, obtener, marcarAvisado, resumenCorto, revisar, programar, duracion, _usarReloj };
+module.exports = { UMBRAL_LENTA_MS, MAX_CHATS_IA, semana, lunesDe, armarDatos, recortar, instruccionesEvaluacion, normalizarEvaluacion, evaluar, generar, reevaluar, listar, obtener, marcarAvisado, resumenCorto, revisar, programar, duracion, _usarReloj };

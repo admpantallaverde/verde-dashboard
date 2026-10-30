@@ -42,7 +42,7 @@ const leads = require('./leads.js');           // 1.5.0: leads clasificados por 
 const hilos = require('./ayuda-hilos.js');     // 1.5.3: conversaciones guardadas del Centro de ayuda
 const reportes = require('./reportes.js');     // 1.5.7: reportes semanales
 
-const VERSION = '1.5.7';
+const VERSION = '1.5.8';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -1024,8 +1024,9 @@ app.post('/api/ayuda/preguntar', requiere(['admin', 'asesor']), async (req, res)
 });
 /* ---------- 1.5.7: reportes semanales ---------- */
 function depsReportes() {
-  const derivadas = [...atencion.clavesPendientes()].concat(((atencion.respondidos({ periodo: '90' }) || {}).lista || []).map(x => x.clave));
-  return { chats: conversaciones.recientes(60), leads: leads.crudos(), calcular: leads.calcular, tareaDe: leads.tareaDe, proceso: leads.leerProceso(), ctx: contexto(), derivadas };
+  const pend = atencion.pendientes(), resp = ((atencion.respondidos({ periodo: '90' }) || {}).lista || []);
+  const derivaciones = pend.concat(resp).map(x => ({ clave: x.clave, creadoEn: x.creadoEn }));
+  return { chats: conversaciones.recientes(60), leads: leads.crudos(), calcular: leads.calcular, tareaDe: leads.tareaDe, proceso: leads.leerProceso(), ctx: contexto(), derivadas: derivaciones.map(x => x.clave), derivaciones };
 }
 app.get('/api/reportes', requiere(['admin']), (req, res) => res.json({ lista: reportes.listar(), semanaActual: reportes.semana('actual'), semanaAnterior: reportes.semana('anterior') }));
 app.post('/api/reportes/generar', requiere(['admin']), async (req, res) => {

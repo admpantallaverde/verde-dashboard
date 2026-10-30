@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.5.7';
+const VERSION_ESPERADA = '1.5.8';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -1924,6 +1924,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   const repMod = require('./reportes.js');
   const lunes78 = Date.UTC(2030, 0, 14, 3, 0);   // lunes 14/01/2030 00:00 de Montevideo
   verificar(repMod.lunesDe(lunes78 + 3 * 86400000 + 5 * 3600000) === lunes78 && repMod.semana('anterior', lunes78 + 9 * 3600000).desde === lunes78 - 7 * 86400000 && repMod.semana('actual', lunes78 + 9 * 3600000).id === '2030-01-14' && repMod.semana('anterior', lunes78 + 9 * 3600000).titulo === 'Semana del 07/01 al 13/01', 'calcula las semanas de lunes a domingo en hora de Montevideo');
+  verificar(repMod.recortar('Acordar un formato mínimo para el primer mensaje tras el traspaso del bot y la primera respuesta', 60) === 'Acordar un formato mínimo para el primer mensaje tras el…' && !/\.$/.test(repMod.recortar('corto.', 60).slice(-2, -1)), 'los textos largos de la evaluación se cortan al final de una palabra (1.5.8)');
   verificar(repMod.duracion(45 * 60000) === '45 min' && repMod.duracion(3 * 3600000 + 10 * 60000) === '3 h 10 min' && repMod.duracion(2 * 86400000) === '2 días', 'muestra las demoras en minutos, horas o días');
   const H78 = 3600000, s78 = repMod.semana('actual', lunes78 + 2 * 86400000);
   const base78 = lunes78 + 1 * 86400000 + 10 * H78;   // martes 10:00
@@ -1938,18 +1939,21 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
     'wa:78002': { tipo: 'compra', producto: 'Funda iPhone 13', intencion: 'alta', traba: { categoria: 'ninguna', frase: '' }, cierre: { resultado: 'ganado', motivo: '', en: base78 + 6 * H78 }, seguimiento: { hechaEn: base78 + 3 * H78, por: 'Carla', etapa: 'x', desde: 0 } },
     'wa:78003': { tipo: 'reparacion', producto: 'Pantalla Samsung A54', intencion: 'media', traba: { categoria: 'ninguna', frase: '' } }
   };
-  const deps78 = { chats: chats78, leads: leads78, calcular: leadsMod.calcular, tareaDe: leadsMod.tareaDe, proceso: leadsMod.leerProceso(), ctx: { pendientes: new Set(), revision: new Set(), pausas: {} }, derivadas: ['wa:78001'] };
+  const deps78 = { chats: chats78, leads: leads78, calcular: leadsMod.calcular, tareaDe: leadsMod.tareaDe, proceso: leadsMod.leerProceso(), ctx: { pendientes: new Set(), revision: new Set(), pausas: {} }, derivadas: ['wa:78001'], derivaciones: [{ clave: 'wa:78001', creadoEn: base78 + 60000 }] };
   const d78 = repMod.armarDatos(s78, deps78, base78 + 8 * H78);
   const carla = d78.atencion.find(x => x.nombre === 'Carla'), manuel = d78.atencion.find(x => x.nombre === 'Manuel');
   verificar(carla && carla.chats === 2 && carla.respuestas === 2 && carla.medianaMs === Math.round((3 * H78 + 15 * 60000) / 2) && carla.maxima === '3 h' && carla.lentas.length === 1 && carla.lentas[0].clave === 'wa:78001' && carla.lentas[0].en === base78 + 3 * H78 && carla.tareasHechas === 1, 'por vendedor: chats, primera respuesta (mediana y máxima), respuestas de más de 2 horas con su mensaje y tareas hechas');
   verificar(manuel && manuel.colgados.length === 1 && manuel.colgados[0].clave === 'wa:78003' && /h/.test(manuel.colgados[0].espera), 'detecta al cliente colgado y lo atribuye a quien lo atendía');
+  verificar(d78.verde.conEquipo === 3 && d78.verde.derivadas === 1 && d78.verde.soloVerde === 0 && !d78.atencion.some(x => x.sinVendedor), 'cuenta las conversaciones con equipo, las derivadas y las que resolvió Verde solo; sin colgados huérfanos no hay tarjeta «Sin vendedor asignado» (1.5.8)');
+  const d78b = repMod.armarDatos(s78, Object.assign({}, deps78, { chats: chats78.concat([{ clave: 'wa:78005', nombre: 'SoloVerde', numero: '78005', ultimoEn: base78 + H78, ultimoClienteEn: base78 + H78, mensajes: [{ tipo: 'cliente', texto: 'horario?', en: base78 + 50 * 60000 }, { tipo: 'verde', texto: 'De 9 a 18', en: base78 + 51 * 60000 }, { tipo: 'cliente', texto: 'gracias', en: base78 + H78 }] }]) }), base78 + 8 * H78);
+  verificar(d78b.verde.soloVerde === 1 && d78b.verde.conEquipo === 3 && d78b.totales.conversaciones === 4, 'una consulta que Verde resolvió sin derivar cuenta como «solo Verde»');
   verificar(d78.pedidos[0].nombre === 'Pantalla Samsung A54' && d78.pedidos[0].veces === 2 && d78.tipos[0].tipo === 'reparacion', 'lo más pedido sale de la clasificación');
   verificar(d78.trabas.length === 1 && d78.trabas[0].categoria === 'precio' && d78.trabas[0].frases[0].frase === 'uh está caro' && d78.trabas[0].frases[0].en === base78 + 4 * H78, 'las trabas traen la frase textual con el mensaje donde la dijo');
   verificar(d78.resultados.nuevos === 3 && d78.resultados.ganados === 1 && d78.resultados.perdidos === 1 && d78.resultados.motivosPerdida[0].motivo === 'Precio' && d78.resultados.abiertos === 1 && d78.totales.conversaciones === 3, 'resultados: nuevos, ganados, perdidos con motivo, abiertos; la conversación vieja no cuenta');
   const ev78 = await repMod.evaluar(s78, deps78, bot74);
   verificar(ev78.chats === 3 && ev78.evaluacion.vendedores[0].nombre === 'Carla' && ev78.evaluacion.vendedores[0].puntaje === 4 && ev78.evaluacion.vendedores[0].ejemplos.length === 1 && ev78.evaluacion.vendedores[0].ejemplos[0].clave === 'wa:78001' && ev78.evaluacion.vendedores[0].ejemplos[0].en === base78 + 3 * H78 && ev78.evaluacion.recomendaciones.length === 3, 'la IA evalúa a cada vendedor; los ejemplos con conversación inventada se descartan y los válidos apuntan al mensaje citado');
   const sysEv = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system), msgEv = String(llamadasIA[llamadasIA.length - 1].body.messages[0].content);
-  verificar(/EVALUADOR DE ATENCIÓN/.test(sysEv) && msgEv.indexOf('wa:78001') < msgEv.indexOf('wa:78002') && /Equipo \(Carla\): Sale 1500/.test(msgEv), 'le manda primero las conversaciones derivadas, con quién habló');
+  verificar(/EVALUADOR DE ATENCIÓN/.test(sysEv) && msgEv.indexOf('wa:78001') < msgEv.indexOf('wa:78002') && /Equipo \(Carla\): Sale 1500/.test(msgEv) && /verbo en infinitivo/.test(sysEv), 'le manda primero las conversaciones derivadas, con quién habló, y pide recomendaciones breves que empiecen con un verbo');
   const cons78 = await json(await api('/api/consumo-ia'));
   verificar(((cons78.porOrigen || {}).reporte || {}).consultas >= 1, 'la evaluación se registra en Consumo de IA como «Reporte»');
   // Generar desde el panel (con los datos reales del entorno de prueba)
