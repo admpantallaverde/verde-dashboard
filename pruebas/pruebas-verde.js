@@ -1776,7 +1776,6 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(leadsMod.pendientesDeClasificar(recientes74()).some(c => c.clave === 'wa:59891000001'), 'con un mensaje nuevo vuelve a quedar pendiente de clasificar');
   await leadsMod.clasificar(convMod.cruda('wa:59891000001'), bot74);
   const pc74b = await json(await api('/api/leads/wa:59891000001'));
-  process.stderr.write('DBG74a ' + JSON.stringify({ pc74b: { tipo: pc74b.tipo, producto: pc74b.producto, resumen: pc74b.resumen, clasificadoEn: pc74b.clasificadoEn, hastaMensaje: null }, ult: (convMod.cruda('wa:59891000001') || {}).ultimoEn, base: base74, llamadas: llamadasIA.length, ultimoSys: String(JSON.stringify((llamadasIA[llamadasIA.length-1]||{body:{}}).body.system)).slice(0,60), modoIA }) + '\n');
   verificar(pc74b.tipo === 'reparacion' && pc74b.producto === 'Cable USB-C' && pc74b.traba.categoria === 'lo_piensa' && pc74b.resumen === 'Reclama por una pantalla cambiada.', 'al volver a clasificar, lo corregido a mano se conserva y el resto se actualiza');
   verificar((await api('/api/leads/wa:noexiste')).status === 404, 'un lead inexistente devuelve 404');
   leadsMod._usarReloj(null);
@@ -1789,7 +1788,6 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   leadsMod.corregir(convMod.cruda('wa:59891000002'), { tipo: 'consulta', intencion: 'baja' });
   const pen74 = await json(await api('/api/chats/pendientes'));
   const iG_74 = pen74.lista.findIndex(p => p.clave === ge_74.clave), iR_74 = pen74.lista.findIndex(p => p.clave === 'wa:59891000002');
-  process.stderr.write('DBG74b ' + JSON.stringify({ lista: pen74.lista.map(p => [p.clave, p.prioridad, p.creadoEn]), cruda: !!convMod.cruda(ge_74.clave) }) + '\n');
   verificar(iG_74 >= 0 && iR_74 >= 0 && iG_74 < iR_74 && pen74.lista[iG_74].prioridad === 3 && pen74.lista[iR_74].prioridad === 2, '«Chats por responder» pone primero el reclamo de garantía aunque haya llegado después');
   const cons74 = await json(await api('/api/consumo-ia'));
   verificar(((cons74.porOrigen || {}).clasificacion || {}).consultas >= 2 && (cons74.precios || []).some(p => p.id === 'claude-haiku-5-5' && p.entrada === 0.1), 'el consumo registra las clasificaciones por separado y conoce el precio de Haiku 5.5');
