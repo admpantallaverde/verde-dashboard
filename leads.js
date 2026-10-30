@@ -421,6 +421,28 @@ function tareasVencidasSinAviso(chats, ctx) {
 }
 function marcarAvisoTarea(c, vence) { const d = cargar(), l = leadDe(d, c); l.avisoTarea = vence; guardar(d); }
 function crudos() { return cargar().leads; }   // 1.5.7: para los reportes semanales
+/* ---------- 1.6.6: resumen de la conversación para la ficha del cliente (Haiku; se guarda hasta que haya mensajes nuevos) ---------- */
+const ARCHIVO_RESUMENES = path.join(DATA_DIR, 'resumenes.json');
+function cargarResumenes() { try { return fs.existsSync(ARCHIVO_RESUMENES) ? JSON.parse(fs.readFileSync(ARCHIVO_RESUMENES, 'utf8') || '{}') || {} : {}; } catch (e) { return {}; } }
+function guardarResumenes(d) { if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true }); const tmp = ARCHIVO_RESUMENES + '.tmp'; fs.writeFileSync(tmp, JSON.stringify(d), { encoding: 'utf8', mode: 0o600 }); fs.renameSync(tmp, ARCHIVO_RESUMENES); }
+function instruccionesResumen(empresa) {
+  return ['RESUMEN DE CONVERSACIÓN para el equipo de ' + (empresa || 'la tienda') + ' (WhatsApp).',
+    'Resumí toda la conversación para una persona del equipo que va a atender al cliente. En 5 a 8 líneas cortas, texto plano, sin títulos ni marcas: 1) qué pidió el cliente y qué equipo o producto; 2) qué respondió el bot y qué respondió el equipo (precios, plazos, promesas, si los hubo); 3) en qué quedó: qué está pendiente y quién tiene que hacerlo; 4) cómo está el cliente (tranquilo, apurado, molesto) con la frase que lo muestra, si la hay.',
+    'No inventes nada: si un dato no está en la conversación, no lo menciones. Español neutro, sin voseo.'].join('\n');
+}
+async function resumir(c, bot, forzar) {
+  const d = cargarResumenes();
+  const r = d[c.clave];
+  if (r && !forzar && r.ultimoEn === (c.ultimoEn || 0)) return Object.assign({ enCache: true }, r);
+  const v = bot.getVerde();
+  const crudo = await bot.callClaude(instruccionesResumen(v.empresa), [{ role: 'user', content: 'CONVERSACIÓN (del más viejo al más nuevo):\n' + transcripcion(c) }], v, bot.configClasificacion(v).modelo, 'resumen');
+  const texto = String(crudo || '').replace(/^\s*```[a-z]*\s*/i, '').replace(/\s*```\s*$/, '').trim().slice(0, 2000);
+  if (!texto) throw new Error('La IA no devolvió un resumen.');
+  d[c.clave] = { texto, en: reloj(), ultimoEn: c.ultimoEn || 0 };
+  const claves = Object.keys(d); if (claves.length > 2000) { claves.sort((a, b) => d[a].en - d[b].en); for (const k of claves.slice(0, claves.length - 2000)) delete d[k]; }
+  guardarResumenes(d);
+  return Object.assign({ enCache: false }, d[c.clave]);
+}
 // Prioridad de una conversación (para ordenar «Chats por responder»). Sin clasificar devuelve 1.
 function prioridadDe(c, ctx) {
   if (!c) return 1;
@@ -446,4 +468,4 @@ function corregir(c, cambios) {
 }
 
 module.exports = { TIPOS, INTENCIONES, TRABAS, ETAPAS, MOTIVOS_CIERRE, RESULTADOS, ETAPAS_CON_TAREA, ESPERA_MS, instrucciones, limpiarJson, normalizar, recortar, fechaCorta, calcular, esperaTexto, clasificar, pendientesDeClasificar, revisar, programar, listar, detalle, prioridadDe, corregir,
-  leerProceso, guardarProceso, tareaDe, asignar, cerrar, reabrir, responderSugerencia, marcarHecha, textoHecha, textoCierre, tareas, tareasVencidasSinAviso, marcarAvisoTarea, crudos, _usarReloj };
+  leerProceso, guardarProceso, tareaDe, asignar, cerrar, reabrir, responderSugerencia, marcarHecha, textoHecha, textoCierre, tareas, tareasVencidasSinAviso, marcarAvisoTarea, crudos, resumir, _usarReloj };

@@ -46,7 +46,7 @@ const manuales = require('./manuales.js');     // 1.6.0: biblioteca de conocimie
 const casos = require('./casos.js');           // 1.6.5: casos resueltos
 const manualCompleto = require('./manual-completo.js');
 
-const VERSION = '1.6.5';
+const VERSION = '1.6.6';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -1142,6 +1142,16 @@ app.post('/api/entrenamiento/generar', permiso(['ayuda']), async (req, res) => {
     console.log('Panel: ' + quienEs(req) + ' generó el borrador «' + manual.nombre + '» desde una entrevista');
     res.json({ manual, conversacion: conversacionPublica(conv, rolDe(req), accesosDe(req)) });
   } catch (e) { responderError(res, e); }
+});
+/* ---------- 1.6.6: resumen de la conversación (ficha del cliente) ---------- */
+app.post('/api/conversaciones/:clave/resumen', permiso(['atencion']), async (req, res) => {
+  try {
+    const c = conversaciones.cruda(req.params.clave);
+    if (!c) return res.status(404).json({ error: 'No existe esa conversación.' });
+    if (!(c.mensajes || []).some(m => m && m.tipo === 'cliente')) return res.status(400).json({ error: 'Todavía no hay mensajes del cliente para resumir.' });
+    const r = await leads.resumir(c, bot, !!(req.body || {}).forzar);
+    res.json({ resumen: r.texto, en: r.en, enCache: r.enCache });
+  } catch (e) { console.error('Resumen de la conversación:', e.message); res.status(502).json({ error: 'No se pudo armar el resumen en este momento. Intentar de nuevo en unos minutos.' }); }
 });
 /* ---------- 1.6.5: casos resueltos ---------- */
 app.post('/api/entrenamiento/guardar-caso', permiso(['ayuda']), async (req, res) => {

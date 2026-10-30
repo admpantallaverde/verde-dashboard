@@ -1992,6 +1992,51 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 .cs-ficha b:first-child{margin-top:0}
 .cs-vacio{padding:24px;text-align:center;color:var(--muted);font-size:13.5px}
 
+/* ===================== 1.6.6: orden visual ===================== */
+.brand{cursor:pointer}
+.ay-saludo{display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center;padding:26px 16px 10px}
+.ay-saludo b{font-family:'Bricolage Grotesque';font-size:22px;letter-spacing:-.4px}
+.ay-saludo span{font-size:14px;color:var(--muted)}
+.ay-manual{font-size:11.5px;padding:3px 9px;margin-bottom:5px}
+.ay-cfg{padding:5px 9px}
+.ay-cfg svg{width:14px;height:14px}
+.ay-pop{position:fixed;z-index:60;min-width:230px;max-width:320px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);box-shadow:0 10px 30px rgba(0,0,0,.18);font-size:13px}
+.ay-pop h5{margin:0 0 8px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+.ay-pop .vel{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap}
+.ay-pop .vel button{font:inherit;font-size:12px;font-weight:600;padding:4px 9px;border-radius:30px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);cursor:pointer}
+.ay-pop .vel button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink,#111b21)}
+.ay-pop select{width:100%}
+#view-verde .note.nota-intro{display:none}
+.power-card{padding:10px 14px;margin-bottom:12px;align-items:center}
+.power-card .power-ic{width:34px;height:34px}
+.power-card .power-tx h3{font-size:14px;margin:0}
+.power-card .power-tx p{display:none}
+.panel.acord > .panel-head{cursor:pointer;user-select:none;margin-bottom:0}
+.panel.acord > .panel-head > div:first-child{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.panel.acord > .panel-head .acord-chev{flex:none;width:18px;height:18px;margin-left:8px;color:var(--muted);transition:transform .15s}
+.panel.acord.cerrada > .panel-head .acord-chev{transform:rotate(-90deg)}
+.panel.acord.cerrada > *:not(.panel-head){display:none!important}
+.panel.acord.cerrada > .panel-head .btn,.panel.acord.cerrada > .panel-head button:not(.acord-btn){display:none}
+.panel.acord.cerrada > .panel-head p{display:none}
+.panel.acord .acord-res{display:none;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.panel.acord.cerrada .acord-res{display:block}
+.panel.acord.cerrada{padding-bottom:0}
+.panel.acord.cerrada > .panel-head{border-bottom:none;padding-bottom:12px}
+.ld-linea{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;line-height:1.3}
+.ld-linea .ld-etapa{margin:0}
+.ld-linea .rojo{color:var(--red);font-weight:600}
+.ld-linea .ok{color:var(--green);font-weight:600}
+.fc-sec{margin-bottom:14px}
+.fc-sec h4{margin:0 0 6px;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.fc-sec h4 .dp-link{font-size:12px}
+.fc-resumen{white-space:pre-wrap;font-size:13px;line-height:1.5;padding:10px 12px;border-radius:10px;background:var(--surface-2);min-height:44px}
+#fcLead .ld-f1,#fcLead .ld-f2,#fcLead .ld-f3{padding:6px 0;border:none}
+.fc-ficha .ficha-fila{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--border-soft);font-size:13px}
+.fc-ficha .ficha-fila span{color:var(--muted)}
+.conv-ficha-btn{white-space:nowrap}
+.conv-cab{padding-right:64px}
+@media(max-width:1280px){.conv-ficha-btn span{display:none}.conv-ficha-btn{padding:0 10px}}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -2007,7 +2052,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
   </div>
   <!-- SIDEBAR -->
   <aside class="side">
-    <div class="brand">
+    <div class="brand" title="Ir al Centro de ayuda" onclick="go('ayuda')">
       <div class="logo">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 8V4M9 4h6M8 13h.01M16 13h.01M9.5 16.5a3 3 0 0 0 5 0"/></svg>
       </div>
@@ -2295,7 +2340,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
         <button class="btn" id="v_powerBtn" onclick="toggleVerdePower()"></button>
       </div>
 
-      <div class="note" style="margin-bottom:20px;border-left:3px solid var(--accent)">
+      <div class="note nota-intro" style="margin-bottom:20px;border-left:3px solid var(--accent)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
         <span>Aquí se edita <b>cómo habla y vende Verde</b>, sin tocar código. El «cerebro» que se arma para el bot se ve en vivo con el botón «Ver cerebro de Verde».</span>
       </div>
@@ -2546,7 +2591,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
             <button class="conv-volver" type="button" onclick="cerrarConversacion()" aria-label="Volver a la lista de chats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></button>
             <span class="chat-av conv-av" id="convAvatar" aria-hidden="true"></span>
             <div class="conv-cab-tx"><h3 id="convTitulo"><span class="c-nom" id="convNombre">Conversación</span><span class="c-num" id="convNumero"></span></h3><div class="conv-estados" id="convEstados"></div></div><button type="button" class="sw sw-mini" id="convSwitch" role="switch" aria-checked="true" aria-label="Verde en este chat" data-clave="" onclick="tocarInterruptor(this)"><span class="pista" aria-hidden="true"><span class="bola"></span></span><span class="sw-tx">Verde</span></button><button type="button" class="btn-devolver oculto" id="convDevolver" data-clave="" onclick="reanudarVerde(this)">Devolver a Verde</button>
-            <button class="pill-btn conv-ayuda" type="button" id="convAyuda" onclick="ayudaConEsteChat()" title="Ayuda con este chat" aria-label="Ayuda con este chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M4.93 4.93l4.24 4.24M14.83 14.83l4.24 4.24M14.83 9.17l4.24-4.24M9.17 14.83l-4.24 4.24"/></svg><span>Ayuda con este chat</span></button>
+            <button class="pill-btn conv-ficha-btn" type="button" id="convFichaBtn" onclick="abrirFichaCliente()" title="Ficha del cliente" aria-label="Ficha del cliente"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Ficha del cliente</span></button><button class="pill-btn conv-ayuda" type="button" id="convAyuda" onclick="ayudaConEsteChat()" title="Ayuda con este chat" aria-label="Ayuda con este chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M4.93 4.93l4.24 4.24M14.83 14.83l4.24 4.24M14.83 9.17l4.24-4.24M9.17 14.83l-4.24 4.24"/></svg><span>Ayuda con este chat</span></button>
             <button class="pill-btn conv-marcar oculto" type="button" id="convMarcar" data-id="" title="Marcar atendido" aria-label="Marcar atendido" onclick="marcarDesdeConversacion()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Marcar atendido</span></button>
           </div>
           <div class="conv-franja oculto" id="convFranja" role="status"></div>
@@ -2961,6 +3006,9 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 </div>
 
 
+<!-- ===== MODAL: FICHA DEL CLIENTE (1.6.6) ===== -->
+<div class="overlay" id="fcOverlay"><div class="modal ancho"><div class="modal-head"><div><h3 id="fcTitulo">Ficha del cliente</h3><p class="faint" id="fcSub"></p></div><button class="x-btn" type="button" aria-label="Cerrar" onclick="close_('fcOverlay')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="modal-body"><div class="fc-sec"><h4>Resumen de la conversación<button type="button" class="dp-link" onclick="cargarResumenFicha(true)">Actualizar resumen</button></h4><div class="fc-resumen" id="fcResumen"></div><div class="faint" id="fcResumenMeta" style="font-size:12px;margin-top:4px"></div></div><div class="fc-sec"><h4>Lead</h4><div id="fcLead"></div></div><div class="fc-sec oculto" id="fcFicha"></div><div class="modal-foot"><button class="btn btn-primary" type="button" onclick="close_('fcOverlay')">Cerrar</button></div></div></div></div>
 <!-- ===== MODAL: CAMBIAR MI CONTRASEÑA (1.6.4) ===== -->
 <div class="overlay" id="cpOverlay"><div class="modal"><div class="modal-head"><div><h3>Cambiar mi contraseña</h3><p class="faint">La nueva debe tener al menos 8 caracteres.</p></div><button class="x-btn" type="button" aria-label="Cerrar" onclick="close_('cpOverlay')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
   <div class="modal-body"><form id="formClavePropia" onsubmit="event.preventDefault();guardarClavePropia()"><div class="login-err" id="cpErr"></div><div class="field"><label for="cpActual">Contraseña actual</label><input type="password" id="cpActual" autocomplete="current-password"></div><div class="field"><label for="cpNueva">Contraseña nueva</label><input type="password" id="cpNueva" autocomplete="new-password"></div><div class="field"><label for="cpRepetir">Repetir la contraseña nueva</label><input type="password" id="cpRepetir" autocomplete="new-password"></div><div class="modal-foot"><button class="btn btn-ghost" type="button" onclick="close_('cpOverlay')">Cancelar</button><button class="btn btn-primary" type="submit" id="cpOk">Guardar</button></div></form></div></div></div>
@@ -3478,6 +3526,7 @@ function go(view){
 function _doGo(view){
   if(!vistaPermitida(view))view='ayuda';   // 1.6.3: fuera de sus accesos, al Centro de ayuda
   const vbc=document.getElementById('ayVolverChat');if(vbc&&view!=='ayuda')vbc.classList.add('oculto');   // 1.6.4
+  if(typeof actualizarResumenesAcordeon==='function')setTimeout(()=>actualizarResumenesAcordeon('view-'+view),50);   // 1.6.6: resúmenes al día al entrar
   if(typeof abrirGrupoDe==='function')abrirGrupoDe(view);   // 1.5.6
   if(CONV.clave&&!_abriendoConv)cerrarConversacion();   // al cambiar de pantalla se cierra la conversación abierta
   currentView=view;
@@ -3491,7 +3540,7 @@ function _doGo(view){
     rastreador:['Rastreador Web','Extrae productos, precios y disponibilidad de sitios web hacia la base de conocimientos.'],
     multimedia:['Multimedia','Fotos, imágenes, PDF, notas de voz, audios y videos que el chatbot reconoce para poder responder sobre ellos.'],
     recursos:['Recursos enviables','PDF, imágenes, enlaces o textos que el chatbot reconoce y envía al cliente cuando pregunta por temas clave.'],
-    verde:['Comportamiento del bot','Permite editar la personalidad, los pasos de venta, las objeciones y las reglas de Verde sin tocar código.'],
+    verde:['Comportamiento del bot','Permite editar la personalidad, los pasos de venta, las objeciones y las reglas de Verde sin tocar código.','<b>Verde</b> › Comportamiento del bot'],
     chats:['Chats por responder','Clientes que Verde derivó a un asesor. Mientras esperan, Verde no les responde.','<b>Atención</b> › Chats por responder'],
     respondidos:['Chats respondidos','Historial de los chats que Verde derivó y cómo se atendió cada uno, para supervisar la atención.','<b>Atención</b> › Chats respondidos'],
     avisos:['Avisos a celulares del equipo','Cada vez que un chat entra a «Chats por responder», estos números reciben un aviso por WhatsApp. Verde nunca les responde como a un cliente.','<b>Atención</b> › <b>Chats por responder</b> › Avisos'],
@@ -5049,7 +5098,8 @@ window.fetch=async function(entrada,opciones){
   try{
     const u=typeof entrada==='string'?entrada:((entrada&&entrada.url)||'');
     if(r.status===401&&/\/api\//.test(u)&&!/\/api\/(login|sesion|clave)/.test(u)&&SESION.loginActivo){
-      mostrarLogin('La sesión venció. Ingresar de nuevo para continuar.');
+      const ls=document.getElementById('loginScreen');
+      if(!(ls&&ls.classList.contains('show')))mostrarLogin('La sesión venció. Ingresar de nuevo para continuar.');   // 1.6.6: un segundo 401 en cola no reinicia el ingreso ya empezado
     }
   }catch(e){}
   return r;
@@ -5175,7 +5225,7 @@ async function arrancarApp(){
   document.getElementById('boot').style.display='none';
   document.getElementById('app').style.display='grid';
   _appIniciada=true;_usuarioInicial=SESION.usuario?SESION.usuario.id:null;
-  pintarUsuario();aplicarRol();reubicarAyuda164();
+  pintarUsuario();aplicarRol();reubicarAyuda164();prepararAcordeones();
   if(!asesor){renderSources();renderCrawler();renderMedia();renderRes();}
   await revisarSalud();
   setInterval(revisarSalud,60000);
@@ -6352,7 +6402,7 @@ function pintarChatAyuda(){
   pintarAdjuntoAyuda();
   const atj=document.getElementById('ayAtajos');if(atj&&!AYUDA.chat)atj.classList.toggle('oculto',AYUDA.hilo.length>0||AYUDA.modo==='entrenamiento');   // 1.5.5: como las sugerencias de Claude
   if(!AYUDA.hilo.length){
-    box.innerHTML='<div class="ay-vacio"><span>'+(AYUDA.modo==='entrenamiento'?'La entrevista empieza con la primera pregunta del Entrevistador.':'Escribí tu consulta o usá un acceso rápido.')+'</span></div>';
+    box.innerHTML=AYUDA.modo==='entrenamiento'?'<div class="ay-vacio"><span>La entrevista empieza con la primera pregunta del Entrevistador.</span></div>':saludoAyuda();   // 1.6.6
     return;
   }
   box.innerHTML=AYUDA.hilo.map((x,hi)=>{
@@ -6361,7 +6411,7 @@ function pintarChatAyuda(){
     if(x.error)return h+'<div class="ay-resp error"><span class="ay-txt">'+escH(x.error)+'</span></div>';
     const f=(x.fuentes||[]).length?'<div class="ay-fuentes"><span>Fuente:</span>'+x.fuentes.map(s=>'<button type="button" class="ay-fuente" onclick="abrirArticulo(\''+escH(s.id)+'\')">'+escH((s.grupo==='meta'?'Guías de Meta':'Manual')+' › '+s.titulo)+'</button>').join('')+'</div>':'';
     if(x.sistema)return h+'<div class="ay-resp ay-sistema"><span class="ay-txt">'+escH(x.respuesta)+'</span></div>';
-    return h+'<div class="ay-resp"><span class="ay-quien">'+(esEntrevista()?'Entrevistador IA':'Asistente IA')+botonEscucharAyuda(hi)+botonVelocidadVoz()+(hi===0?selectorVozHtml():'')+'</span><span class="ay-txt">'+manualHtml(x)+formatoAyuda(x.respuesta)+'</span>'+htmlTextosAyuda(x,hi)+'</div>';
+    return h+'<div class="ay-resp"><span class="ay-quien">'+(esEntrevista()?'Entrevistador IA':'Asistente IA')+botonEscucharAyuda(hi)+botonAjustesVoz()+'</span><span class="ay-txt">'+manualHtml(x)+formatoAyuda(x.respuesta)+'</span>'+htmlTextosAyuda(x,hi)+'</div>';
   }).join('');
   box.scrollTop=box.scrollHeight;
 }
@@ -7437,7 +7487,7 @@ async function cargarLeadEnChat(clave,forzar){
   LEAD_CHAT.datos=r.json;pintarLeadEnChat();
 }
 function pintarLeadEnChat(){
-  const caja=document.getElementById('convLead'),x=LEAD_CHAT.datos;if(!caja||!x)return;
+  const caja=document.getElementById('fcLead'),x=LEAD_CHAT.datos;if(!caja||!x)return;pintarLineaLead(x);   // 1.6.6: la franja va en una línea; el detalle, en la ficha del cliente
   if(!x.clasificado){
     caja.innerHTML='<div class="ld-f1"><b>Lead</b><span class="ld-sep">·</span><span class="faint">Sin clasificar todavía: la IA clasifica 10 minutos después del último mensaje.</span><span class="ld-etapa '+escH(x.etapa)+'">'+escH(x.etapaNombre)+'</span><button type="button" class="dp-link" onclick="abrirCorreccionLead()">Clasificar a mano</button></div>';
   }else{
@@ -7820,7 +7870,7 @@ async function cargarReportes(){
 function pintarListaReportes(){
   const box=document.getElementById('rpLista');if(!box)return;
   const hayAnterior=RP.lista.some(x=>x.id===(RP.semAnterior||{}).id);
-  document.getElementById('rpAcciones').innerHTML='<button type="button" class="btn btn-primary" id="rpGenerarActual" onclick="generarReporte(\'actual\')">Generar ahora (semana en curso)</button>'+(hayAnterior?'':'<button type="button" class="btn btn-ghost" id="rpGenerarAnterior" onclick="generarReporte(\'anterior\')">Generar la semana anterior</button>');
+  document.getElementById('rpAcciones').innerHTML='<button type="button" class="btn btn-primary" id="rpGenerarActual" onclick="generarReporte(\'actual\')">Generar ahora (semana en curso)</button>'+(hayAnterior?'':'<button type="button" class="btn btn-ghost" id="rpGenerarAnterior" onclick="generarReporte(\'anterior\')">Generar la semana anterior</button>')+(RP.actual?'<button type="button" class="btn btn-ghost" id="rpVolverArmar" onclick="generarReporte(\''+(RP.actual.completa?'anterior':'actual')+'\')">Volver a armar el reporte abierto</button>':'');
   box.innerHTML=RP.lista.length?RP.lista.map(x=>'<button type="button" class="rp-sem'+(x.id===RP.sel?' sel':'')+'" data-id="'+escH(x.id)+'" onclick="abrirReporte(this.dataset.id)"><b>'+escH(x.titulo)+'</b><span>'+(x.completa?'Semana completa':'En curso')+' · '+escH(horaCorta(x.generadoEn))+(x.conEvaluacion?'':' · sin evaluación')+'</span></button>').join(''):'<div class="faint" style="padding:8px 4px">Todavía no hay reportes. El primero se arma el lunes a las 07:00, o ahora con los botones de arriba.</div>';
 }
 async function abrirReporte(id){
@@ -7855,7 +7905,7 @@ function pintarReporte(){
   const r=RP.actual;
   if(!r){box.innerHTML='<div class="rp-vacio">Elegir un reporte de la lista, o generar uno.</div>';return;}
   const d=r.datos||{},a=d.atencion||[],res=d.resultados||{},tot=d.totales||{};
-  let h='<div class="rp-cab"><div><h2>'+escH(r.titulo)+'</h2><p>'+(r.completa?'Semana completa':'Semana en curso')+' · armado '+escH(horaCorta(r.generadoEn))+' por '+escH(r.por)+' · '+tot.conversaciones+' conversaciones · '+tot.mensajesCliente+' mensajes de clientes</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-ghost" onclick="generarReporte(\''+(r.completa?'anterior':'actual')+'\')">Volver a armar</button></div></div>';
+  let h='<div class="rp-cab"><div><h2>'+escH(r.titulo)+'</h2><p>'+(r.completa?'Semana completa':'Semana en curso')+' · armado '+escH(horaCorta(r.generadoEn))+' por '+escH(r.por)+' · '+tot.conversaciones+' conversaciones · '+tot.mensajesCliente+' mensajes de clientes</p></div></div>';
   h+='<div class="rp-sec"><h3><span class="rp-num">1</span>Atención del equipo</h3>';
   h+=a.length?'<div class="rp-vend">'+a.map(v=>'<div class="rp-card"><h4>'+escH(v.nombre)+(v.sinVendedor?'':'<span class="faint" style="font-weight:500">'+v.chats+(v.chats===1?' chat':' chats')+'</span>')+'</h4>'
     +(v.sinVendedor?'':'<div class="rp-fila"><span>Primera respuesta (mediana / máxima)</span><b>'+escH(v.mediana)+' / '+escH(v.maxima)+'</b></div>'
@@ -8127,7 +8177,7 @@ function accesosDe(){
 }
 function tieneAcceso(m){return !!accesosDe()[m];}
 function vistaPermitida(v){const m=VISTA_MODULO[v];return m?tieneAcceso(m):tieneAcceso('sistema');}
-function primeraVista(){const A=accesosDe();return A.atencion?'chats':A.ventas?'leads':A.reportes?'reportes':A.verde?'verde':'ayuda';}
+function primeraVista(){return 'ayuda';}   // 1.6.6: el panel abre en el Centro de ayuda
 function pintarAccesosUsr(){
   const box=document.getElementById('usrAccesos');if(!box)return;
   box.classList.toggle('oculto',_usrRol==='admin');
@@ -8289,6 +8339,98 @@ async function armarManualCasos(area,btn){
   if(!r.ok){toast('No se pudo armar el manual',r.json.error||'','error');return;}
   toast('Borrador listo','«'+r.json.manual.nombre+'» quedó en la pestaña Manuales como borrador, para revisar y aprobar.','success');
   cargarConocimiento();
+}
+
+
+/* ===================== 1.6.6: orden visual ===================== */
+function saludoAyuda(){
+  const h=new Date().getHours(),s=h<12?'Buenos días':h<19?'Buenas tardes':'Buenas noches';
+  const n=(SESION.usuario&&SESION.usuario.nombre?String(SESION.usuario.nombre).trim().split(/\s+/)[0]:'');
+  return '<div class="ay-saludo"><b>'+escH(s)+(n?', '+escH(n):'')+'.</b><span>¿Qué desea hacer hoy? ¿O qué quiere aprender?</span></div>';
+}
+/* Ajustes de voz (engranaje) */
+function botonAjustesVoz(){return hayVoz()?'<button type="button" class="ay-escuchar ay-cfg" title="Velocidad y voz" aria-label="Velocidad y voz" onclick="abrirAjustesVoz(this)"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'+textoVelocidad(velocidadVoz())+'</button>':'';}
+function fijarVelocidadVoz(v){v=Number(v);if(!VOZ_VELOCIDADES.includes(v))return;try{localStorage.setItem('verde_voz_vel',String(v));}catch(e){}document.querySelectorAll('.ay-cfg').forEach(b=>{b.lastChild.textContent=textoVelocidad(v);});document.querySelectorAll('#ayVozPop .vel button').forEach(b=>b.classList.toggle('on',Number(b.dataset.v)===v));}
+function abrirAjustesVoz(btn){
+  cerrarAjustesVoz();
+  const r=btn.getBoundingClientRect(),vel=velocidadVoz(),voces=vocesEspanol();let sel='';try{sel=localStorage.getItem('verde_voz_nombre')||'';}catch(e){}
+  const pop=document.createElement('div');pop.id='ayVozPop';pop.className='ay-pop';
+  pop.innerHTML='<h5>Velocidad</h5><div class="vel">'+VOZ_VELOCIDADES.map(v=>'<button type="button" data-v="'+v+'" class="'+(v===vel?'on':'')+'" onclick="fijarVelocidadVoz(this.dataset.v)">'+textoVelocidad(v)+'</button>').join('')+'</div><h5>Voz</h5>'+(voces.length?'<select onchange="elegirVoz(this.value)"><option value="">Voz automática</option>'+voces.map(v=>'<option value="'+escH(v.name)+'"'+(v.name===sel?' selected':'')+'>'+escH(v.name.replace(/^Microsoft |^Google /,''))+' · '+escH(String(v.lang||'').replace('_','-'))+'</option>').join('')+'</select>':'<span class="faint">Este aparato no ofrece voces en español.</span>');
+  document.body.appendChild(pop);
+  const w=pop.offsetWidth,h=pop.offsetHeight;let left=Math.min(r.left,window.innerWidth-w-12),top=r.bottom+6;if(top+h>window.innerHeight-8)top=Math.max(8,r.top-h-6);
+  pop.style.left=Math.max(8,left)+'px';pop.style.top=top+'px';
+  setTimeout(()=>document.addEventListener('click',cerrarAjustesVozFuera),0);
+}
+function cerrarAjustesVoz(){const p=document.getElementById('ayVozPop');if(p)p.remove();document.removeEventListener('click',cerrarAjustesVozFuera);}
+function cerrarAjustesVozFuera(e){const p=document.getElementById('ayVozPop');if(p&&!p.contains(e.target)&&!e.target.closest('.ay-cfg'))cerrarAjustesVoz();}
+/* Acordeones en Comportamiento del bot, Avisos y Proceso de ventas */
+function resumenAcordeon(panel){
+  const vals=[];
+  panel.querySelectorAll('.chip-tag,.chip,.tag,input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea,.opcion-m.sel b').forEach(el=>{
+    if(vals.length>=3)return;let v='';
+    if(el.tagName==='SELECT')v=el.options[el.selectedIndex]?el.options[el.selectedIndex].text:'';else if('value' in el&&el.tagName!=='SPAN'&&el.tagName!=='B')v=el.value;else v=String(el.textContent||'').replace(/[×✕]\s*$/,'');
+    v=String(v||'').replace(/\s+/g,' ').trim();if(v&&!vals.includes(v))vals.push(v.length>40?v.slice(0,38)+'…':v);
+  });
+  return vals.join(' · ');
+}
+function prepararAcordeones(){
+  ['view-verde','view-avisos','view-proceso'].forEach(vid=>{
+    const v=document.getElementById(vid);if(!v)return;
+    let abiertos=[];try{abiertos=JSON.parse(localStorage.getItem('verde_acord_'+vid)||'[]');}catch(e){}
+    [...v.querySelectorAll('.panel')].filter(p=>!p.parentElement.closest('.panel')).forEach((p,i)=>{   // paneles de primer nivel, estén donde estén
+      const head=p.querySelector(':scope > .panel-head');if(!head||p.classList.contains('acord')||head.querySelector('h3')==null)return;
+      p.classList.add('acord');p.dataset.acord=String(i);
+      const tit=head.querySelector(':scope > div');if(!tit)return;
+      tit.insertAdjacentHTML('beforeend','<span class="acord-res"></span>');
+      head.insertAdjacentHTML('beforeend','<svg class="acord-chev" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>');
+      if(!abiertos.includes(i)){p.classList.add('cerrada');}
+      head.addEventListener('click',e=>{if(e.target.closest('button,a,input,select,label'))return;alternarAcordeon(p,vid);});
+    });
+    actualizarResumenesAcordeon(vid);
+  });
+}
+function alternarAcordeon(p,vid){
+  p.classList.toggle('cerrada');
+  const v=document.getElementById(vid),abiertos=[...v.querySelectorAll('.panel.acord:not(.cerrada)')].map(x=>Number(x.dataset.acord));
+  try{localStorage.setItem('verde_acord_'+vid,JSON.stringify(abiertos));}catch(e){}
+  actualizarResumenesAcordeon(vid);
+}
+function actualizarResumenesAcordeon(vid){const v=document.getElementById(vid);if(!v)return;v.querySelectorAll('.panel.acord').forEach(p=>{const r=p.querySelector('.acord-res');if(r)r.textContent=resumenAcordeon(p);});}
+/* Ficha del cliente: ventana flotante */
+function pintarLineaLead(x){
+  const c=document.getElementById('convLead');if(!c)return;
+  if(!x){c.classList.add('oculto');return;}
+  let h='<div class="ld-linea">';
+  if(!x.clasificado)h+='<b>Lead</b><span class="faint">sin clasificar todavía</span>';
+  else{
+    h+=prioHtml(x)+'<span class="ld-sep">·</span><b>'+escH(x.tipoNombre)+(x.producto?' · '+escH(x.producto):'')+'</b><span class="ld-etapa '+escH(x.etapa)+'">'+escH(x.etapaNombre)+'</span>';
+    if(x.cierre)h+='<span class="ld-sep">·</span><span>Cerrado: '+escH(x.cierre.resultadoNombre||'')+'</span>';
+    else if(x.tarea)h+='<span class="ld-sep">·</span><span>Tarea: '+escH(x.tarea.accion||'')+' <span class="'+(x.tarea.estado==='vencida'?'rojo':'faint')+'">'+escH(x.tarea.venceTexto||'')+'</span></span>';
+    if(x.encuesta&&x.encuesta.calificacion)h+='<span class="ld-sep">·</span><span class="'+(x.encuesta.puntaje===3?'ok':x.encuesta.puntaje===1?'rojo':'')+'">Calificación: '+escH(x.encuesta.calificacion)+'</span>';
+  }
+  h+='<span class="ld-sep">·</span><button type="button" class="dp-link" onclick="abrirFichaCliente()">Ficha del cliente</button></div>';
+  c.innerHTML=h;c.classList.remove('oculto');
+}
+function abrirFichaCliente(){
+  const c=CONV.datos;if(!c){toast('Abrir un chat primero','','info');return;}
+  const nombre=c.nombre||(c.numero?'+'+c.numero:'Cliente sin número visible');
+  document.getElementById('fcTitulo').textContent='Ficha del cliente · '+nombre;
+  document.getElementById('fcSub').textContent=(c.numero?'+'+c.numero+' · ':'')+'resumen de toda la conversación, el lead y lo que Verde registró';
+  const r=c.reclamo||c.consulta,fb=document.getElementById('fcFicha');
+  if(r){const filas=(c.reclamo?filasFicha(c.reclamo):filasFicha(c.consulta)).map(([et,v])=>'<div class="ficha-fila"><span>'+escH(et)+'</span><b>'+escH(v==null?'Sin dato todavía':String(v))+'</b></div>').join('');fb.innerHTML='<h4>'+(c.reclamo?'Ficha del reclamo':'Ficha de la consulta')+' (la armó Verde)</h4><div class="fc-ficha">'+filas+'</div>';fb.classList.remove('oculto');}
+  else fb.classList.add('oculto');
+  const rb=document.getElementById('fcResumen');rb.textContent='Armando el resumen…';
+  show('fcOverlay');
+  cargarResumenFicha(false);
+}
+async function cargarResumenFicha(forzar){
+  const c=CONV.datos;if(!c)return;
+  const rb=document.getElementById('fcResumen'),meta=document.getElementById('fcResumenMeta');
+  if(forzar)rb.textContent='Actualizando el resumen…';
+  const r=await api('/api/conversaciones/'+encodeURIComponent(c.clave)+'/resumen',{method:'POST',body:{forzar:!!forzar}});
+  if(!CONV.datos||CONV.datos.clave!==c.clave)return;
+  if(!r.ok){rb.textContent=r.json.error||'No se pudo armar el resumen.';if(meta)meta.textContent='';return;}
+  rb.textContent=r.json.resumen||'';if(meta)meta.textContent='Armado '+horaCorta(r.json.en)+(r.json.enCache?' · sin cambios desde entonces':'');
 }
 
 </script>

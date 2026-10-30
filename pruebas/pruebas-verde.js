@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.6.5';
+const VERSION_ESPERADA = '1.6.6';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -68,6 +68,7 @@ global.fetch = async (url, opts = {}) => {
     }
     if (/REDACTOR DE FICHA DE CASO/.test(JSON.stringify(JSON.parse(opts.body).system || ''))) return respuestaIA(JSON.stringify({ titulo: 'iPhone 11 que no carga', equipo: 'iPhone 11', llegada: 'No cargaba; el cliente dijo que lo mojó.', revision: '1. Limpieza del puerto: sin cambios. 2. Amperímetro con cargador original: 0 A.', diagnostico: 'Pin de carga muerto.', solucion: '1. Cambiar el flex de carga. 2. Probar carga y datos.', repuestos: 'Flex de carga iPhone 11', tiempo: '40 minutos', evitar: 'No forzar el puerto con pinzas.' }));
     if (/REDACTOR DEL MANUAL DE CASOS FRECUENTES/.test(JSON.stringify(JSON.parse(opts.body).system || ''))) return respuestaIA(JSON.stringify({ titulo: 'Manual de casos frecuentes de Soporte técnico, repuestos y proveedores', descripcion: 'Problemas de carga y pantalla', texto: 'PROBLEMAS DE CARGA\n1. Limpiar el puerto.\n2. Medir con amperímetro.\n3. Si marca 0 A, cambiar el flex de carga (caso registrado por Acceso general).\n\nPENDIENTE DE DEFINIR POR DIRECCIÓN\nGarantía de la reparación.\n\nEste borrador debe ser revisado y aprobado por Dirección antes de usarse para capacitar' }));
+    if (/RESUMEN DE CONVERSACIÓN para el equipo/.test(JSON.stringify(JSON.parse(opts.body).system || ''))) return respuestaIA('El cliente pide el precio del cambio de glass del iPhone 11. Verde lo derivó; el equipo todavía no respondió. Pendiente: pasar el precio. Cliente apurado.');   // 1.6.6
     if (/REDACTOR DEL MANUAL DE ÁREA/.test(JSON.stringify(JSON.parse(opts.body).system || ''))) return respuestaIA('```json\n' + JSON.stringify({ titulo: 'Manual de Logística, almacén y Mercado Libre', descripcion: 'Recepción, stock y despacho de pedidos', texto: 'OBJETIVO DEL PUESTO\nAsegurar que cada pedido salga en el día.\n\nPROCEDIMIENTOS PASO A PASO\n1. Recepción: el encargado revisa el paquete y lo registra en el sistema.\n2. Despacho: se imprime la etiqueta y se entrega al correo antes de las 17:00.\n\nESTÁNDARES DE ATENCIÓN Y CONDUCTA\nTrato cordial con el correo y los compañeros.\n\nMANEJO DE SITUACIONES DIFÍCILES\nSi falta un producto: «Te aviso en cuanto lo tenga; disculpá la demora».\n\nREGLAS DE ORO DEL ÁREA\nNada sale sin etiqueta.\n\nPENDIENTES DE DEFINIR POR DIRECCIÓN\nQué hacer con pedidos sin stock.\n\nEste borrador debe ser revisado y aprobado por Dirección antes de usarse para capacitar' }) + '\n```');
     if (/REDACTOR DE RESPUESTAS/.test(JSON.stringify(JSON.parse(opts.body).system || ''))) return respuestaIA('{"mensaje":"Hola Gabriela, soy Carla de Pantalla Verde. Veo su reclamo por la orden 4582: el touch falla desde el cambio de pantalla.\\nPara resolverlo necesitamos revisar el equipo en el local; la evaluación tarda hasta [plazo].\\n¿Puede traerlo mañana? Cualquier duda, me escribe."}');   // 1.5.9
     if (/corrector de mensajes/i.test(JSON.stringify(JSON.parse(opts.body).system || ''))) return respuestaIA('"Hola, buenas. ' + ult.replace(/pantaya/g, 'pantalla') + '"');   // 1.4.10: corrección de mensajes
@@ -2261,6 +2262,22 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(!/CASOS RESUELTOS REGISTRADOS/.test(llamadasIA[llamadasIA.length - 1].body.system[0].text), 'retirado, el Instructor deja de usarlo');
   const actC = require('./ayuda-hilos.js').actividadDe('general');
   verificar(actC.casos >= 1, 'la actividad por persona cuenta los casos');
+
+  mostrar('86) Resumen de la conversación para la ficha del cliente (1.6.6)');
+  const rs = { clave: 'wa:59891000086', numero: '59891000086', nombre: 'Resumen', destino: { to: '59891000086' } };
+  convMod.registrar(Object.assign({ tipo: 'cliente', texto: 'cuánto sale el glass del iPhone 11?' }, rs));
+  convMod.registrar(Object.assign({ tipo: 'verde', texto: 'Te paso con un asesor.' }, rs));
+  llamadasIA.length = 0;
+  let r86 = await json(await api('/api/conversaciones/' + rs.clave + '/resumen', 'POST'));
+  verificar(/cambio de glass/.test(r86.resumen) && r86.enCache === false && llamadasIA.length === 1 && /RESUMEN DE CONVERSACIÓN/.test(JSON.stringify(llamadasIA[0].body.system)) && llamadasIA[0].body.model === 'claude-haiku-5-5', 'el resumen se arma con Haiku a partir de la conversación');
+  r86 = await json(await api('/api/conversaciones/' + rs.clave + '/resumen', 'POST'));
+  verificar(r86.enCache === true && llamadasIA.length === 1, 'sin mensajes nuevos, devuelve el resumen guardado sin volver a consultar');
+  convMod.registrar(Object.assign({ tipo: 'cliente', texto: 'y cuánto demora?' }, rs));
+  r86 = await json(await api('/api/conversaciones/' + rs.clave + '/resumen', 'POST'));
+  verificar(r86.enCache === false && llamadasIA.length === 2, 'con un mensaje nuevo, se rehace');
+  r86 = await json(await api('/api/conversaciones/' + rs.clave + '/resumen', 'POST', { forzar: true }));
+  verificar(r86.enCache === false && llamadasIA.length === 3 && ((await json(await api('/api/consumo-ia'))).porOrigen || {}).resumen.consultas >= 3, '«Actualizar resumen» lo rehace a pedido y el consumo lo registra como «Resumen»');
+  verificar((await api('/api/conversaciones/wa:noexiste/resumen', 'POST')).status === 404, 'un chat inexistente devuelve 404');
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }
