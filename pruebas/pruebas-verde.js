@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.6.3';
+const VERSION_ESPERADA = '1.6.4';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -38,6 +38,7 @@ global.fetch = async (url, opts = {}) => {
     await new Promise(r => setTimeout(r, 150));
     if (modoIA === 'error400') return new Response('{"error":"bad request"}', { status: 400 });
     if (modoIA === 'vacio') return new Response(JSON.stringify({ content: [], stop_reason: 'refusal', usage: { input_tokens: 1000, output_tokens: 0 } }), { status: 200 });
+    if (modoIA === 'sinManual' && JSON.stringify(JSON.parse(opts.body).system || '').includes('ASISTENTE DEL EQUIPO')) return new Response(JSON.stringify({ content: [{ type: 'text', text: '{"respuesta":"Esa área todavía no tiene manual cargado. Por ahora, consulte directamente con Dirección.","manual":"","seccion":"","fuentes":[],"textos":[]}' }], stop_reason: 'end_turn', usage: { input_tokens: 500, output_tokens: 40 } }), { status: 200 });   // 1.6.4
     if (JSON.stringify(JSON.parse(opts.body).system || '').includes('ASISTENTE DEL EQUIPO')) {
       return new Response(JSON.stringify({ content: [{ type: 'text', text: '{"respuesta":"Para devolver un chat a Verde, usar el botón «Devolver a Verde» del encabezado.","fuentes":["conversaciones","portafolio"],"textos":["Hola, te escribo de la tienda: ¿a qué hora podés pasar?"," ","Segunda variante"]}' }], stop_reason: 'end_turn', usage: { input_tokens: 3000, output_tokens: 80 } }), { status: 200 });
     }
@@ -2186,6 +2187,39 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   await json(await api('/api/usuarios/' + uf.id, 'PUT', { accesos: { verde: true } }, gJ));
   verificar((await api('/api/manuales', 'GET', null, gF)).status === 200 && (await api('/api/state', 'GET', null, gF)).status === 200 && (await api('/api/usuarios', 'GET', null, gF)).status === 403 && (await api('/api/respaldos', 'GET', null, gF)).status === 403, 'con Verde accede a la biblioteca y al comportamiento del bot, pero nunca a Sistema');
   verificar((await api('/api/usuarios/' + uf.id, 'PUT', { rol: 'admin' }, gJ)).status === 200 && (await api('/api/usuarios', 'GET', null, gF)).status === 200, 'como administrador tiene todo');
+  process.env.VERDE_LOGIN = '';
+
+  mostrar('84) Centro de ayuda: áreas reservadas, imágenes en la entrevista, preguntas sin manual y actividad (1.6.4)');
+  process.env.VERDE_LOGIN = 'activo';
+  const gJ84 = (await ingresar2('jefe', 'ClaveNueva2026')).galleta;
+  const ingF84 = await ingresar2('flor83', 'FlorSegura2026'); const gF84 = ingF84.galleta;
+  await json(await api('/api/usuarios/' + uf.id, 'PUT', { rol: 'asesor', accesos: { ventas: false } }, gJ84));
+  await json(await api('/api/manuales-areas', 'PUT', { areas: [{ nombre: 'Ventas y atención al cliente' }, { nombre: 'Caja: apertura, arqueo y cierre' }, { nombre: 'Sistema de gestión de órdenes' }, { nombre: 'Reglamento interno', soloAdmin: true }] }, gJ84));
+  const lb84 = await json(await api('/api/manuales', 'GET', null, gJ84));
+  verificar(lb84.areas.find(a => a.nombre === 'Reglamento interno').soloAdmin === true && lb84.areas.filter(a => a.soloAdmin).length === 1, '«Reglamento interno» queda reservada a administradores');
+  const ayJ = await json(await api('/api/ayuda', 'GET', null, gJ84)), ayF84 = await json(await api('/api/ayuda', 'GET', null, gF84));
+  verificar(ayJ.entrenamiento.areas.includes('Reglamento interno') && !ayF84.entrenamiento.areas.includes('Reglamento interno') && ayF84.entrenamiento.areas.includes('Caja: apertura, arqueo y cierre'), 'el administrador ve el área reservada para entrenar; el integrante no');
+  verificar((await api('/api/entrenamiento/empezar', 'POST', { area: 'Reglamento interno' }, gF84)).status === 403, 'el servidor rechaza una entrevista del integrante sobre un área reservada');
+  await json(await api('/api/manuales-areas', 'PUT', { areas: lb84.areas.map(a => ({ nombre: a.nombre, responsable: a.responsable, soloAdmin: a.nombre === 'Caja: apertura, arqueo y cierre' })) }, gJ84));
+  verificar(!(await json(await api('/api/ayuda', 'GET', null, gF84))).entrenamiento.areas.includes('Caja: apertura, arqueo y cierre'), 'la reserva se cambia desde «Áreas y responsables»');
+  // Imagen en la entrevista
+  const e84 = (await json(await api('/api/entrenamiento/empezar', 'POST', { area: 'Sistema de gestión de órdenes' }, gF84))).conversacion;
+  llamadasIA.length = 0;
+  const r84 = await json(await api('/api/entrenamiento/responder', 'POST', { id: e84.id, texto: 'Así se ve la pantalla de órdenes.', imagen: { nombre: 'ordenes.png', tipo: 'image/png', datos: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==' } }, gF84));
+  const msgs84 = llamadasIA[llamadasIA.length - 1].body.messages, ult84 = msgs84[msgs84.length - 1];
+  verificar(r84.conversacion && r84.conversacion.mensajes.some(m => m.rol === 'usuario' && m.imagen && m.imagen.nombre === 'ordenes.png') && Array.isArray(ult84.content) && ult84.content[0].type === 'image' && ult84.content[0].source.media_type === 'image/png' && /Así se ve la pantalla/.test(ult84.content[1].text), 'la imagen de la respuesta llega a la IA como imagen y queda guardada en la entrevista');
+  verificar(/adjunta una IMAGEN/.test(llamadasIA[llamadasIA.length - 1].body.system[0].text), 'el Entrevistador tiene la consigna de describir la imagen antes de seguir');
+  // Preguntas sin manual
+  modoIA = 'sinManual';
+  await json(await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Cómo hago el arqueo de caja?', conversacionId: (await json(await api('/api/ayuda/conversaciones', 'POST', null, gF84))).conversacion.id }, gF84));
+  await json(await api('/api/ayuda/preguntar', 'POST', { pregunta: 'Como hago el arqueo de caja' }, gJ84));
+  modoIA = 'ok';
+  let pq = (await json(await api('/api/manuales', 'GET', null, gJ84))).preguntas;
+  verificar(pq.length === 1 && pq[0].veces === 2 && /arqueo de caja/i.test(pq[0].pregunta) && pq[0].ultimaPor === 'Jefe Prueba', 'cuando el Instructor dice que no hay manual, la pregunta queda anotada y se agrupa aunque cambien tildes o signos');
+  verificar((await json(await api('/api/manuales-preguntas/' + pq[0].id, 'DELETE', null, gJ84))).ok === true && (await json(await api('/api/manuales', 'GET', null, gJ84))).preguntas.length === 0, 'una pregunta anotada se puede quitar de la lista');
+  // Actividad por persona
+  const lu84 = (await json(await api('/api/usuarios', 'GET', null, gJ84))).usuarios.find(x => x.id === uf.id);
+  verificar(lu84.actividad && lu84.actividad.entrevistas >= 1 && lu84.actividad.consultas >= 1 && lu84.actividad.ultimaEn > 0, 'la lista de usuarios trae la actividad de formación de cada persona');
   process.env.VERDE_LOGIN = '';
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));

@@ -37,10 +37,12 @@ function _usarReloj(f) { reloj = f || (() => Date.now()); }
 const t = (v, max) => String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, max);
 
 function cargar() {
-  let d = { manuales: [], areas: [] };
-  try { if (fs.existsSync(ARCHIVO)) { const x = JSON.parse(fs.readFileSync(ARCHIVO, 'utf8') || '{}'); if (x && Array.isArray(x.manuales)) d = { manuales: x.manuales, areas: Array.isArray(x.areas) ? x.areas : [] }; } }
+  let d = { manuales: [], areas: [], preguntas: [] };
+  try { if (fs.existsSync(ARCHIVO)) { const x = JSON.parse(fs.readFileSync(ARCHIVO, 'utf8') || '{}'); if (x && Array.isArray(x.manuales)) d = { manuales: x.manuales, areas: Array.isArray(x.areas) ? x.areas : [], preguntas: Array.isArray(x.preguntas) ? x.preguntas : [] }; } }
   catch (e) { console.error('No se pudo leer manuales.json:', e.message); }
-  if (!d.areas.length) d.areas = AREAS_DEFECTO.map(n => ({ id: idDe(n), nombre: n, responsable: '' }));
+  if (!d.areas.length) d.areas = AREAS_DEFECTO.map(n => ({ id: idDe(n), nombre: n, responsable: '', soloAdmin: n === 'Reglamento interno' }));
+  // 1.6.4: «Reglamento interno» queda reservado a administradores si nunca se definió
+  for (const a of d.areas) if (a.soloAdmin === undefined) a.soloAdmin = a.nombre === 'Reglamento interno';
   return d;
 }
 function guardar(d) {
@@ -235,14 +237,14 @@ function resumenBase() {
 }
 function listar() {
   const d = cargar();
-  return { sistema: SISTEMA.map(s => Object.assign({}, s, { sistema: true, estado: 'aprobado', activo: true })), manuales: d.manuales.map(m => publico(m, d)).sort((a, b) => b.actualizadoEn - a.actualizadoEn), areas: areas(), base: resumenBase() };
+  return { sistema: SISTEMA.map(s => Object.assign({}, s, { sistema: true, estado: 'aprobado', activo: true })), manuales: d.manuales.map(m => publico(m, d)).sort((a, b) => b.actualizadoEn - a.actualizadoEn), areas: areas(), base: resumenBase(), preguntas: d.preguntas.map(p => Object.assign({}, p)), porRevisar: d.manuales.filter(m => m.estado === 'borrador').length };
 }
 /* ---------- áreas ---------- */
 function areas() {
   const d = cargar();
   const aprobadas = new Set(d.manuales.filter(m => m.estado === 'aprobado' && m.activo).map(m => m.area.toLowerCase()));
   const conSistema = new Set(SISTEMA.map(s => s.area.toLowerCase()));
-  return d.areas.map(a => ({ id: a.id, nombre: a.nombre, responsable: a.responsable || '', conManual: aprobadas.has(a.nombre.toLowerCase()) || conSistema.has(a.nombre.toLowerCase()) }));
+  return d.areas.map(a => ({ id: a.id, nombre: a.nombre, responsable: a.responsable || '', soloAdmin: !!a.soloAdmin, conManual: aprobadas.has(a.nombre.toLowerCase()) || conSistema.has(a.nombre.toLowerCase()) }));
 }
 function guardarAreas(lista) {
   const d = cargar();
@@ -250,7 +252,7 @@ function guardarAreas(lista) {
   for (const x of (Array.isArray(lista) ? lista : [])) {
     const nombre = t(x && x.nombre, 80);
     if (!nombre || nuevas.some(n => n.nombre.toLowerCase() === nombre.toLowerCase())) continue;
-    nuevas.push({ id: idDe(nombre), nombre, responsable: t(x.responsable, 80) });
+    nuevas.push({ id: idDe(nombre), nombre, responsable: t(x.responsable, 80), soloAdmin: x.soloAdmin === true });   // 1.6.4: reservada a administradores
   }
   if (!nuevas.length) { const e = new Error('Tiene que quedar al menos un área.'); e.publico = true; throw e; }
   if (nuevas.length > 30) { const e = new Error('Hasta 30 áreas.'); e.publico = true; throw e; }
@@ -258,6 +260,24 @@ function guardarAreas(lista) {
   guardar(d);
   return areas();
 }
+// 1.6.4: áreas que puede entrenar una persona (las reservadas, solo administradores)
+function areasParaEntrenar(esAdmin) { return areas().filter(a => esAdmin || !a.soloAdmin); }
+/* ---------- 1.6.4: preguntas que el Instructor no pudo responder por falta de manual ---------- */
+function normalizarPregunta(p) { return String(p || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[¿?¡!.,;:]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120); }
+function registrarPreguntaSinManual(pregunta, quien) {
+  const d = cargar();
+  const clave = normalizarPregunta(pregunta);
+  if (clave.length < 4) return null;
+  let p = d.preguntas.find(x => x.clave === clave);
+  if (p) { p.veces++; p.ultimaEn = reloj(); p.ultimaPor = t(quien, 80); }
+  else { p = { id: 'p-' + crypto.randomBytes(4).toString('hex'), clave, pregunta: t(pregunta, 200), veces: 1, primeraEn: reloj(), ultimaEn: reloj(), ultimaPor: t(quien, 80) }; d.preguntas.push(p); }
+  d.preguntas.sort((a, b) => b.veces - a.veces || b.ultimaEn - a.ultimaEn);
+  while (d.preguntas.length > 200) d.preguntas.pop();
+  guardar(d);
+  return Object.assign({}, p);
+}
+function preguntasSinManual() { return cargar().preguntas.map(p => Object.assign({}, p)); }
+function borrarPreguntaSinManual(id) { const d = cargar(); const i = d.preguntas.findIndex(p => p.id === id); if (i < 0) return false; d.preguntas.splice(i, 1); guardar(d); return true; }
 // Para el prompt del Instructor: manuales disponibles y áreas sin manual.
 function listasInstructor() {
   const disponibles = SISTEMA.map(s => ({ nombre: s.nombre, descripcion: s.descripcion, area: s.area })).concat(activos().map(m => ({ nombre: m.nombre, descripcion: m.descripcion, area: m.area })));
@@ -265,4 +285,4 @@ function listasInstructor() {
   return { disponibles, sinManual };
 }
 
-module.exports = { SISTEMA, AREAS_DEFECTO, MAX_TEXTO, BASE_BIEN_PAGINAS, leerArchivo, extraerPdf, crear, actualizar, aprobar, activar, eliminar, obtener, texto, rutaOriginal, activos, resumenBase, listar, areas, guardarAreas, listasInstructor, paginas, aprobadoDelArea, actualizacionPendiente, _usarReloj };
+module.exports = { SISTEMA, AREAS_DEFECTO, MAX_TEXTO, BASE_BIEN_PAGINAS, leerArchivo, extraerPdf, crear, actualizar, aprobar, activar, eliminar, obtener, texto, rutaOriginal, activos, resumenBase, listar, areas, guardarAreas, listasInstructor, paginas, aprobadoDelArea, actualizacionPendiente, areasParaEntrenar, registrarPreguntaSinManual, preguntasSinManual, borrarPreguntaSinManual, _usarReloj };

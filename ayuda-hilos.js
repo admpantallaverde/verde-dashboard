@@ -151,17 +151,33 @@ function marcarBorrador(usuario, id, manualId) {
   guardar(d);
   return Object.assign({}, c);
 }
-// Toda la entrevista para la IA (hasta 60 intercambios), alternando roles
-function entrevistaParaIA(c) {
+// Toda la entrevista para la IA (hasta 60 intercambios), alternando roles. 1.6.4: la imagen de la última respuesta viaja como imagen
+function entrevistaParaIA(c, imagenActual) {
   const ms = (c.mensajes || []).filter(m => !m.sistema).slice(-120);
   const out = [];
-  for (const m of ms) {
+  ms.forEach((m, i) => {
     const role = m.rol === 'asistente' ? 'assistant' : 'user';
-    const texto = String(m.texto || '').trim() || '(sin texto)';
-    if (out.length && out[out.length - 1].role === role) out[out.length - 1].content += '\n' + texto;
+    const esUltimo = i === ms.length - 1;
+    let texto = String(m.texto || '').trim() || (m.imagen ? 'Adjunto una imagen de ejemplo.' : '(sin texto)');
+    if (m.imagen && !(esUltimo && imagenActual)) texto = '[envió una imagen: ' + (m.imagen.nombre || 'imagen') + '] ' + texto;
+    if (esUltimo && m.imagen && imagenActual) { out.push({ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: m.imagen.tipo, data: imagenActual } }, { type: 'text', text: texto }] }); return; }
+    if (out.length && out[out.length - 1].role === role && typeof out[out.length - 1].content === 'string') out[out.length - 1].content += '\n' + texto;
     else out.push({ role, content: texto });
-  }
+  });
   if (out.length && out[0].role === 'assistant') out.unshift({ role: 'user', content: 'Comencemos la entrevista.' });
   return out;
 }
-module.exports = { marcarBorrador, entrevistaParaIA, MAX_CONVERSACIONES, MAX_MENSAJES, INTERCAMBIOS_IA, MAX_IMAGEN, nueva, actual, abrir, listar, agregar, guardarImagen, rutaImagen, paraIA, _usarReloj };
+// 1.6.4: actividad de formación por usuario (para la lista de Usuarios)
+function actividadDe(usuario) {
+  const d = cargar(), uid = uidDe(usuario), cu = d.usuarios[uid];
+  if (!cu) return { consultas: 0, entrevistas: 0, borradores: 0, ultimaEn: null };
+  let consultas = 0, entrevistas = 0, borradores = 0, ultimaEn = null;
+  for (const c of cu.conversaciones) {
+    if (!c.mensajes.length) continue;
+    if (c.tipo === 'entrenamiento') { entrevistas++; if (c.borradorId) borradores++; }
+    else consultas += c.mensajes.filter(m => m.rol === 'usuario').length;
+    if (!ultimaEn || c.actualizadoEn > ultimaEn) ultimaEn = c.actualizadoEn;
+  }
+  return { consultas, entrevistas, borradores, ultimaEn };
+}
+module.exports = { actividadDe, marcarBorrador, entrevistaParaIA, MAX_CONVERSACIONES, MAX_MENSAJES, INTERCAMBIOS_IA, MAX_IMAGEN, nueva, actual, abrir, listar, agregar, guardarImagen, rutaImagen, paraIA, _usarReloj };

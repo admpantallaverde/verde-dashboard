@@ -45,7 +45,7 @@ const encuestas = require('./encuestas.js');   // 1.5.9: encuesta de calificaci�
 const manuales = require('./manuales.js');     // 1.6.0: biblioteca de conocimiento
 const manualCompleto = require('./manual-completo.js');
 
-const VERSION = '1.6.3';
+const VERSION = '1.6.4';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -221,7 +221,7 @@ app.post('/api/clave', (req, res) => {
 });
 
 /* ---------- Usuarios (solo administradores) ---------- */
-app.get('/api/usuarios', requiere(['admin']), (req, res) => res.json({ usuarios: usuarios.listar() }));
+app.get('/api/usuarios', requiere(['admin']), (req, res) => res.json({ usuarios: usuarios.listar().map(u => Object.assign(u, { actividad: hilos.actividadDe(u.id) })) }));   // 1.6.4: actividad de formación por persona
 app.post('/api/usuarios', requiere(['admin']), (req, res) => {
   try {
     const r = usuarios.crear(req.body || {});
@@ -1015,7 +1015,7 @@ function configAyuda() {
 const preguntasAyuda = new Map();   // límite de preguntas por usuario y por hora (protege el costo)
 function limiteAyuda() { return Number(process.env.VERDE_AYUDA_LIMITE_HORA) > 0 ? Number(process.env.VERDE_AYUDA_LIMITE_HORA) : 30; }
 app.get('/api/ayuda', permiso(['ayuda']), (req, res) => {
-  res.json({ rol: rolDe(req), accesos: accesosDe(req), revisionMeta: ayuda.REVISION_META, articulos: ayuda.articulosPara(rolDe(req), accesosDe(req)), instructor: { manuales: manuales.listasInstructor().disponibles.map(m => m.nombre) }, entrenamiento: { permitido: puedeEntrenar(req), areas: manuales.areas().map(a => a.nombre) } });   // 1.6.0 · 1.6.1
+  res.json({ rol: rolDe(req), accesos: accesosDe(req), revisionMeta: ayuda.REVISION_META, articulos: ayuda.articulosPara(rolDe(req), accesosDe(req)), instructor: { manuales: manuales.listasInstructor().disponibles.map(m => m.nombre) }, entrenamiento: { permitido: puedeEntrenar(req), areas: manuales.areasParaEntrenar(rolDe(req) === 'admin').map(a => a.nombre) } });   // 1.6.0 · 1.6.1 · 1.6.4: áreas reservadas solo para administradores
 });
 app.post('/api/ayuda/preguntar', permiso(['ayuda']), async (req, res) => {
   try {
@@ -1051,6 +1051,7 @@ app.post('/api/ayuda/preguntar', permiso(['ayuda']), async (req, res) => {
     try { crudo = await bot.callClaude(sistema, mensajes, v, asis.modelo, 'ayuda', { esfuerzo: asis.esfuerzo }); }
     catch (e) { console.error('Centro de ayuda: la IA no respondió:', e.message); return res.status(502).json({ error: 'El asistente no está disponible en este momento. Intentar de nuevo en unos minutos.', conversacionId: conv.id }); }
     const r = ayuda.interpretar(crudo, rol, accesosDe(req));
+    if (/todav[ií]a no tiene manual cargado/i.test(r.respuesta)) { try { manuales.registrarPreguntaSinManual(pregunta, quienActua(req)); } catch (e) { /* no frena la respuesta */ } }   // 1.6.4: preguntas sin manual
     conv = hilos.agregar(clave, conv.id, { rol: 'asistente', texto: r.respuesta, fuentes: (r.fuentes || []).map(f => f.id), textos: r.textos, manual: r.manual, seccion: r.seccion });
     res.json(Object.assign(r, { conversacionId: conv.id, titulo: conv.titulo }));
   } catch (e) { responderError(res, e); }
@@ -1063,6 +1064,7 @@ app.post('/api/entrenamiento/empezar', permiso(['ayuda']), (req, res) => {
   if (!puedeEntrenar(req)) return res.status(403).json({ error: 'Esta persona no tiene habilitado el modo Entrenamiento. Lo habilita un administrador en Usuarios.' });
   const area = String((req.body || {}).area || '').replace(/\s+/g, ' ').trim().slice(0, 80);
   if (!area || !manuales.areas().some(a => a.nombre === area)) return res.status(400).json({ error: 'Elegir el área que se documenta en esta sesión.' });
+  if (!manuales.areasParaEntrenar(rolDe(req) === 'admin').some(a => a.nombre === area)) return res.status(403).json({ error: 'Esa área está reservada: solo un administrador puede entrenarla.' });   // 1.6.4
   const clave = claveAyuda(req);
   let conv = hilos.nueva(clave, { tipo: 'entrenamiento', area });
   conv = hilos.agregar(clave, conv.id, { rol: 'asistente', texto: ayuda.primeraPreguntaEntrevista(area) });
@@ -1074,16 +1076,22 @@ app.post('/api/entrenamiento/responder', permiso(['ayuda']), async (req, res) =>
     if (!puedeEntrenar(req)) return res.status(403).json({ error: 'Esta persona no tiene habilitado el modo Entrenamiento.' });
     const clave = claveAyuda(req);
     const texto = String((req.body || {}).texto || '').replace(/\r\n/g, '\n').trim();
-    if (!texto) return res.status(400).json({ error: 'Escribir la respuesta.' });
+    const imagenEntrante = req.body && req.body.imagen && typeof req.body.imagen === 'object' ? req.body.imagen : null;   // 1.6.4
+    if (!texto && !imagenEntrante) return res.status(400).json({ error: 'Escribir la respuesta.' });
     if (texto.length > 3000) return res.status(400).json({ error: 'La respuesta es demasiado larga (máximo 3000 caracteres).' });
     let conv = hilos.abrir(clave, String((req.body || {}).id || ''));
     if (!conv || conv.tipo !== 'entrenamiento') return res.status(404).json({ error: 'Esa entrevista no existe.' });
-    conv = hilos.agregar(clave, conv.id, { rol: 'usuario', texto });
+    let imagenInfo = null, imagenBase64 = null;
+    if (imagenEntrante) {
+      try { imagenInfo = hilos.guardarImagen(clave, imagenEntrante); } catch (e) { return res.status(400).json({ error: e.message }); }
+      imagenBase64 = String(imagenEntrante.datos || '').replace(/^data:[^,]*,/, '');
+    }
+    conv = hilos.agregar(clave, conv.id, { rol: 'usuario', texto, imagen: imagenInfo });
     const v = bot.getVerde();
     const asis = bot.configAsistente(v);
     const vc = Object.assign({}, v, { tecnico: Object.assign({}, v.tecnico || {}, { maxTokens: Math.max(2000, (v.tecnico && v.tecnico.maxTokens) || 0) }) });
     let crudo;
-    try { crudo = await bot.callClaude(ayuda.instruccionesEntrevistador(conv.area, { nombreEmpresa: v.empresa, quien: quienActua(req) }), hilos.entrevistaParaIA(conv), vc, asis.modelo, 'entrenamiento', { esfuerzo: asis.esfuerzo }); }
+    try { crudo = await bot.callClaude(ayuda.instruccionesEntrevistador(conv.area, { nombreEmpresa: v.empresa, quien: quienActua(req) }), hilos.entrevistaParaIA(conv, imagenBase64), vc, asis.modelo, 'entrenamiento', { esfuerzo: asis.esfuerzo }); }
     catch (e) { console.error('Entrevistador: la IA no respondió:', e.message); return res.status(502).json({ error: 'La IA no está disponible en este momento. La respuesta quedó guardada; intentar de nuevo en unos minutos.' }); }
     const pregunta = limpiarTextoIA(crudo) || '¿Podría ampliar un poco más su última respuesta?';
     conv = hilos.agregar(clave, conv.id, { rol: 'asistente', texto: pregunta });
@@ -1102,7 +1110,7 @@ app.post('/api/entrenamiento/generar', permiso(['ayuda']), async (req, res) => {
     const v = bot.getVerde();
     const asis = bot.configAsistente(v);
     const vc = Object.assign({}, v, { tecnico: Object.assign({}, v.tecnico || {}, { maxTokens: Math.max(8000, (v.tecnico && v.tecnico.maxTokens) || 0) }) });
-    const transcripcion = conv.mensajes.filter(m => !m.sistema).map(m => (m.rol === 'asistente' ? 'Entrevistador: ' : 'Responsable: ') + m.texto).join('\n');
+    const transcripcion = conv.mensajes.filter(m => !m.sistema).map(m => (m.rol === 'asistente' ? 'Entrevistador: ' : 'Responsable: ') + (m.imagen ? '[envió una imagen: ' + (m.imagen.nombre || 'imagen') + '] ' : '') + m.texto).join('\n');
     let crudo;
     try { crudo = await bot.callClaude(ayuda.instruccionesBorrador(conv.area, { nombreEmpresa: v.empresa }), [{ role: 'user', content: 'TRANSCRIPCIÓN DE LA ENTREVISTA:\n' + transcripcion }], vc, asis.modelo, 'entrenamiento', { esfuerzo: asis.esfuerzo }); }
     catch (e) { console.error('Borrador del manual: la IA no respondió:', e.message); return res.status(502).json({ error: 'La IA no está disponible en este momento. Intentar de nuevo en unos minutos.' }); }
@@ -1184,6 +1192,10 @@ app.post('/api/manuales/:id/activo', permiso(['verde']), (req, res) => {
 app.delete('/api/manuales/:id', permiso(['verde']), (req, res) => {
   if (!manuales.eliminar(req.params.id)) return res.status(404).json({ error: 'Ese manual no existe.' });
   res.json({ ok: true, base: manuales.resumenBase() });
+});
+app.delete('/api/manuales-preguntas/:id', permiso(['verde']), (req, res) => {
+  if (!manuales.borrarPreguntaSinManual(req.params.id)) return res.status(404).json({ error: 'Esa pregunta no existe.' });
+  res.json({ ok: true });
 });
 app.put('/api/manuales-areas', permiso(['verde']), (req, res) => {
   try { res.json({ areas: manuales.guardarAreas((req.body || {}).areas) }); } catch (e) { responderError(res, e); }

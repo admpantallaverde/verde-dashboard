@@ -238,14 +238,14 @@ const ARTICULOS = [
     resumen: 'La IA entrevista al responsable de un área y genera el borrador del manual para la biblioteca.',
     bloques: [
       { tipo: 'p', texto: 'Quien tiene habilitado el modo Entrenamiento (los administradores siempre; a los demás los habilita un administrador en Usuarios › Editar) ve en el Centro de ayuda el selector «Instructor | Entrenamiento». En Entrenamiento, con una conversación vacía, se elige el área que se documenta y se toca «Empezar la entrevista»: el Entrevistador IA pregunta nombre, puesto y área, y sigue con una sola pregunta por vez, de lo general a lo específico; cada 5 a 8 preguntas resume lo capturado y pide confirmación. Lo que la persona no sabe queda como «Pendiente de definir por Dirección».' },
-      { tipo: 'p', texto: 'La entrevista queda guardada como conversación (en la lista figura «Entrenamiento · área») y se puede retomar otro día. A partir de 6 respuestas se habilita «Terminar y generar el borrador»: la IA redacta el «Manual de [área]» (objetivo del puesto, procedimientos paso a paso, estándares de atención, situaciones difíciles con frases exactas, reglas de oro, pendientes) y lo deja en la Biblioteca de conocimiento como borrador, hasta que un administrador lo apruebe. Si la entrevista continúa, «Generar de nuevo» actualiza el borrador mientras no esté aprobado. Si el área ya tiene un manual aprobado, el borrador nace como «Actualización de «Manual de…»»: al aprobarla reemplaza el texto del manual vigente y la versión anterior queda guardada, inactiva, por si hay que volver atrás.' }
+      { tipo: 'p', texto: 'La entrevista queda guardada como conversación (en la lista «Conversaciones» aparece en el grupo «Entrevistas (Entrenamiento)») y se puede retomar otro día; también acepta imágenes de ejemplo, que el Entrevistador describe para que la descripción entre al borrador. Las áreas marcadas «Solo administradores» en la biblioteca no se ofrecen a los integrantes. A partir de 6 respuestas se habilita «Terminar y generar el borrador»: la IA redacta el «Manual de [área]» (objetivo del puesto, procedimientos paso a paso, estándares de atención, situaciones difíciles con frases exactas, reglas de oro, pendientes) y lo deja en la Biblioteca de conocimiento como borrador, hasta que un administrador lo apruebe. Si la entrevista continúa, «Generar de nuevo» actualiza el borrador mientras no esté aprobado. Si el área ya tiene un manual aprobado, el borrador nace como «Actualización de «Manual de…»»: al aprobarla reemplaza el texto del manual vigente y la versión anterior queda guardada, inactiva, por si hay que volver atrás.' }
     ]
   },
   {
     id: 'ingreso-dos-pasos', modulo: 'ayuda', grupo: 'manual', soloAdmin: false, titulo: 'Verificación en 2 pasos para entrar al panel',
     resumen: 'Cómo configurar la app autenticadora, entrar con el código y qué hacer si se pierde el celular.',
     bloques: [
-      { tipo: 'p', texto: 'Para entrar al panel, además de la contraseña, hace falta el código de 6 dígitos que muestra una app autenticadora en el celular (Google Authenticator o Microsoft Authenticator). El código cambia cada 30 segundos. Es obligatoria para todos los usuarios.' },
+      { tipo: 'p', texto: 'Para cambiar la contraseña propia en cualquier momento: tocar el círculo con las iniciales (arriba a la derecha) y elegir «Cambiar mi contraseña»; pide la actual, la nueva y su repetición. Para entrar al panel, además de la contraseña, hace falta el código de 6 dígitos que muestra una app autenticadora en el celular (Google Authenticator o Microsoft Authenticator). El código cambia cada 30 segundos. Es obligatoria para todos los usuarios.' },
       { tipo: 'h', texto: 'Configurarla (la primera vez)' },
       { tipo: 'pasos', items: [
         { titulo: 'Instalar la app', texto: 'Instalar Google Authenticator o Microsoft Authenticator en el celular.' },
@@ -514,6 +514,7 @@ function instruccionesEntrevistador(area, extra) {
       'FORMATO EN EL PANEL',
       '- Responde en texto plano (sin JSON, sin títulos, sin marcas de formato): como máximo un comentario breve sobre la respuesta anterior y después UNA sola pregunta. Cuando toque resumir (cada 5 a 8 preguntas), presenta el resumen en líneas cortas y termina pidiendo confirmación, que también cuenta como la única pregunta del turno.',
       '- El borrador del manual NO se redacta en la conversación: lo genera el panel cuando la persona toca «Terminar y generar el borrador».',
+      '- Si la persona adjunta una IMAGEN (una foto del local, una pantalla del sistema, un formulario, un ejemplo), describe en 2 o 3 líneas qué muestra y qué información aporta al manual (esa descripción queda en la transcripción), y recién después haz la siguiente pregunta.',
       '',
       'MANUALES YA CARGADOS (aprobados; úsalos para no repreguntar lo que ya está escrito):',
       manualesParaEntrevista()

@@ -1928,6 +1928,36 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 .usr-atajos button:hover{border-color:var(--accent-borde)}
 .usr-resumen{display:block;font-size:11.5px;color:var(--muted);margin-top:3px}
 
+/* ===================== 1.6.4: ajustes del Centro de ayuda y perfil ===================== */
+#botBadge{display:none!important}
+.ay-cab > div:first-child{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ay-modo{margin-top:4px;align-self:flex-start;background:var(--surface);padding:3px;border:1px solid var(--border)}
+.ay-modo .ay-modo-lbl{font-size:12px;font-weight:600;color:var(--muted);padding:0 8px 0 10px;display:inline-flex;align-items:center}
+.ay-modo button.on{background:var(--accent);color:var(--accent-ink,#111b21);box-shadow:none}
+#crumb{display:inline-block;vertical-align:middle}
+.crumb-volver{display:inline-flex;align-items:center;gap:4px;margin-left:10px;padding:2px 9px;border:1px solid var(--border);border-radius:30px;background:var(--surface);font:inherit;font-size:11.5px;font-weight:600;color:var(--text);cursor:pointer;vertical-align:middle;min-height:0}
+.crumb-volver svg{width:12px;height:12px}
+.crumb-volver:hover{border-color:var(--accent-borde)}
+.ay-conv-grupo{padding:8px 12px 4px;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);border-top:1px solid var(--border-soft)}
+.ay-conv-grupo:first-child{border-top:none}
+.ay-conv-item.ent b::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:6px;vertical-align:1px}
+.bb-preg{margin-top:16px}
+.bb-preg h3{font-size:14.5px;margin:0 0 4px}
+.bb-preg p.faint{margin:0 0 10px}
+.bb-preg-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface);margin-bottom:6px;font-size:13px}
+.bb-preg-item span.faint{font-size:12px}
+.bb-preg-item b{font-variant-numeric:tabular-nums}
+.bv-buscar{display:flex;align-items:center;gap:8px;margin:0 0 10px}
+.bv-buscar input{flex:1;max-width:360px}
+.bv-buscar span{font-size:12px;color:var(--muted);white-space:nowrap}
+.bb-contenido mark{background:rgba(201,242,77,.6);color:inherit;border-radius:3px;padding:0 1px}
+.bb-contenido mark.act{background:var(--amber);}
+.usr-act{display:block;font-size:11.5px;color:var(--muted);margin-top:3px}
+.ba-fila{grid-template-columns:minmax(0,1fr) 170px 120px auto}
+.ba-fila label.ba-res{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap}
+.ba-fila label.ba-res input{width:16px;height:16px;accent-color:var(--accent);margin:0}
+@media(max-width:760px){.ba-fila{grid-template-columns:1fr}}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -1937,6 +1967,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
     <button type="button" class="cuenta-av" id="cuentaBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="cuentaMenu" aria-label="Abrir el menú del perfil" onclick="alternarCuenta()"><span id="suAv">AG</span></button>
     <div class="cuenta-menu oculto" id="cuentaMenu" role="menu" aria-label="Perfil">
       <div class="cuenta-cab"><b id="suNombre">Acceso general</b><span id="suRol">Ingreso con usuario propio inactivo</span></div>
+      <button class="cuenta-item oculto" type="button" id="suClave" role="menuitem" onclick="abrirCambioClavePropia()"><svg class="su-salir-ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Cambiar mi contraseña</button>
       <button class="cuenta-item oculto" type="button" id="suSalir" role="menuitem" onclick="cerrarSesion()"><svg class="su-salir-ic" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Cerrar sesión</button>
     </div>
   </div>
@@ -2650,7 +2681,8 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
     <!-- ===== VIEW: BIBLIOTECA DE CONOCIMIENTO (1.6.0) ===== -->
     <div class="view" id="view-biblioteca">
       <div class="bb-top"><div class="bb-resumen" id="bbResumen"></div><div class="bb-acciones-top"><button type="button" class="btn btn-ghost" onclick="abrirAreas()">Áreas y responsables</button><button type="button" class="btn btn-primary" onclick="nuevoManual()">+ Nuevo manual</button></div></div>
-      <div class="panel"><div style="overflow-x:auto"><table class="bb-tabla" style="min-width:900px"><thead><tr><th>Manual</th><th>Área</th><th>Estado</th><th>Activo</th><th>Actualizado</th><th style="text-align:right">Acciones</th></tr></thead><tbody id="bbTabla"></tbody></table></div><div class="empty oculto" id="bbVacio"><p>Todavía no hay manuales propios. Subí el primero con «Nuevo manual»; en la próxima parte también se van a poder crear entrevistando al responsable de cada área.</p></div></div>
+      <div class="panel"><div style="overflow-x:auto"><table class="bb-tabla" style="min-width:900px"><thead><tr><th>Manual</th><th>Área</th><th>Estado</th><th>Activo</th><th>Actualizado</th><th style="text-align:right">Acciones</th></tr></thead><tbody id="bbTabla"></tbody></table></div><div class="empty oculto" id="bbVacio"><p>Todavía no hay manuales propios. Subí el primero con «Nuevo manual» o creá uno entrevistando al responsable del área desde el Centro de ayuda (modo Entrenamiento).</p></div></div>
+      <div class="panel bb-preg" id="bbPreguntas"></div>
       <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>El Instructor del Centro de ayuda responde solo con los manuales aprobados y activos, más los del sistema. Un manual nace como borrador; «Aprobar» lo activa. Las áreas sin manual aprobado se listan solas para el Instructor, que remite a su responsable en lugar de inventar.</span></div>
     </div>
     <!-- ===== VIEW: REPORTES (1.5.7) ===== -->
@@ -2893,12 +2925,15 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 </div>
 
 
+<!-- ===== MODAL: CAMBIAR MI CONTRASEÑA (1.6.4) ===== -->
+<div class="overlay" id="cpOverlay"><div class="modal"><div class="modal-head"><div><h3>Cambiar mi contraseña</h3><p class="faint">La nueva debe tener al menos 8 caracteres.</p></div><button class="x-btn" type="button" aria-label="Cerrar" onclick="close_('cpOverlay')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="modal-body"><form id="formClavePropia" onsubmit="event.preventDefault();guardarClavePropia()"><div class="login-err" id="cpErr"></div><div class="field"><label for="cpActual">Contraseña actual</label><input type="password" id="cpActual" autocomplete="current-password"></div><div class="field"><label for="cpNueva">Contraseña nueva</label><input type="password" id="cpNueva" autocomplete="new-password"></div><div class="field"><label for="cpRepetir">Repetir la contraseña nueva</label><input type="password" id="cpRepetir" autocomplete="new-password"></div><div class="modal-foot"><button class="btn btn-ghost" type="button" onclick="close_('cpOverlay')">Cancelar</button><button class="btn btn-primary" type="submit" id="cpOk">Guardar</button></div></form></div></div></div>
 <!-- ===== MODAL: NUEVO / EDITAR MANUAL (1.6.0) ===== -->
 <div class="overlay" id="bbOverlay"><div class="modal ancho"><div class="modal-head"><div><h3 id="bbTitulo">Nuevo manual</h3><p class="faint">Nace como borrador; se aprueba desde la lista.</p></div><button class="x-btn" type="button" aria-label="Cerrar" onclick="close_('bbOverlay')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
   <div class="modal-body"><form class="bb-form" id="formManual" onsubmit="event.preventDefault();guardarManual()"><div class="ld-form-fila"><div class="field"><label for="bbNombre">Nombre</label><input type="text" id="bbNombre" maxlength="80" placeholder="Protocolo de Ventas y Atención al Cliente"></div><div class="field"><label for="bbArea">Área</label><select id="bbArea"></select></div></div><div class="field"><label for="bbDescripcion">Descripción (una línea)</label><input type="text" id="bbDescripcion" maxlength="140" placeholder="Ingreso de equipos en 13 pasos, entrega, formas de pago y reglas de oro"></div><div class="field"><label>Contenido</label><div class="bb-radio"><label><input type="radio" name="bbModo" value="archivo" checked onchange="cambioModoManual()">Subir archivo: PDF, .txt o .md</label><label><input type="radio" name="bbModo" value="texto" onchange="cambioModoManual()">Pegar el texto</label></div></div><div id="bbSubir"><input type="file" id="bbArchivo" class="oculto" accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown" onchange="archivoManualElegido(this)"><button type="button" class="btn btn-ghost" onclick="document.getElementById('bbArchivo').click()">Elegir archivo…</button> <span class="bb-info" id="bbArchivoNombre"></span></div><div id="bbPegar" class="oculto"><textarea id="bbTexto" class="bb-texto" placeholder="Pegar acá el texto del manual"></textarea><div class="bb-info" id="bbInfo"></div></div><div class="modal-foot"><button class="btn btn-ghost" type="button" onclick="close_('bbOverlay')">Cancelar</button><button class="btn btn-primary" type="submit" id="bbGuardar">Guardar</button></div></form></div></div></div>
 <!-- ===== MODAL: VER MANUAL (1.6.0) ===== -->
 <div class="overlay" id="bvOverlay"><div class="modal ancho"><div class="modal-head"><div><h3 id="bvTitulo"></h3><p class="faint" id="bvMeta"></p></div><button class="x-btn" type="button" aria-label="Cerrar" onclick="close_('bvOverlay')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
-  <div class="modal-body"><div class="bb-ver"><div class="bb-indice" id="bvIndice"></div><div class="bb-contenido" id="bvContenido"></div></div><div class="modal-foot"><a class="btn btn-ghost oculto" id="bvOriginal" href="#" target="_blank" rel="noopener">Descargar original</a><button class="btn btn-primary" type="button" onclick="close_('bvOverlay')">Cerrar</button></div></div></div></div>
+  <div class="modal-body"><div class="bv-buscar"><input type="search" id="bvBuscar" placeholder="Buscar en este manual…" aria-label="Buscar en este manual" oninput="buscarEnManual(this.value)" onkeydown="teclaBuscarManual(event)"><span id="bvBuscarInfo"></span></div><div class="bb-ver"><div class="bb-indice" id="bvIndice"></div><div class="bb-contenido" id="bvContenido"></div></div><div class="modal-foot"><a class="btn btn-ghost oculto" id="bvOriginal" href="#" target="_blank" rel="noopener">Descargar original</a><button class="btn btn-primary" type="button" onclick="close_('bvOverlay')">Cerrar</button></div></div></div></div>
 <!-- ===== MODAL: ÁREAS Y RESPONSABLES (1.6.0) ===== -->
 <div class="overlay" id="baOverlay"><div class="modal ancho"><div class="modal-head"><div><h3>Áreas y responsables</h3><p class="faint">Las áreas sin manual aprobado se listan solas para el Instructor, que remite a su responsable.</p></div><button class="x-btn" type="button" aria-label="Cerrar" onclick="close_('baOverlay')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
   <div class="modal-body"><div id="baFilas"></div><button type="button" class="btn btn-ghost" onclick="agregarArea()">+ Agregar área</button><div class="modal-foot"><button class="btn btn-ghost" type="button" onclick="close_('baOverlay')">Cancelar</button><button class="btn btn-primary" type="button" onclick="guardarAreas()">Guardar</button></div></div></div></div>
@@ -3406,6 +3441,7 @@ function go(view){
 }
 function _doGo(view){
   if(!vistaPermitida(view))view='ayuda';   // 1.6.3: fuera de sus accesos, al Centro de ayuda
+  const vbc=document.getElementById('ayVolverChat');if(vbc&&view!=='ayuda')vbc.classList.add('oculto');   // 1.6.4
   if(typeof abrirGrupoDe==='function')abrirGrupoDe(view);   // 1.5.6
   if(CONV.clave&&!_abriendoConv)cerrarConversacion();   // al cambiar de pantalla se cierra la conversación abierta
   currentView=view;
@@ -5064,7 +5100,7 @@ function pintarUsuario(){
   document.getElementById('suNombre').textContent=u?u.nombre:'Acceso general';
   document.getElementById('suRol').textContent=u?(u.rolNombre||u.rol):(SESION.loginActivo?'':'Ingreso con usuario propio inactivo');
   document.getElementById('suAv').textContent=u?(iniciales(u.nombre)||'?'):'AG';
-  document.getElementById('suSalir').classList.toggle('oculto',!u);
+  document.getElementById('suSalir').classList.toggle('oculto',!u);const sc=document.getElementById('suClave');if(sc)sc.classList.toggle('oculto',!u);
 }
 function aplicarRol(){   // 1.6.3: por accesos del usuario
   const A=accesosDe();
@@ -5103,7 +5139,7 @@ async function arrancarApp(){
   document.getElementById('boot').style.display='none';
   document.getElementById('app').style.display='grid';
   _appIniciada=true;_usuarioInicial=SESION.usuario?SESION.usuario.id:null;
-  pintarUsuario();aplicarRol();
+  pintarUsuario();aplicarRol();reubicarAyuda164();
   if(!asesor){renderSources();renderCrawler();renderMedia();renderRes();}
   await revisarSalud();
   setInterval(revisarSalud,60000);
@@ -5270,7 +5306,7 @@ function pintarUsuarios(){
   tb.innerHTML=USUARIOS.map(u=>{
     const rol=(u.rol==='admin'
       ?'<span class="pill" style="background:rgba(201,242,77,.14);color:var(--accent-text)">Administrador</span>'
-      :'<span class="pill" style="background:rgba(107,155,255,.14);color:var(--blue)">Integrante</span>')+'<span class="usr-resumen">'+escH(u.accesosResumen||(u.rol==='admin'?'Todo el panel':'Atención, Ventas y Centro de ayuda'))+(u.entrenar&&u.rol!=='admin'?' · entrena':'')+'</span>';
+      :'<span class="pill" style="background:rgba(107,155,255,.14);color:var(--blue)">Integrante</span>')+'<span class="usr-resumen">'+escH(u.accesosResumen||(u.rol==='admin'?'Todo el panel':'Atención, Ventas y Centro de ayuda'))+(u.entrenar&&u.rol!=='admin'?' · entrena':'')+'</span><span class="usr-act">'+escH(textoActividadUsr(u))+'</span>';
     const est=(u.activo?'<span class="pill ok"><span class="d"></span>Activo</span>':'<span class="pill off"><span class="d"></span>Inactivo</span>')+(u.activo?'<span class="dp-estado '+(u.dosPasos?'ok':'pend')+'">'+IC1415.escudoMini+'2 pasos: '+(u.dosPasos?'activa':'pendiente')+'</span>':'');
     const acc='<button class="btn btn-ghost" type="button" data-id="'+escH(u.id)+'" onclick="abrirUsuario(this.dataset.id)">Editar</button> '
       +'<button class="btn btn-ghost" type="button" data-id="'+escH(u.id)+'" onclick="restablecerUsuario(this.dataset.id)">Restablecer contraseña</button> '
@@ -6297,7 +6333,7 @@ async function preguntarAyuda(texto){
   if(AYUDA.cargando)return;
   const ta=document.getElementById('ayPregunta');
   const q=String(texto!==undefined?texto:ta.value).trim();
-  if(AYUDA.modo==='entrenamiento'){if(!esEntrevista()){toast('Primero elegí el área','y tocá «Empezar la entrevista».','info');return;}if(!q)return;return responderEntrevistaAyuda(q);}
+  if(AYUDA.modo==='entrenamiento'){if(!esEntrevista()){toast('Primero elegí el área','y tocá «Empezar la entrevista».','info');return;}if(!q&&!AYUDA.adjuntoImg)return;return responderEntrevistaAyuda(q);}
   const img=AYUDA.adjuntoImg;
   if(!q&&!img)return;
   const item={pregunta:q,pendiente:true,imagenLocal:img?img.datos:null};
@@ -7585,7 +7621,7 @@ async function alternarListaAyuda(){
   if(!r.ok){l.innerHTML='<div class="ay-conv-vacio">No se pudieron cargar las conversaciones.</div>';return;}
   AYUDA.lista=r.json.conversaciones||[];
   const conMensajes=AYUDA.lista.filter(c=>c.mensajes>0);
-  l.innerHTML=conMensajes.length?conMensajes.map(c=>'<button type="button" class="ay-conv-item'+(AYUDA.conv&&c.id===AYUDA.conv.id?' ay-actual':'')+'" data-id="'+escH(c.id)+'" onclick="abrirConversacionAyuda(this.dataset.id)"><b>'+escH(c.titulo||'Conversación')+(c.tipo==='entrenamiento'?'<span class="ay-ent-tag">Entrenamiento</span>':'')+'</b><span>'+escH(horaCorta(c.actualizadoEn))+' · '+c.mensajes+(c.mensajes===1?' mensaje':' mensajes')+'</span></button>').join(''):'<div class="ay-conv-vacio">Todavía no hay conversaciones guardadas.</div>';
+  l.innerHTML=htmlListaConversacionesAyuda(conMensajes);   // 1.6.4: dos grupos
 }
 function cerrarListaAyuda(){const l=document.getElementById('ayConvLista');if(l)l.classList.remove('show');}
 async function abrirConversacionAyuda(id){
@@ -7860,6 +7896,7 @@ function pintarConocimiento(){
   const fila=x=>'<tr data-id="'+escH(x.id)+'"><td><div class="bb-nom"><b>'+escH(x.nombre)+(x.sistema?'<span class="bb-sis">sistema</span>':'')+(x.actualizaDe?'<span class="bb-tag">actualización</span>':'')+(x.versionAnteriorDe?'<span class="bb-tag gris">versión anterior</span>':'')+'</b>'+(x.actualizaDe?'<span>Al aprobarla reemplaza «'+escH(x.actualizaDeNombre||'')+'»; la versión vigente queda guardada.</span>':x.descripcion?'<span>'+escH(x.descripcion)+'</span>':'')+'</div></td><td>'+escH(x.area)+'</td><td><span class="pill '+(x.estado==='aprobado'?'ok':'warn')+'"><span class="d"></span>'+(x.estado==='aprobado'?'Aprobado':'Borrador')+'</span></td><td>'+(x.sistema?'<span class="bb-fijo">siempre</span>':x.estado==='aprobado'?'<button type="button" class="switch bb-sw'+(x.activo?' on':'')+'" role="switch" aria-checked="'+(x.activo?'true':'false')+'" aria-label="Activo" title="'+(x.activo?'Activo':'Inactivo')+'" data-id="'+escH(x.id)+'" onclick="activarManual(this)"></button>':'<span class="bb-fijo">—</span>')+'</td><td>'+(x.sistema?'<span class="bb-fijo">—</span>':'<div class="bb-fecha">'+escH(horaCorta(x.actualizadoEn))+'<span>'+escH(x.por||'')+' · '+x.paginas+(x.paginas===1?' pág.':' págs.')+'</span></div>')+'</td><td><div class="bb-acc"><button type="button" class="btn btn-ghost" onclick="verManual(\''+escH(x.id)+'\','+(x.sistema?'true':'false')+')">Ver</button>'+(x.sistema?'':'<button type="button" class="btn btn-ghost" onclick="editarManual(\''+escH(x.id)+'\')">Editar</button>'+(x.estado==='borrador'?'<button type="button" class="btn btn-primary" onclick="aprobarManual(\''+escH(x.id)+'\')">Aprobar</button>':'')+'<button type="button" class="btn btn-ghost" onclick="eliminarManual(\''+escH(x.id)+'\')">Eliminar</button>')+'</div></td></tr>';
   document.getElementById('bbTabla').innerHTML=(d.sistema||[]).map(fila).join('')+(d.manuales||[]).map(fila).join('');
   document.getElementById('bbVacio').classList.toggle('oculto',!!(d.manuales||[]).length);
+  pintarPreguntasSinManual();   // 1.6.4
 }
 async function activarManual(btn){
   const id=btn.dataset.id,activo=btn.getAttribute('aria-checked')!=='true';
@@ -7944,6 +7981,7 @@ async function verManual(id,sistema){
   const idx=indiceDe(m.texto);
   document.getElementById('bvIndice').innerHTML=idx.length?idx.map(x=>'<button type="button" data-l="'+x.linea+'" onclick="irALineaManual(this.dataset.l)">'+escH(x.titulo)+'</button>').join(''):'<span class="faint">Sin títulos detectados.</span>';
   document.getElementById('bvContenido').innerHTML=lineas.map((l,i)=>'<span id="bvL'+i+'">'+escH(l)+'</span>').join('\n');
+  const bq=document.getElementById('bvBuscar');if(bq)bq.value='';const bi=document.getElementById('bvBuscarInfo');if(bi)bi.textContent='';BV.marcas=[];BV.idx=-1;
   const o=document.getElementById('bvOriginal');o.classList.toggle('oculto',!(m.archivoOriginal));o.href=m.archivoOriginal?'/api/manuales/'+encodeURIComponent(m.id)+'/original':'#';
   show('bvOverlay');
 }
@@ -7957,11 +7995,11 @@ async function abrirAreas(){
 }
 function filaArea(a){
   const opciones='<option value="">— Dirección —</option>'+BA.usuarios.map(u=>'<option value="'+escH(u)+'"'+(u===(a&&a.responsable)?' selected':'')+'>'+escH(u)+'</option>').join('')+(a&&a.responsable&&!BA.usuarios.includes(a.responsable)?'<option value="'+escH(a.responsable)+'" selected>'+escH(a.responsable)+'</option>':'');
-  return '<div class="ba-fila"><input type="text" maxlength="80" value="'+escH((a&&a.nombre)||'')+'" placeholder="Nombre del área" aria-label="Área"><select aria-label="Responsable">'+opciones+'</select><span class="ba-conmanual">'+(a&&a.conManual?'con manual':'sin manual')+' <button type="button" class="dp-link dp-link-gris" onclick="this.closest(\'.ba-fila\').remove()">Quitar</button></span></div>';
+  return '<div class="ba-fila"><input type="text" maxlength="80" value="'+escH((a&&a.nombre)||'')+'" placeholder="Nombre del área" aria-label="Área"><select aria-label="Responsable">'+opciones+'</select><label class="ba-res" title="Solo un administrador puede entrenarla"><input type="checkbox" class="ba-solo"'+(a&&a.soloAdmin?' checked':'')+'>Solo administradores</label><span class="ba-conmanual">'+(a&&a.conManual?'con manual':'sin manual')+' <button type="button" class="dp-link dp-link-gris" onclick="this.closest(\'.ba-fila\').remove()">Quitar</button></span></div>';
 }
 function agregarArea(){document.getElementById('baFilas').insertAdjacentHTML('beforeend',filaArea(null));}
 async function guardarAreas(){
-  const areas=[...document.querySelectorAll('#baFilas .ba-fila')].map(f=>({nombre:f.querySelector('input').value.trim(),responsable:f.querySelector('select').value})).filter(a=>a.nombre);
+  const areas=[...document.querySelectorAll('#baFilas .ba-fila')].map(f=>({nombre:f.querySelector('input[type=text]').value.trim(),responsable:f.querySelector('select').value,soloAdmin:!!(f.querySelector('.ba-solo')||{}).checked})).filter(a=>a.nombre);
   const r=await api('/api/manuales-areas',{method:'PUT',body:{areas}});
   if(!r.ok){toast('No se pudieron guardar las áreas',r.json.error||'','error');return;}
   close_('baOverlay');toast('Áreas guardadas','El Instructor ya usa la lista nueva.','success');cargarConocimiento();
@@ -7979,7 +8017,6 @@ function pintarModoAyuda(){
   const start=document.getElementById('ayEntStart'),info=document.getElementById('ayEntInfo'),chat=document.getElementById('ayChat'),ins=document.getElementById('ayInstructor'),atj=document.getElementById('ayAtajos'),adj=document.getElementById('ayAdjuntar'),ta=document.getElementById('ayPregunta');
   const ent=AYUDA.modo==='entrenamiento';
   if(ins)ins.classList.toggle('oculto',ent);
-  if(adj)adj.classList.toggle('oculto',ent);
   if(ta){ta.placeholder=ent?'Responder al Entrevistador…':'Escribir la consulta: un cliente, una venta, un presupuesto, el panel o las reglas de WhatsApp…';ta.maxLength=ent?3000:500;}   // 1.6.2: las respuestas de una entrevista son largas
   if(ent&&!esEntrevista()){
     if(start){start.classList.remove('oculto');const sel=document.getElementById('ayEntArea');if(sel&&!sel.options.length)sel.innerHTML=(AYUDA.entrenamiento.areas||[]).map(a=>'<option value="'+escH(a)+'">'+escH(a)+'</option>').join('');}
@@ -8015,12 +8052,14 @@ async function empezarEntrevistaAyuda(){
   const ta=document.getElementById('ayPregunta');if(ta)ta.focus();
 }
 async function responderEntrevistaAyuda(q){
-  const item={pregunta:q,pendiente:true};
+  const img=AYUDA.adjuntoImg;   // 1.6.4: la entrevista acepta imágenes de ejemplo
+  const item={pregunta:q,pendiente:true,imagenLocal:img?img.datos:null};
+  AYUDA.adjuntoImg=null;pintarImagenAyuda();
   AYUDA.hilo.push(item);AYUDA.cargando=true;
   const ta=document.getElementById('ayPregunta');ta.value='';ajustarAlto(ta);
   const btn=document.getElementById('ayEnviar');btn.disabled=true;
   pintarChatAyuda();
-  const r=await api('/api/entrenamiento/responder',{method:'POST',body:{id:AYUDA.conv.id,texto:q}});
+  const r=await api('/api/entrenamiento/responder',{method:'POST',body:{id:AYUDA.conv.id,texto:q,imagen:img||undefined}});
   AYUDA.cargando=false;btn.disabled=false;
   if(!r.ok){item.pendiente=false;item.error=r.json.error||'No se pudo obtener la siguiente pregunta. Intentar de nuevo.';pintarChatAyuda();return;}
   aplicarConversacionAyuda(r.json.conversacion);ta.focus();
@@ -8057,6 +8096,82 @@ function pintarAccesosUsr(){
   box.innerHTML='<h5>Accesos del integrante</h5>'+MODULOS_PANEL.map(([k,t,d])=>'<label class="acc"><input type="checkbox" data-mod="'+k+'"'+(sel[k]?' checked':'')+' onchange="_usrAccesos[this.dataset.mod]=this.checked"><span><b>'+t+'</b>'+(k==='verde'?' <span class="aviso">⚠</span>':'')+'<small>'+d+'</small></span></label>').join('')+'<label class="acc fija"><input type="checkbox" checked disabled><span><b>Centro de ayuda</b><small>Siempre incluido.</small></span></label><div class="usr-atajos">Atajos:'+ATAJOS_ACCESOS.map(([n],i)=>'<button type="button" onclick="aplicarAtajoAccesos('+i+')">'+n+'</button>').join('')+'</div>';
 }
 function aplicarAtajoAccesos(i){_usrAccesos=Object.assign({},ATAJOS_ACCESOS[i][1]);pintarAccesosUsr();}
+
+
+/* ===================== 1.6.4: ajustes del Centro de ayuda y perfil ===================== */
+/* Cambiar mi contraseña (menú del perfil) */
+function abrirCambioClavePropia(){
+  alternarCuenta(false);
+  ['cpActual','cpNueva','cpRepetir'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const err=document.getElementById('cpErr');if(err){err.textContent='';err.classList.remove('show');}
+  show('cpOverlay');setTimeout(()=>{const e=document.getElementById('cpActual');if(e)e.focus();},50);
+}
+async function guardarClavePropia(){
+  const err=document.getElementById('cpErr'),fallo=m=>{err.textContent=m;err.classList.add('show');};
+  const actual=document.getElementById('cpActual').value,nueva=document.getElementById('cpNueva').value,rep=document.getElementById('cpRepetir').value;
+  if(!actual)return fallo('Escribir la contraseña actual.');
+  if(nueva.length<8)return fallo('La contraseña nueva debe tener al menos 8 caracteres.');
+  if(nueva!==rep)return fallo('Las dos contraseñas nuevas no coinciden.');
+  const btn=document.getElementById('cpOk');btn.disabled=true;
+  const r=await api('/api/clave',{method:'POST',body:{actual,nueva}});
+  btn.disabled=false;
+  if(!r.ok)return fallo(r.json.error||'No se pudo cambiar la contraseña.');
+  if(r.json.usuario)SESION.usuario=r.json.usuario;
+  close_('cpOverlay');toast('Contraseña actualizada','Desde ahora se ingresa con la contraseña nueva.','success');
+}
+/* Lista de conversaciones en dos grupos */
+function htmlListaConversacionesAyuda(lista){
+  const item=c=>'<button type="button" class="ay-conv-item'+(c.tipo==='entrenamiento'?' ent':'')+(AYUDA.conv&&c.id===AYUDA.conv.id?' ay-actual':'')+'" data-id="'+escH(c.id)+'" onclick="abrirConversacionAyuda(this.dataset.id)"><b>'+escH(c.tipo==='entrenamiento'?(c.area||'Entrevista'):(c.titulo||'Conversación'))+'</b><span>'+escH(horaCorta(c.actualizadoEn))+' · '+(c.tipo==='entrenamiento'?c.respuestas+(c.respuestas===1?' respuesta':' respuestas')+(c.borradorId?' · borrador generado':''):c.mensajes+(c.mensajes===1?' mensaje':' mensajes'))+'</span></button>';
+  const ent=lista.filter(c=>c.tipo==='entrenamiento'),ins=lista.filter(c=>c.tipo!=='entrenamiento');
+  let h='';
+  if(ent.length)h+='<div class="ay-conv-grupo">Entrevistas (Entrenamiento)</div>'+ent.map(item).join('');
+  if(ins.length)h+='<div class="ay-conv-grupo">Consultas al Instructor</div>'+ins.map(item).join('');
+  return h||'<div class="ay-conv-vacio">Todavía no hay conversaciones guardadas.</div>';
+}
+/* Preguntas sin manual (biblioteca) */
+function pintarPreguntasSinManual(){
+  const box=document.getElementById('bbPreguntas');if(!box||!BB.datos)return;
+  const l=BB.datos.preguntas||[];
+  box.innerHTML='<h3>Preguntas que el equipo hizo y no están documentadas</h3><p class="faint">Cada vez que el Instructor responde que un área no tiene manual, la pregunta queda anotada acá. Sirve para decidir qué manual armar primero.</p>'+(l.length?l.map(p=>'<div class="bb-preg-item"><span>'+escH(p.pregunta)+'<br><span class="faint">'+p.veces+(p.veces===1?' vez':' veces')+' · última: '+escH(horaCorta(p.ultimaEn))+(p.ultimaPor?' · '+escH(p.ultimaPor):'')+'</span></span><button type="button" class="dp-link dp-link-gris" data-id="'+escH(p.id)+'" onclick="quitarPreguntaSinManual(this.dataset.id)">Quitar</button></div>').join(''):'<div class="faint">Por ahora, ninguna.</div>');
+}
+async function quitarPreguntaSinManual(id){
+  const r=await api('/api/manuales-preguntas/'+encodeURIComponent(id),{method:'DELETE'});
+  if(!r.ok){toast('No se pudo quitar',r.json.error||'','error');return;}
+  cargarConocimiento();
+}
+/* Buscar dentro de un manual */
+var BV={marcas:[],idx:-1};
+function buscarEnManual(q){
+  const cont=document.getElementById('bvContenido'),inf=document.getElementById('bvBuscarInfo');if(!cont||!BB.ver)return;
+  const texto=String(BB.ver.texto||''),lineas=texto.split('\n');
+  q=String(q||'').trim();BV.marcas=[];BV.idx=-1;
+  if(!q){cont.innerHTML=lineas.map((l,i)=>'<span id="bvL'+i+'">'+escH(l)+'</span>').join('\n');if(inf)inf.textContent='';return;}
+  const re=new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi');let n=0;
+  cont.innerHTML=lineas.map((l,i)=>'<span id="bvL'+i+'">'+escH(l).replace(re,m=>{n++;return '<mark>'+m+'</mark>';})+'</span>').join('\n');
+  BV.marcas=[...cont.querySelectorAll('mark')];
+  if(inf)inf.textContent=n?n+(n===1?' coincidencia':' coincidencias')+' · Enter para la siguiente':'Sin coincidencias';
+  if(n)siguienteCoincidencia();
+}
+function siguienteCoincidencia(){
+  if(!BV.marcas.length)return;
+  if(BV.idx>=0)BV.marcas[BV.idx].classList.remove('act');
+  BV.idx=(BV.idx+1)%BV.marcas.length;const m=BV.marcas[BV.idx];m.classList.add('act');
+  if(typeof m.scrollIntoView==='function')m.scrollIntoView({block:'center'});
+  const inf=document.getElementById('bvBuscarInfo');if(inf)inf.textContent=(BV.idx+1)+' de '+BV.marcas.length+' · Enter para la siguiente';
+}
+function teclaBuscarManual(e){if(e.key==='Enter'){e.preventDefault();if(BV.marcas.length)siguienteCoincidencia();else buscarEnManual(e.target.value);}}
+/* Actividad de formación por persona */
+function textoActividadUsr(u){
+  const a=u.actividad;if(!a||(!a.consultas&&!a.entrevistas))return 'Sin actividad en el Centro de ayuda';
+  return a.consultas+(a.consultas===1?' consulta':' consultas')+' al Instructor · '+a.entrevistas+(a.entrevistas===1?' entrevista':' entrevistas')+(a.borradores?' · '+a.borradores+(a.borradores===1?' borrador':' borradores'):'')+(a.ultimaEn?' · última: '+horaCorta(a.ultimaEn):'');
+}
+/* Reubicaciones al iniciar: «Volver al chat» junto al rastro y el selector de modo bajo el título */
+function reubicarAyuda164(){
+  const vb=document.getElementById('ayVolverChat'),crumb=document.getElementById('crumb');
+  if(vb&&crumb&&!vb.classList.contains('crumb-volver')){vb.classList.remove('btn','btn-ghost','ay-volver');vb.classList.add('crumb-volver');crumb.after(vb);}   // al lado del rastro (el rastro se reescribe al navegar, por eso va como hermano)
+  const m=document.getElementById('ayModo'),ins=document.getElementById('ayInstructor');
+  if(m&&ins&&!m.querySelector('.ay-modo-lbl')){m.insertAdjacentHTML('afterbegin','<span class="ay-modo-lbl">Modo</span>');ins.after(m);}
+}
 
 </script>
 <script>
