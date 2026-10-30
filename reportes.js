@@ -86,7 +86,9 @@ function nombreCliente(c) { return c.nombre || (c.numero ? '+' + c.numero : c.cl
 function armarDatos(s, deps, ahora) {
   ahora = ahora == null ? reloj() : ahora;
   const vendedores = {};
-  const v = n => vendedores[n] || (vendedores[n] = { nombre: n, chats: new Set(), respuestas: [], lentas: [], colgados: [], tareasHechas: 0, tareasVencidas: 0 });
+  const v = n => vendedores[n] || (vendedores[n] = { nombre: n, chats: new Set(), respuestas: [], lentas: [], colgados: [], tareasHechas: 0, tareasVencidas: 0, encuestas: 0, calif: { 3: 0, 2: 0, 1: 0 } });
+  // 1.5.9: calificaciones de los clientes de la semana
+  for (const e of (deps.encuestas || [])) if (e && en(e.en, s)) { const vd = v(e.vendedor || 'Sin vendedor asignado'); vd.encuestas++; if (e.puntaje) vd.calif[e.puntaje]++; }
   const msVisibles = c => (c.mensajes || []).filter(m => m && ['cliente', 'verde', 'equipo'].includes(m.tipo));
   for (const c of deps.chats) {
     const ms = msVisibles(c);
@@ -134,10 +136,11 @@ function armarDatos(s, deps, ahora) {
     }
   }
   // «Sin vendedor asignado» solo aparece si tiene algo que mostrar (colgados o tareas vencidas)
-  const atencion = Object.values(vendedores).filter(x => x.nombre !== 'Sin vendedor asignado' || x.colgados.length || x.tareasVencidas).map(x => ({
+  const atencion = Object.values(vendedores).filter(x => x.nombre !== 'Sin vendedor asignado' || x.colgados.length || x.tareasVencidas || x.encuestas).map(x => ({
     nombre: x.nombre, sinVendedor: x.nombre === 'Sin vendedor asignado', chats: x.chats.size, respuestas: x.respuestas.length,
     medianaMs: mediana(x.respuestas), mediana: duracion(mediana(x.respuestas)), maximaMs: x.respuestas.length ? Math.max(...x.respuestas) : null, maxima: duracion(x.respuestas.length ? Math.max(...x.respuestas) : null),
-    lentas: x.lentas.sort((a, b) => b.demora - a.demora).slice(0, 20), colgados: x.colgados.slice(0, 20), tareasHechas: x.tareasHechas, tareasVencidas: x.tareasVencidas
+    lentas: x.lentas.sort((a, b) => b.demora - a.demora).slice(0, 20), colgados: x.colgados.slice(0, 20), tareasHechas: x.tareasHechas, tareasVencidas: x.tareasVencidas,
+    encuestas: x.encuestas, respondidas: x.calif[3] + x.calif[2] + x.calif[1], muyBuena: x.calif[3], buena: x.calif[2], mala: x.calif[1]
   })).sort((a, b) => b.chats - a.chats);
   // lo más pedido y trabas: leads con actividad en la semana
   const productos = {}, tipos = {}, trabas = {};

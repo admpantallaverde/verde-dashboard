@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.5.8';
+const VERSION_ESPERADA = '1.5.9';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -57,6 +57,7 @@ global.fetch = async (url, opts = {}) => {
         : { tipo: 'compra', producto: 'Cargador iPhone 15', intencion: 'alta', presupuesto: true, traba: { categoria: 'precio', frase: 'uh está caro' }, resumen: 'Quiere un cargador; le pareció caro.', proximoPaso: 'Ofrecer una alternativa más económica.', cierre: 'ninguno', cierreMotivo: '' };
       return respuestaIA('```json\n' + JSON.stringify(j) + '\n```');
     }
+    if (/REDACTOR DE RESPUESTAS/.test(JSON.stringify(JSON.parse(opts.body).system || ''))) return respuestaIA('{"mensaje":"Hola Gabriela, soy Carla de Pantalla Verde. Veo su reclamo por la orden 4582: el touch falla desde el cambio de pantalla.\\nPara resolverlo necesitamos revisar el equipo en el local; la evaluación tarda hasta [plazo].\\n¿Puede traerlo mañana? Cualquier duda, me escribe."}');   // 1.5.9
     if (/corrector de mensajes/i.test(JSON.stringify(JSON.parse(opts.body).system || ''))) return respuestaIA('"Hola, buenas. ' + ult.replace(/pantaya/g, 'pantalla') + '"');   // 1.4.10: corrección de mensajes
     if (/garantía/i.test(ult)) return respuestaIA('Lamento el inconveniente 🙏 ¿Tenés la boleta de garantía?\n[RECLAMO]{"boleta":"4582","producto":"Cambio de pantalla hace 2 semanas","mismo":"sí","falla":"El touch no responde a veces","desde":"ayer","reinicio":"forzado hecho"}\n[DERIVAR]');
     if (/actualizar ficha/i.test(ult)) return respuestaIA('Anotado, gracias.\n[RECLAMO]{"golpes":"no","notas":"video recibido"}');
@@ -1978,6 +1979,71 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   const av78 = await json(await api('/api/avisos', 'PUT', { numeros: [], plantilla: '', idioma: 'es', reporteNumeros: ['+598 95 892 665'], reportePlantilla: 'reporte_semanal' }));
   verificar(av78.avisos && av78.avisos.reporteNumeros[0] === '59895892665' && av78.avisos.reportePlantilla === 'reporte_semanal', 'los números y la plantilla del reporte semanal se guardan en Avisos');
   verificar((await api('/api/avisos', 'PUT', { numeros: [], reporteNumeros: ['12'] })).status === 400, 'un número inválido para el reporte se rechaza');
+
+  mostrar('79) Encuesta de calificación y respuesta sugerida (1.5.9)');
+  const encMod = require('./encuestas.js');
+  const pr79 = await json(await api('/api/proceso'));
+  verificar(pr79.encuesta && pr79.encuesta.automatica === true, 'la encuesta automática viene activada');
+  const urlPrevia79 = process.env.D360_MESSAGES_URL;
+  process.env.D360_MESSAGES_URL = 'https://waba-v2.360dialog.io/messages';
+  const ga = { clave: 'wa:59891000031', numero: '59891000031', nombre: 'Gabriela', destino: { to: '59891000031' } };
+  convMod.registrar(Object.assign({ tipo: 'cliente', texto: 'el touch falla desde el cambio de pantalla, orden 4582' }, ga));
+  convMod.registrar(Object.assign({ tipo: 'equipo', autor: 'Carla', texto: 'Hola, te atiendo' }, ga));
+  const antes79 = envios360.length;
+  let r79 = await json(await api('/api/chats/' + ga.clave + '/encuesta', 'POST'));
+  const env79 = envios360[envios360.length - 1];
+  verificar(r79.ok && envios360.length === antes79 + 1 && env79.body.type === 'interactive' && env79.body.interactive.action.buttons.length === 3 && env79.body.interactive.action.buttons[0].reply.title === 'Muy buena' && /¿Cómo fue la atención de Acceso general\?/.test(env79.body.interactive.body.text), '«Pedir calificación» manda la pregunta con tres botones');
+  verificar(r79.encuesta && r79.encuesta.clave === ga.clave && r79.encuesta.respondidaEn === null && convMod.cruda(ga.clave).mensajes.some(m => m.tipo === 'sistema' && /Encuesta de calificación enviada/.test(m.texto)), 'la encuesta queda registrada y anotada en el chat');
+  verificar((await api('/api/chats/' + ga.clave + '/encuesta', 'POST')).status === 400, 'no se puede repetir la encuesta de inmediato');
+  const antesIA79 = llamadasIA.length;
+  await post360(aviso([{ id: 'enc-r1', from: '59891000031', type: 'interactive', interactive: { type: 'button_reply', button_reply: { id: 'enc_3', title: 'Muy buena' } } }]));
+  await espera(300);
+  const u79 = encMod.ultima(ga.clave);
+  verificar(u79 && u79.puntaje === 3 && u79.calificacion === 'Muy buena' && u79.respondidaEn > 0 && llamadasIA.length === antesIA79 && convMod.cruda(ga.clave).mensajes.some(m => m.tipo === 'sistema' && /Calificación del cliente: Muy buena/.test(m.texto)) && /Muchas gracias/.test(envios360[envios360.length - 1].body.text.body), 'el botón del cliente se guarda como calificación, se agradece y no pasa por Verde');
+  const det79 = await json(await api('/api/leads/' + ga.clave));
+  verificar(det79.encuesta && det79.encuesta.calificacion === 'Muy buena', 'la calificación se ve en el detalle del lead');
+  verificar(encMod.puedeEnviar(convMod.cruda(ga.clave), false).ok === false, 'a ese cliente no se le vuelve a pedir hasta dentro de 30 días');
+  // Respuesta escrita «2» cuando hay una encuesta pendiente; «hola» no cuenta
+  const ro = { clave: 'wa:59891000032', numero: '59891000032', nombre: 'Rodrigo', destino: { to: '59891000032' } };
+  convMod.registrar(Object.assign({ tipo: 'cliente', texto: 'hola, pregunta' }, ro));
+  await json(await api('/api/chats/' + ro.clave + '/encuesta', 'POST'));
+  verificar(encMod.responder(ro.clave, { clase: 'texto', texto: 'hola de nuevo' }, { type: 'text' }) === null, 'un mensaje común no se toma como calificación');
+  const rr79 = encMod.responder(ro.clave, { clase: 'texto', texto: '2' }, { type: 'text' });
+  verificar(rr79 && rr79.puntaje === 2 && rr79.nombre === 'Buena', 'si el cliente escribe «2» en vez de tocar el botón, cuenta como «Buena»');
+  // Automática al marcar atendido (y apagable)
+  const mi = { clave: 'wa:59891000033', numero: '59891000033', nombre: 'Milena', destino: { to: '59891000033' } };
+  convMod.registrar(Object.assign({ tipo: 'cliente', texto: 'cuánto sale' }, mi));
+  const der79 = atenMod.derivar({ clave: mi.clave, destino: 'whatsapp:+59891000033', numero: mi.numero, nombre: mi.nombre, mensajeCliente: 'cuánto sale', motivo: 'Pidió un precio' });
+  const antes79b = envios360.length;
+  await json(await api('/api/chats/' + der79.atencion.id + '/atendido', 'POST', { motivo: 'llamada' }));
+  await espera(300);
+  verificar(envios360.length === antes79b + 1 && envios360[envios360.length - 1].body.type === 'interactive' && (encMod.ultima(mi.clave) || {}).motivo === 'atendido', 'al marcar un chat atendido, la encuesta sale sola');
+  await json(await api('/api/proceso', 'PUT', { encuesta: { automatica: false } }));
+  const yo = { clave: 'wa:59891000034', numero: '59891000034', nombre: 'Yolanda', destino: { to: '59891000034' } };
+  convMod.registrar(Object.assign({ tipo: 'cliente', texto: 'hola' }, yo));
+  const antes79c = envios360.length;
+  await json(await api('/api/leads/' + yo.clave + '/cerrar', 'POST', { resultado: 'ganado' }));
+  await espera(200);
+  verificar(envios360.length === antes79c && !encMod.ultima(yo.clave), 'con la encuesta automática desactivada, cerrar un lead no la manda');
+  await json(await api('/api/proceso', 'PUT', { encuesta: { automatica: true } }));
+  // Cliente con la ventana de 24 horas cerrada
+  const vi = { clave: 'wa:59891000035', numero: '59891000035', nombre: 'Viejo', destino: { to: '59891000035' } };
+  convMod._usarReloj(() => Date.now() - 30 * 3600000); convMod.registrar(Object.assign({ tipo: 'cliente', texto: 'hola' }, vi)); convMod._usarReloj(null);
+  const rv79 = await api('/api/chats/' + vi.clave + '/encuesta', 'POST');
+  verificar(rv79.status === 400 && /ventana de 24 horas/.test((await json(rv79)).error), 'con la ventana de 24 horas cerrada avisa que no se puede mandar');
+  // Reporte: calificaciones por vendedor
+  const d79 = repMod.armarDatos(repMod.semana('actual'), Object.assign({ chats: convMod.recientes(30), leads: leadsMod.crudos(), ctx: { pendientes: new Set(), revision: new Set(), pausas: {} }, proceso: leadsMod.leerProceso(), calcular: leadsMod.calcular, tareaDe: leadsMod.tareaDe, derivadas: [], derivaciones: [], encuestas: encMod.todas() }));
+  const vg = d79.atencion.find(x => x.nombre === 'Acceso general');
+  verificar(vg && vg.encuestas >= 2 && vg.muyBuena >= 1 && vg.buena >= 1 && vg.respondidas >= 2, 'el reporte cuenta las encuestas y las calificaciones por vendedor');
+  // Respuesta sugerida
+  const su79 = await json(await api('/api/chats/' + ga.clave + '/sugerir', 'POST'));
+  const sysSu = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system), ctxSu = String(llamadasIA[llamadasIA.length - 1].body.messages[0].content);
+  verificar(su79.mensaje && /Hola Gabriela, soy Carla/.test(su79.mensaje) && /\[plazo\]/.test(su79.mensaje), '«Sugerir respuesta» devuelve el mensaje armado con la estructura de 6 partes y corchetes para lo que falta');
+  verificar(/REDACTOR DE RESPUESTAS/.test(sysSu) && /USTED/.test(sysSu) && /CLIENTE: Gabriela/.test(ctxSu) && /orden 4582/.test(ctxSu) && /ASESOR QUE RESPONDE: Acceso general/.test(ctxSu) && /GARANTÍA \(configurada\)/.test(ctxSu), 'la IA recibe la estructura, el trato de usted, el cliente, la conversación, el asesor y la garantía configurada');
+  const cons79 = await json(await api('/api/consumo-ia'));
+  verificar(((cons79.porOrigen || {}).sugerencia || {}).consultas >= 1, 'la sugerencia se registra en Consumo de IA por separado');
+  verificar((await api('/api/chats/wa:noexiste/sugerir', 'POST')).status === 404, 'sugerir en un chat inexistente devuelve 404');
+  process.env.D360_MESSAGES_URL = urlPrevia79;
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }

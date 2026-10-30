@@ -57,7 +57,9 @@ function leerProceso() {
     const horas = Number(x.plazoHoras);
     etapas[k] = { accion: t(x.accion, 80) || d.accion, plazoHoras: Number.isInteger(horas) && horas >= 1 && horas <= 720 ? horas : d.plazoHoras, avisar: typeof x.avisar === 'boolean' ? x.avisar : d.avisar };
   }
-  return { etapas };
+  // 1.5.9: encuesta de calificación automática al marcar atendido o cerrar un lead
+  const encuesta = { automatica: !(g.encuesta && g.encuesta.automatica === false) };
+  return { etapas, encuesta };
 }
 function guardarProceso(datos) {
   const actual = leerProceso();
@@ -70,6 +72,7 @@ function guardarProceso(datos) {
     if (Number.isInteger(horas) && horas >= 1 && horas <= 720) actual.etapas[k].plazoHoras = horas;
     if (typeof x.avisar === 'boolean') actual.etapas[k].avisar = x.avisar;
   }
+  if (datos && datos.encuesta && typeof datos.encuesta.automatica === 'boolean') actual.encuesta.automatica = datos.encuesta.automatica;
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
   const tmp = ARCHIVO_PROCESO + '.tmp';
   fs.writeFileSync(tmp, JSON.stringify(actual), { encoding: 'utf8', mode: 0o600 });

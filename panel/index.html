@@ -1834,6 +1834,17 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 .ay-vel{font-variant-numeric:tabular-nums;min-width:40px;justify-content:center}
 @media(max-width:900px){.rp-layout{grid-template-columns:1fr}.rp-lista{flex-direction:row;flex-wrap:wrap}.rp-sem{flex:1 1 150px}}
 
+/* ===================== 1.5.9: respuesta sugerida y encuesta de calificación ===================== */
+.btn-sugerir{flex:none}
+.btn-sugerir.cargando{opacity:.55;pointer-events:none}
+.ld-f3 .ld-calif{display:inline-flex;align-items:center;gap:5px;font-weight:600}
+.ld-f3 .ld-calif.muy{color:var(--green)}
+.ld-f3 .ld-calif.mala{color:var(--red)}
+.proc-enc{display:flex;align-items:center;gap:10px;padding:12px 14px;margin-bottom:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);font-size:13.5px;cursor:pointer}
+.proc-enc input{width:18px;height:18px;accent-color:var(--accent);margin:0;flex:none}
+.proc-enc span small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+@media(max-width:600px){.conv-composer textarea{min-width:0}}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -2400,6 +2411,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
       <div class="fila">
         <div class="adj-wrap"><button type="button" class="btn-adjuntar" id="convAdjuntar" aria-label="Adjuntar un archivo" aria-haspopup="menu" aria-expanded="false" onclick="alternarAdjuntar()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></button><div class="adj-menu oculto" id="adjMenu" role="menu" aria-label="Adjuntar un archivo"><button type="button" role="menuitem" onclick="adjDesdeCompu()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg><span><b>Desde la computadora</b><span id="adjLimites">PDF hasta 25 MB · JPG o PNG hasta 5 MB</span></span></button><button type="button" role="menuitem" onclick="abrirBiblioteca()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span><b>Desde la biblioteca</b><span>Recursos cargados por el administrador</span></span></button></div><input type="file" id="adjArchivo" class="oculto" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" onchange="adjElegido(this)" tabindex="-1" aria-hidden="true"></div>
         <textarea id="convTexto" rows="1" placeholder="Escribir un mensaje…" aria-label="Mensaje para el cliente" maxlength="3900" onkeydown="teclaComposer(event)" oninput="ajustarAlto(this)"></textarea>
+        <button type="button" class="btn-ia btn-sugerir" id="convSugerir" aria-label="Sugerir una respuesta con la IA" title="Sugerir respuesta (IA): arma el mensaje con los datos del cliente" onclick="sugerirRespuesta()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h12M4 12h8M4 18h10"/><path d="M19 3l.9 2.1L22 6l-2.1.9L19 9l-.9-2.1L16 6l2.1-.9z"/></svg></button>
         <div class="ia-wrap"><button type="button" class="btn-ia" id="convIA" aria-label="Corregir y aclarar el texto con la IA" aria-haspopup="menu" aria-expanded="false" title="Corregir con la IA (Shift + |)" onclick="alternarIA()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.6L18.5 9.5l-4.7 1.9L12 16l-1.8-4.6L5.5 9.5l4.7-1.9z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/><path d="M5 2l.6 1.4L7 4l-1.4.6L5 6l-.6-1.4L3 4l1.4-.6z"/></svg></button><div class="ia-menu oculto" id="iaMenu" role="menu" aria-label="Corregir y aclarar el texto"><div class="ia-menu-tit"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.6L18.5 9.5l-4.7 1.9L12 16l-1.8-4.6L5.5 9.5l4.7-1.9z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/><path d="M5 2l.6 1.4L7 4l-1.4.6L5 6l-.6-1.4L3 4l1.4-.6z"/></svg>Corregir y aclarar el texto</div><button type="button" role="menuitem" data-tono="rioplatense" onclick="corregirConIA('rioplatense')"><span class="ia-k" aria-hidden="true">1</span><span class="ia-tx"><b>Rioplatense (vos)</b><span>Como le hablamos al cliente</span></span><span class="ia-ultimo">Última vez</span></button><button type="button" role="menuitem" data-tono="neutro" onclick="corregirConIA('neutro')"><span class="ia-k" aria-hidden="true">2</span><span class="ia-tx"><b>Neutro</b><span>Sin voseo</span></span><span class="ia-ultimo">Última vez</span></button><button type="button" role="menuitem" data-tono="formal" onclick="corregirConIA('formal')"><span class="ia-k" aria-hidden="true">3</span><span class="ia-tx"><b>Formal</b><span>Trato de usted</span></span><span class="ia-ultimo">Última vez</span></button><span class="ia-menu-pie">Corrige la ortografía y lo escribe más claro, sin agregar información. Elegir con 1, 2 o 3.</span></div></div>
         <button class="btn-enviar" type="button" id="convEnviar" aria-label="Enviar el mensaje" onclick="enviarRespuesta()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
       </div>
@@ -2568,6 +2580,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
     <!-- ===== VIEW: PROCESO DE VENTAS (1.5.2) ===== -->
     <div class="view" id="view-proceso">
       <div class="panel"><div class="panel-head"><div><h3>Próxima acción y plazo por etapa</h3><p>Cuando un lead entra en una etapa, el vendedor tiene esa tarea con ese plazo. Con «Aviso al celular», al vencer se avisa al equipo como con los chats por responder.</p></div></div>
+        <label class="proc-enc"><input type="checkbox" id="procEncuesta"><span>Pedir la calificación al cliente al marcar un chat atendido o cerrar un lead<small>Pregunta «¿Cómo fue la atención?» con tres botones. Solo dentro de las 24 horas del último mensaje del cliente y como máximo una vez cada 30 días por cliente.</small></span></label>
         <div style="overflow-x:auto"><table class="proc-tabla" style="min-width:720px"><thead><tr><th>Etapa</th><th>Próxima acción</th><th>Plazo (horas)</th><th style="text-align:center">Aviso al celular</th></tr></thead><tbody id="procTabla"></tbody></table></div>
         <div class="proc-barra"><button class="btn btn-primary" type="button" onclick="guardarProceso()">Guardar cambios</button></div>
       </div>
@@ -5973,8 +5986,8 @@ function pintarConsumo(c){
   const mesDato=c.desde.slice(0,7);
   document.getElementById('consCostoSub').textContent=c.tipo==='mes'?(etiquetaMes(mesDato,false)+(mesDato===actual?', hasta hoy':'')):textoPeriodo(c.desde,c.hasta);
   document.getElementById('consConsultas').textContent=_consEnt.format(c.total.consultas);
-  const w=((c.porOrigen||{}).whatsapp||{}).consultas||0,pr=((c.porOrigen||{}).pruebas||{}).consultas||0,ay=((c.porOrigen||{}).ayuda||{}).consultas||0,co=((c.porOrigen||{}).correccion||{}).consultas||0,cl=((c.porOrigen||{}).clasificacion||{}).consultas||0,rpo=((c.porOrigen||{}).reporte||{}).consultas||0;
-  document.getElementById('consOrigen').textContent='WhatsApp: '+_consEnt.format(w)+' · Pruebas en el panel: '+_consEnt.format(pr)+' · Ayuda: '+_consEnt.format(ay)+' · Corrección: '+_consEnt.format(co)+' · Clasificación: '+_consEnt.format(cl)+' · Reporte: '+_consEnt.format(rpo);
+  const w=((c.porOrigen||{}).whatsapp||{}).consultas||0,pr=((c.porOrigen||{}).pruebas||{}).consultas||0,ay=((c.porOrigen||{}).ayuda||{}).consultas||0,co=((c.porOrigen||{}).correccion||{}).consultas||0,cl=((c.porOrigen||{}).clasificacion||{}).consultas||0,rpo=((c.porOrigen||{}).reporte||{}).consultas||0,sug=((c.porOrigen||{}).sugerencia||{}).consultas||0;
+  document.getElementById('consOrigen').textContent='WhatsApp: '+_consEnt.format(w)+' · Pruebas en el panel: '+_consEnt.format(pr)+' · Ayuda: '+_consEnt.format(ay)+' · Corrección: '+_consEnt.format(co)+' · Clasificación: '+_consEnt.format(cl)+' · Reporte: '+_consEnt.format(rpo)+' · Sugerencias: '+_consEnt.format(sug);
   document.getElementById('consPromedio').textContent=c.total.consultas?'US$ '+_cons4.format(c.promedio):'—';
   const m=c.modeloActual||{};
   const mv=document.getElementById('consModelo');
@@ -7389,11 +7402,11 @@ async function responderSugerenciaLead(aceptar){
 function lineaTareaLead(x){
   if(x.etapa==='cerrado'){
     const c=x.cierre||{};
-    return '<div class="ld-f3 ld-cerrado"><span class="pill '+(c.resultado==='ganado'?'ok':'off')+'"><span class="d"></span>Cerrado: '+escH(c.resultadoNombre||'')+(c.motivoNombre?' · '+escH(c.motivoNombre):'')+'</span><span>por '+escH(c.por||'')+' · '+escH(horaCorta(c.en))+(c.nota?' · '+escH(c.nota):'')+'</span><button type="button" class="dp-link" onclick="reabrirLead()">Reabrir</button></div>';
+    return '<div class="ld-f3 ld-cerrado"><span class="pill '+(c.resultado==='ganado'?'ok':'off')+'"><span class="d"></span>Cerrado: '+escH(c.resultadoNombre||'')+(c.motivoNombre?' · '+escH(c.motivoNombre):'')+'</span><span>por '+escH(c.por||'')+' · '+escH(horaCorta(c.en))+(c.nota?' · '+escH(c.nota):'')+'</span><button type="button" class="dp-link" onclick="reabrirLead()">Reabrir</button><span class="ld-sep">·</span>'+(x.encuesta&&x.encuesta.calificacion?textoCalificacionLead(x):'<button type="button" class="dp-link" onclick="pedirCalificacion()">Pedir calificación</button>'+(x.encuesta?' '+textoCalificacionLead(x):''))+'</div>';
   }
   let h='<div class="ld-f3"><span>Vendedor: <b>'+(x.vendedor?escH(x.vendedor):'sin asignar')+'</b></span><button type="button" class="dp-link" onclick="abrirAsignarLead()">Asignar</button><span class="ld-sep">·</span>';
   h+=x.tarea?'<span>Tarea: <b>'+escH(x.tarea.accion)+'</b> <span class="'+(x.tarea.estado==='vencida'?'acc-rojo':'')+'">'+escH(x.tarea.venceTexto)+'</span></span><button type="button" class="dp-link" data-clave="'+escH(x.clave)+'" onclick="abrirTareaHecha(this.dataset.clave)">Hecho</button>':'<span>Sin tarea pendiente</span>';
-  h+='<span class="ld-sep">·</span><button type="button" class="dp-link rojo" onclick="abrirCerrarLead()">Cerrar lead</button></div>';
+  h+='<span class="ld-sep">·</span><button type="button" class="dp-link rojo" onclick="abrirCerrarLead()">Cerrar lead</button><span class="ld-sep">·</span>'+(x.encuesta&&x.encuesta.calificacion?textoCalificacionLead(x):'<button type="button" class="dp-link" onclick="pedirCalificacion()">Pedir calificación</button>'+(x.encuesta?' '+textoCalificacionLead(x):''))+'</div>';
   if(x.sugerencia)h+='<div class="ld-sug"><span>La IA propone cerrar este lead como <b>'+escH((x.sugerencia.resultadoNombre||'').toLowerCase())+'</b>'+(x.sugerencia.motivoNombre?' ('+escH(x.sugerencia.motivoNombre.toLowerCase())+')':'')+'.</span><button type="button" class="btn btn-primary" onclick="responderSugerenciaLead(true)">Confirmar</button><button type="button" class="btn btn-ghost" onclick="responderSugerenciaLead(false)">No</button></div>';
   return h;
 }
@@ -7404,6 +7417,7 @@ async function cargarProceso(){
   const r=await api('/api/proceso');
   if(!r.ok){toast('No se pudo cargar el proceso de ventas',r.json.error||'','error');return;}
   PROC.datos=r.json;
+  const pe=document.getElementById('procEncuesta');if(pe)pe.checked=!(r.json.encuesta&&r.json.encuesta.automatica===false);
   const et=r.json.etapas||{},nombres=r.json.nombres||{};
   tb.innerHTML=Object.keys(et).map(k=>'<tr data-etapa="'+k+'"><td><b>'+escH(nombres[k]||k)+'</b></td><td><input type="text" maxlength="80" value="'+escH(et[k].accion)+'" aria-label="Próxima acción en '+escH(nombres[k]||k)+'"></td><td><input type="number" min="1" max="720" value="'+et[k].plazoHoras+'" aria-label="Plazo en horas en '+escH(nombres[k]||k)+'"></td><td style="text-align:center"><input type="checkbox"'+(et[k].avisar?' checked':'')+' aria-label="Avisar al celular en '+escH(nombres[k]||k)+'"></td></tr>').join('');
 }
@@ -7416,7 +7430,7 @@ async function guardarProceso(){
     if(!(horas>=1&&horas<=720)){toast('Plazo inválido','El plazo va de 1 a 720 horas (30 días).','error');pl.focus();return;}
     etapas[f.dataset.etapa]={accion:acc.value.trim(),plazoHoras:horas,avisar:av.checked};
   }
-  const r=await api('/api/proceso',{method:'PUT',body:{etapas}});
+  const r=await api('/api/proceso',{method:'PUT',body:{etapas,encuesta:{automatica:!!(document.getElementById('procEncuesta')||{}).checked}}});
   if(!r.ok){toast('No se pudo guardar',r.json.error||'','error');return;}
   PROC.datos=r.json;toast('Proceso guardado','Las tareas nuevas usan estos plazos.','success');
 }
@@ -7656,7 +7670,7 @@ function pintarReporte(){
     +(v.sinVendedor?'':'<div class="rp-fila"><span>Primera respuesta (mediana / máxima)</span><b>'+escH(v.mediana)+' / '+escH(v.maxima)+'</b></div>'
     +'<div class="rp-fila"><span>Respuestas de más de 2 horas</span><b'+(v.lentas.length?' class="acc-rojo"':'')+'>'+v.lentas.length+'</b></div>'+(v.lentas.length?'<div class="rp-chips">'+v.lentas.map(x=>chipChat(x,'rojo')).join('')+'</div>':''))
     +'<div class="rp-fila"><span>Clientes que quedaron colgados</span><b'+(v.colgados.length?' class="acc-rojo"':'')+'>'+v.colgados.length+'</b></div>'+(v.colgados.length?'<div class="rp-chips">'+v.colgados.map(x=>chipChat(x,'rojo')).join('')+'</div>':'')
-    +'<div class="rp-fila"><span>Tareas hechas / vencidas</span><b>'+v.tareasHechas+' / '+v.tareasVencidas+'</b></div></div>').join('')+'</div>':'<div class="rp-vacio">Nadie del equipo respondió chats esta semana.</div>';
+    +'<div class="rp-fila"><span>Tareas hechas / vencidas</span><b>'+v.tareasHechas+' / '+v.tareasVencidas+'</b></div>'+(v.encuestas?'<div class="rp-fila"><span>Calificación de clientes</span><b>Muy buena '+(v.muyBuena||0)+' · Buena '+(v.buena||0)+' · Mala '+(v.mala||0)+'</b></div><div class="faint" style="font-size:12px">Respondieron '+(v.respondidas||0)+' de '+v.encuestas+'</div>':'')+'</div>').join('')+'</div>':'<div class="rp-vacio">Nadie del equipo respondió chats esta semana.</div>';
   h+='</div><div class="rp-dos"><div class="rp-sec"><h3><span class="rp-num">2</span>Lo más pedido</h3>';
   const max=Math.max(1,...(d.pedidos||[]).map(x=>x.veces));
   h+=(d.pedidos||[]).length?(d.pedidos||[]).map(x=>'<div class="rp-barra"><div><div>'+escH(x.nombre)+(x.tipo?' <span class="faint">· '+escH(x.tipo)+'</span>':'')+'</div><div class="rp-b"><i style="width:'+Math.round(x.veces/max*100)+'%"></i></div></div><b>'+x.veces+'</b></div>').join(''):'<div class="rp-vacio">Sin productos clasificados esta semana.</div>';
@@ -7675,6 +7689,40 @@ function pintarReporte(){
   }
   h+='</div>';
   box.innerHTML=h;
+}
+
+
+/* ===================== 1.5.9: respuesta sugerida y encuesta de calificación ===================== */
+async function sugerirRespuesta(){
+  const clave=CONV.clave,ta=document.getElementById('convTexto'),btn=document.getElementById('convSugerir');
+  if(!clave||!ta||!btn||btn.classList.contains('cargando'))return;
+  const seguir=async()=>{
+    btn.classList.add('cargando');
+    toast('Armando la respuesta','La IA usa la ficha, el lead y los últimos mensajes.','info');
+    const r=await api('/api/chats/'+encodeURIComponent(clave)+'/sugerir',{method:'POST'});
+    btn.classList.remove('cargando');
+    if(!r.ok){toast('No se pudo sugerir',r.json.error||'','error');return;}
+    ta.value=r.json.mensaje||'';ajustarAlto(ta);try{ta.focus();}catch(e){}
+    if(typeof guardarBorrador==='function')guardarBorrador();
+    toast('Respuesta sugerida','Revisarla, completar lo que esté entre corchetes y enviar.','success');
+  };
+  if(ta.value.trim())askConfirm({title:'Reemplazar el texto',message:'La caja ya tiene un mensaje escrito. ¿Reemplazarlo por la respuesta sugerida?',okLabel:'Reemplazar',icon:'warn'},seguir);
+  else seguir();
+}
+async function pedirCalificacion(){
+  const x=LEAD_CHAT.datos;if(!x)return;
+  askConfirm({title:'Pedir calificación',message:'Se le manda al cliente la pregunta «¿Cómo fue la atención?» con tres botones: Muy buena, Buena y Mala. Solo se puede dentro de las 24 horas de su último mensaje.',okLabel:'Enviar',icon:'info'},async()=>{
+    const r=await api('/api/chats/'+encodeURIComponent(x.clave)+'/encuesta',{method:'POST'});
+    if(!r.ok){toast('No se pudo mandar la encuesta',r.json.error||'','error');return;}
+    toast('Encuesta enviada','La respuesta del cliente va a aparecer acá y en el reporte semanal.','success');
+    LEAD_CHAT.en=0;cargarLeadEnChat(x.clave,true);
+    if(CONV.clave===x.clave)refrescarConversacion();
+  });
+}
+function textoCalificacionLead(x){
+  const e=x&&x.encuesta;if(!e)return '';
+  if(e.calificacion)return '<span class="ld-calif '+(e.puntaje===3?'muy':e.puntaje===1?'mala':'')+'">Calificación del cliente: '+escH(e.calificacion)+'</span>';
+  return '<span class="faint">Encuesta enviada '+escH(horaCorta(e.en))+', sin respuesta todavía</span>';
 }
 
 </script>

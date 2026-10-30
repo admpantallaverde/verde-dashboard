@@ -42,7 +42,7 @@ const ARTICULOS = [
     bloques: [
       { tipo: 'p', texto: 'En «Ventas › Reportes» está el reporte de cada semana (lunes a domingo). Se arma solo los lunes a las 07:00 con la semana anterior; «Generar ahora» arma el de la semana en curso y «Volver a armar» rehace uno. A las 07:05 llega un aviso por WhatsApp a los números cargados en «Avisos a celulares del equipo › Reporte semanal» (fuera de las 24 horas hace falta la plantilla «reporte_semanal» aprobada por Meta).' },
       { tipo: 'h', texto: 'Qué trae' },
-      { tipo: 'l', items: ['Atención del equipo, por vendedor: chats atendidos, primera respuesta (mediana y máxima), respuestas de más de 2 horas, clientes que quedaron colgados y tareas hechas o vencidas.', 'Lo más pedido: productos y servicios según la clasificación de los leads.', 'Por qué no compran: las trabas con la frase textual de cada cliente.', 'Resultados: leads nuevos, ganados, perdidos con motivo y sin cerrar; y cuántas conversaciones resolvió Verde solo, cuántas se derivaron y cuántas atendió el equipo.', 'Evaluación de la atención hecha por la IA: puntaje de 1 a 5 por vendedor, qué hace bien, qué mejorar y ejemplos citados; temas de la semana y tres puntos para la reunión.'] },
+      { tipo: 'l', items: ['Atención del equipo, por vendedor: chats atendidos, primera respuesta (mediana y máxima), respuestas de más de 2 horas, clientes que quedaron colgados, tareas hechas o vencidas y la calificación de los clientes.', 'Lo más pedido: productos y servicios según la clasificación de los leads.', 'Por qué no compran: las trabas con la frase textual de cada cliente.', 'Resultados: leads nuevos, ganados, perdidos con motivo y sin cerrar; y cuántas conversaciones resolvió Verde solo, cuántas se derivaron y cuántas atendió el equipo.', 'Evaluación de la atención hecha por la IA: puntaje de 1 a 5 por vendedor, qué hace bien, qué mejorar y ejemplos citados; temas de la semana y tres puntos para la reunión.'] },
       { tipo: 'p', texto: 'Todo lo que cita se toca y abre la conversación parada en ese mensaje. La evaluación lee hasta 40 conversaciones atendidas por el equipo (primero las derivadas) con el modelo y esfuerzo del Asistente IA; su gasto se ve en Consumo de IA como «Reporte». Si falla, «Repetir la evaluación» la vuelve a pedir.' }
     ]
   },
@@ -51,7 +51,8 @@ const ARTICULOS = [
     resumen: 'Configurar la próxima acción, el plazo y el aviso de cada etapa.',
     bloques: [
       { tipo: 'p', texto: 'En «Ventas › Proceso de ventas» se define, para cada etapa con tarea (Derivado, En atención, Presupuesto enviado, Esperando al cliente y Sin respuesta), qué tiene que hacer el vendedor, en cuántas horas y si se avisa al celular del equipo cuando la tarea vence. Los avisos usan el mismo sistema que los de «Chats por responder». Las etapas Nuevo, Con Verde y Cerrado no tienen tarea.' },
-      { tipo: 'p', texto: 'Los cambios valen para las tareas desde ese momento: una tarea ya vencida no se reabre por cambiar el plazo.' }
+      { tipo: 'p', texto: 'Los cambios valen para las tareas desde ese momento: una tarea ya vencida no se reabre por cambiar el plazo.' },
+      { tipo: 'p', texto: 'La casilla «Pedir la calificación al cliente…» activa la encuesta automática al marcar un chat atendido o cerrar un lead: pregunta «¿Cómo fue la atención?» con tres botones (Muy buena, Buena, Mala), solo dentro de las 24 horas del último mensaje del cliente y como máximo una vez cada 30 días por cliente. También se puede pedir a mano desde la franja «Lead».' }
     ]
   },
   {

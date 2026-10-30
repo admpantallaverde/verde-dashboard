@@ -41,8 +41,9 @@ const respaldos = require('./respaldos.js');   // 1.4.15: respaldo diario cifrad
 const leads = require('./leads.js');           // 1.5.0: leads clasificados por prioridad
 const hilos = require('./ayuda-hilos.js');     // 1.5.3: conversaciones guardadas del Centro de ayuda
 const reportes = require('./reportes.js');     // 1.5.7: reportes semanales
+const encuestas = require('./encuestas.js');   // 1.5.9: encuesta de calificación
 
-const VERSION = '1.5.8';
+const VERSION = '1.5.9';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -465,6 +466,13 @@ function enviarWhatsApp(destino, texto) {
   cuerpo.text = { body: String(texto).slice(0, 4096) };
   return enviar360(cuerpo);
 }
+// 1.5.9: mensaje con botones de respuesta (hasta 3). Solo dentro de la ventana de 24 horas; no necesita plantilla.
+function enviarBotones(destino, texto, botones) {
+  const cuerpo = baseDestino(destino);
+  cuerpo.type = 'interactive';
+  cuerpo.interactive = { type: 'button', body: { text: String(texto).slice(0, 1024) }, action: { buttons: botones.slice(0, 3) } };
+  return enviar360(cuerpo);
+}
 // Plantilla aprobada por Meta (necesaria para avisar fuera de la ventana de 24 horas).
 function limpiarParametro(t) { return String(t == null ? '' : t).replace(/[\r\n\t]+/g, ' ').replace(/ {2,}/g, ' ').trim().slice(0, 200) || '-'; }
 function enviarPlantilla(destino, nombre, idioma, parametros) {
@@ -707,6 +715,15 @@ async function manejarEntrante(msg, nombres) {
   const info = interpretar(msg);
   if (info.clase === 'ignorar') { console.log('360 <<', info.tipo, 'de', quien, '→ se ignora'); return; }
   const textoCliente = info.clase === 'adjunto' ? '[El cliente envió ' + info.desc + info.leyenda + ']' : info.texto;
+  // 1.5.9: respuesta a la encuesta de calificación: se guarda como anotación (no como mensaje, para no alterar
+  // la etapa del lead ni los reportes), se agradece y no pasa por Verde.
+  const calificacion = encuestas.responder(clave, info, msg);
+  if (calificacion) {
+    conversaciones.anotarSistema(clave, 'Calificación del cliente: ' + calificacion.nombre + (calificacion.vendedor ? ' (atendió ' + calificacion.vendedor + ')' : '') + '. Se le agradeció por WhatsApp.');
+    await enviarWhatsApp(destino, encuestas.textoGracias());
+    console.log('360 << de', quien, '→ calificó la atención: ' + calificacion.nombre);
+    return;
+  }
   conversaciones.registrar({ clave, numero, nombre, destino, tipo: 'cliente', texto: textoCliente, archivo: info.archivo || null });
 
   const v = bot.getVerde();
@@ -923,6 +940,7 @@ app.post('/api/chats/:id/atendido', requiere(['admin', 'asesor']), (req, res) =>
     const b = req.body || {};
     const u = req.usuario;
     const a = atencion.marcarAtendido(req.params.id, { motivo: b.motivo, detalle: b.detalle, usuarioId: u ? u.id : null, usuarioNombre: u ? u.nombre : 'Acceso general' });
+    if (a && a.clave) encuestaAutomatica(a.clave, req, 'atendido');   // 1.5.9
     bot.pausar(a.clave, PAUSA_HORAS);   // Verde sigue en silencio; si el cliente vuelve a escribir, regresa a «Por responder»
     res.json({ ok: true, chat: atencion.detalle(a.id) });
   } catch (e) { responderError(res, e); }
@@ -1022,11 +1040,85 @@ app.post('/api/ayuda/preguntar', requiere(['admin', 'asesor']), async (req, res)
     res.json(Object.assign(r, { conversacionId: conv.id, titulo: conv.titulo }));
   } catch (e) { responderError(res, e); }
 });
+/* ---------- 1.5.9: encuesta de calificación y respuesta sugerida ---------- */
+// Manda la encuesta al cliente del chat. Devuelve { ok, motivo }.
+async function enviarEncuesta(c, datos) {
+  if (!c) return { ok: false, motivo: 'No existe esa conversación.' };
+  const puede = encuestas.puedeEnviar(c, !!datos.forzar);
+  if (!puede.ok) return puede;
+  if (!d360Configurado()) return { ok: false, motivo: 'WhatsApp no está configurado.' };
+  const destino = c.destino || (c.numero ? { to: c.numero } : null);
+  if (!destino) return { ok: false, motivo: 'Este chat no tiene un destino de WhatsApp.' };
+  const vendedor = String(datos.vendedor || '').trim();
+  let ok = await enviarBotones(destino, encuestas.texto(vendedor), encuestas.botones()), interactivo = true;
+  if (!ok) { ok = await enviarWhatsApp(destino, encuestas.textoSinBotones(vendedor)); interactivo = false; }
+  if (!ok) return { ok: false, motivo: 'WhatsApp no aceptó el mensaje.' };
+  encuestas.registrarEnvio(c, { vendedor, por: datos.por, motivo: datos.motivo, interactivo });
+  // Como anotación (no como mensaje de Verde) para no alterar la etapa del lead ni los reportes.
+  conversaciones.anotarSistema(c.clave, 'Encuesta de calificación enviada' + (datos.por ? ' por ' + datos.por : '') + ': «' + (interactivo ? encuestas.texto(vendedor) + '» [Muy buena] [Buena] [Mala]' : encuestas.textoSinBotones(vendedor) + '»'));
+  return { ok: true };
+}
+async function encuestaAutomatica(clave, req, motivo) {
+  try {
+    if (!leads.leerProceso().encuesta.automatica) return;
+    const c = conversaciones.cruda(clave);
+    const r = await enviarEncuesta(c, { vendedor: quienActua(req), por: 'Automático', motivo });
+    if (!r.ok) console.log('Encuesta no enviada (' + clave + '): ' + r.motivo);
+  } catch (e) { console.error('Encuesta automática:', e.message); }
+}
+app.post('/api/chats/:clave/encuesta', requiere(['admin', 'asesor']), async (req, res) => {
+  const c = conversaciones.cruda(req.params.clave);
+  if (!c) return res.status(404).json({ error: 'No existe esa conversación.' });
+  const r = await enviarEncuesta(c, { vendedor: quienActua(req), por: quienActua(req), motivo: 'manual', forzar: true });
+  if (!r.ok) return res.status(400).json({ error: r.motivo });
+  res.json({ ok: true, encuesta: encuestas.ultima(c.clave) });
+});
+// Respuesta sugerida: la IA arma el primer mensaje del asesor con la estructura de 6 partes, en español neutro de usted.
+const sugerencias = new Map();
+app.post('/api/chats/:clave/sugerir', requiere(['admin', 'asesor']), async (req, res) => {
+  try {
+    const c = conversaciones.cruda(req.params.clave);
+    if (!c) return res.status(404).json({ error: 'No existe esa conversación.' });
+    const quien = req.usuario ? req.usuario.id : 'general';
+    const hace1h = Date.now() - 3600000;
+    const previas = (sugerencias.get(quien) || []).filter(x => x > hace1h);
+    if (previas.length >= LIMITE_CORRECCIONES) return res.status(429).json({ error: 'Se alcanzó el límite de ' + LIMITE_CORRECCIONES + ' sugerencias por hora. Intentar más tarde.' });
+    previas.push(Date.now()); sugerencias.set(quien, previas);
+    const v = bot.getVerde();
+    const lead = leads.detalle(c, contexto());
+    const a = atencion.ultimaPorClave(c.clave);
+    const g = bot.garantiaDe ? bot.garantiaDe(v) : null;
+    const contexto_ = [
+      'EMPRESA: ' + (v.empresa || 'la tienda') + '. ASESOR QUE RESPONDE: ' + quienActua(req) + '.',
+      'CLIENTE: ' + (c.nombre || 'sin nombre') + (c.numero ? ' (+' + c.numero + ')' : '') + '.',
+      lead && lead.clasificado ? 'LEAD: tipo ' + lead.tipoNombre + (lead.producto ? ' · producto ' + lead.producto : '') + ' · etapa ' + lead.etapaNombre + (lead.resumen ? ' · resumen: ' + lead.resumen : '') + (lead.proximoPaso ? ' · próximo paso sugerido: ' + lead.proximoPaso : '') : 'LEAD: sin clasificar.',
+      a && a.ficha ? 'FICHA QUE ARMÓ VERDE: ' + JSON.stringify(a.ficha).slice(0, 1500) : '',
+      a && a.motivo ? 'MOTIVO DE LA DERIVACIÓN: ' + a.motivo : '',
+      g ? 'GARANTÍA (configurada): requisitos: ' + g.requisitos + ' · cobertura: ' + g.condiciones : '',
+      'CONVERSACIÓN (últimos mensajes):\n' + ayuda.textoConversacion(conversaciones.detalle(c.clave, contexto()))
+    ].filter(Boolean).join('\n');
+    const sistema = [
+      'REDACTOR DE RESPUESTAS para el equipo de ' + (v.empresa || 'la tienda') + ' (WhatsApp). Escribís el mensaje que el asesor le va a mandar al cliente.',
+      'Devolvé SOLO un objeto JSON válido: {"mensaje":"texto del mensaje"}.',
+      'Estructura obligatoria, en este orden y en pocas líneas: 1) saludo con el nombre del cliente y el nombre del asesor; 2) qué entendimos: el equipo, la falla o consulta y el número de orden si existe, en una línea; 3) solo si falta un dato imprescindible, una pregunta (como máximo dos); 4) qué va a pasar y cuándo; 5) el próximo paso concreto que necesitamos del cliente (fecha, traer el equipo, confirmar); 6) un cierre de una línea.',
+      'Reglas: español neutro, tratando al cliente de USTED (nunca «vos» ni «tú»), tono cercano y profesional, sin emojis, sin adulación ni repeticiones, máximo 7 líneas. NO inventar precios, plazos, stock ni promesas: si un dato hace falta y no está en el contexto, escribirlo entre corchetes para que el asesor lo complete, por ejemplo [precio] o [fecha]. Los plazos de garantía salen de la configuración. No firmar: la firma la agrega el panel. Si el cliente está molesto, reconocerlo con empatía en una frase, sin justificar errores.'
+    ].join('\n');
+    const vc = Object.assign({}, v, { tecnico: Object.assign({}, v.tecnico || {}, { maxTokens: Math.max(2000, (v.tecnico && v.tecnico.maxTokens) || 0) }) });
+    const asis = bot.configAsistente(v);
+    let crudo;
+    try { crudo = await bot.callClaude(sistema, [{ role: 'user', content: contexto_ }], vc, asis.modelo, 'sugerencia', { esfuerzo: asis.esfuerzo }); }
+    catch (e) { console.error('Sugerir respuesta: la IA no respondió:', e.message); return res.status(502).json({ error: 'La IA no está disponible en este momento. Intentar de nuevo en unos minutos.' }); }
+    const j = leads.limpiarJson(crudo);
+    const mensaje = String((j && j.mensaje) || '').trim().slice(0, 3900);
+    if (!mensaje) return res.status(502).json({ error: 'La IA no devolvió un mensaje válido.' });
+    res.json({ mensaje });
+  } catch (e) { responderError(res, e); }
+});
 /* ---------- 1.5.7: reportes semanales ---------- */
 function depsReportes() {
   const pend = atencion.pendientes(), resp = ((atencion.respondidos({ periodo: '90' }) || {}).lista || []);
   const derivaciones = pend.concat(resp).map(x => ({ clave: x.clave, creadoEn: x.creadoEn }));
-  return { chats: conversaciones.recientes(60), leads: leads.crudos(), calcular: leads.calcular, tareaDe: leads.tareaDe, proceso: leads.leerProceso(), ctx: contexto(), derivadas: derivaciones.map(x => x.clave), derivaciones };
+  return { chats: conversaciones.recientes(60), leads: leads.crudos(), calcular: leads.calcular, tareaDe: leads.tareaDe, proceso: leads.leerProceso(), ctx: contexto(), derivadas: derivaciones.map(x => x.clave), derivaciones, encuestas: encuestas.todas() };
 }
 app.get('/api/reportes', requiere(['admin']), (req, res) => res.json({ lista: reportes.listar(), semanaActual: reportes.semana('actual'), semanaAnterior: reportes.semana('anterior') }));
 app.post('/api/reportes/generar', requiere(['admin']), async (req, res) => {
@@ -1154,6 +1246,7 @@ app.post('/api/leads/:clave/cerrar', requiere(['admin', 'asesor']), (req, res) =
     const l = leads.cerrar(c, req.body || {}, quienActua(req));
     conversaciones.anotarSistema(c.clave, leads.textoCierre(l));
     cerrarPendientePorLead(c, l, req);
+    encuestaAutomatica(c.clave, req, 'lead cerrado');   // 1.5.9
     res.json(leads.detalle(c, contexto()));
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
@@ -1207,7 +1300,7 @@ async function avisarTarea(c, lead) {
 app.get('/api/leads/:clave', requiere(['admin', 'asesor']), (req, res) => {
   const c = conversaciones.cruda(req.params.clave);
   if (!c) return res.status(404).json({ error: 'No existe esa conversación.' });
-  res.json(leads.detalle(c, contexto()));
+  res.json(Object.assign(leads.detalle(c, contexto()), { encuesta: encuestas.ultima(c.clave) }));   // 1.5.9
 });
 app.put('/api/leads/:clave', requiere(['admin', 'asesor']), (req, res) => {
   const c = conversaciones.cruda(req.params.clave);
