@@ -26,7 +26,7 @@ const PRECIOS = {
   'claude-haiku-5-5': { nombre: 'Claude Haiku 5.5', entrada: 0.1, salida: 0.5 }   // pedidos de hasta 100.000 tokens (los de Verde son mucho más cortos)
 };
 const PRECIOS_VERIFICADOS = '2026-10-29';
-const ORIGENES = ['whatsapp', 'pruebas', 'ayuda', 'correccion', 'clasificacion', 'reporte', 'sugerencia'];   // 1.4.10: corrección · 1.5.0: clasificación · 1.5.7: reporte · 1.5.9: respuesta sugerida
+const ORIGENES = ['whatsapp', 'pruebas', 'ayuda', 'correccion', 'clasificacion', 'reporte', 'sugerencia', 'entrenamiento'];   // 1.4.10: corrección · 1.5.0: clasificación · 1.5.7: reporte · 1.5.9: respuesta sugerida
 
 let relojPrueba = null;                       // solo para las pruebas automáticas
 function ahora() { return relojPrueba ? relojPrueba() : Date.now(); }
@@ -128,7 +128,7 @@ function resumen(filtro) {
   if (p.error) return { error: p.error };
   const d = cargar();
   const total = { consultas: 0, entrada: 0, salida: 0, costo: 0, sinPrecio: 0 };
-  const porOrigen = { whatsapp: { consultas: 0, costo: 0 }, pruebas: { consultas: 0, costo: 0 }, ayuda: { consultas: 0, costo: 0 }, correccion: { consultas: 0, costo: 0 }, clasificacion: { consultas: 0, costo: 0 }, reporte: { consultas: 0, costo: 0 }, sugerencia: { consultas: 0, costo: 0 } };
+  const porOrigen = { whatsapp: { consultas: 0, costo: 0 }, pruebas: { consultas: 0, costo: 0 }, ayuda: { consultas: 0, costo: 0 }, correccion: { consultas: 0, costo: 0 }, clasificacion: { consultas: 0, costo: 0 }, reporte: { consultas: 0, costo: 0 }, sugerencia: { consultas: 0, costo: 0 }, entrenamiento: { consultas: 0, costo: 0 } };
   const porModelo = {};
   const dias = [];
   for (const dia of Object.keys(d.dias).sort().reverse()) {

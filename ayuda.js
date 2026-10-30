@@ -234,6 +234,14 @@ const ARTICULOS = [
     ]
   },
   {
+    id: 'entrenamiento', grupo: 'manual', soloAdmin: false, titulo: 'Modo Entrenamiento',
+    resumen: 'La IA entrevista al responsable de un área y genera el borrador del manual para la biblioteca.',
+    bloques: [
+      { tipo: 'p', texto: 'Quien tiene habilitado el modo Entrenamiento (los administradores siempre; a los demás los habilita un administrador en Usuarios › Editar) ve en el Centro de ayuda el selector «Instructor | Entrenamiento». En Entrenamiento, con una conversación vacía, se elige el área que se documenta y se toca «Empezar la entrevista»: el Entrevistador IA pregunta nombre, puesto y área, y sigue con una sola pregunta por vez, de lo general a lo específico; cada 5 a 8 preguntas resume lo capturado y pide confirmación. Lo que la persona no sabe queda como «Pendiente de definir por Dirección».' },
+      { tipo: 'p', texto: 'La entrevista queda guardada como conversación (en la lista figura «Entrenamiento · área») y se puede retomar otro día. A partir de 6 respuestas se habilita «Terminar y generar el borrador»: la IA redacta el «Manual de [área]» (objetivo del puesto, procedimientos paso a paso, estándares de atención, situaciones difíciles con frases exactas, reglas de oro, pendientes) y lo deja en la Biblioteca de conocimiento como borrador, hasta que un administrador lo apruebe. Si la entrevista continúa, «Generar de nuevo» actualiza el borrador mientras no esté aprobado.' }
+    ]
+  },
+  {
     id: 'ingreso-dos-pasos', grupo: 'manual', soloAdmin: false, titulo: 'Verificación en 2 pasos para entrar al panel',
     resumen: 'Cómo configurar la app autenticadora, entrar con el código y qué hacer si se pierde el celular.',
     bloques: [
@@ -451,6 +459,67 @@ function instruccionesEnBloques(rol, config, extra) {
     { type: 'text', text: todo.slice(corte + '\n[[VARIABLE]]\n'.length) }
   ];
 }
+// 1.6.1: Modo Entrenamiento. El Entrevistador captura cómo se trabaja en un área; al terminar, redacta el borrador del manual.
+function manualesParaEntrevista() {
+  const propios = manuales.activos();
+  return propios.length ? propios.map(m => '=== MANUAL YA CARGADO: ' + m.nombre.toUpperCase() + ' (área: ' + m.area + ') ===\n' + m.texto).join('\n\n') : '(todavía no hay manuales propios cargados)';
+}
+function primeraPreguntaEntrevista(area) {
+  return 'Buen día. Soy el Entrevistador del cerebro de conocimiento. En esta sesión vamos a documentar el área «' + area + '», con una pregunta por vez. Para empezar, ¿me indica su nombre, su puesto y el área en la que trabaja?';
+}
+function instruccionesEntrevistador(area, extra) {
+  const ex = extra || {};
+  const empresa = String(ex.nombreEmpresa || '').trim() || 'Pantalla Verde';
+  return [
+    { type: 'text', cache_control: { type: 'ephemeral' }, text: [
+      'ENTREVISTADOR DEL CEREBRO DE CONOCIMIENTO DE ' + empresa.toUpperCase(),
+      'Eres el Entrevistador del cerebro de conocimiento de ' + empresa + ', empresa de reparación y venta de tecnología en Montevideo, Uruguay. Tu tarea es entrevistar a un encargado o responsable de área para capturar, con precisión y sin inventar nada, cómo se trabaja en su área. Con sus respuestas se redactará el manual oficial que luego usará el Modo Instructor para capacitar al personal.',
+      '',
+      'CÓMO ENTREVISTAR',
+      '- Al comenzar, pregunta nombre, puesto y área de la persona, y confirma qué área se documenta en esta sesión (una sola por sesión).',
+      '- Haz una sola pregunta por vez. Nunca varias juntas.',
+      '- Sé meticuloso y estratégico: ve de lo general a lo específico, y repregunta hasta que cada procedimiento quede completo (qué se hace, quién, cuándo, cómo, con qué herramienta, qué se registra en el sistema y qué está prohibido).',
+      '- Pide siempre ejemplos reales y las frases exactas que se usan con clientes o compañeros.',
+      '- Cada 5 a 8 preguntas, resume lo capturado y pide confirmación antes de seguir.',
+      '- Si la persona no sabe o duda, no completes el hueco: regístralo como «Pendiente de definir por Dirección».',
+      '- Si una respuesta contradice el Reglamento Interno o un protocolo existente, señálalo con respeto y registra las dos versiones para que Dirección decida.',
+      '- Si tienes acceso a manuales ya cargados, úsalos para no volver a preguntar lo que ya está escrito.',
+      '',
+      'QUÉ CAPTURAR EN CADA ÁREA (adaptado al puesto)',
+      '1. Procedimientos: tareas paso a paso, uso del sistema, registros obligatorios, prohibiciones.',
+      '2. Estándares de atención y conducta: actitud, tono de voz, postura y presencia, seguridad y confianza, comunicación efectiva.',
+      '3. Habilidades del puesto: inteligencia emocional, resolución de conflictos, negociación, manejo de reclamos, cierre de ventas, cómo dar y recibir feedback.',
+      '4. Criterio de negocio: orientación a resultados, qué decisiones toma el puesto solo y cuáles se consultan, integridad y coherencia, resiliencia en situaciones difíciles, propuestas de mejora e innovación.',
+      '5. Errores comunes: qué le sale mal a la gente nueva y cómo evitarlo.',
+      '',
+      'REGLAS FIJAS',
+      '- No inventes procedimientos, precios, enlaces ni políticas.',
+      '- Responde en español neutro, claro y profesional, sin voseo.',
+      '- Solo tratas temas de ' + empresa + '.',
+      '',
+      'FORMATO EN EL PANEL',
+      '- Responde en texto plano (sin JSON, sin títulos, sin marcas de formato): como máximo un comentario breve sobre la respuesta anterior y después UNA sola pregunta. Cuando toque resumir (cada 5 a 8 preguntas), presenta el resumen en líneas cortas y termina pidiendo confirmación, que también cuenta como la única pregunta del turno.',
+      '- El borrador del manual NO se redacta en la conversación: lo genera el panel cuando la persona toca «Terminar y generar el borrador».',
+      '',
+      'MANUALES YA CARGADOS (aprobados; úsalos para no repreguntar lo que ya está escrito):',
+      manualesParaEntrevista()
+    ].join('\n') },
+    { type: 'text', text: 'ÁREA QUE SE DOCUMENTA EN ESTA SESIÓN: ' + area + '.' + (ex.quien ? ' PERSONA ENTREVISTADA (usuario del panel): ' + ex.quien + '.' : '') }
+  ];
+}
+function instruccionesBorrador(area, extra) {
+  const ex = extra || {};
+  const empresa = String(ex.nombreEmpresa || '').trim() || 'Pantalla Verde';
+  return [
+    'REDACTOR DEL MANUAL DE ÁREA de ' + empresa + ' (cerebro de conocimiento).',
+    'Recibes la transcripción de una entrevista hecha por el Entrevistador al responsable del área «' + area + '». Redacta el borrador del «Manual de ' + area + '» usando SOLO lo que la persona dijo. No inventes procedimientos, precios, enlaces ni políticas; lo que no sabía queda en «Pendientes de definir por Dirección»; si hubo contradicciones con manuales existentes, registra las dos versiones.',
+    'Estructura obligatoria, con estos títulos en mayúsculas: OBJETIVO DEL PUESTO; PROCEDIMIENTOS PASO A PASO (numerados, con quién, cuándo, cómo, herramienta, qué se registra y qué está prohibido); ESTÁNDARES DE ATENCIÓN Y CONDUCTA; MANEJO DE SITUACIONES DIFÍCILES (con las frases exactas que se usan); REGLAS DE ORO DEL ÁREA; PENDIENTES DE DEFINIR POR DIRECCIÓN.',
+    'Cierra con esta nota, textual: «Este borrador debe ser revisado y aprobado por Dirección antes de usarse para capacitar».',
+    'Español neutro, claro y profesional, sin voseo. Texto plano con títulos y listas simples (sin marcas de formato).',
+    'Devolvé SOLO un objeto JSON válido: {"titulo": "Manual de ' + area + '", "descripcion": "una línea de hasta 140 caracteres con lo que cubre", "texto": "el manual completo"}.'
+  ].join('\n');
+}
+
 // Interpreta la respuesta de la IA: objeto JSON con «respuesta» y «fuentes». Solo acepta fuentes visibles para el rol.
 function interpretar(texto, rol) {
   const limpio = String(texto || '').replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
@@ -473,4 +542,4 @@ const manualCompleto = require('./manual-completo.js');
 function articuloManualCompleto(rol) {
   return { id: 'manual-completo', grupo: 'manual', soloAdmin: false, titulo: 'Manual completo del panel', resumen: 'Pantalla por pantalla: qué hay, qué hace cada botón y qué ve cada rol.', bloques: manualCompleto.bloquesPara(rol) };
 }
-module.exports = { ARTICULOS, REVISION_META, articulosPara, articulo, instrucciones, instruccionesEnBloques, interpretar, textoConversacion, articuloManualCompleto };
+module.exports = { instruccionesEntrevistador, instruccionesBorrador, primeraPreguntaEntrevista, ARTICULOS, REVISION_META, articulosPara, articulo, instrucciones, instruccionesEnBloques, interpretar, textoConversacion, articuloManualCompleto };

@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.6.0';
+const VERSION_ESPERADA = '1.6.1';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -57,6 +57,11 @@ global.fetch = async (url, opts = {}) => {
         : { tipo: 'compra', producto: 'Cargador iPhone 15', intencion: 'alta', presupuesto: true, traba: { categoria: 'precio', frase: 'uh está caro' }, resumen: 'Quiere un cargador; le pareció caro.', proximoPaso: 'Ofrecer una alternativa más económica.', cierre: 'ninguno', cierreMotivo: '' };
       return respuestaIA('```json\n' + JSON.stringify(j) + '\n```');
     }
+    if (/ENTREVISTADOR DEL CEREBRO DE CONOCIMIENTO/.test(JSON.stringify(JSON.parse(opts.body).system || ''))) {   // 1.6.1
+      const n = (JSON.parse(opts.body).messages || []).filter(m => m.role === 'user').length;
+      return respuestaIA(n >= 6 ? 'Resumen de lo capturado: recepción, control de stock y despacho. ¿Confirma que es correcto?' : 'Gracias. ¿Cómo registra en el sistema cada pedido que entra?');
+    }
+    if (/REDACTOR DEL MANUAL DE ÁREA/.test(JSON.stringify(JSON.parse(opts.body).system || ''))) return respuestaIA('```json\n' + JSON.stringify({ titulo: 'Manual de Logística, almacén y Mercado Libre', descripcion: 'Recepción, stock y despacho de pedidos', texto: 'OBJETIVO DEL PUESTO\nAsegurar que cada pedido salga en el día.\n\nPROCEDIMIENTOS PASO A PASO\n1. Recepción: el encargado revisa el paquete y lo registra en el sistema.\n2. Despacho: se imprime la etiqueta y se entrega al correo antes de las 17:00.\n\nESTÁNDARES DE ATENCIÓN Y CONDUCTA\nTrato cordial con el correo y los compañeros.\n\nMANEJO DE SITUACIONES DIFÍCILES\nSi falta un producto: «Te aviso en cuanto lo tenga; disculpá la demora».\n\nREGLAS DE ORO DEL ÁREA\nNada sale sin etiqueta.\n\nPENDIENTES DE DEFINIR POR DIRECCIÓN\nQué hacer con pedidos sin stock.\n\nEste borrador debe ser revisado y aprobado por Dirección antes de usarse para capacitar' }) + '\n```');
     if (/REDACTOR DE RESPUESTAS/.test(JSON.stringify(JSON.parse(opts.body).system || ''))) return respuestaIA('{"mensaje":"Hola Gabriela, soy Carla de Pantalla Verde. Veo su reclamo por la orden 4582: el touch falla desde el cambio de pantalla.\\nPara resolverlo necesitamos revisar el equipo en el local; la evaluación tarda hasta [plazo].\\n¿Puede traerlo mañana? Cualquier duda, me escribe."}');   // 1.5.9
     if (/corrector de mensajes/i.test(JSON.stringify(JSON.parse(opts.body).system || ''))) return respuestaIA('"Hola, buenas. ' + ult.replace(/pantaya/g, 'pantalla') + '"');   // 1.4.10: corrección de mensajes
     if (/garantía/i.test(ult)) return respuestaIA('Lamento el inconveniente 🙏 ¿Tenés la boleta de garantía?\n[RECLAMO]{"boleta":"4582","producto":"Cambio de pantalla hace 2 semanas","mismo":"sí","falla":"El touch no responde a veces","desde":"ayer","reinicio":"forzado hecho"}\n[DERIVAR]');
@@ -478,7 +483,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(rr.status === 401, 'sin sesión no se puede ver ningún archivo');
   rr = await api('/api/ayuda', 'GET', null, galletaCarla);
   const ayC = await json(rr);
-  verificar(rr.status === 200 && ayC.rol === 'asesor' && !ayC.articulos.some(a => a.soloAdmin) && ayC.articulos.map(a => a.id).join(',') === 'leads,tareas,chats-por-responder,conversaciones,chats-respondidos,garantia,consultas,archivos-enviados,corregir,asistente,ingreso-dos-pasos,apariencia,manual-completo', 'un asesor ve solo los 13 temas para atender los chats y entrar al panel');
+  verificar(rr.status === 200 && ayC.rol === 'asesor' && !ayC.articulos.some(a => a.soloAdmin) && ayC.articulos.map(a => a.id).join(',') === 'leads,tareas,chats-por-responder,conversaciones,chats-respondidos,garantia,consultas,archivos-enviados,corregir,asistente,entrenamiento,ingreso-dos-pasos,apariencia,manual-completo', 'un asesor ve solo los 14 temas para atender los chats y entrar al panel');
   rr = await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Cómo devuelvo un chat a Verde?' }, galletaCarla);
   const pC = await json(rr);
   const sysC = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system);
@@ -943,7 +948,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
 
   mostrar('55) Centro de ayuda: manual y guías según el rol');
   const ay55 = await json(await api('/api/ayuda', 'GET'));
-  verificar(ay55.rol === 'admin' && ay55.articulos.filter(a => a.grupo === 'manual').length === 22 && ay55.articulos.filter(a => a.grupo === 'meta').length === 6 && ay55.revisionMeta === '2026-10-24', 'el administrador ve los 16 temas del manual y las 6 guías de Meta');
+  verificar(ay55.rol === 'admin' && ay55.articulos.filter(a => a.grupo === 'manual').length === 23 && ay55.articulos.filter(a => a.grupo === 'meta').length === 6 && ay55.revisionMeta === '2026-10-24', 'el administrador ve los 16 temas del manual y las 6 guías de Meta');
   verificar(ay55.articulos.every(a => a.titulo && a.resumen && a.bloques && a.bloques.length), 'cada tema tiene título, resumen y contenido');
 
   mostrar('56) Asistente de ayuda');
@@ -2092,6 +2097,46 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(typeof r80i.manual === 'string' && typeof r80i.seccion === 'string', 'la respuesta trae el manual y la sección citados (aunque vengan vacíos del simulador)');
   verificar((await json(await api('/api/manuales/' + mMd.id, 'DELETE'))).ok === true && (await api('/api/manuales/' + mMd.id)).status === 404 && !fs.existsSync(path.join(__dirname, 'data', 'manuales', mMd.id + '.txt')), 'eliminar borra el manual y sus archivos');
   verificar(manMod.paginas(2500 * 160) === 160 && manMod.resumenBase().estado === 'bien', 'el tamaño de la base se calcula en páginas');
+
+  mostrar('81) Modo Entrenamiento (1.6.1)');
+  const ay81 = await json(await api('/api/ayuda'));
+  verificar(ay81.entrenamiento && ay81.entrenamiento.permitido === true && ay81.entrenamiento.areas.includes('Logística, almacén y Mercado Libre'), 'el acceso general (administrador) puede entrenar y recibe las áreas');
+  verificar((await api('/api/entrenamiento/empezar', 'POST', { area: 'Área inexistente' })).status === 400, 'un área que no está en la lista se rechaza');
+  let e81 = await json(await api('/api/entrenamiento/empezar', 'POST', { area: 'Logística, almacén y Mercado Libre' }));
+  const conv81 = e81.conversacion;
+  verificar(conv81 && conv81.tipo === 'entrenamiento' && conv81.area === 'Logística, almacén y Mercado Libre' && conv81.titulo === 'Entrenamiento · Logística, almacén y Mercado Libre' && conv81.mensajes.length === 1 && conv81.mensajes[0].rol === 'asistente' && /su nombre, su puesto y el área/.test(conv81.mensajes[0].texto) && conv81.respuestas === 0, '«Empezar la entrevista» crea la conversación de entrenamiento con la primera pregunta fija');
+  verificar((await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Cómo ingreso un equipo?', conversacionId: conv81.id })).status === 400, 'el Instructor no responde dentro de una entrevista');
+  verificar((await api('/api/entrenamiento/generar', 'POST', { id: conv81.id })).status === 400, 'sin respuestas no se puede generar el borrador');
+  llamadasIA.length = 0;
+  e81 = await json(await api('/api/entrenamiento/responder', 'POST', { id: conv81.id, texto: 'Manuel Cadenas, encargado de depósito.' }));
+  const sysE = llamadasIA[llamadasIA.length - 1].body.system, msgsE = llamadasIA[llamadasIA.length - 1].body.messages;
+  verificar(e81.conversacion.mensajes.length === 3 && e81.conversacion.respuestas === 1 && /registra en el sistema/.test(e81.conversacion.mensajes[2].texto), 'cada respuesta recibe la siguiente pregunta del Entrevistador');
+  verificar(Array.isArray(sysE) && sysE[0].cache_control && /ENTREVISTADOR DEL CEREBRO DE CONOCIMIENTO/.test(sysE[0].text) && /Haz una sola pregunta por vez/.test(sysE[0].text) && /Pendiente de definir por Dirección/.test(sysE[0].text) && /sin voseo/.test(sysE[0].text) && /MANUAL YA CARGADO: PROTOCOLO EDITADO|MANUALES YA CARGADOS/.test(sysE[0].text) && /ÁREA QUE SE DOCUMENTA EN ESTA SESIÓN: Logística/.test(sysE[1].text) && msgsE[0].role === 'user' && msgsE[msgsE.length - 1].content === 'Manuel Cadenas, encargado de depósito.', 'la IA recibe el prompt del Entrevistador con los manuales aprobados en caché, el área y toda la entrevista');
+  const cons81 = await json(await api('/api/consumo-ia'));
+  verificar(((cons81.porOrigen || {}).entrenamiento || {}).consultas >= 1, 'la entrevista se registra en Consumo de IA como «Entrenamiento»');
+  for (const r of ['Lo cargo en el sistema con el número de orden.', 'Lo reviso con el remito.', 'Imprimo la etiqueta.', 'Lo entrego al correo antes de las 17.', 'No sé qué hacer si falta stock.']) e81 = await json(await api('/api/entrenamiento/responder', 'POST', { id: conv81.id, texto: r }));
+  verificar(e81.conversacion.respuestas === 6 && /Resumen de lo capturado/.test(e81.conversacion.mensajes[e81.conversacion.mensajes.length - 1].texto), 'a las 6 respuestas la IA resume y pide confirmación');
+  const lst81 = await json(await api('/api/ayuda/conversaciones'));
+  verificar(lst81.conversaciones[0].id === conv81.id && lst81.conversaciones[0].tipo === 'entrenamiento' && lst81.conversaciones[0].area === 'Logística, almacén y Mercado Libre' && lst81.conversaciones[0].respuestas === 6, 'la lista de conversaciones marca la entrevista con su área');
+  llamadasIA.length = 0;
+  const g81 = await json(await api('/api/entrenamiento/generar', 'POST', { id: conv81.id }));
+  const sysB = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system), msgB = String(llamadasIA[llamadasIA.length - 1].body.messages[0].content);
+  verificar(/REDACTOR DEL MANUAL DE ÁREA/.test(sysB) && /PENDIENTES DE DEFINIR POR DIRECCIÓN/.test(sysB) && /Responsable: Manuel Cadenas, encargado de depósito\./.test(msgB) && /Entrevistador: /.test(msgB), 'el borrador se pide con la estructura del manual y la transcripción completa');
+  verificar(g81.manual && g81.manual.estado === 'borrador' && g81.manual.origen === 'entrenamiento' && g81.manual.area === 'Logística, almacén y Mercado Libre' && g81.manual.nombre === 'Manual de Logística, almacén y Mercado Libre' && g81.manual.entrevista && g81.manual.entrevista.por === 'Acceso general' && g81.conversacion.borradorId === g81.manual.id && /Borrador generado/.test(g81.conversacion.mensajes[g81.conversacion.mensajes.length - 1].texto), 'el borrador queda en la biblioteca con origen «entrevista» y la entrevista lo recuerda');
+  const txt81 = (await json(await api('/api/manuales/' + g81.manual.id))).manual.texto;
+  verificar(/OBJETIVO DEL PUESTO/.test(txt81) && /Este borrador debe ser revisado y aprobado por Dirección/.test(txt81), 'el texto del borrador tiene la estructura y la nota de revisión');
+  llamadasIA.length = 0;
+  await json(await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Cómo despacho un pedido?', conversacionId: (await json(await api('/api/ayuda/conversaciones', 'POST'))).conversacion.id }));
+  verificar(!/=== MANUAL: MANUAL DE LOGÍSTICA/.test(llamadasIA[llamadasIA.length - 1].body.system[0].text), 'mientras es borrador, el Instructor no lo usa');
+  await json(await api('/api/entrenamiento/responder', 'POST', { id: conv81.id, texto: 'Sí, confirmo.' }));
+  const g81b = await json(await api('/api/entrenamiento/generar', 'POST', { id: conv81.id }));
+  verificar(g81b.manual.id === g81.manual.id && (await json(await api('/api/manuales'))).manuales.filter(m => m.nombre.startsWith('Manual de Logística')).length === 1, '«Generar de nuevo» actualiza el mismo borrador en lugar de duplicarlo');
+  await json(await api('/api/manuales/' + g81.manual.id + '/aprobar', 'POST'));
+  const g81c = await json(await api('/api/entrenamiento/generar', 'POST', { id: conv81.id }));
+  verificar(g81c.manual.id !== g81.manual.id && g81c.manual.nombre === 'Manual de Logística, almacén y Mercado Libre (2)', 'si el borrador ya fue aprobado, generar de nuevo crea otro con nombre distinto');
+  // Permiso por usuario
+  const u81 = usuariosMod.crear({ nombre: 'Lucas Entrena', usuario: 'lucas81', rol: 'asesor', firma: '- Lucas -' }).usuario;
+  verificar(usuariosMod.listar().find(x => x.id === u81.id).entrenar === false && usuariosMod.actualizar(u81.id, { entrenar: true }).entrenar === true && usuariosMod.listar().find(x => x.rol === 'admin').entrenar === true, 'el permiso se guarda por usuario y los administradores siempre lo tienen');
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }

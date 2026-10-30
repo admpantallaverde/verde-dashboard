@@ -123,7 +123,7 @@ async function crear(datos) {
   fs.writeFileSync(rutaTexto(id), texto, { encoding: 'utf8', mode: 0o600 });
   let archivoOriginal = null;
   if (original) { archivoOriginal = id + '.' + original.ext; fs.writeFileSync(path.join(DIR, archivoOriginal), original.buffer, { mode: 0o600 }); }
-  const m = Object.assign(v, { id, estado: 'borrador', activo: false, origen: datos.origen === 'entrenamiento' ? 'entrenamiento' : (original ? 'archivo' : 'texto'), archivoOriginal, nombreOriginal: original ? original.nombre : '', caracteres: texto.length, paginasPdf: pag, creadoEn: reloj(), actualizadoEn: reloj(), por: t(datos.por, 80) || 'Acceso general', aprobadoEn: null, aprobadoPor: '' });
+  const m = Object.assign(v, { id, estado: 'borrador', activo: false, origen: datos.origen === 'entrenamiento' ? 'entrenamiento' : (original ? 'archivo' : 'texto'), archivoOriginal, nombreOriginal: original ? original.nombre : '', caracteres: texto.length, paginasPdf: pag, creadoEn: reloj(), actualizadoEn: reloj(), por: t(datos.por, 80) || 'Acceso general', aprobadoEn: null, aprobadoPor: '', entrevista: datos.origen === 'entrenamiento' ? { por: t(datos.por, 80) || 'Acceso general', en: reloj() } : null });
   d.manuales.push(m);
   guardar(d);
   return publico(m);

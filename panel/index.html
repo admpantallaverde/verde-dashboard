@@ -1878,6 +1878,24 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 .modal.ancho{max-width:960px;width:calc(100vw - 40px)}
 @media(max-width:760px){.bb-ver{grid-template-columns:1fr}.bb-indice{max-height:120px}.ba-fila{grid-template-columns:1fr}}
 
+/* ===================== 1.6.1: modo Entrenamiento ===================== */
+.ay-modo{display:inline-flex;border:1px solid var(--border);border-radius:30px;padding:3px;background:var(--surface-2);gap:2px}
+.ay-modo button{border:none;background:transparent;font:inherit;font-size:12.5px;font-weight:600;color:var(--muted);padding:6px 12px;border-radius:30px;cursor:pointer}
+.ay-modo button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.ay-ent-start{padding:26px 22px;border:1px dashed var(--border);border-radius:14px;margin:14px;text-align:center}
+.ay-ent-start h4{margin:0 0 6px;font-size:16px}
+.ay-ent-start p{margin:0 auto 14px;max-width:520px;font-size:13.5px;color:var(--muted);line-height:1.5}
+.ay-ent-start .field{max-width:420px;margin:0 auto 12px;text-align:left}
+.ay-ent-info{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--border-soft);font-size:12.5px;color:var(--muted)}
+.ay-ent-info b{color:var(--text)}
+.ay-ent-info .btn{padding:6px 12px;min-height:0;font-size:12.5px}
+.ay-ent-info .btn:disabled{opacity:.45;cursor:not-allowed}
+.ay-resp.ay-sistema{background:var(--surface-2);border-left:3px solid var(--accent)}
+.ay-conv-item .ay-ent-tag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:30px;font-size:10.5px;font-weight:700;background:rgba(201,242,77,.18);border:1px solid var(--accent-borde);color:var(--text)}
+.usr-ent{display:flex;align-items:flex-start;gap:10px;font-size:13px;cursor:pointer;margin-top:4px}
+.usr-ent input{width:18px;height:18px;accent-color:var(--accent);margin:1px 0 0;flex:none}
+.usr-ent small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -2662,9 +2680,9 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
     <div class="view" id="view-ayuda">
       <div class="ay-grid" id="ayGrid">
         <section class="panel ay-asistente" aria-labelledby="ayTitAsistente">
-          <div class="panel-head ay-cab"><div><h3 id="ayTitAsistente"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> Asistente IA</h3><span class="ay-instructor" id="ayInstructor"></span></div><div class="ay-cab-acc"><div class="ay-adjunto oculto" id="ayAdjunto"></div><button class="btn btn-ghost ay-volver oculto" type="button" id="ayVolverChat" onclick="volverAlChatAyuda()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Volver al chat</button><div class="ay-conv-wrap" id="ayConvWrap"><button class="btn btn-ghost" type="button" id="ayConvBtn" onclick="alternarListaAyuda()" aria-haspopup="true"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Conversaciones</button><div class="ay-conv-lista" id="ayConvLista" role="menu" aria-label="Conversaciones anteriores"></div></div><button class="btn btn-ghost" type="button" id="ayLimpiar" onclick="limpiarAyuda()">Nueva conversación</button></div></div>
+          <div class="panel-head ay-cab"><div><h3 id="ayTitAsistente"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> Asistente IA</h3><span class="ay-instructor" id="ayInstructor"></span></div><div class="ay-cab-acc"><div class="ay-modo oculto" id="ayModo" role="tablist" aria-label="Modo del asistente"><button type="button" role="tab" class="on" data-modo="instructor" onclick="cambiarModoAyuda('instructor')">Instructor</button><button type="button" role="tab" data-modo="entrenamiento" onclick="cambiarModoAyuda('entrenamiento')">Entrenamiento</button></div><div class="ay-adjunto oculto" id="ayAdjunto"></div><button class="btn btn-ghost ay-volver oculto" type="button" id="ayVolverChat" onclick="volverAlChatAyuda()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Volver al chat</button><div class="ay-conv-wrap" id="ayConvWrap"><button class="btn btn-ghost" type="button" id="ayConvBtn" onclick="alternarListaAyuda()" aria-haspopup="true"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Conversaciones</button><div class="ay-conv-lista" id="ayConvLista" role="menu" aria-label="Conversaciones anteriores"></div></div><button class="btn btn-ghost" type="button" id="ayLimpiar" onclick="limpiarAyuda()">Nueva conversación</button></div></div>
           <div class="ay-atajos" id="ayAtajos"></div>
-          <div class="ay-chat" id="ayChat" aria-live="polite"></div>
+          <div class="ay-ent-info oculto" id="ayEntInfo"></div><div class="ay-ent-start oculto" id="ayEntStart"><h4>Entrenar al cerebro</h4><p>La IA lo va a entrevistar sobre cómo se trabaja en su área, una pregunta por vez. Al terminar, genera el borrador del manual para que Dirección lo revise.</p><div class="field"><label for="ayEntArea">Área que se documenta en esta sesión</label><select id="ayEntArea"></select></div><button type="button" class="btn btn-primary" id="ayEntEmpezar" onclick="empezarEntrevistaAyuda()">Empezar la entrevista</button></div><div class="ay-chat" id="ayChat" aria-live="polite"></div>
           <div class="ay-pie">
             <div class="ay-adj-chip oculto" id="ayAdjChip"></div>
             <div class="ay-input"><input type="file" id="ayArchivo" accept="image/jpeg,image/png" class="oculto" tabindex="-1" aria-hidden="true" onchange="imagenAyudaElegida(this)"><button type="button" class="ay-clip" id="ayAdjuntar" onclick="document.getElementById('ayArchivo').click()" aria-label="Adjuntar una imagen" title="Adjuntar una imagen (JPG o PNG, hasta 5 MB)"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></button><textarea id="ayPregunta" rows="1" maxlength="500" onpaste="pegarEnAyuda(event)" placeholder="Escribir la consulta: un cliente, una venta, un presupuesto, el panel o las reglas de WhatsApp…" aria-label="Pregunta para el asistente" onkeydown="teclaAyuda(event)" oninput="ajustarAlto(this)"></textarea><button class="ay-enviar" type="button" id="ayEnviar" onclick="preguntarAyuda()" aria-label="Enviar la pregunta"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button></div>
@@ -2755,6 +2773,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
       <div class="field"><label for="usrUsuario">Usuario para entrar al panel</label><input type="text" id="usrUsuario" maxlength="30" autocomplete="off" autocapitalize="none"><p class="faint" style="margin-top:5px" id="usrUsuarioAyuda">Letras sin acentos, números, punto, guion o guion bajo (de 3 a 30).</p></div>
       <div class="field"><label>Rol</label><div id="usrRoles" role="radiogroup" aria-label="Rol"></div></div>
       <div class="field"><label for="usrFirma">Firma en WhatsApp</label><input type="text" id="usrFirma" maxlength="40" placeholder="por ejemplo: — Carla"><p class="faint" style="margin-top:5px">Cada mensaje que envíe desde el celular debe terminar con esta firma. Así el historial sabe quién respondió.</p></div>
+      <div class="field"><label class="usr-ent"><input type="checkbox" id="usrEntrenar"><span>Puede entrenar al cerebro (modo Entrenamiento)<small>La IA lo entrevista sobre su área y genera el borrador del manual. Los administradores siempre pueden.</small></span></label></div>
       <div class="usr-dp oculto" id="usrDosPasos"><div class="usr-dp-cab"><b><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>Verificación en 2 pasos</b><span class="pill" id="usrDpEstado"></span></div><p class="faint" id="usrDpTexto"></p><button class="btn btn-ghost" type="button" id="usrDpBtn" onclick="restablecerDosPasosUsuario()">Restablecer verificación en 2 pasos</button></div>
       <div class="note" id="usrNotaClave"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>Al guardar se genera una <b>contraseña temporal</b> que se muestra una sola vez. La persona la cambia por una propia en su primer ingreso.</span></div>
       <div class="login-err" id="usrErr" style="margin-top:10px"></div>
@@ -5229,7 +5248,7 @@ function abrirUsuario(id){
   document.getElementById('usrNombre').value=u?u.nombre:'';
   const us=document.getElementById('usrUsuario');us.value=u?u.usuario:'';us.disabled=!!u;
   document.getElementById('usrUsuarioAyuda').textContent=u?'El usuario no se puede cambiar.':'Letras sin acentos, números, punto, guion o guion bajo (de 3 a 30).';
-  document.getElementById('usrFirma').value=u?(u.firma||''):'';
+  document.getElementById('usrFirma').value=u?(u.firma||''):'';const ue=document.getElementById('usrEntrenar');if(ue)ue.checked=!!(u&&u.entrenar);
   _usrRol=u?u.rol:'asesor';pintarRoles();
   document.getElementById('usrNotaClave').classList.toggle('oculto',!!u);
   pintarDosPasosUsuario(u);
@@ -5239,7 +5258,7 @@ function abrirUsuario(id){
 }
 async function guardarUsuarioPanel(){
   const e=document.getElementById('usrErr');const fallo=m=>{e.textContent=m;e.classList.add('show');};
-  const datos={nombre:document.getElementById('usrNombre').value.trim(),rol:_usrRol,firma:document.getElementById('usrFirma').value.trim()};
+  const datos={nombre:document.getElementById('usrNombre').value.trim(),rol:_usrRol,firma:document.getElementById('usrFirma').value.trim(),entrenar:!!(document.getElementById('usrEntrenar')||{}).checked};
   if(!datos.nombre)return fallo('Falta el nombre.');
   const btn=document.getElementById('usrOk');btn.disabled=true;
   let r;
@@ -6037,8 +6056,8 @@ function pintarConsumo(c){
   const mesDato=c.desde.slice(0,7);
   document.getElementById('consCostoSub').textContent=c.tipo==='mes'?(etiquetaMes(mesDato,false)+(mesDato===actual?', hasta hoy':'')):textoPeriodo(c.desde,c.hasta);
   document.getElementById('consConsultas').textContent=_consEnt.format(c.total.consultas);
-  const w=((c.porOrigen||{}).whatsapp||{}).consultas||0,pr=((c.porOrigen||{}).pruebas||{}).consultas||0,ay=((c.porOrigen||{}).ayuda||{}).consultas||0,co=((c.porOrigen||{}).correccion||{}).consultas||0,cl=((c.porOrigen||{}).clasificacion||{}).consultas||0,rpo=((c.porOrigen||{}).reporte||{}).consultas||0,sug=((c.porOrigen||{}).sugerencia||{}).consultas||0;
-  document.getElementById('consOrigen').textContent='WhatsApp: '+_consEnt.format(w)+' · Pruebas en el panel: '+_consEnt.format(pr)+' · Ayuda: '+_consEnt.format(ay)+' · Corrección: '+_consEnt.format(co)+' · Clasificación: '+_consEnt.format(cl)+' · Reporte: '+_consEnt.format(rpo)+' · Sugerencias: '+_consEnt.format(sug);
+  const w=((c.porOrigen||{}).whatsapp||{}).consultas||0,pr=((c.porOrigen||{}).pruebas||{}).consultas||0,ay=((c.porOrigen||{}).ayuda||{}).consultas||0,co=((c.porOrigen||{}).correccion||{}).consultas||0,cl=((c.porOrigen||{}).clasificacion||{}).consultas||0,rpo=((c.porOrigen||{}).reporte||{}).consultas||0,sug=((c.porOrigen||{}).sugerencia||{}).consultas||0,entr=((c.porOrigen||{}).entrenamiento||{}).consultas||0;
+  document.getElementById('consOrigen').textContent='WhatsApp: '+_consEnt.format(w)+' · Pruebas en el panel: '+_consEnt.format(pr)+' · Ayuda: '+_consEnt.format(ay)+' · Corrección: '+_consEnt.format(co)+' · Clasificación: '+_consEnt.format(cl)+' · Reporte: '+_consEnt.format(rpo)+' · Sugerencias: '+_consEnt.format(sug)+' · Entrenamiento: '+_consEnt.format(entr);
   document.getElementById('consPromedio').textContent=c.total.consultas?'US$ '+_cons4.format(c.promedio):'—';
   const m=c.modeloActual||{};
   const mv=document.getElementById('consModelo');
@@ -6155,6 +6174,7 @@ async function cargarAyuda(){
     const r=await api('/api/ayuda');
     if(!r.ok){document.getElementById('ayManual').innerHTML='<li class="faint" style="padding:10px 8px">No se pudo cargar el manual. Volver a intentar en unos minutos.</li>';return;}
     AYUDA.articulos=r.json.articulos||[];AYUDA.rol=r.json.rol||'admin';AYUDA.revision=r.json.revisionMeta||'';
+    AYUDA.entrenamiento=r.json.entrenamiento||{permitido:false,areas:[]};const selE=document.getElementById('ayEntArea');if(selE)selE.innerHTML=(AYUDA.entrenamiento.areas||[]).map(a=>'<option value="'+escH(a)+'">'+escH(a)+'</option>').join('');pintarModoAyuda();
     const ins=document.getElementById('ayInstructor'),lm=(r.json.instructor&&r.json.instructor.manuales)||[];if(ins){ins.textContent='Instructor · responde desde '+lm.length+(lm.length===1?' manual':' manuales');ins.title=lm.join(' · ');}
   }
   if(!AYUDA.conv)await cargarConversacionAyuda();   // 1.5.3
@@ -6218,9 +6238,9 @@ function preguntarSobreTema(){
 function pintarChatAyuda(){
   const box=document.getElementById('ayChat');
   pintarAdjuntoAyuda();
-  const atj=document.getElementById('ayAtajos');if(atj&&!AYUDA.chat)atj.classList.toggle('oculto',AYUDA.hilo.length>0);   // 1.5.5: como las sugerencias de Claude
+  const atj=document.getElementById('ayAtajos');if(atj&&!AYUDA.chat)atj.classList.toggle('oculto',AYUDA.hilo.length>0||AYUDA.modo==='entrenamiento');   // 1.5.5: como las sugerencias de Claude
   if(!AYUDA.hilo.length){
-    box.innerHTML='<div class="ay-vacio"><span>Escribí tu consulta o usá un acceso rápido.</span></div>';
+    box.innerHTML='<div class="ay-vacio"><span>'+(AYUDA.modo==='entrenamiento'?'La entrevista empieza con la primera pregunta del Entrevistador.':'Escribí tu consulta o usá un acceso rápido.')+'</span></div>';
     return;
   }
   box.innerHTML=AYUDA.hilo.map((x,hi)=>{
@@ -6228,7 +6248,8 @@ function pintarChatAyuda(){
     if(x.pendiente)return h+'<div class="ay-pensando" role="status">Buscando la respuesta…</div>';
     if(x.error)return h+'<div class="ay-resp error"><span class="ay-txt">'+escH(x.error)+'</span></div>';
     const f=(x.fuentes||[]).length?'<div class="ay-fuentes"><span>Fuente:</span>'+x.fuentes.map(s=>'<button type="button" class="ay-fuente" onclick="abrirArticulo(\''+escH(s.id)+'\')">'+escH((s.grupo==='meta'?'Guías de Meta':'Manual')+' › '+s.titulo)+'</button>').join('')+'</div>':'';
-    return h+'<div class="ay-resp"><span class="ay-quien">Asistente IA'+botonEscucharAyuda(hi)+botonVelocidadVoz()+'</span><span class="ay-txt">'+manualHtml(x)+formatoAyuda(x.respuesta)+'</span>'+htmlTextosAyuda(x,hi)+'</div>';
+    if(x.sistema)return h+'<div class="ay-resp ay-sistema"><span class="ay-txt">'+escH(x.respuesta)+'</span></div>';
+    return h+'<div class="ay-resp"><span class="ay-quien">'+(esEntrevista()?'Entrevistador IA':'Asistente IA')+botonEscucharAyuda(hi)+botonVelocidadVoz()+'</span><span class="ay-txt">'+manualHtml(x)+formatoAyuda(x.respuesta)+'</span>'+htmlTextosAyuda(x,hi)+'</div>';
   }).join('');
   box.scrollTop=box.scrollHeight;
 }
@@ -6236,6 +6257,7 @@ async function preguntarAyuda(texto){
   if(AYUDA.cargando)return;
   const ta=document.getElementById('ayPregunta');
   const q=String(texto!==undefined?texto:ta.value).trim();
+  if(AYUDA.modo==='entrenamiento'){if(!esEntrevista()){toast('Primero elegí el área','y tocá «Empezar la entrevista».','info');return;}if(!q)return;return responderEntrevistaAyuda(q);}
   const img=AYUDA.adjuntoImg;
   if(!q&&!img)return;
   const item={pregunta:q,pendiente:true,imagenLocal:img?img.datos:null};
@@ -7491,13 +7513,15 @@ async function guardarProceso(){
 /* ===================== 1.5.3: Centro de ayuda personal ===================== */
 AYUDA.conv=null;AYUDA.adjuntoImg=null;AYUDA.lista=[];
 function aplicarConversacionAyuda(c){
-  AYUDA.conv={id:c.id,titulo:c.titulo||''};
+  AYUDA.conv={id:c.id,titulo:c.titulo||'',tipo:c.tipo||'instructor',area:c.area||'',borradorId:c.borradorId||null,respuestas:c.respuestas||0};
+  if(AYUDA.conv.tipo==='entrenamiento')AYUDA.modo='entrenamiento';else if(AYUDA.modo==='entrenamiento')AYUDA.modo='instructor';
   const hilo=[];
   for(const m of (c.mensajes||[])){
     if(m.rol==='usuario')hilo.push({pregunta:m.texto,imagen:m.imagen||null});
-    else{let it=hilo[hilo.length-1];if(!it||it.respuesta!==undefined){it={pregunta:'',sinPregunta:true};hilo.push(it);}it.respuesta=m.texto;it.fuentes=m.fuentes||[];it.textos=m.textos||[];it.manual=m.manual||'';it.seccion=m.seccion||'';}
+    else{let it=hilo[hilo.length-1];if(!it||it.respuesta!==undefined){it={pregunta:'',sinPregunta:true};hilo.push(it);}it.respuesta=m.texto;it.fuentes=m.fuentes||[];it.textos=m.textos||[];it.manual=m.manual||'';it.seccion=m.seccion||'';if(m.sistema)it.sistema=true;}
   }
   AYUDA.hilo=hilo;
+  pintarModoAyuda();
   pintarChatAyuda();
 }
 async function cargarConversacionAyuda(){
@@ -7521,7 +7545,7 @@ async function alternarListaAyuda(){
   if(!r.ok){l.innerHTML='<div class="ay-conv-vacio">No se pudieron cargar las conversaciones.</div>';return;}
   AYUDA.lista=r.json.conversaciones||[];
   const conMensajes=AYUDA.lista.filter(c=>c.mensajes>0);
-  l.innerHTML=conMensajes.length?conMensajes.map(c=>'<button type="button" class="ay-conv-item'+(AYUDA.conv&&c.id===AYUDA.conv.id?' ay-actual':'')+'" data-id="'+escH(c.id)+'" onclick="abrirConversacionAyuda(this.dataset.id)"><b>'+escH(c.titulo||'Conversación')+'</b><span>'+escH(horaCorta(c.actualizadoEn))+' · '+c.mensajes+(c.mensajes===1?' mensaje':' mensajes')+'</span></button>').join(''):'<div class="ay-conv-vacio">Todavía no hay conversaciones guardadas.</div>';
+  l.innerHTML=conMensajes.length?conMensajes.map(c=>'<button type="button" class="ay-conv-item'+(AYUDA.conv&&c.id===AYUDA.conv.id?' ay-actual':'')+'" data-id="'+escH(c.id)+'" onclick="abrirConversacionAyuda(this.dataset.id)"><b>'+escH(c.titulo||'Conversación')+(c.tipo==='entrenamiento'?'<span class="ay-ent-tag">Entrenamiento</span>':'')+'</b><span>'+escH(horaCorta(c.actualizadoEn))+' · '+c.mensajes+(c.mensajes===1?' mensaje':' mensajes')+'</span></button>').join(''):'<div class="ay-conv-vacio">Todavía no hay conversaciones guardadas.</div>';
 }
 function cerrarListaAyuda(){const l=document.getElementById('ayConvLista');if(l)l.classList.remove('show');}
 async function abrirConversacionAyuda(id){
@@ -7901,6 +7925,75 @@ async function guardarAreas(){
   const r=await api('/api/manuales-areas',{method:'PUT',body:{areas}});
   if(!r.ok){toast('No se pudieron guardar las áreas',r.json.error||'','error');return;}
   close_('baOverlay');toast('Áreas guardadas','El Instructor ya usa la lista nueva.','success');cargarConocimiento();
+}
+
+
+/* ===================== 1.6.1: modo Entrenamiento ===================== */
+function esEntrevista(){return !!(AYUDA.conv&&AYUDA.conv.tipo==='entrenamiento');}
+function pintarModoAyuda(){
+  const m=document.getElementById('ayModo');if(!m)return;
+  AYUDA.modo=AYUDA.modo||'instructor';
+  const perm=!!(AYUDA.entrenamiento&&AYUDA.entrenamiento.permitido);
+  m.classList.toggle('oculto',!perm);
+  m.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.modo===AYUDA.modo));
+  const start=document.getElementById('ayEntStart'),info=document.getElementById('ayEntInfo'),chat=document.getElementById('ayChat'),ins=document.getElementById('ayInstructor'),atj=document.getElementById('ayAtajos'),adj=document.getElementById('ayAdjuntar'),ta=document.getElementById('ayPregunta');
+  const ent=AYUDA.modo==='entrenamiento';
+  if(ins)ins.classList.toggle('oculto',ent);
+  if(adj)adj.classList.toggle('oculto',ent);
+  if(ta)ta.placeholder=ent?'Responder al Entrevistador…':'Escribir la consulta: un cliente, una venta, un presupuesto, el panel o las reglas de WhatsApp…';
+  if(ent&&!esEntrevista()){
+    if(start){start.classList.remove('oculto');const sel=document.getElementById('ayEntArea');if(sel&&!sel.options.length)sel.innerHTML=(AYUDA.entrenamiento.areas||[]).map(a=>'<option value="'+escH(a)+'">'+escH(a)+'</option>').join('');}
+    if(chat)chat.classList.add('oculto');if(info)info.classList.add('oculto');if(atj)atj.classList.add('oculto');
+    return;
+  }
+  if(start)start.classList.add('oculto');if(chat)chat.classList.remove('oculto');
+  if(info){
+    if(esEntrevista()){
+      const c=AYUDA.conv,n=c.respuestas||0,puede=n>=6;
+      info.classList.remove('oculto');
+      info.innerHTML='<span>Entrenamiento · <b>'+escH(c.area||'')+'</b> · '+n+(n===1?' respuesta':' respuestas')+(c.borradorId?' · borrador generado':'')+'</span><button type="button" class="btn btn-primary" id="ayEntGenerar" '+(puede?'':'disabled title="Se habilita a partir de 6 respuestas"')+' onclick="generarBorradorAyuda()">'+(c.borradorId?'Generar de nuevo':'Terminar y generar el borrador')+'</button>';
+    } else info.classList.add('oculto');
+  }
+}
+function cambiarModoAyuda(modo){
+  if(AYUDA.cargando)return;
+  AYUDA.modo=modo==='entrenamiento'?'entrenamiento':'instructor';
+  if(AYUDA.modo==='instructor'&&esEntrevista()){nuevaConversacionAyuda();return;}
+  if(AYUDA.modo==='entrenamiento'&&!esEntrevista()){cerrarListaAyuda();quitarImagenAyuda();}
+  pintarModoAyuda();pintarChatAyuda();
+}
+async function empezarEntrevistaAyuda(){
+  if(AYUDA.cargando)return;
+  const sel=document.getElementById('ayEntArea'),area=sel?sel.value:'';
+  if(!area){toast('Elegir el área','','error');return;}
+  AYUDA.cargando=true;const btn=document.getElementById('ayEntEmpezar');if(btn)btn.disabled=true;
+  const r=await api('/api/entrenamiento/empezar',{method:'POST',body:{area}});
+  AYUDA.cargando=false;if(btn)btn.disabled=false;
+  if(!r.ok){toast('No se pudo empezar la entrevista',r.json.error||'','error');return;}
+  AYUDA.modo='entrenamiento';
+  aplicarConversacionAyuda(r.json.conversacion);
+  const ta=document.getElementById('ayPregunta');if(ta)ta.focus();
+}
+async function responderEntrevistaAyuda(q){
+  const item={pregunta:q,pendiente:true};
+  AYUDA.hilo.push(item);AYUDA.cargando=true;
+  const ta=document.getElementById('ayPregunta');ta.value='';ajustarAlto(ta);
+  const btn=document.getElementById('ayEnviar');btn.disabled=true;
+  pintarChatAyuda();
+  const r=await api('/api/entrenamiento/responder',{method:'POST',body:{id:AYUDA.conv.id,texto:q}});
+  AYUDA.cargando=false;btn.disabled=false;
+  if(!r.ok){item.pendiente=false;item.error=r.json.error||'No se pudo obtener la siguiente pregunta. Intentar de nuevo.';pintarChatAyuda();return;}
+  aplicarConversacionAyuda(r.json.conversacion);ta.focus();
+}
+async function generarBorradorAyuda(){
+  if(AYUDA.cargando||!esEntrevista())return;
+  const btn=document.getElementById('ayEntGenerar');if(btn){btn.disabled=true;btn.textContent='Redactando el borrador…';}
+  AYUDA.cargando=true;
+  const r=await api('/api/entrenamiento/generar',{method:'POST',body:{id:AYUDA.conv.id}});
+  AYUDA.cargando=false;
+  if(!r.ok){if(btn){btn.disabled=false;btn.textContent=AYUDA.conv.borradorId?'Generar de nuevo':'Terminar y generar el borrador';}toast('No se pudo generar el borrador',r.json.error||'','error');return;}
+  aplicarConversacionAyuda(r.json.conversacion);
+  toast('Borrador generado','«'+(r.json.manual.nombre||'Manual')+'» quedó en la Biblioteca de conocimiento como borrador.'+(AYUDA.rol==='admin'?' Revisalo y aprobalo desde Verde › Biblioteca de conocimiento.':' Dirección lo va a revisar antes de usarlo para capacitar.'),'success');
 }
 
 </script>

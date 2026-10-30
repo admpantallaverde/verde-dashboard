@@ -84,7 +84,8 @@ function publico(u) {
     id: u.id, nombre: u.nombre, usuario: u.usuario, rol: u.rol, rolNombre: ROLES[u.rol] || u.rol,
     firma: u.firma || '', activo: u.activo !== false, debeCambiar: !!u.debeCambiar,
     creadoEn: u.creadoEn || null, ultimoIngreso: u.ultimoIngreso || null,
-    dosPasos: !!(u.dosPasos && u.dosPasos.secreto)   // 1.4.15: verificación en 2 pasos activa
+    dosPasos: !!(u.dosPasos && u.dosPasos.secreto),   // 1.4.15: verificación en 2 pasos activa
+    entrenar: u.rol === 'admin' || !!u.entrenar   // 1.6.1: puede usar el modo Entrenamiento (los administradores siempre)
   };
 }
 function adminsActivosSalvo(lista, id) { return lista.filter(u => u.rol === 'admin' && u.activo !== false && u.id !== id).length; }
@@ -113,7 +114,7 @@ function crear(datos) {
   const temporal = claveTemporal();
   const sal = crypto.randomBytes(16).toString('hex');
   const u = {
-    id: 'u' + crypto.randomBytes(5).toString('hex'), nombre, usuario, rol, firma, activo: true,
+    id: 'u' + crypto.randomBytes(5).toString('hex'), nombre, usuario, rol, firma, activo: true, entrenar: datos.entrenar === true,   // 1.6.1
     sal, hash: cifrar(temporal, sal), debeCambiar: true, creadoEn: reloj(), ultimoIngreso: null, sesionesDesde: 0
   };
   d.usuarios.push(u);
@@ -132,6 +133,7 @@ function actualizar(id, cambios) {
     u.nombre = n;
   }
   if (cambios.firma !== undefined) u.firma = limpiarTexto(cambios.firma, 40);
+  if (typeof cambios.entrenar === 'boolean') u.entrenar = cambios.entrenar;   // 1.6.1
   if (cambios.rol !== undefined && cambios.rol !== u.rol) {
     if (!Object.prototype.hasOwnProperty.call(ROLES, cambios.rol)) throw error('El rol no es válido.');
     if (u.rol === 'admin' && adminsActivosSalvo(d.usuarios, u.id) === 0) throw error('Tiene que quedar al menos un administrador activo.');
