@@ -1626,6 +1626,8 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 @media(max-width:600px){.acc-fila select{min-width:0;width:100%}.acc-fila .cons-campo{flex:1 1 100%}}
 @media(max-width:420px){.dp-caja{width:40px;height:50px;font-size:22px}.dp-cajas{gap:6px}.dp-qr svg{width:164px;height:164px}}
 
+/* ===================== 1.4.16: en pantallas táctiles, los campos de texto usan 16 px: con menos, el iPhone agranda la página al tocarlos ===================== */
+@media (pointer: coarse){input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),textarea,select{font-size:16px!important}}
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
