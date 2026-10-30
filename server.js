@@ -43,9 +43,10 @@ const hilos = require('./ayuda-hilos.js');     // 1.5.3: conversaciones guardada
 const reportes = require('./reportes.js');     // 1.5.7: reportes semanales
 const encuestas = require('./encuestas.js');   // 1.5.9: encuesta de calificación
 const manuales = require('./manuales.js');     // 1.6.0: biblioteca de conocimiento
+const casos = require('./casos.js');           // 1.6.5: casos resueltos
 const manualCompleto = require('./manual-completo.js');
 
-const VERSION = '1.6.4';
+const VERSION = '1.6.5';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -1066,9 +1067,10 @@ app.post('/api/entrenamiento/empezar', permiso(['ayuda']), (req, res) => {
   if (!area || !manuales.areas().some(a => a.nombre === area)) return res.status(400).json({ error: 'Elegir el área que se documenta en esta sesión.' });
   if (!manuales.areasParaEntrenar(rolDe(req) === 'admin').some(a => a.nombre === area)) return res.status(403).json({ error: 'Esa área está reservada: solo un administrador puede entrenarla.' });   // 1.6.4
   const clave = claveAyuda(req);
-  let conv = hilos.nueva(clave, { tipo: 'entrenamiento', area });
-  conv = hilos.agregar(clave, conv.id, { rol: 'asistente', texto: ayuda.primeraPreguntaEntrevista(area) });
-  console.log('Panel: ' + quienEs(req) + ' empezó una entrevista del área «' + area + '»');
+  const subtipo = String((req.body || {}).subtipo || '') === 'caso' ? 'caso' : '';   // 1.6.5
+  let conv = hilos.nueva(clave, { tipo: 'entrenamiento', area, subtipo });
+  conv = hilos.agregar(clave, conv.id, { rol: 'asistente', texto: subtipo === 'caso' ? ayuda.primeraPreguntaCaso(area) : ayuda.primeraPreguntaEntrevista(area) });
+  console.log('Panel: ' + quienEs(req) + ' empezó ' + (subtipo === 'caso' ? 'un caso resuelto' : 'una entrevista') + ' del área «' + area + '»');
   res.json({ conversacion: conversacionPublica(conv, rolDe(req), accesosDe(req)) });
 });
 app.post('/api/entrenamiento/responder', permiso(['ayuda']), async (req, res) => {
@@ -1091,7 +1093,8 @@ app.post('/api/entrenamiento/responder', permiso(['ayuda']), async (req, res) =>
     const asis = bot.configAsistente(v);
     const vc = Object.assign({}, v, { tecnico: Object.assign({}, v.tecnico || {}, { maxTokens: Math.max(2000, (v.tecnico && v.tecnico.maxTokens) || 0) }) });
     let crudo;
-    try { crudo = await bot.callClaude(ayuda.instruccionesEntrevistador(conv.area, { nombreEmpresa: v.empresa, quien: quienActua(req) }), hilos.entrevistaParaIA(conv, imagenBase64), vc, asis.modelo, 'entrenamiento', { esfuerzo: asis.esfuerzo }); }
+    const sistemaEnt = conv.subtipo === 'caso' ? ayuda.instruccionesCasos(conv.area, { nombreEmpresa: v.empresa, quien: quienActua(req) }) : ayuda.instruccionesEntrevistador(conv.area, { nombreEmpresa: v.empresa, quien: quienActua(req) });   // 1.6.5
+    try { crudo = await bot.callClaude(sistemaEnt, hilos.entrevistaParaIA(conv, imagenBase64), vc, asis.modelo, 'entrenamiento', { esfuerzo: asis.esfuerzo }); }
     catch (e) { console.error('Entrevistador: la IA no respondió:', e.message); return res.status(502).json({ error: 'La IA no está disponible en este momento. La respuesta quedó guardada; intentar de nuevo en unos minutos.' }); }
     const pregunta = limpiarTextoIA(crudo) || '¿Podría ampliar un poco más su última respuesta?';
     conv = hilos.agregar(clave, conv.id, { rol: 'asistente', texto: pregunta });
@@ -1105,6 +1108,7 @@ app.post('/api/entrenamiento/generar', permiso(['ayuda']), async (req, res) => {
     const clave = claveAyuda(req);
     let conv = hilos.abrir(clave, String((req.body || {}).id || ''));
     if (!conv || conv.tipo !== 'entrenamiento') return res.status(404).json({ error: 'Esa entrevista no existe.' });
+    if (conv.subtipo === 'caso') return res.status(400).json({ error: 'Esta sesión es un caso resuelto: usar «Guardar el caso».' });   // 1.6.5
     const respuestas = conv.mensajes.filter(m => m.rol === 'usuario').length;
     if (respuestas < MIN_RESPUESTAS_BORRADOR) return res.status(400).json({ error: 'Faltan respuestas: el borrador se genera a partir de ' + MIN_RESPUESTAS_BORRADOR + ' respuestas (hay ' + respuestas + ').' });
     const v = bot.getVerde();
@@ -1137,6 +1141,64 @@ app.post('/api/entrenamiento/generar', permiso(['ayuda']), async (req, res) => {
     conv = hilos.agregar(clave, conv.id, { rol: 'asistente', sistema: true, texto: (manual.actualizaDe ? 'Actualización generada: «' + manual.nombre + '». Quedó en la Biblioteca de conocimiento como borrador; al aprobarla, reemplaza el manual vigente y la versión anterior queda guardada.' : 'Borrador generado: «' + manual.nombre + '». Quedó en la Biblioteca de conocimiento como borrador; Dirección lo va a revisar antes de usarlo para capacitar.') + ' Si continúa la entrevista, «Generar de nuevo» lo actualiza.' });
     console.log('Panel: ' + quienEs(req) + ' generó el borrador «' + manual.nombre + '» desde una entrevista');
     res.json({ manual, conversacion: conversacionPublica(conv, rolDe(req), accesosDe(req)) });
+  } catch (e) { responderError(res, e); }
+});
+/* ---------- 1.6.5: casos resueltos ---------- */
+app.post('/api/entrenamiento/guardar-caso', permiso(['ayuda']), async (req, res) => {
+  try {
+    if (!puedeEntrenar(req)) return res.status(403).json({ error: 'Esta persona no tiene habilitado el modo Entrenamiento.' });
+    const clave = claveAyuda(req);
+    let conv = hilos.abrir(clave, String((req.body || {}).id || ''));
+    if (!conv || conv.tipo !== 'entrenamiento' || conv.subtipo !== 'caso') return res.status(404).json({ error: 'Esa sesión de caso no existe.' });
+    if (conv.casoId) return res.status(400).json({ error: 'Este caso ya fue guardado. Empezar uno nuevo con «Nuevo caso».' });
+    if (!conv.mensajes.some(m => m.rol === 'usuario')) return res.status(400).json({ error: 'Primero contar el caso.' });
+    const v = bot.getVerde();
+    const asis = bot.configAsistente(v);
+    const vc = Object.assign({}, v, { tecnico: Object.assign({}, v.tecnico || {}, { maxTokens: Math.max(3000, (v.tecnico && v.tecnico.maxTokens) || 0) }) });
+    const transcripcion = conv.mensajes.filter(m => !m.sistema).map(m => (m.rol === 'asistente' ? 'Entrevistador: ' : 'Persona: ') + (m.imagen ? '[envió una imagen: ' + (m.imagen.nombre || 'imagen') + '] ' : '') + m.texto).join('\n');
+    let crudo;
+    try { crudo = await bot.callClaude(ayuda.instruccionesFichaCaso(conv.area, { nombreEmpresa: v.empresa }), [{ role: 'user', content: 'CONVERSACIÓN:\n' + transcripcion }], vc, asis.modelo, 'entrenamiento', { esfuerzo: asis.esfuerzo }); }
+    catch (e) { console.error('Ficha del caso: la IA no respondió:', e.message); return res.status(502).json({ error: 'La IA no está disponible en este momento. Intentar de nuevo en unos minutos.' }); }
+    const j = leads.limpiarJson(crudo);
+    if (!j) return res.status(502).json({ error: 'La IA no devolvió una ficha válida. Intentar de nuevo.' });
+    const caso = casos.crear(Object.assign({}, j, { area: conv.area, por: quienActua(req), conversacionId: conv.id }));
+    conv = hilos.marcarBorrador(clave, conv.id, caso.id);
+    conv = hilos.agregar(clave, conv.id, { rol: 'asistente', sistema: true, texto: 'Caso guardado: «' + caso.titulo + '». Ya está disponible para el Instructor, marcado como registrado por ' + caso.por + '. Para contar otro, «Nuevo caso».' });
+    console.log('Panel: ' + quienEs(req) + ' guardó el caso «' + caso.titulo + '»');
+    res.json({ caso, conversacion: conversacionPublica(conv, rolDe(req), accesosDe(req)) });
+  } catch (e) { responderError(res, e); }
+});
+app.get('/api/casos', permiso(['verde']), (req, res) => res.json({ lista: casos.listar(), porArea: casos.porArea() }));
+app.delete('/api/casos/:id', permiso(['verde']), (req, res) => {
+  const c = casos.retirar(req.params.id, quienActua(req));
+  if (!c) return res.status(404).json({ error: 'Ese caso no existe.' });
+  console.log('Panel: ' + quienEs(req) + ' retiró el caso «' + c.titulo + '»');
+  res.json({ ok: true });
+});
+app.post('/api/casos/manual', permiso(['verde']), async (req, res) => {
+  try {
+    const area = String((req.body || {}).area || '').trim().slice(0, 80);
+    const fichas = casos.paraManual(area);
+    if (!area || !fichas) return res.status(400).json({ error: 'No hay casos registrados en esa área.' });
+    const v = bot.getVerde();
+    const asis = bot.configAsistente(v);
+    const vc = Object.assign({}, v, { tecnico: Object.assign({}, v.tecnico || {}, { maxTokens: Math.max(8000, (v.tecnico && v.tecnico.maxTokens) || 0) }) });
+    let crudo;
+    try { crudo = await bot.callClaude(ayuda.instruccionesManualCasos(area, { nombreEmpresa: v.empresa }), [{ role: 'user', content: 'FICHAS DE CASOS:\n' + fichas }], vc, asis.modelo, 'entrenamiento', { esfuerzo: asis.esfuerzo }); }
+    catch (e) { return res.status(502).json({ error: 'La IA no está disponible en este momento. Intentar de nuevo en unos minutos.' }); }
+    const j = leads.limpiarJson(crudo);
+    const texto = String((j && j.texto) || '').trim();
+    if (!j || texto.length < 200) return res.status(502).json({ error: 'La IA no devolvió un borrador válido. Intentar de nuevo.' });
+    const quien = quienActua(req);
+    const aprobado = manuales.aprobadoDelArea(area);
+    const nombreBase = String(j.titulo || ('Manual de casos frecuentes de ' + area)).trim().slice(0, 80);
+    const existente = manuales.listar().manuales.find(m => m.nombre.toLowerCase() === nombreBase.toLowerCase());
+    let manual;
+    if (existente && existente.estado === 'borrador') manual = await manuales.actualizar(existente.id, { descripcion: j.descripcion, texto, por: quien });
+    else if (existente && existente.estado === 'aprobado') { const pend = manuales.actualizacionPendiente(existente.id); manual = pend ? await manuales.actualizar(pend.id, { descripcion: j.descripcion, texto, por: quien }) : await manuales.crear({ nombre: ('Actualización de «' + existente.nombre + '»').slice(0, 80), area, descripcion: j.descripcion, texto, origen: 'entrenamiento', por: quien, actualizaDe: existente.id }); }
+    else manual = await manuales.crear({ nombre: nombreBase, area, descripcion: j.descripcion, texto, origen: 'entrenamiento', por: quien });
+    console.log('Panel: ' + quienEs(req) + ' armó «' + manual.nombre + '» a partir de los casos');
+    res.json({ manual });
   } catch (e) { responderError(res, e); }
 });
 /* ---------- 1.6.0: biblioteca de conocimiento ---------- */
@@ -1316,7 +1378,7 @@ async function avisarReporte(r) {
 }
 /* ---------- 1.5.3: conversaciones guardadas del Centro de ayuda ---------- */
 function conversacionPublica(c, rol, accesos) {
-  return { id: c.id, titulo: c.titulo, creadoEn: c.creadoEn, actualizadoEn: c.actualizadoEn, tipo: c.tipo || 'instructor', area: c.area || '', borradorId: c.borradorId || null, respuestas: (c.mensajes || []).filter(m => m.rol === 'usuario').length, mensajes: (c.mensajes || []).map(m => Object.assign({ en: m.en, rol: m.rol, texto: m.texto }, m.sistema ? { sistema: true } : {}, m.imagen ? { imagen: { archivo: m.imagen.archivo, nombre: m.imagen.nombre } } : {}, m.textos ? { textos: m.textos } : {}, m.manual ? { manual: m.manual, seccion: m.seccion || '' } : {}, m.fuentes ? { fuentes: m.fuentes.map(id => (ayuda.articulo(id, rol, accesos) || {}).articulo).filter(Boolean).map(a => ({ id: a.id, titulo: a.titulo, grupo: a.grupo })) } : {})) };   // 1.6.3: corregido (antes mapeaba el envoltorio y las fuentes guardadas salían vacías)
+  return { id: c.id, titulo: c.titulo, creadoEn: c.creadoEn, actualizadoEn: c.actualizadoEn, tipo: c.tipo || 'instructor', subtipo: c.subtipo || '', area: c.area || '', borradorId: c.borradorId || null, casoId: c.casoId || null, respuestas: (c.mensajes || []).filter(m => m.rol === 'usuario').length, mensajes: (c.mensajes || []).map(m => Object.assign({ en: m.en, rol: m.rol, texto: m.texto }, m.sistema ? { sistema: true } : {}, m.imagen ? { imagen: { archivo: m.imagen.archivo, nombre: m.imagen.nombre } } : {}, m.textos ? { textos: m.textos } : {}, m.manual ? { manual: m.manual, seccion: m.seccion || '' } : {}, m.fuentes ? { fuentes: m.fuentes.map(id => (ayuda.articulo(id, rol, accesos) || {}).articulo).filter(Boolean).map(a => ({ id: a.id, titulo: a.titulo, grupo: a.grupo })) } : {})) };   // 1.6.3: corregido (antes mapeaba el envoltorio y las fuentes guardadas salían vacías)
 }
 app.get('/api/ayuda/conversaciones', permiso(['ayuda']), (req, res) => res.json(hilos.listar(req.usuario ? req.usuario.id : 'general')));
 app.post('/api/ayuda/conversaciones', permiso(['ayuda']), (req, res) => res.json({ conversacion: conversacionPublica(hilos.nueva(req.usuario ? req.usuario.id : 'general'), rolDe(req), accesosDe(req)) }));

@@ -40,15 +40,15 @@ function guardar(d) {
 const uidDe = u => String(u || 'general').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 60) || 'general';
 const t = (v, max) => String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, max);
 function cuenta(d, uid) { return d.usuarios[uid] || (d.usuarios[uid] = { actual: null, conversaciones: [] }); }
-function resumen(c) { return { id: c.id, titulo: c.titulo, creadoEn: c.creadoEn, actualizadoEn: c.actualizadoEn, mensajes: c.mensajes.length, tipo: c.tipo || 'instructor', area: c.area || '', borradorId: c.borradorId || null, respuestas: c.mensajes.filter(m => m.rol === 'usuario').length }; }
+function resumen(c) { return { id: c.id, titulo: c.titulo, creadoEn: c.creadoEn, actualizadoEn: c.actualizadoEn, mensajes: c.mensajes.length, tipo: c.tipo || 'instructor', subtipo: c.subtipo || '', area: c.area || '', borradorId: c.borradorId || null, casoId: c.casoId || null, respuestas: c.mensajes.filter(m => m.rol === 'usuario').length }; }
 
 // 1.6.1: datos opcionales { tipo: 'entrenamiento', area } para una entrevista del modo Entrenamiento
 function nueva(usuario, datos) {
   const d = cargar(), uid = uidDe(usuario), cu = cuenta(d, uid);
   const vacia = cu.conversaciones.find(c => !c.mensajes.length);
-  if (vacia) { if (datos && datos.tipo === 'entrenamiento') { vacia.tipo = 'entrenamiento'; vacia.area = String(datos.area || '').slice(0, 80); vacia.titulo = 'Entrenamiento · ' + vacia.area; } else { delete vacia.tipo; delete vacia.area; vacia.titulo = ''; } cu.actual = vacia.id; guardar(d); return Object.assign({}, vacia); }   // no acumula conversaciones vacías
+  if (vacia) { if (datos && datos.tipo === 'entrenamiento') { vacia.tipo = 'entrenamiento'; vacia.area = String(datos.area || '').slice(0, 80); vacia.subtipo = datos.subtipo === 'caso' ? 'caso' : ''; vacia.titulo = (vacia.subtipo === 'caso' ? 'Caso · ' : 'Entrenamiento · ') + vacia.area; } else { delete vacia.tipo; delete vacia.area; delete vacia.subtipo; vacia.titulo = ''; } cu.actual = vacia.id; guardar(d); return Object.assign({}, vacia); }   // no acumula conversaciones vacías
   const c = { id: crypto.randomBytes(6).toString('hex'), titulo: '', creadoEn: reloj(), actualizadoEn: reloj(), mensajes: [] };
-  if (datos && datos.tipo === 'entrenamiento') { c.tipo = 'entrenamiento'; c.area = String(datos.area || '').slice(0, 80); c.titulo = 'Entrenamiento · ' + c.area; }
+  if (datos && datos.tipo === 'entrenamiento') { c.tipo = 'entrenamiento'; c.area = String(datos.area || '').slice(0, 80); c.subtipo = datos.subtipo === 'caso' ? 'caso' : ''; c.titulo = (c.subtipo === 'caso' ? 'Caso · ' : 'Entrenamiento · ') + c.area; }
   cu.conversaciones.push(c);
   while (cu.conversaciones.length > MAX_CONVERSACIONES) borrarImagenes(cu.conversaciones.shift());
   cu.actual = c.id;
@@ -147,7 +147,8 @@ function marcarBorrador(usuario, id, manualId) {
   const d = cargar(), uid = uidDe(usuario), cu = cuenta(d, uid);
   const c = cu.conversaciones.find(x => x.id === id);
   if (!c) return null;
-  c.borradorId = manualId; c.actualizadoEn = reloj();
+  if (manualId && String(manualId).startsWith('c-')) c.casoId = manualId; else c.borradorId = manualId;   // 1.6.5: un caso guardado también se liga
+  c.actualizadoEn = reloj();
   guardar(d);
   return Object.assign({}, c);
 }
@@ -170,14 +171,14 @@ function entrevistaParaIA(c, imagenActual) {
 // 1.6.4: actividad de formación por usuario (para la lista de Usuarios)
 function actividadDe(usuario) {
   const d = cargar(), uid = uidDe(usuario), cu = d.usuarios[uid];
-  if (!cu) return { consultas: 0, entrevistas: 0, borradores: 0, ultimaEn: null };
-  let consultas = 0, entrevistas = 0, borradores = 0, ultimaEn = null;
+  if (!cu) return { consultas: 0, entrevistas: 0, borradores: 0, casos: 0, ultimaEn: null };
+  let consultas = 0, entrevistas = 0, borradores = 0, casos = 0, ultimaEn = null;
   for (const c of cu.conversaciones) {
     if (!c.mensajes.length) continue;
-    if (c.tipo === 'entrenamiento') { entrevistas++; if (c.borradorId) borradores++; }
+    if (c.tipo === 'entrenamiento') { if (c.subtipo === 'caso') { casos++; } else { entrevistas++; } if (c.borradorId) borradores++; }
     else consultas += c.mensajes.filter(m => m.rol === 'usuario').length;
     if (!ultimaEn || c.actualizadoEn > ultimaEn) ultimaEn = c.actualizadoEn;
   }
-  return { consultas, entrevistas, borradores, ultimaEn };
+  return { consultas, entrevistas, borradores, casos, ultimaEn };
 }
 module.exports = { actividadDe, marcarBorrador, entrevistaParaIA, MAX_CONVERSACIONES, MAX_MENSAJES, INTERCAMBIOS_IA, MAX_IMAGEN, nueva, actual, abrir, listar, agregar, guardarImagen, rutaImagen, paraIA, _usarReloj };

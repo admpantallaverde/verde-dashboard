@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.6.4';
+const VERSION_ESPERADA = '1.6.5';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -62,6 +62,12 @@ global.fetch = async (url, opts = {}) => {
       const n = (JSON.parse(opts.body).messages || []).filter(m => m.role === 'user').length;
       return respuestaIA(n >= 6 ? 'Resumen de lo capturado: recepción, control de stock y despacho. ¿Confirma que es correcto?' : 'Gracias. ¿Cómo registra en el sistema cada pedido que entra?');
     }
+    if (/ENTREVISTADOR DE CASOS RESUELTOS/.test(JSON.stringify(JSON.parse(opts.body).system || ''))) {   // 1.6.5
+      const n = (JSON.parse(opts.body).messages || []).filter(m => m.role === 'user').length;
+      return respuestaIA(n >= 3 ? 'Listo: el caso está completo. Toque «Guardar el caso».' : '¿Cómo comprobó que el pin de carga estaba muerto: qué midió y con qué valor?');   // (el primer turno de usuario es «Comencemos»)
+    }
+    if (/REDACTOR DE FICHA DE CASO/.test(JSON.stringify(JSON.parse(opts.body).system || ''))) return respuestaIA(JSON.stringify({ titulo: 'iPhone 11 que no carga', equipo: 'iPhone 11', llegada: 'No cargaba; el cliente dijo que lo mojó.', revision: '1. Limpieza del puerto: sin cambios. 2. Amperímetro con cargador original: 0 A.', diagnostico: 'Pin de carga muerto.', solucion: '1. Cambiar el flex de carga. 2. Probar carga y datos.', repuestos: 'Flex de carga iPhone 11', tiempo: '40 minutos', evitar: 'No forzar el puerto con pinzas.' }));
+    if (/REDACTOR DEL MANUAL DE CASOS FRECUENTES/.test(JSON.stringify(JSON.parse(opts.body).system || ''))) return respuestaIA(JSON.stringify({ titulo: 'Manual de casos frecuentes de Soporte técnico, repuestos y proveedores', descripcion: 'Problemas de carga y pantalla', texto: 'PROBLEMAS DE CARGA\n1. Limpiar el puerto.\n2. Medir con amperímetro.\n3. Si marca 0 A, cambiar el flex de carga (caso registrado por Acceso general).\n\nPENDIENTE DE DEFINIR POR DIRECCIÓN\nGarantía de la reparación.\n\nEste borrador debe ser revisado y aprobado por Dirección antes de usarse para capacitar' }));
     if (/REDACTOR DEL MANUAL DE ÁREA/.test(JSON.stringify(JSON.parse(opts.body).system || ''))) return respuestaIA('```json\n' + JSON.stringify({ titulo: 'Manual de Logística, almacén y Mercado Libre', descripcion: 'Recepción, stock y despacho de pedidos', texto: 'OBJETIVO DEL PUESTO\nAsegurar que cada pedido salga en el día.\n\nPROCEDIMIENTOS PASO A PASO\n1. Recepción: el encargado revisa el paquete y lo registra en el sistema.\n2. Despacho: se imprime la etiqueta y se entrega al correo antes de las 17:00.\n\nESTÁNDARES DE ATENCIÓN Y CONDUCTA\nTrato cordial con el correo y los compañeros.\n\nMANEJO DE SITUACIONES DIFÍCILES\nSi falta un producto: «Te aviso en cuanto lo tenga; disculpá la demora».\n\nREGLAS DE ORO DEL ÁREA\nNada sale sin etiqueta.\n\nPENDIENTES DE DEFINIR POR DIRECCIÓN\nQué hacer con pedidos sin stock.\n\nEste borrador debe ser revisado y aprobado por Dirección antes de usarse para capacitar' }) + '\n```');
     if (/REDACTOR DE RESPUESTAS/.test(JSON.stringify(JSON.parse(opts.body).system || ''))) return respuestaIA('{"mensaje":"Hola Gabriela, soy Carla de Pantalla Verde. Veo su reclamo por la orden 4582: el touch falla desde el cambio de pantalla.\\nPara resolverlo necesitamos revisar el equipo en el local; la evaluación tarda hasta [plazo].\\n¿Puede traerlo mañana? Cualquier duda, me escribe."}');   // 1.5.9
     if (/corrector de mensajes/i.test(JSON.stringify(JSON.parse(opts.body).system || ''))) return respuestaIA('"Hola, buenas. ' + ult.replace(/pantaya/g, 'pantalla') + '"');   // 1.4.10: corrección de mensajes
@@ -2221,6 +2227,40 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   const lu84 = (await json(await api('/api/usuarios', 'GET', null, gJ84))).usuarios.find(x => x.id === uf.id);
   verificar(lu84.actividad && lu84.actividad.entrevistas >= 1 && lu84.actividad.consultas >= 1 && lu84.actividad.ultimaEn > 0, 'la lista de usuarios trae la actividad de formación de cada persona');
   process.env.VERDE_LOGIN = '';
+
+  mostrar('85) Casos resueltos (1.6.5)');
+  const casosMod = require('./casos.js');
+  await json(await api('/api/manuales-areas', 'PUT', { areas: ['Ventas y atención al cliente', 'Logística, almacén y Mercado Libre', 'Caja: apertura, arqueo y cierre', 'Sistema de gestión de órdenes', 'Soporte técnico, repuestos y proveedores'].map(n => ({ nombre: n })).concat([{ nombre: 'Reglamento interno', soloAdmin: true }]) }));
+  let ec = await json(await api('/api/entrenamiento/empezar', 'POST', { area: 'Soporte técnico, repuestos y proveedores', subtipo: 'caso' }));
+  const convC = ec.conversacion;
+  verificar(convC.tipo === 'entrenamiento' && convC.subtipo === 'caso' && convC.titulo === 'Caso · Soporte técnico, repuestos y proveedores' && /Cuénteme el caso con sus palabras/.test(convC.mensajes[0].texto), 'una sesión de caso resuelto arranca pidiendo que cuente el caso');
+  verificar((await api('/api/entrenamiento/guardar-caso', 'POST', { id: convC.id })).status === 400 && (await api('/api/entrenamiento/generar', 'POST', { id: convC.id })).status === 400, 'sin contar el caso no se guarda, y un caso no genera manual');
+  llamadasIA.length = 0;
+  ec = await json(await api('/api/entrenamiento/responder', 'POST', { id: convC.id, texto: 'Un iPhone 11 que no cargaba. Limpié el puerto, no era eso. Con el tester el pin estaba muerto; cambié el flex y quedó.' }));
+  const sysCaso = llamadasIA[llamadasIA.length - 1].body.system;
+  verificar(/ENTREVISTADOR DE CASOS RESUELTOS/.test(sysCaso[0].text) && /Como máximo 4 preguntas/.test(sysCaso[0].text) && /ÁREA DEL CASO: Soporte técnico/.test(sysCaso[1].text) && /qué midió y con qué valor/.test(ec.conversacion.mensajes[2].texto), 'el entrevistador de casos pregunta solo lo que falta, con el tope de 4 preguntas');
+  ec = await json(await api('/api/entrenamiento/responder', 'POST', { id: convC.id, texto: 'Con el amperímetro: 0 A con el cargador original.' }));
+  verificar(/Listo: el caso está completo/.test(ec.conversacion.mensajes[ec.conversacion.mensajes.length - 1].texto), 'cuando la ficha está completa, avisa que se puede guardar');
+  llamadasIA.length = 0;
+  const gc = await json(await api('/api/entrenamiento/guardar-caso', 'POST', { id: convC.id }));
+  verificar(/REDACTOR DE FICHA DE CASO/.test(JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system)) && /Persona: Un iPhone 11/.test(String(llamadasIA[llamadasIA.length - 1].body.messages[0].content)), 'la ficha se arma con la conversación completa');
+  verificar(gc.caso && gc.caso.id.startsWith('c-') && gc.caso.titulo === 'iPhone 11 que no carga' && gc.caso.area === 'Soporte técnico, repuestos y proveedores' && gc.caso.por === 'Acceso general' && /Amperímetro/.test(gc.caso.revision) && gc.conversacion.casoId === gc.caso.id && /Caso guardado: «iPhone 11 que no carga»/.test(gc.conversacion.mensajes[gc.conversacion.mensajes.length - 1].texto), 'el caso queda guardado con su ficha y ligado a la sesión');
+  verificar((await api('/api/entrenamiento/guardar-caso', 'POST', { id: convC.id })).status === 400, 'un caso no se guarda dos veces');
+  const lc85 = await json(await api('/api/casos'));
+  verificar(lc85.lista.length === 1 && lc85.lista[0].id === gc.caso.id && lc85.porArea['Soporte técnico, repuestos y proveedores'] === 1, 'la lista de casos lo muestra por área');
+  llamadasIA.length = 0;
+  await json(await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Qué hago con un iPhone 11 que no carga?', conversacionId: (await json(await api('/api/ayuda/conversaciones', 'POST'))).conversacion.id }));
+  const sysI85 = llamadasIA[llamadasIA.length - 1].body.system[0].text;
+  verificar(/CASOS RESUELTOS REGISTRADOS POR EL EQUIPO/.test(sysI85) && /Caso «iPhone 11 que no carga» \(registrado por Acceso general el \d\d\/\d\d\/\d{4}\)/.test(sysI85) && /Amperímetro con cargador original/.test(sysI85) && /CASOS RESUELTOS registrados por el equipo/.test(sysI85), 'el Instructor recibe el caso apenas se guarda, con quién lo registró y cuándo');
+  const mc = await json(await api('/api/casos/manual', 'POST', { area: 'Soporte técnico, repuestos y proveedores' }));
+  verificar(mc.manual && mc.manual.estado === 'borrador' && mc.manual.nombre === 'Manual de casos frecuentes de Soporte técnico, repuestos y proveedores' && /PROBLEMAS DE CARGA/.test((await json(await api('/api/manuales/' + mc.manual.id))).manual.texto), '«Armar manual de casos frecuentes» deja un borrador en la biblioteca');
+  verificar((await api('/api/casos/manual', 'POST', { area: 'Caja: apertura, arqueo y cierre' })).status === 400, 'sin casos en el área, no hay manual que armar');
+  verificar((await json(await api('/api/casos/' + gc.caso.id, 'DELETE'))).ok === true && (await json(await api('/api/casos'))).lista.length === 0, 'retirar un caso lo saca de la lista');
+  llamadasIA.length = 0;
+  await json(await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Y un iPhone 12?', conversacionId: (await json(await api('/api/ayuda/conversaciones', 'POST'))).conversacion.id }));
+  verificar(!/CASOS RESUELTOS REGISTRADOS/.test(llamadasIA[llamadasIA.length - 1].body.system[0].text), 'retirado, el Instructor deja de usarlo');
+  const actC = require('./ayuda-hilos.js').actividadDe('general');
+  verificar(actC.casos >= 1, 'la actividad por persona cuenta los casos');
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }

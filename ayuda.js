@@ -238,7 +238,7 @@ const ARTICULOS = [
     resumen: 'La IA entrevista al responsable de un área y genera el borrador del manual para la biblioteca.',
     bloques: [
       { tipo: 'p', texto: 'Quien tiene habilitado el modo Entrenamiento (los administradores siempre; a los demás los habilita un administrador en Usuarios › Editar) ve en el Centro de ayuda el selector «Instructor | Entrenamiento». En Entrenamiento, con una conversación vacía, se elige el área que se documenta y se toca «Empezar la entrevista»: el Entrevistador IA pregunta nombre, puesto y área, y sigue con una sola pregunta por vez, de lo general a lo específico; cada 5 a 8 preguntas resume lo capturado y pide confirmación. Lo que la persona no sabe queda como «Pendiente de definir por Dirección».' },
-      { tipo: 'p', texto: 'La entrevista queda guardada como conversación (en la lista «Conversaciones» aparece en el grupo «Entrevistas (Entrenamiento)») y se puede retomar otro día; también acepta imágenes de ejemplo, que el Entrevistador describe para que la descripción entre al borrador. Las áreas marcadas «Solo administradores» en la biblioteca no se ofrecen a los integrantes. A partir de 6 respuestas se habilita «Terminar y generar el borrador»: la IA redacta el «Manual de [área]» (objetivo del puesto, procedimientos paso a paso, estándares de atención, situaciones difíciles con frases exactas, reglas de oro, pendientes) y lo deja en la Biblioteca de conocimiento como borrador, hasta que un administrador lo apruebe. Si la entrevista continúa, «Generar de nuevo» actualiza el borrador mientras no esté aprobado. Si el área ya tiene un manual aprobado, el borrador nace como «Actualización de «Manual de…»»: al aprobarla reemplaza el texto del manual vigente y la versión anterior queda guardada, inactiva, por si hay que volver atrás.' }
+      { tipo: 'p', texto: 'Además de la entrevista, «Caso resuelto» sirve para registrar un caso real del día (el técnico, por ejemplo): se cuenta con las propias palabras, la IA pregunta solo lo que falta y «Guardar el caso» deja la ficha disponible para el Instructor de inmediato. La entrevista queda guardada como conversación (en la lista «Conversaciones» aparece en el grupo «Entrevistas y casos (Entrenamiento)») y se puede retomar otro día; también acepta imágenes de ejemplo, que el Entrevistador describe para que la descripción entre al borrador. Las áreas marcadas «Solo administradores» en la biblioteca no se ofrecen a los integrantes. A partir de 6 respuestas se habilita «Terminar y generar el borrador»: la IA redacta el «Manual de [área]» (objetivo del puesto, procedimientos paso a paso, estándares de atención, situaciones difíciles con frases exactas, reglas de oro, pendientes) y lo deja en la Biblioteca de conocimiento como borrador, hasta que un administrador lo apruebe. Si la entrevista continúa, «Generar de nuevo» actualiza el borrador mientras no esté aprobado. Si el área ya tiene un manual aprobado, el borrador nace como «Actualización de «Manual de…»»: al aprobarla reemplaza el texto del manual vigente y la versión anterior queda guardada, inactiva, por si hay que volver atrás.' }
     ]
   },
   {
@@ -394,6 +394,13 @@ function describirAccesos(a) {
 // sistema (manual completo del panel, configuración de Verde y guías de Meta). Devuelve el texto completo; la marca
 // [[VARIABLE]] separa el bloque fijo (con caché) del variable.
 const manuales = require('./manuales.js');
+const casos = require('./casos.js');
+// 1.6.5: los casos resueltos registrados por el equipo, como fuente adicional del Instructor
+function bloqueCasos() {
+  const b = casos.paraInstructor();
+  if (!b) return '';
+  return '\n=== CASOS RESUELTOS REGISTRADOS POR EL EQUIPO (experiencia real; no revisados por Dirección) ===\nUsarlos para responder «cómo se resolvió un caso así»: dar el paso a paso tal como lo registró la persona y citar «según el caso registrado por [quién] el [fecha]». Si un caso contradice un manual aprobado, manda el manual y hay que señalarlo.\n' + b;
+}
 function instrucciones(rol, config, extra) {
   const esAdmin = rol === 'admin';
   const ex = extra || {};
@@ -411,7 +418,7 @@ function instrucciones(rol, config, extra) {
     'Eres el Centro de Ayuda Operativo e instructor interno de ' + empresa + ', empresa de reparación y venta de tecnología en Montevideo, Uruguay. Tu función es ayudar al personal a resolver consultas operativas del día a día, capacitarlo en cada respuesta y enseñar a las personas nuevas cómo se trabaja en cada área: tanto los procedimientos como los estándares de atención y conducta definidos en los manuales.',
     '',
     'FUENTE DE VERDAD',
-    '- Tu única fuente de verdad son los manuales listados en «Manuales disponibles», cuyo contenido completo está más abajo. Responde solamente con información que esté en ellos.',
+    '- Tu única fuente de verdad son los manuales listados en «Manuales disponibles», cuyo contenido completo está más abajo, y los CASOS RESUELTOS registrados por el equipo (si los hay). Responde solamente con información que esté en ellos.',
     '- Indica siempre de qué manual y sección proviene cada respuesta (campos «manual» y «seccion» del JSON, y también en el texto cuando ayude), y comparte textualmente los enlaces o rutas que figuren en el manual (nunca inventes enlaces).',
     '- Si la consulta corresponde a un área sin manual cargado, responde: «Esa área todavía no tiene manual cargado. Por ahora, consulte directamente con [responsable o Dirección]», usando el responsable de la lista «Áreas previstas sin manual todavía». No improvises el procedimiento.',
     '- Si la información de un manual parece contradecir otra instrucción escrita, señala la contradicción y recomienda confirmarla con Dirección antes de actuar.',
@@ -452,6 +459,7 @@ function instrucciones(rol, config, extra) {
     '=== MANUAL DEL SISTEMA: GUÍAS DE META (reglas de WhatsApp revisadas el ' + REVISION_META.split('-').reverse().join('/') + ') ===',
     baseMeta,
     propios.map(m => '\n=== MANUAL: ' + m.nombre.toUpperCase() + ' (área: ' + m.area + (m.descripcion ? ' · ' + m.descripcion : '') + ') ===\n' + m.texto).join('\n'),
+    bloqueCasos(),
     '',
     '[[VARIABLE]]',
     'CONFIGURACIÓN ACTUAL DEL PANEL (en el momento de la pregunta):',
@@ -522,6 +530,50 @@ function instruccionesEntrevistador(area, extra) {
     { type: 'text', text: 'ÁREA QUE SE DOCUMENTA EN ESTA SESIÓN: ' + area + '.' + (ex.quien ? ' PERSONA ENTREVISTADA (usuario del panel): ' + ex.quien + '.' : '') }
   ];
 }
+// 1.6.5: Casos resueltos. La persona cuenta un caso real; la IA pregunta solo lo que falta para completar la ficha.
+function primeraPreguntaCaso(area) {
+  return 'Caso resuelto del área «' + area + '». Cuénteme el caso con sus palabras: qué equipo o producto era, cómo llegó (qué síntoma tenía o qué dijo el cliente), qué revisó y probó, y cómo lo resolvió. Después le pregunto solo lo que falte.';
+}
+function instruccionesCasos(area, extra) {
+  const ex = extra || {};
+  const empresa = String(ex.nombreEmpresa || '').trim() || 'Pantalla Verde';
+  return [
+    { type: 'text', cache_control: { type: 'ephemeral' }, text: [
+      'ENTREVISTADOR DE CASOS RESUELTOS DE ' + empresa.toUpperCase() + ' (cerebro de conocimiento).',
+      'Una persona del equipo cuenta un caso real que resolvió en el área que se indica. Tu tarea es dejar el caso completo con el menor esfuerzo posible para la persona, para que otro compañero pueda resolver uno igual mañana.',
+      '',
+      'LA FICHA QUE HAY QUE COMPLETAR',
+      '1. Equipo o producto (marca, modelo).  2. Cómo llegó: síntoma y lo que dijo el cliente.  3. Qué revisó y probó, en orden, con qué herramienta y qué resultado dio cada prueba.  4. Diagnóstico.  5. Solución, paso a paso.  6. Repuestos o materiales y tiempo que llevó.  7. Qué conviene no hacer o qué error evitar.',
+      '',
+      'CÓMO HACERLO',
+      '- Lee lo que contó la persona y pregunta SOLO lo que falte o esté vago, UNA pregunta por vez, concreta (por ejemplo: «¿cómo comprobó que el pin de carga estaba muerto: qué midió y con qué valor?»). Como máximo 4 preguntas en total; no repreguntes lo que ya dijo.',
+      '- No inventes nada ni completes huecos por tu cuenta. Si la persona no sabe un dato, déjalo como «no registrado».',
+      '- Cuando la ficha esté razonablemente completa, o la persona indique que no hay más, responde exactamente: «Listo: el caso está completo. Toque «Guardar el caso».»',
+      '- Si la persona adjunta una imagen, describe en una o dos líneas qué muestra y qué aporta al caso, y sigue.',
+      '- Texto plano, español neutro, sin voseo, sin títulos ni marcas de formato. Solo temas de ' + empresa + '.'
+    ].join('\n') },
+    { type: 'text', text: 'ÁREA DEL CASO: ' + area + '.' + (ex.quien ? ' PERSONA QUE LO CUENTA: ' + ex.quien + '.' : '') }
+  ];
+}
+function instruccionesFichaCaso(area, extra) {
+  const empresa = String((extra || {}).nombreEmpresa || '').trim() || 'Pantalla Verde';
+  return [
+    'REDACTOR DE FICHA DE CASO de ' + empresa + ' (cerebro de conocimiento).',
+    'Recibes la conversación en la que una persona del equipo contó un caso real del área «' + area + '». Armá la ficha SOLO con lo que la persona dijo; lo que no dijo queda vacío (cadena vacía), nunca inventado.',
+    'Devolvé SOLO un objeto JSON válido: {"titulo": "equipo y síntoma en pocas palabras", "equipo": "", "llegada": "", "revision": "qué revisó y probó, en orden, numerado", "diagnostico": "", "solucion": "paso a paso", "repuestos": "", "tiempo": "", "evitar": ""}.',
+    'Español neutro, claro, sin voseo. Texto plano dentro de cada campo (los pasos numerados como «1. …», «2. …»).'
+  ].join('\n');
+}
+function instruccionesManualCasos(area, extra) {
+  const empresa = String((extra || {}).nombreEmpresa || '').trim() || 'Pantalla Verde';
+  return [
+    'REDACTOR DEL MANUAL DE CASOS FRECUENTES de ' + empresa + ' (cerebro de conocimiento).',
+    'Recibes las fichas de casos resueltos del área «' + area + '», registradas por el equipo. Redacta el borrador del «Manual de casos frecuentes de ' + area + '»: agrupa los casos por síntoma o problema, y para cada grupo escribe el procedimiento recomendado paso a paso (qué revisar primero, cómo confirmar el diagnóstico, cómo resolver, repuestos habituales, errores a evitar), citando entre paréntesis quién registró los casos en que se basa. Usa SOLO lo que dicen las fichas; donde falte información, escribe «Pendiente de definir por Dirección».',
+    'Cierra con la nota textual: «Este borrador debe ser revisado y aprobado por Dirección antes de usarse para capacitar».',
+    'Devolvé SOLO un objeto JSON válido: {"titulo": "Manual de casos frecuentes de ' + area + '", "descripcion": "una línea de hasta 140 caracteres", "texto": "el manual completo en texto plano con títulos en mayúsculas y listas simples"}.',
+    'Español neutro, claro y profesional, sin voseo.'
+  ].join('\n');
+}
 function instruccionesBorrador(area, extra) {
   const ex = extra || {};
   const empresa = String(ex.nombreEmpresa || '').trim() || 'Pantalla Verde';
@@ -557,4 +609,4 @@ const manualCompleto = require('./manual-completo.js');
 function articuloManualCompleto(rol, accesos) {
   return { id: 'manual-completo', modulo: 'ayuda', grupo: 'manual', soloAdmin: false, titulo: 'Manual completo del panel', resumen: 'Pantalla por pantalla: qué hay, qué hace cada botón y qué ve cada rol.', bloques: manualCompleto.bloquesPara(rol, accesos) };
 }
-module.exports = { instruccionesEntrevistador, instruccionesBorrador, primeraPreguntaEntrevista, ARTICULOS, REVISION_META, articulosPara, articulo, instrucciones, instruccionesEnBloques, interpretar, textoConversacion, articuloManualCompleto };
+module.exports = { primeraPreguntaCaso, instruccionesCasos, instruccionesFichaCaso, instruccionesManualCasos, instruccionesEntrevistador, instruccionesBorrador, primeraPreguntaEntrevista, ARTICULOS, REVISION_META, articulosPara, articulo, instrucciones, instruccionesEnBloques, interpretar, textoConversacion, articuloManualCompleto };

@@ -1958,6 +1958,40 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 .ba-fila label.ba-res input{width:16px;height:16px;accent-color:var(--accent);margin:0}
 @media(max-width:760px){.ba-fila{grid-template-columns:1fr}}
 
+/* ===================== 1.6.5: cabecera compacta, voz y casos resueltos ===================== */
+.topbar{align-items:center;margin-bottom:18px}
+.topbar > div:first-child{display:flex;align-items:center;gap:14px;flex-wrap:wrap;min-width:0}
+.crumb{margin:0}
+.title{font-size:20px;letter-spacing:-.4px}
+.subtitle{display:none}
+.cuenta{top:27px}
+.ay-cab > div:first-child{flex-direction:row;align-items:center;gap:12px;flex-wrap:wrap}
+.ay-instructor{margin:0}
+.ay-modo{margin:0}
+.ay-voz{max-width:170px;padding:4px 8px;border-radius:30px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font:inherit;font-size:12px;font-weight:600;cursor:pointer;margin-top:8px;align-self:flex-start}
+.ay-ent-tipo{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:0 auto 12px;max-width:560px}
+.ay-ent-tipo label{flex:1 1 220px;display:flex;align-items:flex-start;gap:9px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;cursor:pointer;text-align:left;font-size:13px}
+.ay-ent-tipo label.sel{border-color:var(--accent-borde);background:rgba(201,242,77,.12)}
+.ay-ent-tipo input{accent-color:var(--accent);margin:2px 0 0;flex:none}
+.ay-ent-tipo small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.ay-conv-item.caso b::before{background:var(--blue)}
+.bb-tabs{display:inline-flex;border:1px solid var(--border);border-radius:30px;padding:3px;background:var(--surface-2);gap:2px;margin-bottom:12px}
+.bb-tabs button{border:none;background:transparent;font:inherit;font-size:12.5px;font-weight:600;color:var(--muted);padding:6px 14px;border-radius:30px;cursor:pointer}
+.bb-tabs button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.cs-area{margin-bottom:16px}
+.cs-area h3{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:14.5px;margin:0 0 8px}
+.cs-area h3 .btn{padding:5px 11px;min-height:0;font-size:12.5px}
+.cs-item{border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:10px 14px;margin-bottom:8px}
+.cs-item .cs-cab{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.cs-item .cs-cab b{font-size:13.5px}
+.cs-item .cs-cab span.faint{font-size:12px}
+.cs-item .cs-acc{display:flex;gap:10px}
+.cs-ficha{display:none;margin-top:10px;font-size:13px;line-height:1.5;white-space:pre-wrap;border-top:1px solid var(--border-soft);padding-top:10px}
+.cs-item.abierto .cs-ficha{display:block}
+.cs-ficha b{display:block;color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.3px;margin-top:8px}
+.cs-ficha b:first-child{margin-top:0}
+.cs-vacio{padding:24px;text-align:center;color:var(--muted);font-size:13.5px}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -2681,8 +2715,10 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
     <!-- ===== VIEW: BIBLIOTECA DE CONOCIMIENTO (1.6.0) ===== -->
     <div class="view" id="view-biblioteca">
       <div class="bb-top"><div class="bb-resumen" id="bbResumen"></div><div class="bb-acciones-top"><button type="button" class="btn btn-ghost" onclick="abrirAreas()">Áreas y responsables</button><button type="button" class="btn btn-primary" onclick="nuevoManual()">+ Nuevo manual</button></div></div>
-      <div class="panel"><div style="overflow-x:auto"><table class="bb-tabla" style="min-width:900px"><thead><tr><th>Manual</th><th>Área</th><th>Estado</th><th>Activo</th><th>Actualizado</th><th style="text-align:right">Acciones</th></tr></thead><tbody id="bbTabla"></tbody></table></div><div class="empty oculto" id="bbVacio"><p>Todavía no hay manuales propios. Subí el primero con «Nuevo manual» o creá uno entrevistando al responsable del área desde el Centro de ayuda (modo Entrenamiento).</p></div></div>
-      <div class="panel bb-preg" id="bbPreguntas"></div>
+      <div class="bb-tabs" id="bbTabs"><button type="button" class="on" data-tab="manuales" onclick="cambiarTabBiblioteca('manuales')">Manuales</button><button type="button" data-tab="casos" onclick="cambiarTabBiblioteca('casos')">Casos resueltos</button></div>
+      <div id="bbManualesWrap"><div class="panel"><div style="overflow-x:auto"><table class="bb-tabla" style="min-width:900px"><thead><tr><th>Manual</th><th>Área</th><th>Estado</th><th>Activo</th><th>Actualizado</th><th style="text-align:right">Acciones</th></tr></thead><tbody id="bbTabla"></tbody></table></div><div class="empty oculto" id="bbVacio"><p>Todavía no hay manuales propios. Subí el primero con «Nuevo manual» o creá uno entrevistando al responsable del área desde el Centro de ayuda (modo Entrenamiento).</p></div></div>
+      <div class="panel bb-preg" id="bbPreguntas"></div></div>
+      <div class="panel oculto" id="bbCasos"></div>
       <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>El Instructor del Centro de ayuda responde solo con los manuales aprobados y activos, más los del sistema. Un manual nace como borrador; «Aprobar» lo activa. Las áreas sin manual aprobado se listan solas para el Instructor, que remite a su responsable en lugar de inventar.</span></div>
     </div>
     <!-- ===== VIEW: REPORTES (1.5.7) ===== -->
@@ -2745,7 +2781,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
         <section class="panel ay-asistente" aria-labelledby="ayTitAsistente">
           <div class="panel-head ay-cab"><div><h3 id="ayTitAsistente"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> Asistente IA</h3><span class="ay-instructor" id="ayInstructor"></span></div><div class="ay-cab-acc"><div class="ay-modo oculto" id="ayModo" role="tablist" aria-label="Modo del asistente"><button type="button" role="tab" class="on" data-modo="instructor" onclick="cambiarModoAyuda('instructor')">Instructor</button><button type="button" role="tab" data-modo="entrenamiento" onclick="cambiarModoAyuda('entrenamiento')">Entrenamiento</button></div><div class="ay-adjunto oculto" id="ayAdjunto"></div><button class="btn btn-ghost ay-volver oculto" type="button" id="ayVolverChat" onclick="volverAlChatAyuda()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Volver al chat</button><div class="ay-conv-wrap" id="ayConvWrap"><button class="btn btn-ghost" type="button" id="ayConvBtn" onclick="alternarListaAyuda()" aria-haspopup="true"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Conversaciones</button><div class="ay-conv-lista" id="ayConvLista" role="menu" aria-label="Conversaciones anteriores"></div></div><button class="btn btn-ghost" type="button" id="ayLimpiar" onclick="limpiarAyuda()">Nueva conversación</button></div></div>
           <div class="ay-atajos" id="ayAtajos"></div>
-          <div class="ay-ent-info oculto" id="ayEntInfo"></div><div class="ay-ent-start oculto" id="ayEntStart"><h4>Entrenar al cerebro</h4><p>La IA lo va a entrevistar sobre cómo se trabaja en su área, una pregunta por vez. Al terminar, genera el borrador del manual para que Dirección lo revise.</p><div class="field"><label for="ayEntArea">Área que se documenta en esta sesión</label><select id="ayEntArea"></select></div><button type="button" class="btn btn-primary" id="ayEntEmpezar" onclick="empezarEntrevistaAyuda()">Empezar la entrevista</button></div><div class="ay-chat" id="ayChat" aria-live="polite"></div>
+          <div class="ay-ent-info oculto" id="ayEntInfo"></div><div class="ay-ent-start oculto" id="ayEntStart"><h4>Entrenar al cerebro</h4><p>La IA lo va a entrevistar sobre cómo se trabaja en su área, una pregunta por vez. Al terminar, genera el borrador del manual para que Dirección lo revise.</p><div class="ay-ent-tipo" id="ayEntTipo"><label class="sel" data-tipo="entrevista"><input type="radio" name="ayEntTipo" value="entrevista" checked onchange="elegirTipoEntrenamiento(this.value)"><span><b>Entrevista del área</b><small>Cómo se trabaja: procedimientos, estándares, reglas de oro.</small></span></label><label data-tipo="caso"><input type="radio" name="ayEntTipo" value="caso" onchange="elegirTipoEntrenamiento(this.value)"><span><b>Caso resuelto</b><small>Un caso real: cómo llegó, qué revisó, qué probó, cómo lo resolvió.</small></span></label></div><div class="field"><label for="ayEntArea">Área</label><select id="ayEntArea"></select></div><button type="button" class="btn btn-primary" id="ayEntEmpezar" onclick="empezarEntrevistaAyuda()">Empezar la entrevista</button></div><div class="ay-chat" id="ayChat" aria-live="polite"></div>
           <div class="ay-pie">
             <div class="ay-adj-chip oculto" id="ayAdjChip"></div>
             <div class="ay-input"><input type="file" id="ayArchivo" accept="image/jpeg,image/png" class="oculto" tabindex="-1" aria-hidden="true" onchange="imagenAyudaElegida(this)"><button type="button" class="ay-clip" id="ayAdjuntar" onclick="document.getElementById('ayArchivo').click()" aria-label="Adjuntar una imagen" title="Adjuntar una imagen (JPG o PNG, hasta 5 MB)"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></button><textarea id="ayPregunta" rows="1" maxlength="500" onpaste="pegarEnAyuda(event)" placeholder="Escribir la consulta: un cliente, una venta, un presupuesto, el panel o las reglas de WhatsApp…" aria-label="Pregunta para el asistente" onkeydown="teclaAyuda(event)" oninput="ajustarAlto(this)"></textarea><button class="ay-enviar" type="button" id="ayEnviar" onclick="preguntarAyuda()" aria-label="Enviar la pregunta"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button></div>
@@ -6325,7 +6361,7 @@ function pintarChatAyuda(){
     if(x.error)return h+'<div class="ay-resp error"><span class="ay-txt">'+escH(x.error)+'</span></div>';
     const f=(x.fuentes||[]).length?'<div class="ay-fuentes"><span>Fuente:</span>'+x.fuentes.map(s=>'<button type="button" class="ay-fuente" onclick="abrirArticulo(\''+escH(s.id)+'\')">'+escH((s.grupo==='meta'?'Guías de Meta':'Manual')+' › '+s.titulo)+'</button>').join('')+'</div>':'';
     if(x.sistema)return h+'<div class="ay-resp ay-sistema"><span class="ay-txt">'+escH(x.respuesta)+'</span></div>';
-    return h+'<div class="ay-resp"><span class="ay-quien">'+(esEntrevista()?'Entrevistador IA':'Asistente IA')+botonEscucharAyuda(hi)+botonVelocidadVoz()+'</span><span class="ay-txt">'+manualHtml(x)+formatoAyuda(x.respuesta)+'</span>'+htmlTextosAyuda(x,hi)+'</div>';
+    return h+'<div class="ay-resp"><span class="ay-quien">'+(esEntrevista()?'Entrevistador IA':'Asistente IA')+botonEscucharAyuda(hi)+botonVelocidadVoz()+(hi===0?selectorVozHtml():'')+'</span><span class="ay-txt">'+manualHtml(x)+formatoAyuda(x.respuesta)+'</span>'+htmlTextosAyuda(x,hi)+'</div>';
   }).join('');
   box.scrollTop=box.scrollHeight;
 }
@@ -7589,7 +7625,7 @@ async function guardarProceso(){
 /* ===================== 1.5.3: Centro de ayuda personal ===================== */
 AYUDA.conv=null;AYUDA.adjuntoImg=null;AYUDA.lista=[];
 function aplicarConversacionAyuda(c){
-  AYUDA.conv={id:c.id,titulo:c.titulo||'',tipo:c.tipo||'instructor',area:c.area||'',borradorId:c.borradorId||null,respuestas:c.respuestas||0};
+  AYUDA.conv={id:c.id,titulo:c.titulo||'',tipo:c.tipo||'instructor',subtipo:c.subtipo||'',area:c.area||'',borradorId:c.borradorId||null,casoId:c.casoId||null,respuestas:c.respuestas||0};
   if(AYUDA.conv.tipo==='entrenamiento')AYUDA.modo='entrenamiento';else if(AYUDA.modo==='entrenamiento')AYUDA.modo='instructor';
   const hilo=[];
   for(const m of (c.mensajes||[])){
@@ -7701,6 +7737,8 @@ function textoParaVoz(t){return String(t||'').replace(/\*\*/g,'').replace(/^\s*\
 function vozEspanol(){
   // 1.5.6: primero las voces de mejor calidad que tenga el equipo (Natural, Online, Neural, Google), después por región.
   const voces=(window.speechSynthesis.getVoices()||[]).filter(v=>/^es/i.test(String(v.lang||'')));
+  let elegida='';try{elegida=localStorage.getItem('verde_voz_nombre')||'';}catch(e){}   // 1.6.5: voz elegida por la persona
+  if(elegida){const v=voces.find(x=>x.name===elegida);if(v)return v;}
   const puntaje=v=>{const n=String(v.name||''),l=String(v.lang||'').toLowerCase();let p=0;
     if(/natural|online|neural|google|premium|enhanced|wavenet/i.test(n))p+=10;
     if(/desktop|espeak|compact/i.test(n))p-=5;
@@ -7748,7 +7786,7 @@ if(document.readyState!=='loading')aplicarGruposMenu();
 
 /* ===================== 1.5.7: reportes semanales ===================== */
 var RP={lista:[],actual:null,sel:null,cargando:false};
-const VOZ_VELOCIDADES=[0.8,1,1.2,1.5];
+const VOZ_VELOCIDADES=[0.8,1,1.2,1.5,2];   // 1.6.5: hasta 2×
 function velocidadVoz(){const v=parseFloat(localStorage.getItem('verde_voz_vel')||'1');return VOZ_VELOCIDADES.includes(v)?v:1;}
 function textoVelocidad(v){return String(v).replace('.',',')+'×';}
 function cambiarVelocidadVoz(btn){
@@ -8017,7 +8055,7 @@ function pintarModoAyuda(){
   const start=document.getElementById('ayEntStart'),info=document.getElementById('ayEntInfo'),chat=document.getElementById('ayChat'),ins=document.getElementById('ayInstructor'),atj=document.getElementById('ayAtajos'),adj=document.getElementById('ayAdjuntar'),ta=document.getElementById('ayPregunta');
   const ent=AYUDA.modo==='entrenamiento';
   if(ins)ins.classList.toggle('oculto',ent);
-  if(ta){ta.placeholder=ent?'Responder al Entrevistador…':'Escribir la consulta: un cliente, una venta, un presupuesto, el panel o las reglas de WhatsApp…';ta.maxLength=ent?3000:500;}   // 1.6.2: las respuestas de una entrevista son largas
+  if(ta){ta.placeholder=ent?(esCaso()?'Contar el caso o responder…':'Responder al Entrevistador…'):'Escribir la consulta: un cliente, una venta, un presupuesto, el panel o las reglas de WhatsApp…';ta.maxLength=ent?3000:500;}   // 1.6.2: las respuestas de una entrevista son largas
   if(ent&&!esEntrevista()){
     if(start){start.classList.remove('oculto');const sel=document.getElementById('ayEntArea');if(sel&&!sel.options.length)sel.innerHTML=(AYUDA.entrenamiento.areas||[]).map(a=>'<option value="'+escH(a)+'">'+escH(a)+'</option>').join('');}
     if(chat)chat.classList.add('oculto');if(info)info.classList.add('oculto');if(atj)atj.classList.add('oculto');
@@ -8028,7 +8066,8 @@ function pintarModoAyuda(){
     if(esEntrevista()){
       const c=AYUDA.conv,n=c.respuestas||0,puede=n>=6;
       info.classList.remove('oculto');
-      info.innerHTML='<span>Entrenamiento · <b>'+escH(c.area||'')+'</b> · '+n+(n===1?' respuesta':' respuestas')+(c.borradorId?' · borrador generado':'')+'</span><button type="button" class="btn btn-primary" id="ayEntGenerar" '+(puede?'':'disabled title="Se habilita a partir de 6 respuestas"')+' onclick="generarBorradorAyuda()">'+(c.borradorId?'Generar de nuevo':'Terminar y generar el borrador')+'</button>';
+      if(c.subtipo==='caso')info.innerHTML='<span>Caso resuelto · <b>'+escH(c.area||'')+'</b> · '+n+(n===1?' respuesta':' respuestas')+(c.casoId?' · caso guardado':'')+'</span>'+(c.casoId?'<button type="button" class="btn btn-primary" id="ayEntGenerar" onclick="nuevoCasoAyuda()">Nuevo caso</button>':'<button type="button" class="btn btn-primary" id="ayEntGenerar" '+(n>=1?'':'disabled title="Primero contar el caso"')+' onclick="guardarCasoAyuda()">Guardar el caso</button>');
+      else info.innerHTML='<span>Entrenamiento · <b>'+escH(c.area||'')+'</b> · '+n+(n===1?' respuesta':' respuestas')+(c.borradorId?' · borrador generado':'')+'</span><button type="button" class="btn btn-primary" id="ayEntGenerar" '+(puede?'':'disabled title="Se habilita a partir de 6 respuestas"')+' onclick="generarBorradorAyuda()">'+(c.borradorId?'Generar de nuevo':'Terminar y generar el borrador')+'</button>';
     } else info.classList.add('oculto');
   }
 }
@@ -8044,9 +8083,9 @@ async function empezarEntrevistaAyuda(){
   const sel=document.getElementById('ayEntArea'),area=sel?sel.value:'';
   if(!area){toast('Elegir el área','','error');return;}
   AYUDA.cargando=true;const btn=document.getElementById('ayEntEmpezar');if(btn)btn.disabled=true;
-  const r=await api('/api/entrenamiento/empezar',{method:'POST',body:{area}});
+  const r=await api('/api/entrenamiento/empezar',{method:'POST',body:{area,subtipo:ENT_TIPO}});   // 1.6.5
   AYUDA.cargando=false;if(btn)btn.disabled=false;
-  if(!r.ok){toast('No se pudo empezar la entrevista',r.json.error||'','error');return;}
+  if(!r.ok){toast('No se pudo empezar',r.json.error||'','error');return;}
   AYUDA.modo='entrenamiento';
   aplicarConversacionAyuda(r.json.conversacion);
   const ta=document.getElementById('ayPregunta');if(ta)ta.focus();
@@ -8121,10 +8160,10 @@ async function guardarClavePropia(){
 }
 /* Lista de conversaciones en dos grupos */
 function htmlListaConversacionesAyuda(lista){
-  const item=c=>'<button type="button" class="ay-conv-item'+(c.tipo==='entrenamiento'?' ent':'')+(AYUDA.conv&&c.id===AYUDA.conv.id?' ay-actual':'')+'" data-id="'+escH(c.id)+'" onclick="abrirConversacionAyuda(this.dataset.id)"><b>'+escH(c.tipo==='entrenamiento'?(c.area||'Entrevista'):(c.titulo||'Conversación'))+'</b><span>'+escH(horaCorta(c.actualizadoEn))+' · '+(c.tipo==='entrenamiento'?c.respuestas+(c.respuestas===1?' respuesta':' respuestas')+(c.borradorId?' · borrador generado':''):c.mensajes+(c.mensajes===1?' mensaje':' mensajes'))+'</span></button>';
+  const item=c=>'<button type="button" class="ay-conv-item'+(c.tipo==='entrenamiento'?' ent':'')+(c.subtipo==='caso'?' caso':'')+(AYUDA.conv&&c.id===AYUDA.conv.id?' ay-actual':'')+'" data-id="'+escH(c.id)+'" onclick="abrirConversacionAyuda(this.dataset.id)"><b>'+escH(c.tipo==='entrenamiento'?((c.subtipo==='caso'?'Caso · ':'')+(c.area||'Entrevista')):(c.titulo||'Conversación'))+'</b><span>'+escH(horaCorta(c.actualizadoEn))+' · '+(c.tipo==='entrenamiento'?c.respuestas+(c.respuestas===1?' respuesta':' respuestas')+(c.borradorId?' · borrador generado':''):c.mensajes+(c.mensajes===1?' mensaje':' mensajes'))+'</span></button>';
   const ent=lista.filter(c=>c.tipo==='entrenamiento'),ins=lista.filter(c=>c.tipo!=='entrenamiento');
   let h='';
-  if(ent.length)h+='<div class="ay-conv-grupo">Entrevistas (Entrenamiento)</div>'+ent.map(item).join('');
+  if(ent.length)h+='<div class="ay-conv-grupo">Entrevistas y casos (Entrenamiento)</div>'+ent.map(item).join('');
   if(ins.length)h+='<div class="ay-conv-grupo">Consultas al Instructor</div>'+ins.map(item).join('');
   return h||'<div class="ay-conv-vacio">Todavía no hay conversaciones guardadas.</div>';
 }
@@ -8162,8 +8201,8 @@ function siguienteCoincidencia(){
 function teclaBuscarManual(e){if(e.key==='Enter'){e.preventDefault();if(BV.marcas.length)siguienteCoincidencia();else buscarEnManual(e.target.value);}}
 /* Actividad de formación por persona */
 function textoActividadUsr(u){
-  const a=u.actividad;if(!a||(!a.consultas&&!a.entrevistas))return 'Sin actividad en el Centro de ayuda';
-  return a.consultas+(a.consultas===1?' consulta':' consultas')+' al Instructor · '+a.entrevistas+(a.entrevistas===1?' entrevista':' entrevistas')+(a.borradores?' · '+a.borradores+(a.borradores===1?' borrador':' borradores'):'')+(a.ultimaEn?' · última: '+horaCorta(a.ultimaEn):'');
+  const a=u.actividad;if(!a||(!a.consultas&&!a.entrevistas&&!a.casos))return 'Sin actividad en el Centro de ayuda';
+  return a.consultas+(a.consultas===1?' consulta':' consultas')+' al Instructor · '+a.entrevistas+(a.entrevistas===1?' entrevista':' entrevistas')+(a.casos?' · '+a.casos+(a.casos===1?' caso':' casos'):'')+(a.borradores?' · '+a.borradores+(a.borradores===1?' borrador':' borradores'):'')+(a.ultimaEn?' · última: '+horaCorta(a.ultimaEn):'');
 }
 /* Reubicaciones al iniciar: «Volver al chat» junto al rastro y el selector de modo bajo el título */
 function reubicarAyuda164(){
@@ -8171,6 +8210,85 @@ function reubicarAyuda164(){
   if(vb&&crumb&&!vb.classList.contains('crumb-volver')){vb.classList.remove('btn','btn-ghost','ay-volver');vb.classList.add('crumb-volver');crumb.after(vb);}   // al lado del rastro (el rastro se reescribe al navegar, por eso va como hermano)
   const m=document.getElementById('ayModo'),ins=document.getElementById('ayInstructor');
   if(m&&ins&&!m.querySelector('.ay-modo-lbl')){m.insertAdjacentHTML('afterbegin','<span class="ay-modo-lbl">Modo</span>');ins.after(m);}
+}
+
+
+/* ===================== 1.6.5: voz, casos resueltos y pestaña Casos ===================== */
+function vocesEspanol(){try{return (window.speechSynthesis.getVoices()||[]).filter(v=>/^es/i.test(String(v.lang||'')));}catch(e){return [];}}
+function elegirVoz(nombre){try{localStorage.setItem('verde_voz_nombre',nombre||'');}catch(e){}document.querySelectorAll('.ay-voz').forEach(s=>{s.value=nombre||'';});toast('Voz elegida',nombre||'Automática','info');}
+function selectorVozHtml(){
+  if(!hayVoz())return '';
+  const voces=vocesEspanol();if(!voces.length)return '';
+  let sel='';try{sel=localStorage.getItem('verde_voz_nombre')||'';}catch(e){}
+  return '<select class="ay-voz" aria-label="Voz" title="Elegir la voz" onchange="elegirVoz(this.value)"><option value="">Voz automática</option>'+voces.map(v=>'<option value="'+escH(v.name)+'"'+(v.name===sel?' selected':'')+'>'+escH(v.name.replace(/^Microsoft |^Google /,''))+' · '+escH(String(v.lang||'').replace('_','-'))+'</option>').join('')+'</select>';
+}
+try{if(window.speechSynthesis&&typeof window.speechSynthesis.addEventListener==='function')window.speechSynthesis.addEventListener('voiceschanged',()=>{if(document.getElementById('view-ayuda')&&document.getElementById('view-ayuda').classList.contains('show')&&typeof pintarChatAyuda==='function')pintarChatAyuda();});}catch(e){}
+/* Tipo de sesión en Entrenamiento */
+var ENT_TIPO='entrevista';
+function elegirTipoEntrenamiento(t){ENT_TIPO=t==='caso'?'caso':'entrevista';document.querySelectorAll('#ayEntTipo label').forEach(l=>l.classList.toggle('sel',l.dataset.tipo===ENT_TIPO));const b=document.getElementById('ayEntEmpezar');if(b)b.textContent=ENT_TIPO==='caso'?'Contar el caso':'Empezar la entrevista';}
+function esCaso(){return esEntrevista()&&AYUDA.conv.subtipo==='caso';}
+async function guardarCasoAyuda(){
+  if(AYUDA.cargando||!esCaso())return;
+  const btn=document.getElementById('ayEntGenerar');if(btn){btn.disabled=true;btn.textContent='Armando la ficha…';}
+  AYUDA.cargando=true;
+  const r=await api('/api/entrenamiento/guardar-caso',{method:'POST',body:{id:AYUDA.conv.id}});
+  AYUDA.cargando=false;
+  if(!r.ok){if(btn){btn.disabled=false;btn.textContent='Guardar el caso';}toast('No se pudo guardar el caso',r.json.error||'','error');return;}
+  aplicarConversacionAyuda(r.json.conversacion);
+  toast('Caso guardado','«'+(r.json.caso.titulo||'Caso')+'» ya está disponible para el Instructor.','success');
+}
+async function nuevoCasoAyuda(){
+  if(AYUDA.cargando||!esEntrevista())return;
+  const area=AYUDA.conv.area;
+  AYUDA.cargando=true;
+  const r=await api('/api/entrenamiento/empezar',{method:'POST',body:{area,subtipo:'caso'}});
+  AYUDA.cargando=false;
+  if(!r.ok){toast('No se pudo empezar otro caso',r.json.error||'','error');return;}
+  aplicarConversacionAyuda(r.json.conversacion);
+}
+/* Pestaña Casos de la biblioteca */
+var BBC={tab:'manuales',lista:[],porArea:{}};
+function cambiarTabBiblioteca(t){
+  BBC.tab=t==='casos'?'casos':'manuales';
+  document.querySelectorAll('#bbTabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===BBC.tab));
+  document.getElementById('bbManualesWrap').classList.toggle('oculto',BBC.tab!=='manuales');
+  document.getElementById('bbCasos').classList.toggle('oculto',BBC.tab!=='casos');
+  if(BBC.tab==='casos')cargarCasos();
+}
+async function cargarCasos(){
+  const box=document.getElementById('bbCasos');if(!box)return;
+  const r=await api('/api/casos');
+  if(!r.ok){toast('No se pudieron cargar los casos',r.json.error||'','error');return;}
+  BBC.lista=r.json.lista||[];BBC.porArea=r.json.porArea||{};
+  pintarCasos();
+}
+function fichaCasoHtml(c){
+  const campos=[['equipo','Equipo o producto'],['llegada','Cómo llegó'],['revision','Qué revisó y probó'],['diagnostico','Diagnóstico'],['solucion','Solución'],['repuestos','Repuestos o materiales'],['tiempo','Tiempo'],['evitar','Qué conviene no hacer']];
+  return campos.filter(([k])=>c[k]).map(([k,n])=>'<b>'+n+'</b>'+escH(c[k])).join('');
+}
+function pintarCasos(){
+  const box=document.getElementById('bbCasos');if(!box)return;
+  const areas={};for(const c of BBC.lista)(areas[c.area]=areas[c.area]||[]).push(c);
+  const nombres=Object.keys(areas);
+  if(!nombres.length){box.innerHTML='<div class="cs-vacio">Todavía no hay casos registrados. Se cargan desde el Centro de ayuda, modo Entrenamiento, con «Caso resuelto».</div>';return;}
+  box.innerHTML=nombres.map(a=>'<div class="cs-area"><h3><span>'+escH(a)+' <span class="faint" style="font-weight:500">· '+areas[a].length+(areas[a].length===1?' caso':' casos')+'</span></span><button type="button" class="btn btn-ghost" data-area="'+escH(a)+'" onclick="armarManualCasos(this.dataset.area,this)">Armar manual de casos frecuentes</button></h3>'+areas[a].map(c=>'<div class="cs-item" id="cs-'+escH(c.id)+'"><div class="cs-cab"><div><b>'+escH(c.titulo)+'</b><br><span class="faint">registrado por '+escH(c.por)+' · '+escH(horaCorta(c.en))+' · sin revisar por Dirección</span></div><div class="cs-acc"><button type="button" class="dp-link" onclick="this.closest(\'.cs-item\').classList.toggle(\'abierto\')">Ver ficha</button><button type="button" class="dp-link rojo" data-id="'+escH(c.id)+'" onclick="retirarCaso(this.dataset.id)">Retirar</button></div></div><div class="cs-ficha">'+fichaCasoHtml(c)+'</div></div>').join('')+'</div>').join('');
+}
+function retirarCaso(id){
+  const c=BBC.lista.find(x=>x.id===id);if(!c)return;
+  askConfirm({title:'Retirar el caso',message:'«'+c.titulo+'» deja de estar disponible para el Instructor. No se puede deshacer.',okLabel:'Retirar',icon:'warn'},async()=>{
+    const r=await api('/api/casos/'+encodeURIComponent(id),{method:'DELETE'});
+    if(!r.ok){toast('No se pudo retirar',r.json.error||'','error');return;}
+    toast('Caso retirado','','success');cargarCasos();
+  });
+}
+async function armarManualCasos(area,btn){
+  if(btn){btn.disabled=true;btn.textContent='Redactando…';}
+  toast('Armando el manual de casos','La IA resume los casos del área. Puede tardar un minuto.','info');
+  const r=await api('/api/casos/manual',{method:'POST',body:{area}});
+  if(btn){btn.disabled=false;btn.textContent='Armar manual de casos frecuentes';}
+  if(!r.ok){toast('No se pudo armar el manual',r.json.error||'','error');return;}
+  toast('Borrador listo','«'+r.json.manual.nombre+'» quedó en la pestaña Manuales como borrador, para revisar y aprobar.','success');
+  cargarConocimiento();
 }
 
 </script>
