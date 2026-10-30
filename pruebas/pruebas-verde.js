@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.4.16';
+const VERSION_ESPERADA = '1.5.0';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -44,6 +44,12 @@ global.fetch = async (url, opts = {}) => {
     const ultimo = (JSON.parse(opts.body).messages || []).slice(-1)[0] || {};
     const ult = String(ultimo.content || '');
     const respuestaIA = t => new Response(JSON.stringify({ content: [{ type: 'text', text: t }], stop_reason: 'end_turn', usage: { input_tokens: 1000, output_tokens: 100 } }), { status: 200 });
+    if (JSON.stringify(JSON.parse(opts.body).system || '').includes('CLASIFICADOR DE CONVERSACIONES')) {   // 1.5.0: leads
+      const u = String(((JSON.parse(opts.body).messages || [])[0] || {}).content || '');
+      const j = /garantía/i.test(u) ? { tipo: 'garantia', producto: 'Pantalla iPhone 11', intencion: 'media', presupuesto: false, traba: { categoria: 'ninguna', frase: '' }, resumen: 'Reclama por una pantalla cambiada.', proximoPaso: 'Revisar la orden de trabajo.' }
+        : { tipo: 'compra', producto: 'Cargador iPhone 15', intencion: 'alta', presupuesto: true, traba: { categoria: 'precio', frase: 'uh está caro' }, resumen: 'Quiere un cargador; le pareció caro.', proximoPaso: 'Ofrecer una alternativa más económica.' };
+      return respuestaIA('```json\n' + JSON.stringify(j) + '\n```');
+    }
     if (/corrector de mensajes/i.test(JSON.stringify(JSON.parse(opts.body).system || ''))) return respuestaIA('"Hola, buenas. ' + ult.replace(/pantaya/g, 'pantalla') + '"');   // 1.4.10: corrección de mensajes
     if (/garantía/i.test(ult)) return respuestaIA('Lamento el inconveniente 🙏 ¿Tenés la boleta de garantía?\n[RECLAMO]{"boleta":"4582","producto":"Cambio de pantalla hace 2 semanas","mismo":"sí","falla":"El touch no responde a veces","desde":"ayer","reinicio":"forzado hecho"}\n[DERIVAR]');
     if (/actualizar ficha/i.test(ult)) return respuestaIA('Anotado, gracias.\n[RECLAMO]{"golpes":"no","notas":"video recibido"}');
@@ -464,7 +470,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(rr.status === 401, 'sin sesión no se puede ver ningún archivo');
   rr = await api('/api/ayuda', 'GET', null, galletaCarla);
   const ayC = await json(rr);
-  verificar(rr.status === 200 && ayC.rol === 'asesor' && !ayC.articulos.some(a => a.soloAdmin) && ayC.articulos.map(a => a.id).join(',') === 'chats-por-responder,conversaciones,chats-respondidos,garantia,consultas,archivos-enviados,corregir,asistente,ingreso-dos-pasos,apariencia', 'un asesor ve solo los 10 temas para atender los chats y entrar al panel');
+  verificar(rr.status === 200 && ayC.rol === 'asesor' && !ayC.articulos.some(a => a.soloAdmin) && ayC.articulos.map(a => a.id).join(',') === 'leads,chats-por-responder,conversaciones,chats-respondidos,garantia,consultas,archivos-enviados,corregir,asistente,ingreso-dos-pasos,apariencia', 'un asesor ve solo los 11 temas para atender los chats y entrar al panel');
   rr = await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Cómo devuelvo un chat a Verde?' }, galletaCarla);
   const pC = await json(rr);
   const sysC = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system);
@@ -503,7 +509,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
 
   mostrar('29) Elegir otra IA');
   const mods = await json(await api('/api/modelos'));
-  verificar(mods.modelos && mods.modelos.map(m => m.id).join(',') === 'claude-sonnet-5-5,claude-opus-5-5,claude-fable-5-1', 'están las 3 IA para elegir');
+  verificar(mods.modelos && mods.modelos.map(m => m.id).join(',') === 'claude-sonnet-5-5,claude-opus-5-5,claude-fable-5-1,claude-haiku-5-5', 'están las 4 IA para elegir (Haiku 5.5 solo para clasificar leads)');
   r = await json(await api('/api/simulate', 'POST', { message: 'hola', from: 'opus', modelo: 'claude-opus-5-5' }));
   let pedIA = llamadasIA[llamadasIA.length - 1].body;
   verificar(pedIA.model === 'claude-opus-5-5' && !pedIA.thinking && pedIA.output_config.effort === 'low' && pedIA.max_tokens >= 4000, 'Opus 5.5 va con esfuerzo bajo y margen de tokens');
@@ -929,7 +935,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
 
   mostrar('55) Centro de ayuda: manual y guías según el rol');
   const ay55 = await json(await api('/api/ayuda', 'GET'));
-  verificar(ay55.rol === 'admin' && ay55.articulos.filter(a => a.grupo === 'manual').length === 16 && ay55.articulos.filter(a => a.grupo === 'meta').length === 6 && ay55.revisionMeta === '2026-10-24', 'el administrador ve los 16 temas del manual y las 6 guías de Meta');
+  verificar(ay55.rol === 'admin' && ay55.articulos.filter(a => a.grupo === 'manual').length === 17 && ay55.articulos.filter(a => a.grupo === 'meta').length === 6 && ay55.revisionMeta === '2026-10-24', 'el administrador ve los 16 temas del manual y las 6 guías de Meta');
   verificar(ay55.articulos.every(a => a.titulo && a.resumen && a.bloques && a.bloques.length), 'cada tema tiene título, resumen y contenido');
 
   mostrar('56) Asistente de ayuda');
@@ -1708,6 +1714,85 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   fs.rmSync(caja73, { recursive: true, force: true });
   delete process.env.VERDE_RESPALDO_CLAVE;
   process.env.VERDE_LOGIN = '';
+
+  mostrar('74) Leads clasificados (1.5.0)');
+  const leadsMod = require('./leads.js'), convMod = require('./conversaciones.js'), bot74 = require('./bot.js'), atenMod = require('./atencion.js');
+  verificar(leadsMod.limpiarJson('```json\n{"tipo":"compra"}\n```').tipo === 'compra' && leadsMod.limpiarJson('nada') === null, 'lee el JSON aunque venga con marcas de código y descarta lo que no es JSON');
+  const cJ_74 = { mensajes: [{ tipo: 'cliente', texto: 'Hola, está caro para mí', en: 1 }] };
+  const n1_74 = leadsMod.normalizar({ tipo: 'compra', producto: 'Funda', intencion: 'rara', presupuesto: 'sí', traba: { categoria: 'precio', frase: 'está caro para mí' }, resumen: 'x', proximoPaso: 'y' }, cJ_74);
+  verificar(n1_74.intencion === 'baja' && n1_74.presupuesto === false && n1_74.traba.categoria === 'precio' && n1_74.traba.frase === 'está caro para mí', 'normaliza los valores inválidos y acepta la frase textual del cliente');
+  const n2_74 = leadsMod.normalizar({ tipo: 'compra', traba: { categoria: 'precio', frase: 'frase inventada por la IA' } }, cJ_74);
+  verificar(n2_74.traba.frase === '' && n2_74.traba.categoria === 'otra', 'una frase que el cliente no dijo se descarta');
+  const H74 = 3600000, base74 = Date.now();
+  const ctxV_74 = { pendientes: new Set(), revision: new Set(), pausas: {} };
+  const ctxD_74 = { pendientes: new Set(['wa:1']), revision: new Set(), pausas: {} };
+  const chatDe_74 = ms => ({ clave: 'wa:1', nombre: 'X', numero: '1', mensajes: ms, ultimoEn: ms[ms.length - 1].en, ultimoClienteEn: ([...ms].reverse().find(m => m.tipo === 'cliente') || {}).en });
+  const c1_74 = chatDe_74([{ tipo: 'cliente', texto: 'hola', en: base74 - 10 * 60000 }, { tipo: 'verde', texto: 'hola!', en: base74 - 9 * 60000 }]);
+  let k_74 = leadsMod.calcular(c1_74, null, ctxV_74, base74);
+  verificar(k_74.etapa === 'nuevo' && k_74.prioridad === 1 && k_74.vendedor === '', 'un chat recién empezado con Verde es «Nuevo», prioridad normal');
+  verificar(leadsMod.calcular(c1_74, { tipo: 'garantia', intencion: 'media' }, ctxV_74, base74).prioridad === 3 && leadsMod.calcular(c1_74, { tipo: 'compra', intencion: 'alta' }, ctxV_74, base74).prioridad === 3, 'un reclamo de garantía o una compra con intención alta son prioridad alta');
+  verificar(leadsMod.calcular(c1_74, { tipo: 'reparacion', intencion: 'media' }, ctxV_74, base74).prioridad === 2, 'intención media: prioridad media');
+  k_74 = leadsMod.calcular(c1_74, { tipo: 'reparacion', intencion: 'baja' }, ctxD_74, base74);
+  verificar(k_74.etapa === 'derivado' && k_74.prioridad === 2 && /min/.test(k_74.esperaTexto), 'derivado hace minutos: etapa «Derivado», prioridad media');
+  k_74 = leadsMod.calcular(c1_74, { tipo: 'reparacion', intencion: 'baja' }, ctxD_74, base74 + 3 * H74);
+  verificar(k_74.etapa === 'derivado' && k_74.prioridad === 3 && /^3 h/.test(k_74.esperaTexto), 'derivado hace más de 2 horas sin respuesta: prioridad alta');
+  const c2_74 = chatDe_74([{ tipo: 'cliente', texto: 'cuánto sale', en: base74 - 2 * H74 }, { tipo: 'equipo', texto: 'sale 3000', autor: 'Carla', en: base74 - H74 }]);
+  k_74 = leadsMod.calcular(c2_74, { tipo: 'reparacion', intencion: 'media', presupuesto: true }, ctxV_74, base74);
+  verificar(k_74.etapa === 'presupuesto_enviado' && k_74.vendedor === 'Carla' && /^1 h/.test(k_74.esperaTexto), 'el equipo dio un precio: «Presupuesto enviado», con el vendedor');
+  verificar(leadsMod.calcular(c2_74, { tipo: 'reparacion', intencion: 'media' }, ctxV_74, base74).etapa === 'esperando_cliente', 'el equipo respondió sin precio: «Esperando al cliente»');
+  k_74 = leadsMod.calcular(c2_74, { tipo: 'reparacion', intencion: 'media' }, ctxV_74, base74 + 60 * H74);
+  verificar(k_74.etapa === 'sin_respuesta' && /2 días/.test(k_74.esperaTexto), 'a las 48 horas sin respuesta del cliente: «Sin respuesta»');
+  verificar(leadsMod.calcular(chatDe_74(c2_74.mensajes.concat([{ tipo: 'cliente', texto: 'dale', en: base74 - 30 * 60000 }])), { tipo: 'reparacion', intencion: 'media' }, ctxV_74, base74).etapa === 'en_atencion', 'el cliente volvió a escribir después del equipo: «En atención»');
+  verificar(leadsMod.calcular(chatDe_74([{ tipo: 'cliente', texto: 'hola', en: base74 - 30 * H74 }, { tipo: 'verde', texto: 'hola!', en: base74 - 30 * H74 + 60000 }, { tipo: 'cliente', texto: 'ok', en: base74 - 20 * 60000 }]), null, ctxV_74, base74).etapa === 'con_verde', 'un chat de más de un día que sigue con Verde: «Con Verde»');
+  leadsMod._usarReloj(() => base74);
+  convMod._usarReloj(() => base74 - 11 * 60000);
+  const lia_74 = { clave: 'wa:59891000001', numero: '59891000001', nombre: 'Lía Lead' };
+  convMod.registrar(Object.assign({ tipo: 'cliente', texto: 'Quiero comprar un cargador iPhone 15, cuánto sale' }, lia_74));
+  convMod.registrar(Object.assign({ tipo: 'equipo', autor: 'Carla', texto: 'Sale 1500' }, lia_74));
+  convMod.registrar(Object.assign({ tipo: 'cliente', texto: 'uh está caro' }, lia_74));
+  convMod._usarReloj(() => base74 - 2 * 60000);
+  convMod.registrar({ clave: 'wa:59891000002', numero: '59891000002', nombre: 'Reciente', tipo: 'cliente', texto: 'hola' });
+  convMod._usarReloj(null);
+  const recientes74 = () => convMod.recientes(30);
+  const pend74 = leadsMod.pendientesDeClasificar(recientes74());
+  verificar(pend74.some(c => c.clave === 'wa:59891000001') && !pend74.some(c => c.clave === 'wa:59891000002'), 'espera 10 minutos sin mensajes nuevos antes de clasificar');
+  const antesIA74 = llamadasIA.length;
+  const r74 = await leadsMod.revisar(recientes74, bot74);
+  const ll74 = llamadasIA[llamadasIA.length - 1] || { body: {} };
+  verificar(r74.hechas >= 1 && llamadasIA.length > antesIA74 && ll74.body.model === 'claude-haiku-5-5' && !ll74.body.output_config && !ll74.body.thinking && /CLASIFICADOR DE CONVERSACIONES/.test(JSON.stringify(ll74.body.system)) && /Equipo \(Carla\): Sale 1500/.test(String(ll74.body.messages[0].content)), 'clasifica con Haiku 5.5 (pedido básico, sin esfuerzo ni razonamiento) y le manda la conversación con quién habló');
+  verificar(leadsMod.pendientesDeClasificar(recientes74()).every(c => c.clave !== 'wa:59891000001'), 'una vez clasificada, no se vuelve a clasificar hasta que haya mensajes nuevos');
+  const l74 = await json(await api('/api/leads'));
+  const liaL_74 = (l74.lista || []).find(x => x.clave === 'wa:59891000001');
+  verificar(!!liaL_74 && liaL_74.tipo === 'compra' && liaL_74.producto === 'Cargador iPhone 15' && liaL_74.etapa === 'en_atencion' && liaL_74.prioridad === 3 && liaL_74.traba.frase === 'uh está caro' && liaL_74.vendedor === 'Carla' && liaL_74.presupuesto === true, 'la lista de leads trae tipo, producto, etapa, prioridad, vendedor y la frase textual de la traba');
+  verificar(l74.lista.length >= 2 && l74.lista[0].prioridad >= l74.lista[l74.lista.length - 1].prioridad && l74.conteo.alta >= 1 && l74.conteo.sinClasificar >= 1 && l74.vendedores.includes('Carla') && l74.etapas.derivado === 'Derivado', 'ordenados por prioridad, con el conteo, los vendedores y los nombres de etapa');
+  const l74b = await json(await api('/api/leads?etapa=en_atencion&tipo=compra&q=cargador'));
+  verificar(l74b.lista.length >= 1 && l74b.lista.every(x => x.etapa === 'en_atencion' && x.tipo === 'compra'), 'los filtros por etapa, tipo y texto funcionan');
+  const pc74 = await json(await api('/api/leads/wa:59891000001', 'PUT', { tipo: 'reparacion', producto: 'Cable USB-C', traba: { categoria: 'lo_piensa', frase: 'lo pienso' } }));
+  verificar(pc74.tipo === 'reparacion' && pc74.producto === 'Cable USB-C' && pc74.traba.categoria === 'lo_piensa' && pc74.fijos.tipo && pc74.fijos.producto && pc74.fijos.traba && !pc74.fijos.intencion && pc74.intencion === 'alta', 'el vendedor corrige la clasificación y lo corregido queda marcado como fijo');
+  convMod._usarReloj(() => base74 + 5 * 60000);
+  convMod.registrar(Object.assign({ tipo: 'cliente', texto: '¿y la garantía?' }, lia_74));
+  convMod._usarReloj(null);
+  leadsMod._usarReloj(() => base74 + 20 * 60000);
+  verificar(leadsMod.pendientesDeClasificar(recientes74()).some(c => c.clave === 'wa:59891000001'), 'con un mensaje nuevo vuelve a quedar pendiente de clasificar');
+  await leadsMod.clasificar(convMod.cruda('wa:59891000001'), bot74);
+  const pc74b = await json(await api('/api/leads/wa:59891000001'));
+  process.stderr.write('DBG74a ' + JSON.stringify({ pc74b: { tipo: pc74b.tipo, producto: pc74b.producto, resumen: pc74b.resumen, clasificadoEn: pc74b.clasificadoEn, hastaMensaje: null }, ult: (convMod.cruda('wa:59891000001') || {}).ultimoEn, base: base74, llamadas: llamadasIA.length, ultimoSys: String(JSON.stringify((llamadasIA[llamadasIA.length-1]||{body:{}}).body.system)).slice(0,60), modoIA }) + '\n');
+  verificar(pc74b.tipo === 'reparacion' && pc74b.producto === 'Cable USB-C' && pc74b.traba.categoria === 'lo_piensa' && pc74b.resumen === 'Reclama por una pantalla cambiada.', 'al volver a clasificar, lo corregido a mano se conserva y el resto se actualiza');
+  verificar((await api('/api/leads/wa:noexiste')).status === 404, 'un lead inexistente devuelve 404');
+  leadsMod._usarReloj(null);
+  // «Chats por responder» ordenados por prioridad
+  const ge_74 = { clave: 'wa:59891000003', numero: '59891000003', nombre: 'Gastón' };
+  convMod.registrar(Object.assign({ tipo: 'cliente', texto: 'Me cambiaron la pantalla y falla la garantía' }, ge_74));
+  atenMod.derivar({ clave: 'wa:59891000002', destino: 'whatsapp:+59891000002', numero: '59891000002', nombre: 'Reciente', mensajeCliente: 'hola', motivo: 'Pidió un precio' });
+  atenMod.derivar({ clave: ge_74.clave, destino: 'whatsapp:+59891000003', numero: ge_74.numero, nombre: ge_74.nombre, mensajeCliente: 'garantía', motivo: 'Reclamo de garantía' });
+  leadsMod.corregir(convMod.cruda(ge_74.clave), { tipo: 'garantia' });
+  leadsMod.corregir(convMod.cruda('wa:59891000002'), { tipo: 'consulta', intencion: 'baja' });
+  const pen74 = await json(await api('/api/chats/pendientes'));
+  const iG_74 = pen74.lista.findIndex(p => p.clave === ge_74.clave), iR_74 = pen74.lista.findIndex(p => p.clave === 'wa:59891000002');
+  process.stderr.write('DBG74b ' + JSON.stringify({ lista: pen74.lista.map(p => [p.clave, p.prioridad, p.creadoEn]), cruda: !!convMod.cruda(ge_74.clave) }) + '\n');
+  verificar(iG_74 >= 0 && iR_74 >= 0 && iG_74 < iR_74 && pen74.lista[iG_74].prioridad === 3 && pen74.lista[iR_74].prioridad === 2, '«Chats por responder» pone primero el reclamo de garantía aunque haya llegado después');
+  const cons74 = await json(await api('/api/consumo-ia'));
+  verificar(((cons74.porOrigen || {}).clasificacion || {}).consultas >= 2 && (cons74.precios || []).some(p => p.id === 'claude-haiku-5-5' && p.entrada === 0.1), 'el consumo registra las clasificaciones por separado y conoce el precio de Haiku 5.5');
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }

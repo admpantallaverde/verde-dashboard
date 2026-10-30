@@ -279,6 +279,10 @@ function lista(opciones, ctx) {
   };
 }
 
+/* ---------- 1.5.0: conversaciones crudas para los leads ---------- */
+function recientes(dias) { const desde = reloj() - (dias || 30) * 86400000; return Object.values(cargar().chats).filter(c => c.ultimoEn >= desde); }
+function cruda(clave) { return cargar().chats[clave] || null; }
+
 /* ---------- detalle de una conversación ---------- */
 function detalle(clave, ctx) {
   const c = cargar().chats[clave];
@@ -317,5 +321,5 @@ module.exports = {
   MAX_MENSAJES, RETENCION_DIAS, VENTANA_HORAS, ESPERA_MINUTOS,
   claveValida, registrar, anotarSistema, apagar, encender, estaApagado, apagados,
   esperasVencidas, mensajesClienteDesde, cerrarEspera, sembrarDesdeAtencion, iniciarEsperaPorPausa, cerrarEsperaDePausa,
-  lista, detalle, purgar, _usarReloj
+  lista, detalle, purgar, recientes, cruda, _usarReloj
 };

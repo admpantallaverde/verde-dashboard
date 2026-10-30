@@ -42,7 +42,8 @@ const ESFUERZOS_ASISTENTE = ['low', 'medium', 'high', 'xhigh', 'max'];
 const MODELOS = [
   { id: 'claude-sonnet-5-5', nombre: 'Claude Sonnet 5.5', thinking: { type: 'between_tools' }, esfuerzo: 'medium', tokensMinimos: 0 },
   { id: 'claude-opus-5-5', nombre: 'Claude Opus 5.5', thinking: null, esfuerzo: 'low', tokensMinimos: 4000 },
-  { id: 'claude-fable-5-1', nombre: 'Claude Fable 5.1', thinking: null, esfuerzo: 'low', tokensMinimos: 4000 }
+  { id: 'claude-fable-5-1', nombre: 'Claude Fable 5.1', thinking: null, esfuerzo: 'low', tokensMinimos: 4000 },
+  { id: 'claude-haiku-5-5', nombre: 'Claude Haiku 5.5', thinking: null, esfuerzo: null, tokensMinimos: 0 }   // 1.5.0: clasificación de leads (sin esfuerzo ni razonamiento: pedido básico)
 ];
 function listarModelos() { return MODELOS.map(m => ({ id: m.id, nombre: m.nombre })); }
 function modeloPermitido(id) { return MODELOS.some(m => m.id === id); }
@@ -255,6 +256,11 @@ function paraMemoria(reply, recurso) {
 function configAsistente(v) {
   const a = (v && v.asistente) || {};
   return { modelo: modeloPermitido(a.modelo) ? a.modelo : 'claude-sonnet-5-5', esfuerzo: ESFUERZOS_ASISTENTE.includes(a.esfuerzo) ? a.esfuerzo : 'high' };
+}
+// 1.5.0: modelo de la clasificación de leads (sección H). Por defecto Haiku 5.5, el más económico.
+function configClasificacion(v) {
+  const c = (v && v.clasificacion) || {};
+  return { modelo: modeloPermitido(c.modelo) ? c.modelo : 'claude-haiku-5-5' };
 }
 // 1.4.11: resumen de la empresa para el asistente del equipo, armado con lo configurado en el panel.
 function resumenEmpresa(v, recursosLista) {
@@ -503,7 +509,7 @@ function armarPedido(model, system, messages, max_tokens, opciones) {
     const e = String(process.env.VERDE_ESFUERZO || '').trim().toLowerCase();
     if (ESFUERZOS_VALIDOS.includes(e)) esfuerzo = e;
   }
-  pedido.output_config = { effort: esfuerzo };
+  if (esfuerzo) pedido.output_config = { effort: esfuerzo };
   pedido.max_tokens = Math.max(max_tokens, conf.tokensMinimos);
   return pedido;
 }
@@ -739,7 +745,7 @@ module.exports = {
   ADJUNTO_POR_DEFECTO, instruccionesArchivo, notaAtencion,
   GARANTIA_DATOS_DEFECTO, GARANTIA_SINTOMAS_DEFECTO, GARANTIA_REQUISITOS_DEFECTO, GARANTIA_COBERTURA_DEFECTO, garantiaDe, bloqueGarantia, separarReclamo,
   CONSULTA_REPARACION_DEFECTO, CONSULTA_COMPRA_DEFECTO, consultasDe, bloqueConsultas, separarConsulta, notaPresentacion,
-  bloqueBiblioteca, separarEnvio, notaSinArchivos, corregirEnvioFallido, TONOS_CORRECCION, instruccionesCorreccion, limpiarCorreccion, ESFUERZOS_ASISTENTE, configAsistente, resumenEmpresa,
+  bloqueBiblioteca, separarEnvio, notaSinArchivos, corregirEnvioFallido, TONOS_CORRECCION, instruccionesCorreccion, limpiarCorreccion, ESFUERZOS_ASISTENTE, configAsistente, configClasificacion, resumenEmpresa,
   tieneRespuestas,
   modeloEnUso,
   responderPendiente,

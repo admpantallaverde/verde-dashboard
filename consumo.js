@@ -22,10 +22,11 @@ const RANGO_MAXIMO_DIAS = 400;
 const PRECIOS = {
   'claude-sonnet-5-5': { nombre: 'Claude Sonnet 5.5', entrada: 2, salida: 10 },
   'claude-opus-5-5': { nombre: 'Claude Opus 5.5', entrada: 4, salida: 20 },
-  'claude-fable-5-1': { nombre: 'Claude Fable 5.1', entrada: 10, salida: 50 }
+  'claude-fable-5-1': { nombre: 'Claude Fable 5.1', entrada: 10, salida: 50 },
+  'claude-haiku-5-5': { nombre: 'Claude Haiku 5.5', entrada: 0.1, salida: 0.5 }   // pedidos de hasta 100.000 tokens (los de Verde son mucho más cortos)
 };
-const PRECIOS_VERIFICADOS = '2026-10-24';
-const ORIGENES = ['whatsapp', 'pruebas', 'ayuda', 'correccion'];   // 1.4.10: corrección de mensajes del asesor
+const PRECIOS_VERIFICADOS = '2026-10-29';
+const ORIGENES = ['whatsapp', 'pruebas', 'ayuda', 'correccion', 'clasificacion'];   // 1.4.10: corrección · 1.5.0: clasificación de leads
 
 let relojPrueba = null;                       // solo para las pruebas automáticas
 function ahora() { return relojPrueba ? relojPrueba() : Date.now(); }
@@ -127,7 +128,7 @@ function resumen(filtro) {
   if (p.error) return { error: p.error };
   const d = cargar();
   const total = { consultas: 0, entrada: 0, salida: 0, costo: 0, sinPrecio: 0 };
-  const porOrigen = { whatsapp: { consultas: 0, costo: 0 }, pruebas: { consultas: 0, costo: 0 }, ayuda: { consultas: 0, costo: 0 }, correccion: { consultas: 0, costo: 0 } };
+  const porOrigen = { whatsapp: { consultas: 0, costo: 0 }, pruebas: { consultas: 0, costo: 0 }, ayuda: { consultas: 0, costo: 0 }, correccion: { consultas: 0, costo: 0 }, clasificacion: { consultas: 0, costo: 0 } };
   const porModelo = {};
   const dias = [];
   for (const dia of Object.keys(d.dias).sort().reverse()) {

@@ -12,12 +12,25 @@ const REVISION_META = '2026-10-24';   // fecha de la última revisión de las re
 const ARTICULOS = [
   // ===================== MANUAL DEL PANEL =====================
   {
+    id: 'leads', grupo: 'manual', soloAdmin: false, titulo: 'Leads',
+    resumen: 'Cada conversación clasificada por la IA: tipo, producto, etapa, prioridad y traba, ordenadas para atender primero lo que más importa.',
+    bloques: [
+      { tipo: 'p', texto: 'En «Ventas › Leads» están todas las conversaciones de los últimos 30 días, ordenadas por prioridad. La IA clasifica cada una cuando pasan 10 minutos sin mensajes nuevos: tipo (reparación, compra, garantía, consulta general u otro), producto o servicio, intención de compra, un resumen, el próximo paso sugerido y la traba, con la frase textual del cliente.' },
+      { tipo: 'h', texto: 'Etapas' },
+      { tipo: 'l', items: ['Nuevo: empezó hace menos de 24 horas y lo atiende Verde.', 'Con Verde: Verde sigue conversando.', 'Derivado: está en «Chats por responder» y nadie del equipo contestó todavía.', 'En atención: el cliente escribió después de que alguien del equipo le respondió.', 'Presupuesto enviado: el equipo ya le dio un precio y se espera su respuesta.', 'Esperando al cliente: el equipo respondió y el cliente todavía no contestó.', 'Sin respuesta: pasaron más de 48 horas sin respuesta del cliente.'] },
+      { tipo: 'h', texto: 'Prioridad' },
+      { tipo: 'p', texto: 'Alta: reclamos de garantía, compras con intención alta y derivados sin respuesta hace más de 2 horas. Media: intención alta o media, derivados recientes, presupuestos enviados y chats esperando al cliente. Normal: el resto. Dentro de cada nivel, el que más espera va primero. La etapa y la prioridad no las decide la IA: salen de reglas fijas.' },
+      { tipo: 'h', texto: 'Corregir una clasificación' },
+      { tipo: 'p', texto: 'Al abrir un chat, arriba aparece la franja «Lead» con la clasificación. Si la IA se equivocó, «Corregir» permite cambiar el tipo, el producto, la intención y la traba; lo corregido queda fijo aunque la IA vuelva a clasificar. El modelo que clasifica se elige en «Comportamiento del bot», sección H, y su gasto se ve en «Consumo de IA» como «Clasificación».' }
+    ]
+  },
+  {
     id: 'chats-por-responder', grupo: 'manual', soloAdmin: false, titulo: 'Chats por responder',
     resumen: 'Clientes que esperan a una persona del equipo: cómo responderlos y cómo marcarlos como atendidos.',
     bloques: [
       { tipo: 'p', texto: 'Cuando Verde deriva un chat a una persona del equipo (por ejemplo, porque el cliente pide un precio exacto), el chat aparece en «Chats por responder» y se avisa al equipo. Verde sigue conversando con el cliente, sin dar precios, hasta que una persona del equipo responda; ahí hace su pausa de 12 horas.' },
       { tipo: 'p', texto: 'Cuando el cliente envía un archivo, el chat aparece con la etiqueta «Archivo para revisar». Si después el cliente pide un precio, pasa a «Por responder» y se avisa al equipo por ese motivo. En los dos casos, Verde sigue conversando.' },
-      { tipo: 'p', texto: 'Los tiempos de espera de más de 5 minutos se muestran en rojo. El número junto a «Chats por responder» en el menú indica cuántos chats esperan.' },
+      { tipo: 'p', texto: 'Los tiempos de espera de más de 5 minutos se muestran en rojo. El número junto a «Chats por responder» en el menú indica cuántos chats esperan. Desde la 1.5.0 la lista va ordenada por la prioridad del lead (alta primero) y, dentro de cada nivel, el más viejo primero.' },
       { tipo: 'h', texto: 'Cómo atender un chat' },
       { tipo: 'pasos', items: [
         { titulo: 'Abrir el chat', texto: 'Tocar el chat en la lista. La conversación se abre a la derecha (en el celular, a pantalla completa).' },

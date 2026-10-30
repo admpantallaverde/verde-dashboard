@@ -38,8 +38,9 @@ const atencion = require('./atencion.js');
 const conversaciones = require('./conversaciones.js');
 const accesos = require('./accesos.js');       // 1.4.15: registro de accesos
 const respaldos = require('./respaldos.js');   // 1.4.15: respaldo diario cifrado
+const leads = require('./leads.js');           // 1.5.0: leads clasificados por prioridad
 
-const VERSION = '1.4.16';
+const VERSION = '1.5.0';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -889,7 +890,10 @@ app.get('/api/chats/pendientes', requiere(['admin', 'asesor']), (req, res) => {
   const apagados = conversaciones.apagados();
   const pausas = bot.pausasVigentes(), ahora = Date.now(), encendido = bot.getVerde().encendido !== false;
   // verdeActivo (1.4.3): Verde sigue conversando en ese chat (no está apagado ni en pausa).
-  const lista = atencion.pendientes().map(p => Object.assign(p, { apagado: apagados.has(p.clave), verdeActivo: encendido && !apagados.has(p.clave) && !(Number(pausas[p.clave]) > ahora) }));
+  const ctx = contexto();
+  // 1.5.0: por prioridad del lead (alta primero) y, dentro de cada nivel, el más viejo primero.
+  const lista = atencion.pendientes().map(p => Object.assign(p, { apagado: apagados.has(p.clave), verdeActivo: encendido && !apagados.has(p.clave) && !(Number(pausas[p.clave]) > ahora), prioridad: leads.prioridadDe(conversaciones.cruda(p.clave), ctx) }))
+    .sort((a, b) => b.prioridad - a.prioridad || a.creadoEn - b.creadoEn);
   res.json({ total: lista.length, lista });
 });
 app.get('/api/chats/respondidos', requiere(['admin', 'asesor']), (req, res) => {
@@ -1039,6 +1043,23 @@ app.get('/privacidad', (req, res) => {
    CONVERSACIONES: todos los chats, interruptor de Verde por chat y respuesta desde el panel
    ============================================================ */
 function contexto() { return { pendientes: atencion.clavesPendientes(), revision: atencion.clavesRevision(), pausas: bot.pausasVigentes() }; }
+
+/* ---------- 1.5.0: leads ---------- */
+app.get('/api/leads', requiere(['admin', 'asesor']), (req, res) => {
+  const q = req.query || {};
+  res.json(leads.listar(conversaciones.recientes(30), contexto(), { etapa: String(q.etapa || ''), tipo: String(q.tipo || ''), vendedor: String(q.vendedor || ''), q: String(q.q || '') }));
+});
+app.get('/api/leads/:clave', requiere(['admin', 'asesor']), (req, res) => {
+  const c = conversaciones.cruda(req.params.clave);
+  if (!c) return res.status(404).json({ error: 'No existe esa conversación.' });
+  res.json(leads.detalle(c, contexto()));
+});
+app.put('/api/leads/:clave', requiere(['admin', 'asesor']), (req, res) => {
+  const c = conversaciones.cruda(req.params.clave);
+  if (!c) return res.status(404).json({ error: 'No existe esa conversación.' });
+  leads.corregir(c, req.body || {});
+  res.json(leads.detalle(c, contexto()));
+});
 function quienEs(req) { return req.usuario ? req.usuario.nombre : 'Acceso general'; }
 function claveDeRuta(req) {
   const clave = String(req.params.clave || '');
@@ -1363,6 +1384,7 @@ app.post('/webhook/360/:clave', (req, res) => {
 });
 
 respaldos.programar();   // 1.4.15: respaldo automático todas las noches a las 03:30
+leads.programar(() => conversaciones.recientes(30), bot);   // 1.5.0: clasifica las conversaciones quietas hace 10 minutos
 
 app.listen(PORT, HOST, () => {
   console.log('====================================================');
