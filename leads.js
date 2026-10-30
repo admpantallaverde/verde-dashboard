@@ -23,6 +23,7 @@ const ESPERA_MS = 10 * 60 * 1000;          // minutos sin mensajes antes de clas
 const VENTANA_DIAS = 30;                   // solo conversaciones con actividad reciente
 const MAX_POR_VUELTA = 5;                  // clasificaciones por minuto como máximo
 const NUEVO_HORAS = 24, SIN_RESPUESTA_HORAS = 48, DERIVADO_URGENTE_HORAS = 2;
+const REINTENTO_MS = 30 * 60 * 1000, MAX_FALLOS = 3;   // 1.5.1: si la IA falla, reintenta a los 30 minutos, hasta 3 veces por mensaje
 const MAX_MENSAJES = 30;
 
 let reloj = () => Date.now();
@@ -37,10 +38,12 @@ const PRIORIDADES = { 3: 'alta', 2: 'media', 1: 'normal' };
 /* ---------- archivo ---------- */
 function cargar() {
   try {
-    if (!fs.existsSync(ARCHIVO)) return { leads: {} };
+    if (!fs.existsSync(ARCHIVO)) return { leads: {}, fallos: {} };
     const d = JSON.parse(fs.readFileSync(ARCHIVO, 'utf8') || '{}');
-    return d && d.leads && typeof d.leads === 'object' ? d : { leads: {} };
-  } catch (e) { console.error('No se pudo leer leads.json:', e.message); return { leads: {} }; }
+    if (!d || !d.leads || typeof d.leads !== 'object') return { leads: {}, fallos: {} };
+    if (!d.fallos || typeof d.fallos !== 'object') d.fallos = {};
+    return d;
+  } catch (e) { console.error('No se pudo leer leads.json:', e.message); return { leads: {}, fallos: {} }; }
 }
 function guardar(d) {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -132,6 +135,15 @@ function esperaTexto(ms) {
 }
 
 /* ---------- clasificación ---------- */
+// 1.5.1: registra una falla para no reintentar cada minuto (cada intento se cobra).
+function anotarFallo(c, motivo) {
+  const d = cargar();
+  const f = d.fallos[c.clave];
+  const hasta = c.ultimoEn || 0;
+  d.fallos[c.clave] = { hastaMensaje: hasta, intentos: f && f.hastaMensaje === hasta ? f.intentos + 1 : 1, en: reloj(), motivo: t(motivo, 160) };
+  guardar(d);
+  return d.fallos[c.clave];
+}
 // bot: { callClaude, getVerde, configClasificacion }. Devuelve el lead guardado o null si la IA falló.
 async function clasificar(c, bot) {
   const v = bot.getVerde();
@@ -140,15 +152,16 @@ async function clasificar(c, bot) {
   const previo = d.leads[c.clave] || {};
   let crudo;
   try { crudo = await bot.callClaude(instrucciones(v.empresa), [{ role: 'user', content: 'CONVERSACIÓN (del más viejo al más nuevo):\n' + transcripcion(c) }], v, modelo, 'clasificacion'); }
-  catch (e) { console.error('Clasificación de ' + c.clave + ': la IA no respondió: ' + e.message); return null; }
+  catch (e) { const f = anotarFallo(c, e.message); console.error('Clasificación de ' + c.clave + ': la IA no respondió (intento ' + f.intentos + ' de ' + MAX_FALLOS + '): ' + e.message); return null; }
   const j = limpiarJson(crudo);
-  if (!j) { console.error('Clasificación de ' + c.clave + ': la IA no devolvió JSON'); return null; }
+  if (!j) { const f = anotarFallo(c, 'no devolvió JSON'); console.error('Clasificación de ' + c.clave + ': la IA no devolvió JSON (intento ' + f.intentos + ' de ' + MAX_FALLOS + ')'); return null; }
   const nuevo = normalizar(j, c);
   const fijos = previo.fijos && typeof previo.fijos === 'object' ? previo.fijos : {};
   for (const k of ['tipo', 'producto', 'intencion', 'traba']) if (fijos[k]) nuevo[k] = previo[k];   // lo corregido a mano no se pisa
   const lead = Object.assign({}, nuevo, { fijos, clasificadoEn: reloj(), hastaMensaje: c.ultimoEn || reloj(), modelo });
   const d2 = cargar();
   d2.leads[c.clave] = lead;
+  delete d2.fallos[c.clave];
   guardar(d2);
   return lead;
 }
@@ -158,6 +171,7 @@ function pendientesDeClasificar(chats) {
   const d = cargar();
   return chats.filter(c => c && c.ultimoClienteEn && c.ultimoEn >= ahora - VENTANA_DIAS * 86400000 && ahora - c.ultimoEn >= ESPERA_MS)
     .filter(c => { const l = d.leads[c.clave]; return !l || (l.hastaMensaje || 0) < c.ultimoEn; })
+    .filter(c => { const f = d.fallos[c.clave]; return !f || f.hastaMensaje !== c.ultimoEn || (f.intentos < MAX_FALLOS && ahora - f.en >= REINTENTO_MS); })
     .sort((a, b) => a.ultimoEn - b.ultimoEn);
 }
 // Una vuelta: clasifica hasta 5 conversaciones. chats(): función que devuelve las conversaciones recientes.
@@ -174,6 +188,7 @@ function podar(chats) {
   const vivas = new Set(chats.map(c => c.clave));
   let cambio = false;
   for (const k of Object.keys(d.leads)) if (!vivas.has(k)) { delete d.leads[k]; cambio = true; }
+  for (const k of Object.keys(d.fallos)) if (!vivas.has(k)) { delete d.fallos[k]; cambio = true; }
   if (cambio) guardar(d);
 }
 let temporizador = null;

@@ -40,7 +40,7 @@ const accesos = require('./accesos.js');       // 1.4.15: registro de accesos
 const respaldos = require('./respaldos.js');   // 1.4.15: respaldo diario cifrado
 const leads = require('./leads.js');           // 1.5.0: leads clasificados por prioridad
 
-const VERSION = '1.5.0';
+const VERSION = '1.5.1';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).

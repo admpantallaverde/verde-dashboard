@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.5.0';
+const VERSION_ESPERADA = '1.5.1';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -1759,7 +1759,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   const antesIA74 = llamadasIA.length;
   const r74 = await leadsMod.revisar(recientes74, bot74);
   const ll74 = llamadasIA[llamadasIA.length - 1] || { body: {} };
-  verificar(r74.hechas >= 1 && llamadasIA.length > antesIA74 && ll74.body.model === 'claude-haiku-5-5' && !ll74.body.output_config && !ll74.body.thinking && /CLASIFICADOR DE CONVERSACIONES/.test(JSON.stringify(ll74.body.system)) && /Equipo \(Carla\): Sale 1500/.test(String(ll74.body.messages[0].content)), 'clasifica con Haiku 5.5 (pedido básico, sin esfuerzo ni razonamiento) y le manda la conversación con quién habló');
+  verificar(r74.hechas >= 1 && llamadasIA.length > antesIA74 && ll74.body.model === 'claude-haiku-5-5' && ll74.body.output_config && ll74.body.output_config.effort === 'low' && ll74.body.max_tokens >= 2000 && !ll74.body.thinking && /CLASIFICADOR DE CONVERSACIONES/.test(JSON.stringify(ll74.body.system)) && /Equipo \(Carla\): Sale 1500/.test(String(ll74.body.messages[0].content)), 'clasifica con Haiku 5.5 con esfuerzo bajo y al menos 2000 tokens (su razonamiento descuenta del límite) y le manda la conversación con quién habló');
   verificar(leadsMod.pendientesDeClasificar(recientes74()).every(c => c.clave !== 'wa:59891000001'), 'una vez clasificada, no se vuelve a clasificar hasta que haya mensajes nuevos');
   const l74 = await json(await api('/api/leads'));
   const liaL_74 = (l74.lista || []).find(x => x.clave === 'wa:59891000001');
@@ -1778,6 +1778,26 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   const pc74b = await json(await api('/api/leads/wa:59891000001'));
   verificar(pc74b.tipo === 'reparacion' && pc74b.producto === 'Cable USB-C' && pc74b.traba.categoria === 'lo_piensa' && pc74b.resumen === 'Reclama por una pantalla cambiada.', 'al volver a clasificar, lo corregido a mano se conserva y el resto se actualiza');
   verificar((await api('/api/leads/wa:noexiste')).status === 404, 'un lead inexistente devuelve 404');
+  // 1.5.1: si la IA falla, no reintenta cada minuto (cada intento se cobra)
+  const fa75 = { clave: 'wa:59891000009', numero: '59891000009', nombre: 'Falla' };
+  convMod._usarReloj(() => base74 - 20 * 60000); convMod.registrar(Object.assign({ tipo: 'cliente', texto: 'hola' }, fa75)); convMod._usarReloj(null);
+  const esta75 = () => leadsMod.pendientesDeClasificar(convMod.recientes(30)).some(c => c.clave === fa75.clave);
+  modoIA = 'vacio';
+  leadsMod._usarReloj(() => base74);
+  verificar(esta75() && await leadsMod.clasificar(convMod.cruda(fa75.clave), bot74) === null, 'si la IA no devuelve texto, la clasificación falla sin romper nada');
+  verificar(!esta75(), 'después de una falla no reintenta enseguida');
+  leadsMod._usarReloj(() => base74 + 31 * 60000);
+  verificar(esta75(), 'a los 30 minutos vuelve a intentar');
+  await leadsMod.clasificar(convMod.cruda(fa75.clave), bot74);
+  leadsMod._usarReloj(() => base74 + 62 * 60000);
+  await leadsMod.clasificar(convMod.cruda(fa75.clave), bot74);
+  leadsMod._usarReloj(() => base74 + 300 * 60000);
+  verificar(!esta75(), 'después de 3 intentos fallidos deja de intentar con ese mensaje');
+  modoIA = 'ok';
+  convMod._usarReloj(() => base74 + 250 * 60000); convMod.registrar(Object.assign({ tipo: 'cliente', texto: 'sigo esperando' }, fa75)); convMod._usarReloj(null);
+  verificar(esta75(), 'cuando el cliente vuelve a escribir, se intenta de nuevo');
+  verificar(await leadsMod.clasificar(convMod.cruda(fa75.clave), bot74) !== null && !esta75(), 'al clasificar bien, la falla se olvida');
+  leadsMod._usarReloj(null);
   leadsMod._usarReloj(null);
   // «Chats por responder» ordenados por prioridad
   const ge_74 = { clave: 'wa:59891000003', numero: '59891000003', nombre: 'Gastón' };

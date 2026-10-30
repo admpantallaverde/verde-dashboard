@@ -43,7 +43,8 @@ const MODELOS = [
   { id: 'claude-sonnet-5-5', nombre: 'Claude Sonnet 5.5', thinking: { type: 'between_tools' }, esfuerzo: 'medium', tokensMinimos: 0 },
   { id: 'claude-opus-5-5', nombre: 'Claude Opus 5.5', thinking: null, esfuerzo: 'low', tokensMinimos: 4000 },
   { id: 'claude-fable-5-1', nombre: 'Claude Fable 5.1', thinking: null, esfuerzo: 'low', tokensMinimos: 4000 },
-  { id: 'claude-haiku-5-5', nombre: 'Claude Haiku 5.5', thinking: null, esfuerzo: null, tokensMinimos: 0 }   // 1.5.0: clasificación de leads (sin esfuerzo ni razonamiento: pedido básico)
+  // 1.5.1: Haiku 5.5 razona por defecto y ese razonamiento descuenta de max_tokens: esfuerzo bajo y lugar suficiente para razonar y escribir el JSON.
+  { id: 'claude-haiku-5-5', nombre: 'Claude Haiku 5.5', thinking: null, esfuerzo: 'low', tokensMinimos: 2000 }
 ];
 function listarModelos() { return MODELOS.map(m => ({ id: m.id, nombre: m.nombre })); }
 function modeloPermitido(id) { return MODELOS.some(m => m.id === id); }
