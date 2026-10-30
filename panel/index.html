@@ -1896,6 +1896,25 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 .usr-ent input{width:18px;height:18px;accent-color:var(--accent);margin:1px 0 0;flex:none}
 .usr-ent small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
 
+/* ===================== 1.6.2: biblioteca más limpia ===================== */
+.bb-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.bb-top .bb-resumen{margin:0}
+.bb-acciones-top{display:flex;gap:8px;flex-wrap:wrap}
+.bb-tabla{table-layout:fixed;width:100%;min-width:900px}
+.bb-tabla th:nth-child(1){width:37%}.bb-tabla th:nth-child(2){width:15%}.bb-tabla th:nth-child(3){width:11%}.bb-tabla th:nth-child(4){width:7%}.bb-tabla th:nth-child(5){width:13%}.bb-tabla th:nth-child(6){width:17%}
+.bb-tabla th,.bb-tabla td{padding:11px 12px;vertical-align:middle}
+.bb-tabla td:nth-child(2){font-size:13px;line-height:1.35}
+.bb-nom b{font-size:13.5px;line-height:1.3}
+.bb-nom > span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.bb-tag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:30px;font-size:10.5px;font-weight:700;letter-spacing:.3px;vertical-align:2px;background:rgba(201,242,77,.2);border:1px solid var(--accent-borde);color:var(--text)}
+.bb-tag.gris{background:var(--surface-2);border-color:var(--border);color:var(--muted)}
+.bb-fecha{font-size:13px;line-height:1.3}
+.bb-fecha span{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
+.bb-sw{padding:0!important;min-height:0;vertical-align:middle;display:inline-block}
+.bb-acc{flex-wrap:nowrap;justify-content:flex-end;gap:5px}
+.bb-acc .btn{padding:4px 9px;font-size:12px;min-height:0;white-space:nowrap}
+@media(max-width:760px){.bb-acc{flex-wrap:wrap}}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -2617,8 +2636,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
     </div>
     <!-- ===== VIEW: BIBLIOTECA DE CONOCIMIENTO (1.6.0) ===== -->
     <div class="view" id="view-biblioteca">
-      <div class="bb-resumen" id="bbResumen"></div>
-      <div class="rsp-barra" style="gap:8px"><button type="button" class="btn btn-ghost" onclick="abrirAreas()">Áreas y responsables</button><button type="button" class="btn btn-primary" onclick="nuevoManual()">+ Nuevo manual</button></div>
+      <div class="bb-top"><div class="bb-resumen" id="bbResumen"></div><div class="bb-acciones-top"><button type="button" class="btn btn-ghost" onclick="abrirAreas()">Áreas y responsables</button><button type="button" class="btn btn-primary" onclick="nuevoManual()">+ Nuevo manual</button></div></div>
       <div class="panel"><div style="overflow-x:auto"><table class="bb-tabla" style="min-width:900px"><thead><tr><th>Manual</th><th>Área</th><th>Estado</th><th>Activo</th><th>Actualizado</th><th style="text-align:right">Acciones</th></tr></thead><tbody id="bbTabla"></tbody></table></div><div class="empty oculto" id="bbVacio"><p>Todavía no hay manuales propios. Subí el primero con «Nuevo manual»; en la próxima parte también se van a poder crear entrevistando al responsable de cada área.</p></div></div>
       <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>El Instructor del Centro de ayuda responde solo con los manuales aprobados y activos, más los del sistema. Un manual nace como borrador; «Aprobar» lo activa. Las áreas sin manual aprobado se listan solas para el Instructor, que remite a su responsable en lugar de inventar.</span></div>
     </div>
@@ -7816,8 +7834,8 @@ async function cargarConocimiento(){
 function pintarConocimiento(){
   const d=BB.datos;if(!d)return;
   const b=d.base||{};
-  document.getElementById('bbResumen').innerHTML='<span class="ld-chip">'+ICO_MANUAL+' Manuales activos <b>'+((b.activos||0)+3)+'</b></span><span class="ld-chip bb-base '+(b.estado==='grande'?'grande':'')+'">Tamaño de la base <b>'+(b.paginas||0)+' páginas'+(b.estado==='grande'?' · grande':'')+'</b></span>'+(b.estado==='grande'?'<span class="faint">La base es grande: las respuestas van a tardar más y costar más. Conviene desactivar lo que no se use.</span>':'');
-  const fila=x=>'<tr data-id="'+escH(x.id)+'"><td><div class="bb-nom"><b>'+escH(x.nombre)+(x.sistema?'<span class="bb-sis">sistema</span>':'')+'</b>'+(x.descripcion?'<span>'+escH(x.descripcion)+'</span>':'')+'</div></td><td>'+escH(x.area)+'</td><td><span class="pill '+(x.estado==='aprobado'?'ok':'warn')+'"><span class="d"></span>'+(x.estado==='aprobado'?'Aprobado':'Borrador')+'</span></td><td>'+(x.sistema?'<span class="bb-fijo">siempre</span>':x.estado==='aprobado'?'<button type="button" class="sw sw-mini'+(x.activo?' on':'')+'" role="switch" aria-checked="'+(x.activo?'true':'false')+'" aria-label="Activo" data-id="'+escH(x.id)+'" onclick="activarManual(this)"><span class="sw-dot"></span></button>':'<span class="bb-fijo">—</span>')+'</td><td>'+(x.sistema?'<span class="bb-fijo">—</span>':escH(horaCorta(x.actualizadoEn))+'<br><span class="faint">'+escH(x.por||'')+' · '+x.paginas+(x.paginas===1?' página':' páginas')+'</span>')+'</td><td><div class="bb-acc"><button type="button" class="btn btn-ghost" onclick="verManual(\''+escH(x.id)+'\','+(x.sistema?'true':'false')+')">Ver</button>'+(x.sistema?'':'<button type="button" class="btn btn-ghost" onclick="editarManual(\''+escH(x.id)+'\')">Editar</button>'+(x.estado==='borrador'?'<button type="button" class="btn btn-primary" onclick="aprobarManual(\''+escH(x.id)+'\')">Aprobar</button>':'')+'<button type="button" class="btn btn-ghost" onclick="eliminarManual(\''+escH(x.id)+'\')">Eliminar</button>')+'</div></td></tr>';
+  document.getElementById('bbResumen').innerHTML='<span class="ld-chip">'+ICO_MANUAL+' Manuales activos <b>'+((b.activos||0)+3)+'</b></span><span class="ld-chip bb-base '+(b.estado==='grande'?'grande':'')+'">Tamaño de la base <b>'+(b.paginas||0)+((b.paginas||0)===1?' página':' páginas')+(b.estado==='grande'?' · grande':'')+'</b></span>'+(b.estado==='grande'?'<span class="faint">La base es grande: las respuestas van a tardar más y costar más. Conviene desactivar lo que no se use.</span>':'');
+  const fila=x=>'<tr data-id="'+escH(x.id)+'"><td><div class="bb-nom"><b>'+escH(x.nombre)+(x.sistema?'<span class="bb-sis">sistema</span>':'')+(x.actualizaDe?'<span class="bb-tag">actualización</span>':'')+(x.versionAnteriorDe?'<span class="bb-tag gris">versión anterior</span>':'')+'</b>'+(x.actualizaDe?'<span>Al aprobarla reemplaza «'+escH(x.actualizaDeNombre||'')+'»; la versión vigente queda guardada.</span>':x.descripcion?'<span>'+escH(x.descripcion)+'</span>':'')+'</div></td><td>'+escH(x.area)+'</td><td><span class="pill '+(x.estado==='aprobado'?'ok':'warn')+'"><span class="d"></span>'+(x.estado==='aprobado'?'Aprobado':'Borrador')+'</span></td><td>'+(x.sistema?'<span class="bb-fijo">siempre</span>':x.estado==='aprobado'?'<button type="button" class="switch bb-sw'+(x.activo?' on':'')+'" role="switch" aria-checked="'+(x.activo?'true':'false')+'" aria-label="Activo" title="'+(x.activo?'Activo':'Inactivo')+'" data-id="'+escH(x.id)+'" onclick="activarManual(this)"></button>':'<span class="bb-fijo">—</span>')+'</td><td>'+(x.sistema?'<span class="bb-fijo">—</span>':'<div class="bb-fecha">'+escH(horaCorta(x.actualizadoEn))+'<span>'+escH(x.por||'')+' · '+x.paginas+(x.paginas===1?' pág.':' págs.')+'</span></div>')+'</td><td><div class="bb-acc"><button type="button" class="btn btn-ghost" onclick="verManual(\''+escH(x.id)+'\','+(x.sistema?'true':'false')+')">Ver</button>'+(x.sistema?'':'<button type="button" class="btn btn-ghost" onclick="editarManual(\''+escH(x.id)+'\')">Editar</button>'+(x.estado==='borrador'?'<button type="button" class="btn btn-primary" onclick="aprobarManual(\''+escH(x.id)+'\')">Aprobar</button>':'')+'<button type="button" class="btn btn-ghost" onclick="eliminarManual(\''+escH(x.id)+'\')">Eliminar</button>')+'</div></td></tr>';
   document.getElementById('bbTabla').innerHTML=(d.sistema||[]).map(fila).join('')+(d.manuales||[]).map(fila).join('');
   document.getElementById('bbVacio').classList.toggle('oculto',!!(d.manuales||[]).length);
 }
@@ -7830,10 +7848,10 @@ async function activarManual(btn){
 }
 function aprobarManual(id){
   const m=(BB.datos.manuales||[]).find(x=>x.id===id);if(!m)return;
-  askConfirm({title:'Aprobar el manual',message:'«'+m.nombre+'» pasa a aprobado y se activa: el Instructor lo va a usar como fuente de verdad desde ahora.',okLabel:'Aprobar',icon:'info'},async()=>{
+  askConfirm({title:m.actualizaDe?'Aprobar la actualización':'Aprobar el manual',message:m.actualizaDe?'El texto de «'+(m.actualizaDeNombre||'el manual vigente')+'» se reemplaza por esta actualización. La versión actual queda guardada como «versión anterior», inactiva, por si hay que volver atrás.':'«'+m.nombre+'» pasa a aprobado y se activa: el Instructor lo va a usar como fuente de verdad desde ahora.',okLabel:'Aprobar',icon:'info'},async()=>{
     const r=await api('/api/manuales/'+encodeURIComponent(id)+'/aprobar',{method:'POST'});
     if(!r.ok){toast('No se pudo aprobar',r.json.error||'','error');return;}
-    toast('Manual aprobado','Ya está activo para el Instructor.','success');cargarConocimiento();
+    toast(m.actualizaDe?'Actualización aprobada':'Manual aprobado',m.actualizaDe?'El manual vigente ya tiene el texto nuevo; la versión anterior quedó guardada.':'Ya está activo para el Instructor.','success');cargarConocimiento();
   });
 }
 function eliminarManual(id){
@@ -7940,7 +7958,7 @@ function pintarModoAyuda(){
   const ent=AYUDA.modo==='entrenamiento';
   if(ins)ins.classList.toggle('oculto',ent);
   if(adj)adj.classList.toggle('oculto',ent);
-  if(ta)ta.placeholder=ent?'Responder al Entrevistador…':'Escribir la consulta: un cliente, una venta, un presupuesto, el panel o las reglas de WhatsApp…';
+  if(ta){ta.placeholder=ent?'Responder al Entrevistador…':'Escribir la consulta: un cliente, una venta, un presupuesto, el panel o las reglas de WhatsApp…';ta.maxLength=ent?3000:500;}   // 1.6.2: las respuestas de una entrevista son largas
   if(ent&&!esEntrevista()){
     if(start){start.classList.remove('oculto');const sel=document.getElementById('ayEntArea');if(sel&&!sel.options.length)sel.innerHTML=(AYUDA.entrenamiento.areas||[]).map(a=>'<option value="'+escH(a)+'">'+escH(a)+'</option>').join('');}
     if(chat)chat.classList.add('oculto');if(info)info.classList.add('oculto');if(atj)atj.classList.add('oculto');

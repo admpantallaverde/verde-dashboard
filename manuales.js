@@ -52,7 +52,16 @@ function guardar(d) {
 function idDe(nombre) { return String(nombre || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'area'; }
 const rutaTexto = id => path.join(DIR, id + '.txt');
 function paginas(caracteres) { return Math.max(1, Math.round(caracteres / CARACTERES_POR_PAGINA)); }
-function publico(m) { return Object.assign({}, m, { sistema: false, paginas: paginas(m.caracteres || 0) }); }
+function publico(m, d) {
+  const p = Object.assign({}, m, { sistema: false, paginas: paginas(m.caracteres || 0) });
+  // 1.6.2: nombre del manual que actualiza o del que es versión anterior
+  if (d) {
+    if (m.actualizaDe) { const o = d.manuales.find(x => x.id === m.actualizaDe); p.actualizaDeNombre = o ? o.nombre : ''; }
+    if (m.versionAnteriorDe) { const o = d.manuales.find(x => x.id === m.versionAnteriorDe); p.versionAnteriorDeNombre = o ? o.nombre : ''; }
+  }
+  return p;
+}
+function fechaCorta(ms) { const x = new Date(ms - 3 * 3600000); return String(x.getUTCDate()).padStart(2, '0') + '/' + String(x.getUTCMonth() + 1).padStart(2, '0') + '/' + x.getUTCFullYear(); }
 
 /* ---------- lectura de archivos ---------- */
 async function extraerPdf(buffer) {
@@ -123,10 +132,10 @@ async function crear(datos) {
   fs.writeFileSync(rutaTexto(id), texto, { encoding: 'utf8', mode: 0o600 });
   let archivoOriginal = null;
   if (original) { archivoOriginal = id + '.' + original.ext; fs.writeFileSync(path.join(DIR, archivoOriginal), original.buffer, { mode: 0o600 }); }
-  const m = Object.assign(v, { id, estado: 'borrador', activo: false, origen: datos.origen === 'entrenamiento' ? 'entrenamiento' : (original ? 'archivo' : 'texto'), archivoOriginal, nombreOriginal: original ? original.nombre : '', caracteres: texto.length, paginasPdf: pag, creadoEn: reloj(), actualizadoEn: reloj(), por: t(datos.por, 80) || 'Acceso general', aprobadoEn: null, aprobadoPor: '', entrevista: datos.origen === 'entrenamiento' ? { por: t(datos.por, 80) || 'Acceso general', en: reloj() } : null });
+  const m = Object.assign(v, { id, estado: 'borrador', activo: false, origen: datos.origen === 'entrenamiento' ? 'entrenamiento' : (original ? 'archivo' : 'texto'), archivoOriginal, nombreOriginal: original ? original.nombre : '', caracteres: texto.length, paginasPdf: pag, creadoEn: reloj(), actualizadoEn: reloj(), por: t(datos.por, 80) || 'Acceso general', aprobadoEn: null, aprobadoPor: '', entrevista: datos.origen === 'entrenamiento' ? { por: t(datos.por, 80) || 'Acceso general', en: reloj() } : null, actualizaDe: datos.actualizaDe && d.manuales.some(x => x.id === datos.actualizaDe) ? datos.actualizaDe : null });   // 1.6.2: actualizaDe
   d.manuales.push(m);
   guardar(d);
-  return publico(m);
+  return publico(m, d);
 }
 async function actualizar(id, datos) {
   const d = cargar();
@@ -149,15 +158,49 @@ async function actualizar(id, datos) {
   m.actualizadoEn = reloj();
   if (datos.por) m.por = t(datos.por, 80);
   guardar(d);
-  return publico(m);
+  return publico(m, d);
 }
 function aprobar(id, quien) {
   const d = cargar();
   const m = d.manuales.find(x => x.id === id);
   if (!m) return null;
-  m.estado = 'aprobado'; m.activo = true; m.aprobadoEn = reloj(); m.aprobadoPor = t(quien, 80) || 'Acceso general'; m.actualizadoEn = reloj();
+  const q = t(quien, 80) || 'Acceso general';
+  // 1.6.2: una actualización reemplaza el texto del manual aprobado; la versión anterior queda guardada, inactiva
+  const destino = m.actualizaDe ? d.manuales.find(x => x.id === m.actualizaDe) : null;
+  if (destino) {
+    const copiaId = 'm-' + crypto.randomBytes(5).toString('hex');
+    const textoViejo = texto(destino.id);
+    fs.writeFileSync(rutaTexto(copiaId), textoViejo, { encoding: 'utf8', mode: 0o600 });
+    const copia = Object.assign({}, destino, { id: copiaId, nombre: (destino.nombre.slice(0, 50) + ' · versión anterior (' + fechaCorta(reloj()) + ')'), estado: 'aprobado', activo: false, archivoOriginal: null, nombreOriginal: '', caracteres: textoViejo.length, actualizadoEn: reloj(), versionAnteriorDe: destino.id, actualizaDe: null });
+    if (destino.archivoOriginal) { const nuevoNombre = copiaId + destino.archivoOriginal.slice(destino.archivoOriginal.lastIndexOf('.')); try { fs.renameSync(path.join(DIR, destino.archivoOriginal), path.join(DIR, nuevoNombre)); copia.archivoOriginal = nuevoNombre; copia.nombreOriginal = destino.nombreOriginal; } catch (e) { /* sin original */ } }
+    let n = 2; while (d.manuales.some(x => x.nombre.toLowerCase() === copia.nombre.toLowerCase())) { copia.nombre = destino.nombre.slice(0, 44) + ' · versión anterior (' + fechaCorta(reloj()) + ') ' + n++; }
+    d.manuales.push(copia);
+    fs.writeFileSync(rutaTexto(destino.id), texto(m.id), { encoding: 'utf8', mode: 0o600 });
+    destino.caracteres = m.caracteres; destino.archivoOriginal = null; destino.nombreOriginal = ''; destino.paginasPdf = null; destino.origen = m.origen; destino.entrevista = m.entrevista || destino.entrevista;
+    if (m.descripcion) destino.descripcion = m.descripcion;
+    destino.estado = 'aprobado'; destino.activo = true; destino.aprobadoEn = reloj(); destino.aprobadoPor = q; destino.actualizadoEn = reloj(); destino.por = m.por || destino.por;
+    try { fs.unlinkSync(rutaTexto(m.id)); } catch (e) { /* no estaba */ }
+    d.manuales.splice(d.manuales.indexOf(m), 1);
+    guardar(d);
+    return publico(destino, d);
+  }
+  m.estado = 'aprobado'; m.activo = true; m.aprobadoEn = reloj(); m.aprobadoPor = q; m.actualizadoEn = reloj();
   guardar(d);
-  return publico(m);
+  return publico(m, d);
+}
+// 1.6.2: el manual aprobado del área (para que un borrador de entrevista nazca como su actualización)
+function aprobadoDelArea(area) {
+  const d = cargar();
+  const cand = d.manuales.filter(m => m.estado === 'aprobado' && !m.versionAnteriorDe && m.area.toLowerCase() === String(area || '').toLowerCase());
+  if (!cand.length) return null;
+  cand.sort((a, b) => (b.origen === 'entrenamiento') - (a.origen === 'entrenamiento') || (b.activo - a.activo) || b.aprobadoEn - a.aprobadoEn);
+  return publico(cand[0], d);
+}
+// 1.6.2: el borrador de actualización pendiente de un manual, si existe
+function actualizacionPendiente(idManual) {
+  const d = cargar();
+  const m = d.manuales.find(x => x.estado === 'borrador' && x.actualizaDe === idManual);
+  return m ? Object.assign(publico(m, d), { texto: texto(m.id) }) : null;
 }
 function activar(id, activo) {
   const d = cargar();
@@ -166,7 +209,7 @@ function activar(id, activo) {
   if (m.estado !== 'aprobado') { const e = new Error('Primero hay que aprobar el manual.'); e.publico = true; throw e; }
   m.activo = !!activo; m.actualizadoEn = reloj();
   guardar(d);
-  return publico(m);
+  return publico(m, d);
 }
 function eliminar(id) {
   const d = cargar();
@@ -180,10 +223,10 @@ function eliminar(id) {
   return true;
 }
 function texto(id) { try { return fs.readFileSync(rutaTexto(id), 'utf8'); } catch (e) { return ''; } }
-function obtener(id) { const m = cargar().manuales.find(x => x.id === id); return m ? Object.assign(publico(m), { texto: texto(id) }) : null; }
+function obtener(id) { const d = cargar(); const m = d.manuales.find(x => x.id === id); return m ? Object.assign(publico(m, d), { texto: texto(id) }) : null; }
 function rutaOriginal(id) { const m = cargar().manuales.find(x => x.id === id); if (!m || !m.archivoOriginal) return null; const r = path.join(DIR, m.archivoOriginal); return fs.existsSync(r) ? { ruta: r, nombre: m.nombreOriginal || m.archivoOriginal } : null; }
 // Los que usa el Instructor: aprobados y activos, con su texto.
-function activos() { return cargar().manuales.filter(m => m.estado === 'aprobado' && m.activo).map(m => Object.assign(publico(m), { texto: texto(m.id) })); }
+function activos() { const d = cargar(); return d.manuales.filter(m => m.estado === 'aprobado' && m.activo).map(m => Object.assign(publico(m, d), { texto: texto(m.id) })); }
 function resumenBase() {
   const act = cargar().manuales.filter(m => m.estado === 'aprobado' && m.activo);
   const caracteres = act.reduce((n, m) => n + (m.caracteres || 0), 0);
@@ -192,7 +235,7 @@ function resumenBase() {
 }
 function listar() {
   const d = cargar();
-  return { sistema: SISTEMA.map(s => Object.assign({}, s, { sistema: true, estado: 'aprobado', activo: true })), manuales: d.manuales.map(publico).sort((a, b) => b.actualizadoEn - a.actualizadoEn), areas: areas(), base: resumenBase() };
+  return { sistema: SISTEMA.map(s => Object.assign({}, s, { sistema: true, estado: 'aprobado', activo: true })), manuales: d.manuales.map(m => publico(m, d)).sort((a, b) => b.actualizadoEn - a.actualizadoEn), areas: areas(), base: resumenBase() };
 }
 /* ---------- áreas ---------- */
 function areas() {
@@ -222,4 +265,4 @@ function listasInstructor() {
   return { disponibles, sinManual };
 }
 
-module.exports = { SISTEMA, AREAS_DEFECTO, MAX_TEXTO, BASE_BIEN_PAGINAS, leerArchivo, extraerPdf, crear, actualizar, aprobar, activar, eliminar, obtener, texto, rutaOriginal, activos, resumenBase, listar, areas, guardarAreas, listasInstructor, paginas, _usarReloj };
+module.exports = { SISTEMA, AREAS_DEFECTO, MAX_TEXTO, BASE_BIEN_PAGINAS, leerArchivo, extraerPdf, crear, actualizar, aprobar, activar, eliminar, obtener, texto, rutaOriginal, activos, resumenBase, listar, areas, guardarAreas, listasInstructor, paginas, aprobadoDelArea, actualizacionPendiente, _usarReloj };

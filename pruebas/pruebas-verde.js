@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.6.1';
+const VERSION_ESPERADA = '1.6.2';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -2133,7 +2133,22 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(g81b.manual.id === g81.manual.id && (await json(await api('/api/manuales'))).manuales.filter(m => m.nombre.startsWith('Manual de Logística')).length === 1, '«Generar de nuevo» actualiza el mismo borrador en lugar de duplicarlo');
   await json(await api('/api/manuales/' + g81.manual.id + '/aprobar', 'POST'));
   const g81c = await json(await api('/api/entrenamiento/generar', 'POST', { id: conv81.id }));
-  verificar(g81c.manual.id !== g81.manual.id && g81c.manual.nombre === 'Manual de Logística, almacén y Mercado Libre (2)', 'si el borrador ya fue aprobado, generar de nuevo crea otro con nombre distinto');
+  verificar(g81c.manual.id !== g81.manual.id && g81c.manual.nombre === 'Actualización de «Manual de Logística, almacén y Mercado Libre»' && g81c.manual.actualizaDe === g81.manual.id && g81c.manual.actualizaDeNombre === 'Manual de Logística, almacén y Mercado Libre' && g81c.manual.estado === 'borrador' && /Actualización generada/.test(g81c.conversacion.mensajes[g81c.conversacion.mensajes.length - 1].texto), '1.6.2: si el manual ya fue aprobado, el borrador nace como actualización de ese manual');
+  const g81d = await json(await api('/api/entrenamiento/generar', 'POST', { id: conv81.id }));
+  verificar(g81d.manual.id === g81c.manual.id && (await json(await api('/api/manuales'))).manuales.filter(m => m.actualizaDe === g81.manual.id).length === 1, 'generar otra vez actualiza la misma actualización pendiente, sin duplicar');
+  llamadasIA.length = 0;
+  await json(await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Cómo despacho un pedido?', conversacionId: (await json(await api('/api/ayuda/conversaciones', 'POST'))).conversacion.id }));
+  verificar(/=== MANUAL: MANUAL DE LOGÍSTICA, ALMACÉN Y MERCADO LIBRE \(/.test(llamadasIA[llamadasIA.length - 1].body.system[0].text) && !/ACTUALIZACIÓN DE «/.test(llamadasIA[llamadasIA.length - 1].body.system[0].text), 'mientras la actualización es borrador, el Instructor sigue usando el manual vigente');
+  const textoAntes = (await json(await api('/api/manuales/' + g81.manual.id))).manual.texto;
+  await json(await api('/api/manuales/' + g81c.manual.id, 'PUT', { texto: textoAntes + '\n\nPROCEDIMIENTO NUEVO\nLos pedidos sin stock se avisan al cliente en el día.' }));
+  const ap = await json(await api('/api/manuales/' + g81c.manual.id + '/aprobar', 'POST'));
+  const lb82 = await json(await api('/api/manuales'));
+  const vigente = lb82.manuales.find(m => m.id === g81.manual.id), anterior = lb82.manuales.find(m => m.versionAnteriorDe === g81.manual.id);
+  verificar(ap.manual.id === g81.manual.id && vigente && vigente.estado === 'aprobado' && vigente.activo && vigente.nombre === 'Manual de Logística, almacén y Mercado Libre' && /PROCEDIMIENTO NUEVO/.test((await json(await api('/api/manuales/' + g81.manual.id))).manual.texto) && !lb82.manuales.some(m => m.id === g81c.manual.id), 'al aprobar la actualización, el manual vigente toma el texto nuevo, conserva su nombre y el borrador desaparece');
+  verificar(anterior && anterior.estado === 'aprobado' && anterior.activo === false && /versión anterior \(/.test(anterior.nombre) && anterior.versionAnteriorDeNombre === 'Manual de Logística, almacén y Mercado Libre' && !/PROCEDIMIENTO NUEVO/.test((await json(await api('/api/manuales/' + anterior.id))).manual.texto), 'la versión anterior queda guardada, inactiva, con el texto viejo');
+  llamadasIA.length = 0;
+  await json(await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Y si no hay stock?', conversacionId: (await json(await api('/api/ayuda/conversaciones', 'POST'))).conversacion.id }));
+  verificar(/PROCEDIMIENTO NUEVO/.test(llamadasIA[llamadasIA.length - 1].body.system[0].text) && !/versión anterior/i.test(llamadasIA[llamadasIA.length - 1].body.system[0].text.split('=== MANUAL:').slice(1).join('')), 'el Instructor pasa a usar el texto actualizado y no la versión anterior');
   // Permiso por usuario
   const u81 = usuariosMod.crear({ nombre: 'Lucas Entrena', usuario: 'lucas81', rol: 'asesor', firma: '- Lucas -' }).usuario;
   verificar(usuariosMod.listar().find(x => x.id === u81.id).entrenar === false && usuariosMod.actualizar(u81.id, { entrenar: true }).entrenar === true && usuariosMod.listar().find(x => x.rol === 'admin').entrenar === true, 'el permiso se guarda por usuario y los administradores siempre lo tienen');

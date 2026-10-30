@@ -45,7 +45,7 @@ const encuestas = require('./encuestas.js');   // 1.5.9: encuesta de calificaci�
 const manuales = require('./manuales.js');     // 1.6.0: biblioteca de conocimiento
 const manualCompleto = require('./manual-completo.js');
 
-const VERSION = '1.6.1';
+const VERSION = '1.6.2';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -1100,7 +1100,11 @@ app.post('/api/entrenamiento/generar', requiere(['admin', 'asesor']), async (req
     const quien = quienActua(req);
     let manual = null;
     const previo = conv.borradorId ? manuales.obtener(conv.borradorId) : null;
+    const aprobado = manuales.aprobadoDelArea(conv.area);   // 1.6.2
+    const pendiente = aprobado ? manuales.actualizacionPendiente(aprobado.id) : null;
     if (previo && previo.estado === 'borrador') manual = await manuales.actualizar(previo.id, { descripcion: j.descripcion, texto: textoManual, por: quien });
+    else if (pendiente) manual = await manuales.actualizar(pendiente.id, { descripcion: j.descripcion, texto: textoManual, por: quien });   // ya había una actualización pendiente del mismo manual
+    else if (aprobado) manual = await manuales.crear({ nombre: ('Actualización de «' + aprobado.nombre + '»').slice(0, 80), area: conv.area, descripcion: j.descripcion, texto: textoManual, origen: 'entrenamiento', por: quien, actualizaDe: aprobado.id });   // 1.6.2: nace como actualización del manual aprobado del área
     else {
       let nombre = String((j && j.titulo) || ('Manual de ' + conv.area)).trim().slice(0, 80) || ('Manual de ' + conv.area);
       let intento = 1;
@@ -1110,7 +1114,7 @@ app.post('/api/entrenamiento/generar', requiere(['admin', 'asesor']), async (req
       }
     }
     conv = hilos.marcarBorrador(clave, conv.id, manual.id);
-    conv = hilos.agregar(clave, conv.id, { rol: 'asistente', sistema: true, texto: 'Borrador generado: «' + manual.nombre + '». Quedó en la Biblioteca de conocimiento como borrador; Dirección lo va a revisar antes de usarlo para capacitar. Si continúa la entrevista, «Generar de nuevo» lo actualiza.' });
+    conv = hilos.agregar(clave, conv.id, { rol: 'asistente', sistema: true, texto: (manual.actualizaDe ? 'Actualización generada: «' + manual.nombre + '». Quedó en la Biblioteca de conocimiento como borrador; al aprobarla, reemplaza el manual vigente y la versión anterior queda guardada.' : 'Borrador generado: «' + manual.nombre + '». Quedó en la Biblioteca de conocimiento como borrador; Dirección lo va a revisar antes de usarlo para capacitar.') + ' Si continúa la entrevista, «Generar de nuevo» lo actualiza.' });
     console.log('Panel: ' + quienEs(req) + ' generó el borrador «' + manual.nombre + '» desde una entrevista');
     res.json({ manual, conversacion: conversacionPublica(conv, rolDe(req)) });
   } catch (e) { responderError(res, e); }
