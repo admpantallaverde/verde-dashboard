@@ -41,7 +41,7 @@ const respaldos = require('./respaldos.js');   // 1.4.15: respaldo diario cifrad
 const leads = require('./leads.js');           // 1.5.0: leads clasificados por prioridad
 const hilos = require('./ayuda-hilos.js');     // 1.5.3: conversaciones guardadas del Centro de ayuda
 
-const VERSION = '1.5.5';
+const VERSION = '1.5.6';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).

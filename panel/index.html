@@ -1760,6 +1760,24 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 .bot-card .link-btn:hover{text-decoration:underline}
 .bot-card .tema-sw{grid-column:2;grid-row:1}
 
+/* ===================== 1.5.6: menú por grupos desplegables, más compacto; Devolver a Verde en chats por responder ===================== */
+.nav-grupo{display:flex;flex-direction:column}
+.nav-toggle{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;background:none;border:none;cursor:pointer;font:inherit;text-align:left;padding:8px 8px 3px}
+.nav-toggle:hover{color:var(--text)}
+.nav-toggle svg{width:12px;height:12px;transition:transform .15s;flex:none;color:var(--muted)}
+.nav-grupo.cerrado .nav-toggle svg{transform:rotate(-90deg)}
+.nav-grupo.cerrado .nav-cuerpo{display:none}
+:root[data-menu="corto"] .nav-grupo.cerrado .nav-cuerpo{display:block}
+:root[data-menu="corto"] .nav-toggle{display:none}
+.nav-cuerpo{display:flex;flex-direction:column;gap:1px}
+.side-link{min-height:38px;padding:7px 12px}
+.tree-leaf{padding:7px 9px}
+.side-top{margin-bottom:0}
+.side{gap:2px;padding:12px 14px}
+.topbar{margin-bottom:18px}
+.ay-asistente{height:calc(100vh - 132px)}
+.conv-franja .franja-botones{display:flex;gap:6px;flex-wrap:wrap}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -1785,21 +1803,21 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
       <button type="button" class="menu-toggle" id="btnMenu" onclick="alternarMenu()" aria-label="Achicar el menú" aria-expanded="true" data-tip="Achicar el menú"><svg class="ic-cerrar" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><polyline points="16 15 13 12 16 9"/></svg><svg class="ic-abrir" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><polyline points="14 9 17 12 14 15"/></svg></button>
     </div>
 
-    <div class="nav-label">Ventas</div>
-    <div class="side-top">
+    
+    <div class="nav-grupo" data-grupo="ventas"><button type="button" class="nav-label nav-toggle" aria-expanded="true" onclick="alternarGrupo(this)">Ventas<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button><div class="nav-cuerpo"><div class="side-top">
       <button class="side-link" id="leaf-leads" onclick="go('leads')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg>Leads</button>
       <button class="side-link" id="leaf-tareas" onclick="go('tareas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Tareas<span class="side-count rojo" id="cntTareas">0</span></button>
       <div id="navVentasAdmin"><button class="side-link" id="leaf-proceso" onclick="go('proceso')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h6"/></svg>Proceso de ventas</button></div>
-    </div>
-    <div class="side-top">
+    </div></div></div>
+    <div class="nav-grupo" data-grupo="atencion"><button type="button" class="nav-label nav-toggle" aria-expanded="true" onclick="alternarGrupo(this)">Atención<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button><div class="nav-cuerpo"><div class="side-top">
       <button class="side-link" id="leaf-chats" onclick="go('chats')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>Chats por responder<span class="side-count" id="cntPend">0</span></button>
       <button class="side-link" id="leaf-conversaciones" onclick="go('conversaciones')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"/><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"/></svg>Conversaciones</button>
       <button class="side-link" id="leaf-respondidos" onclick="go('respondidos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Chats respondidos</button>
-    </div>
-    <div id="navAdmin">
-    <div class="nav-label">Categorías</div>
-
-    <button class="tree-parent" id="parentBtn" onclick="toggleParent()" aria-expanded="false" aria-controls="parentChildren">
+    </div></div></div>
+    <div id="navAdmin"><div class="nav-grupo" data-grupo="verde"><button type="button" class="nav-label nav-toggle" aria-expanded="true" onclick="alternarGrupo(this)">Verde<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button><div class="nav-cuerpo"><button class="tree-leaf" id="leaf-verde" onclick="go('verde')">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 17v4M8 21h8"/></svg>
+          Comportamiento del bot
+        </button></div></div><div class="oculto" id="navDemo" aria-hidden="true"><button class="tree-parent" id="parentBtn" onclick="toggleParent()" aria-expanded="false" aria-controls="parentChildren">
       <span class="dot"></span> Agentes IA
       <svg class="chev" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
     </button>
@@ -1826,25 +1844,14 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13l-4 4-4-4M12 17V9"/></svg>
           Recursos enviables
         </button>
-        <button class="tree-leaf" id="leaf-verde" onclick="go('verde')">
-          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 17v4M8 21h8"/></svg>
-          Comportamiento del bot
-        </button>
+        
       </div>
-    </div>
-
-    </div>
-    <div id="navSistema">
-      <div class="nav-label">Sistema</div>
-      <button class="tree-leaf" id="leaf-usuarios" onclick="go('usuarios')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Usuarios</button>
+    </div></div></div>
+    <div id="navSistema"><div class="nav-grupo" data-grupo="sistema"><button type="button" class="nav-label nav-toggle" aria-expanded="true" onclick="alternarGrupo(this)">Sistema<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button><div class="nav-cuerpo"><button class="tree-leaf" id="leaf-usuarios" onclick="go('usuarios')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Usuarios</button>
       <button class="tree-leaf" id="leaf-consumo" onclick="go('consumo')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Consumo de IA</button>
       <button class="tree-leaf" id="leaf-accesos" onclick="go('accesos')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Registro de accesos</button>
-      <button class="tree-leaf" id="leaf-respaldos" onclick="go('respaldos')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>Respaldos</button>
-    </div>
-    <div id="navAyuda">
-      <div class="nav-label">Ayuda</div>
-      <button class="tree-leaf" id="leaf-ayuda" onclick="go('ayuda')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Centro de ayuda</button>
-    </div>
+      <button class="tree-leaf" id="leaf-respaldos" onclick="go('respaldos')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>Respaldos</button></div></div></div>
+    <div id="navAyuda"><div class="nav-grupo" data-grupo="ayuda"><button type="button" class="nav-label nav-toggle" aria-expanded="true" onclick="alternarGrupo(this)">Ayuda<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button><div class="nav-cuerpo"><button class="tree-leaf" id="leaf-ayuda" onclick="go('ayuda')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Centro de ayuda</button></div></div></div>
     <div class="side-foot">
       <div class="bot-card">
         <div class="row">
@@ -3222,6 +3229,7 @@ function go(view){
   _doGo(view);
 }
 function _doGo(view){
+  if(typeof abrirGrupoDe==='function')abrirGrupoDe(view);   // 1.5.6
   if(CONV.clave&&!_abriendoConv)cerrarConversacion();   // al cambiar de pantalla se cierra la conversación abierta
   currentView=view;
   document.querySelectorAll('.tree-leaf,.side-link').forEach(l=>l.classList.remove('active'));
@@ -5718,7 +5726,7 @@ function pintarSwitch(c){
     :pausa?'Verde está en pausa porque respondió una persona del equipo. Para que vuelva a responder, usar «Devolver a Verde». Este interruptor lo apaga sin límite de tiempo.'
     :'Verde responde en este chat. Tocar para apagarlo.';
   const b=document.getElementById('convDevolver');
-  if(b){b.classList.toggle('oculto',!enPausaVerde(c));b.dataset.clave=c.clave;}
+  if(b){b.classList.toggle('oculto',!(c&&c.pausaHasta&&!c.apagado));b.dataset.clave=c.clave;}   // 1.5.6: también si el chat está por responder
 }
 function pintarFranja(c){
   const f=document.getElementById('convFranja');if(!f)return;
@@ -5735,9 +5743,9 @@ function pintarFranja(c){
     if(c.pendienteId)boton='<button type="button" class="btn-mini franja-marcar" onclick="marcarDesdeConversacion()">'+IC134.check+'Marcar atendido</button>';
   }else if(c.pendiente&&c.pausaHasta){
     clase='roja';
-    txt='Por responder: una persona del equipo tiene que atender este chat. Verde está en pausa hasta '+minuscula1(horaCorta(c.pausaHasta))+' porque alguien del equipo ya respondió; no va a contestar hasta entonces o hasta que alguien atienda.';
+    txt='Por responder: una persona del equipo tiene que atender este chat. Verde está en pausa hasta '+minuscula1(horaCorta(c.pausaHasta))+' porque alguien del equipo ya respondió. Para que vuelva a responder ya, tocar «Devolver a Verde».';
     corto='Por responder: Verde en pausa hasta '+minuscula1(horaCorta(c.pausaHasta))+'.';
-    if(c.pendienteId)boton='<button type="button" class="btn-mini franja-marcar" onclick="marcarDesdeConversacion()">'+IC134.check+'Marcar atendido</button>';
+    boton='<span class="franja-botones"><button type="button" class="btn-mini" data-clave="'+escH(c.clave)+'" onclick="reanudarVerde(this)">'+IC134.bot+'Devolver a Verde</button>'+(c.pendienteId?'<button type="button" class="btn-mini franja-marcar" onclick="marcarDesdeConversacion()">'+IC134.check+'Marcar atendido</button>':'')+'</span>';
   }else if(c.pendiente){
     clase='roja';
     txt='Por responder: una persona del equipo tiene que atender este chat. Verde sigue conversando, sin dar precios, hasta que alguien responda; ahí hace su pausa de 12 horas.';
@@ -7455,10 +7463,14 @@ var VOZ={hablando:null};
 function hayVoz(){return typeof window!=='undefined'&&!!window.speechSynthesis&&typeof window.SpeechSynthesisUtterance==='function';}
 function textoParaVoz(t){return String(t||'').replace(/\*\*/g,'').replace(/^\s*\d+[.)]\s+/gm,'').replace(/^\s*[-•]\s+/gm,'').replace(/«|»/g,'').replace(/\s+/g,' ').trim();}
 function vozEspanol(){
-  const voces=window.speechSynthesis.getVoices()||[];
-  const orden=['es-UY','es-AR','es-MX','es-US','es-ES','es'];
-  for(const l of orden){const v=voces.find(x=>String(x.lang||'').toLowerCase().startsWith(l.toLowerCase()));if(v)return v;}
-  return null;
+  // 1.5.6: primero las voces de mejor calidad que tenga el equipo (Natural, Online, Neural, Google), después por región.
+  const voces=(window.speechSynthesis.getVoices()||[]).filter(v=>/^es/i.test(String(v.lang||'')));
+  const puntaje=v=>{const n=String(v.name||''),l=String(v.lang||'').toLowerCase();let p=0;
+    if(/natural|online|neural|google|premium|enhanced|wavenet/i.test(n))p+=10;
+    if(/desktop|espeak|compact/i.test(n))p-=5;
+    if(l.startsWith('es-uy')||l.startsWith('es-ar'))p+=3;else if(l.startsWith('es-mx')||l.startsWith('es-us'))p+=2;else if(l.startsWith('es-es'))p+=1;
+    return p;};
+  return voces.sort((a,b)=>puntaje(b)-puntaje(a))[0]||null;
 }
 function botonEscucharAyuda(hi){return hayVoz()?'<button type="button" class="ay-escuchar" data-hi="'+hi+'" onclick="escucharAyuda(this)"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg><span>Escuchar</span></button>':'';}
 function detenerVozAyuda(){if(!hayVoz())return;window.speechSynthesis.cancel();if(VOZ.hablando){VOZ.hablando.classList.remove('activo');VOZ.hablando.querySelector('span').textContent='Escuchar';VOZ.hablando=null;}}
@@ -7473,6 +7485,29 @@ function escucharAyuda(btn){
   VOZ.hablando=btn;btn.classList.add('activo');btn.querySelector('span').textContent='Detener';
   window.speechSynthesis.speak(u);
 }
+
+
+/* ===================== 1.5.6: grupos del menú desplegables ===================== */
+function gruposGuardados(){try{return JSON.parse(localStorage.getItem('verde_menu_grupos')||'{}')||{};}catch(e){return {};}}
+function alternarGrupo(btn){
+  const g=btn.closest('.nav-grupo');if(!g)return;
+  g.classList.toggle('cerrado');
+  btn.setAttribute('aria-expanded',String(!g.classList.contains('cerrado')));
+  const est=gruposGuardados();est[g.dataset.grupo]=!g.classList.contains('cerrado');
+  try{localStorage.setItem('verde_menu_grupos',JSON.stringify(est));}catch(e){}
+}
+function aplicarGruposMenu(){
+  const est=gruposGuardados();
+  document.querySelectorAll('.nav-grupo').forEach(g=>{const abierto=est[g.dataset.grupo]!==false;g.classList.toggle('cerrado',!abierto);const b=g.querySelector('.nav-toggle');if(b)b.setAttribute('aria-expanded',String(abierto));});
+}
+// Si la vista activa está en un grupo cerrado, se abre para que se vea la entrada marcada.
+function abrirGrupoDe(view){
+  const hoja=document.getElementById('leaf-'+view)||document.getElementById('leaf-'+((typeof VISTA_PADRE!=='undefined'&&VISTA_PADRE[view])||''));
+  const g=hoja&&hoja.closest('.nav-grupo');
+  if(g&&g.classList.contains('cerrado')){g.classList.remove('cerrado');const b=g.querySelector('.nav-toggle');if(b)b.setAttribute('aria-expanded','true');}
+}
+document.addEventListener('DOMContentLoaded',aplicarGruposMenu);
+if(document.readyState!=='loading')aplicarGruposMenu();
 
 </script>
 <script>
