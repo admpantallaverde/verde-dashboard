@@ -79,13 +79,37 @@ function claveTemporal() {
 function limpiarTexto(s, max) { return String(s == null ? '' : s).replace(/\s+/g, ' ').trim().slice(0, max); }
 function normalizarUsuario(s) { return String(s == null ? '' : s).trim().toLowerCase(); }
 function usuarioValido(s) { return /^[a-z0-9._-]{3,30}$/.test(s); }
+// 1.6.3: accesos por usuario. El administrador tiene todo; un integrante solo lo marcado. El Centro de ayuda es para todos.
+const MODULOS = ['atencion', 'ventas', 'reportes', 'verde'];
+const ACCESOS_DEFECTO = { atencion: true, ventas: true, reportes: false, verde: false };   // lo que tenía un asesor antes de la 1.6.3
+function accesosDe(u) {
+  if (!u) return { atencion: false, ventas: false, reportes: false, verde: false, sistema: false, ayuda: true };
+  if (u.rol === 'admin') return { atencion: true, ventas: true, reportes: true, verde: true, sistema: true, ayuda: true };
+  const a = u.accesos && typeof u.accesos === 'object' ? u.accesos : ACCESOS_DEFECTO;
+  const out = { sistema: false, ayuda: true };
+  for (const m of MODULOS) out[m] = !!a[m];
+  return out;
+}
+function limpiarAccesos(datos) {
+  if (!datos || typeof datos !== 'object') return null;
+  const out = {};
+  for (const m of MODULOS) out[m] = datos[m] === true;
+  return out;
+}
+function resumenAccesos(u) {
+  if (u.rol === 'admin') return 'Todo el panel';
+  const a = accesosDe(u), n = { atencion: 'Atención', ventas: 'Ventas', reportes: 'Reportes', verde: 'Verde' };
+  const l = MODULOS.filter(m => a[m]).map(m => n[m]);
+  return l.length ? l.join(', ') + ' y Centro de ayuda' : 'Solo Centro de ayuda';
+}
 function publico(u) {
   return {
     id: u.id, nombre: u.nombre, usuario: u.usuario, rol: u.rol, rolNombre: ROLES[u.rol] || u.rol,
     firma: u.firma || '', activo: u.activo !== false, debeCambiar: !!u.debeCambiar,
     creadoEn: u.creadoEn || null, ultimoIngreso: u.ultimoIngreso || null,
     dosPasos: !!(u.dosPasos && u.dosPasos.secreto),   // 1.4.15: verificación en 2 pasos activa
-    entrenar: u.rol === 'admin' || !!u.entrenar   // 1.6.1: puede usar el modo Entrenamiento (los administradores siempre)
+    entrenar: u.rol === 'admin' || !!u.entrenar,   // 1.6.1: puede usar el modo Entrenamiento (los administradores siempre)
+    accesos: accesosDe(u), accesosResumen: resumenAccesos(u), tipoNombre: u.rol === 'admin' ? 'Administrador' : 'Integrante del equipo'   // 1.6.3
   };
 }
 function adminsActivosSalvo(lista, id) { return lista.filter(u => u.rol === 'admin' && u.activo !== false && u.id !== id).length; }
@@ -115,6 +139,7 @@ function crear(datos) {
   const sal = crypto.randomBytes(16).toString('hex');
   const u = {
     id: 'u' + crypto.randomBytes(5).toString('hex'), nombre, usuario, rol, firma, activo: true, entrenar: datos.entrenar === true,   // 1.6.1
+    accesos: rol === 'admin' ? null : (limpiarAccesos(datos.accesos) || Object.assign({}, ACCESOS_DEFECTO)),   // 1.6.3
     sal, hash: cifrar(temporal, sal), debeCambiar: true, creadoEn: reloj(), ultimoIngreso: null, sesionesDesde: 0
   };
   d.usuarios.push(u);
@@ -134,6 +159,7 @@ function actualizar(id, cambios) {
   }
   if (cambios.firma !== undefined) u.firma = limpiarTexto(cambios.firma, 40);
   if (typeof cambios.entrenar === 'boolean') u.entrenar = cambios.entrenar;   // 1.6.1
+  if (cambios.accesos !== undefined) { const a = limpiarAccesos(cambios.accesos); if (a) u.accesos = a; }   // 1.6.3
   if (cambios.rol !== undefined && cambios.rol !== u.rol) {
     if (!Object.prototype.hasOwnProperty.call(ROLES, cambios.rol)) throw error('El rol no es válido.');
     if (u.rol === 'admin' && adminsActivosSalvo(d.usuarios, u.id) === 0) throw error('Tiene que quedar al menos un administrador activo.');
@@ -364,6 +390,6 @@ function detectarFirma(texto) {
 }
 
 module.exports = {
-  ROLES, LARGO_MINIMO, hayUsuarios, listar, buscarPorId, buscarPorUsuario, crear, actualizar, restablecerClave,
+  ROLES, MODULOS, ACCESOS_DEFECTO, accesosDe, resumenAccesos, LARGO_MINIMO, hayUsuarios, listar, buscarPorId, buscarPorUsuario, crear, actualizar, restablecerClave,
   cambiarClave, ingresar, segundoPaso, restablecerDosPasos, validarSesion, cerrarSesion, detectarFirma, _usarReloj
 };

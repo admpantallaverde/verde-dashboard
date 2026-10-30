@@ -1915,6 +1915,19 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 .bb-acc .btn{padding:4px 9px;font-size:12px;min-height:0;white-space:nowrap}
 @media(max-width:760px){.bb-acc{flex-wrap:wrap}}
 
+/* ===================== 1.6.3: accesos por usuario ===================== */
+.usr-acc{border:1px solid var(--border);border-radius:12px;padding:12px 14px;background:var(--surface);display:flex;flex-direction:column;gap:8px}
+.usr-acc h5{margin:0 0 2px;font-size:13px}
+.usr-acc label.acc{display:flex;align-items:flex-start;gap:10px;font-size:13px;cursor:pointer}
+.usr-acc label.acc input{width:18px;height:18px;accent-color:var(--accent);margin:1px 0 0;flex:none}
+.usr-acc label.acc small{display:block;color:var(--muted);font-size:12px;margin-top:1px}
+.usr-acc label.acc.fija{opacity:.75;cursor:default}
+.usr-acc .aviso{color:var(--amber);font-size:12px}
+.usr-atajos{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--muted);margin-top:2px}
+.usr-atajos button{font:inherit;font-size:12px;font-weight:600;padding:4px 10px;border-radius:30px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);cursor:pointer}
+.usr-atajos button:hover{border-color:var(--accent-borde)}
+.usr-resumen{display:block;font-size:11.5px;color:var(--muted);margin-top:3px}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -2584,7 +2597,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
       <div class="panel">
         <div style="overflow-x:auto">
           <table style="min-width:900px">
-            <thead><tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Firma en WhatsApp</th><th>Estado</th><th>Último ingreso</th><th style="text-align:right">Acciones</th></tr></thead>
+            <thead><tr><th>Nombre</th><th>Usuario</th><th>Tipo</th><th>Firma en WhatsApp</th><th>Estado</th><th>Último ingreso</th><th style="text-align:right">Acciones</th></tr></thead>
             <tbody id="usrTabla"></tbody>
           </table>
         </div>
@@ -2789,8 +2802,9 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
     <div class="drawer-body">
       <div class="field"><label for="usrNombre">Nombre y apellido</label><input type="text" id="usrNombre" maxlength="60"></div>
       <div class="field"><label for="usrUsuario">Usuario para entrar al panel</label><input type="text" id="usrUsuario" maxlength="30" autocomplete="off" autocapitalize="none"><p class="faint" style="margin-top:5px" id="usrUsuarioAyuda">Letras sin acentos, números, punto, guion o guion bajo (de 3 a 30).</p></div>
-      <div class="field"><label>Rol</label><div id="usrRoles" role="radiogroup" aria-label="Rol"></div></div>
+      <div class="field"><label>Tipo</label><div id="usrRoles" role="radiogroup" aria-label="Tipo"></div></div>
       <div class="field"><label for="usrFirma">Firma en WhatsApp</label><input type="text" id="usrFirma" maxlength="40" placeholder="por ejemplo: — Carla"><p class="faint" style="margin-top:5px">Cada mensaje que envíe desde el celular debe terminar con esta firma. Así el historial sabe quién respondió.</p></div>
+      <div class="field usr-acc" id="usrAccesos"></div>
       <div class="field"><label class="usr-ent"><input type="checkbox" id="usrEntrenar"><span>Puede entrenar al cerebro (modo Entrenamiento)<small>La IA lo entrevista sobre su área y genera el borrador del manual. Los administradores siempre pueden.</small></span></label></div>
       <div class="usr-dp oculto" id="usrDosPasos"><div class="usr-dp-cab"><b><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>Verificación en 2 pasos</b><span class="pill" id="usrDpEstado"></span></div><p class="faint" id="usrDpTexto"></p><button class="btn btn-ghost" type="button" id="usrDpBtn" onclick="restablecerDosPasosUsuario()">Restablecer verificación en 2 pasos</button></div>
       <div class="note" id="usrNotaClave"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>Al guardar se genera una <b>contraseña temporal</b> que se muestra una sola vez. La persona la cambia por una propia en su primer ingreso.</span></div>
@@ -3266,7 +3280,7 @@ async function load(){
 }
 async function save(){
   if(_cargaFallida){toast('No se guardó','La configuración no se cargó bien al abrir el panel. Recargar la página antes de hacer cambios.','error');return;}
-  if(esAsesor())return;
+  if(!tieneAcceso('verde'))return;
   if(_backendOk!==false){
     try{
       const r=await fetch('/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({state:DB})});
@@ -3391,6 +3405,7 @@ function go(view){
   _doGo(view);
 }
 function _doGo(view){
+  if(!vistaPermitida(view))view='ayuda';   // 1.6.3: fuera de sus accesos, al Centro de ayuda
   if(typeof abrirGrupoDe==='function')abrirGrupoDe(view);   // 1.5.6
   if(CONV.clave&&!_abriendoConv)cerrarConversacion();   // al cambiar de pantalla se cierra la conversación abierta
   currentView=view;
@@ -5051,17 +5066,24 @@ function pintarUsuario(){
   document.getElementById('suAv').textContent=u?(iniciales(u.nombre)||'?'):'AG';
   document.getElementById('suSalir').classList.toggle('oculto',!u);
 }
-function aplicarRol(){
-  const a=esAsesor();
-  document.getElementById('navAdmin').classList.toggle('oculto',a);
-  document.getElementById('navSistema').classList.toggle('oculto',a);
-  document.getElementById('navVentasAdmin').classList.toggle('oculto',a);
-  document.getElementById('btnAvisos').classList.toggle('oculto',a);
+function aplicarRol(){   // 1.6.3: por accesos del usuario
+  const A=accesosDe();
+  const q=s=>document.querySelector(s),g=id=>document.getElementById(id);
+  const gA=q('.nav-grupo[data-grupo="atencion"]'),gV=q('.nav-grupo[data-grupo="ventas"]');
+  if(gA)gA.classList.toggle('oculto',!A.atencion);
+  if(gV)gV.classList.toggle('oculto',!A.ventas&&!A.reportes&&!A.sistema);
+  ['leaf-leads','leaf-tareas'].forEach(id=>{const e=g(id);if(e)e.classList.toggle('oculto',!A.ventas);});
+  g('navVentasAdmin').classList.toggle('oculto',!A.reportes&&!A.sistema);
+  const lr=g('leaf-reportes');if(lr)lr.classList.toggle('oculto',!A.reportes);
+  const lp=g('leaf-proceso');if(lp)lp.classList.toggle('oculto',!A.sistema);
+  g('navAdmin').classList.toggle('oculto',!A.verde);
+  g('navSistema').classList.toggle('oculto',!A.sistema);
+  g('btnAvisos').classList.toggle('oculto',!A.sistema);
 }
 
 /* ---------- arranque del panel ---------- */
 async function arrancarApp(){
-  const asesor=esAsesor();
+  const asesor=!tieneAcceso('verde');   // 1.6.3: la configuración se carga solo con acceso a Verde
   if(!asesor){
     let ok=false,estado=null;
     try{
@@ -5085,9 +5107,8 @@ async function arrancarApp(){
   if(!asesor){renderSources();renderCrawler();renderMedia();renderRes();}
   await revisarSalud();
   setInterval(revisarSalud,60000);
-  await actualizarContador();
-  setInterval(()=>actualizarContador(),30000);
-  _doGo('chats');
+  if(tieneAcceso('atencion')||tieneAcceso('ventas')){await actualizarContador();setInterval(()=>actualizarContador(),30000);}
+  _doGo(primeraVista());   // 1.6.3
 }
 async function revisarSalud(){
   try{
@@ -5100,6 +5121,7 @@ async function revisarSalud(){
 /* ---------- chats por responder ---------- */
 let CHATS_PEND=[];
 async function actualizarContador(pintar){
+  if(!tieneAcceso('atencion')){actualizarTareasBadge(!!pintar);return;}   // 1.6.3
   const r=await api('/api/chats/pendientes');
   if(!r.ok)return;
   CHATS_PEND=r.json.lista||[];
@@ -5235,8 +5257,8 @@ async function guardarAvisosPanel(){
 }
 
 /* ---------- usuarios ---------- */
-const ROLES_PANEL=[['admin','Administrador','Acceso a todo el panel, la configuración y los usuarios.'],['asesor','Asesor','Atiende los chats por responder y consulta el historial.']];
-let USUARIOS=[],_usrId=null,_usrRol='asesor';
+const ROLES_PANEL=[['asesor','Integrante del equipo','Ve solo lo que se le marca en «Accesos» y el Centro de ayuda.'],['admin','Administrador','Todo el panel, incluida la gestión de usuarios. No se puede limitar.']];
+let USUARIOS=[],_usrId=null,_usrRol='asesor',_usrAccesos={atencion:true,ventas:true,reportes:false,verde:false};
 async function cargarUsuarios(){
   const r=await api('/api/usuarios');
   if(!r.ok){toast('No se pudo cargar la lista de usuarios',r.json.error||'','error');return;}
@@ -5246,9 +5268,9 @@ function pintarUsuarios(){
   const tb=document.getElementById('usrTabla');
   if(!USUARIOS.length){tb.innerHTML='<tr><td colspan="7"><div class="empty"><p>Todavía no hay usuarios. Crear el primero con «Nuevo usuario».</p></div></td></tr>';return;}
   tb.innerHTML=USUARIOS.map(u=>{
-    const rol=u.rol==='admin'
+    const rol=(u.rol==='admin'
       ?'<span class="pill" style="background:rgba(201,242,77,.14);color:var(--accent-text)">Administrador</span>'
-      :'<span class="pill" style="background:rgba(107,155,255,.14);color:var(--blue)">Asesor</span>';
+      :'<span class="pill" style="background:rgba(107,155,255,.14);color:var(--blue)">Integrante</span>')+'<span class="usr-resumen">'+escH(u.accesosResumen||(u.rol==='admin'?'Todo el panel':'Atención, Ventas y Centro de ayuda'))+(u.entrenar&&u.rol!=='admin'?' · entrena':'')+'</span>';
     const est=(u.activo?'<span class="pill ok"><span class="d"></span>Activo</span>':'<span class="pill off"><span class="d"></span>Inactivo</span>')+(u.activo?'<span class="dp-estado '+(u.dosPasos?'ok':'pend')+'">'+IC1415.escudoMini+'2 pasos: '+(u.dosPasos?'activa':'pendiente')+'</span>':'');
     const acc='<button class="btn btn-ghost" type="button" data-id="'+escH(u.id)+'" onclick="abrirUsuario(this.dataset.id)">Editar</button> '
       +'<button class="btn btn-ghost" type="button" data-id="'+escH(u.id)+'" onclick="restablecerUsuario(this.dataset.id)">Restablecer contraseña</button> '
@@ -5258,7 +5280,7 @@ function pintarUsuarios(){
 }
 function pintarRoles(){
   document.getElementById('usrRoles').innerHTML=ROLES_PANEL.map(([k,t,d])=>
-    '<label class="opcion-m'+(_usrRol===k?' sel':'')+'" style="align-items:flex-start;padding:12px 14px;min-height:0"><input type="radio" name="usrRol" value="'+k+'"'+(_usrRol===k?' checked':'')+' style="margin-top:2px" onchange="_usrRol=this.value;pintarRoles()"><span style="display:flex;flex-direction:column;gap:2px"><b>'+t+'</b><span class="faint">'+d+'</span></span></label>').join('');
+    '<label class="opcion-m'+(_usrRol===k?' sel':'')+'" style="align-items:flex-start;padding:12px 14px;min-height:0"><input type="radio" name="usrRol" value="'+k+'"'+(_usrRol===k?' checked':'')+' style="margin-top:2px" onchange="_usrRol=this.value;pintarRoles();pintarAccesosUsr()"><span style="display:flex;flex-direction:column;gap:2px"><b>'+t+'</b><span class="faint">'+d+'</span></span></label>').join('');
 }
 function abrirUsuario(id){
   _usrId=id||null;const u=id?USUARIOS.find(x=>x.id===id):null;
@@ -5266,8 +5288,8 @@ function abrirUsuario(id){
   document.getElementById('usrNombre').value=u?u.nombre:'';
   const us=document.getElementById('usrUsuario');us.value=u?u.usuario:'';us.disabled=!!u;
   document.getElementById('usrUsuarioAyuda').textContent=u?'El usuario no se puede cambiar.':'Letras sin acentos, números, punto, guion o guion bajo (de 3 a 30).';
-  document.getElementById('usrFirma').value=u?(u.firma||''):'';const ue=document.getElementById('usrEntrenar');if(ue)ue.checked=!!(u&&u.entrenar);
-  _usrRol=u?u.rol:'asesor';pintarRoles();
+  document.getElementById('usrFirma').value=u?(u.firma||''):'';const ue=document.getElementById('usrEntrenar');if(ue)ue.checked=!!(u&&u.entrenar);_usrAccesos=u&&u.accesos?{atencion:!!u.accesos.atencion,ventas:!!u.accesos.ventas,reportes:!!u.accesos.reportes,verde:!!u.accesos.verde}:{atencion:true,ventas:true,reportes:false,verde:false};
+  _usrRol=u?u.rol:'asesor';pintarRoles();pintarAccesosUsr();
   document.getElementById('usrNotaClave').classList.toggle('oculto',!!u);
   pintarDosPasosUsuario(u);
   document.getElementById('usrOk').textContent=u?'Guardar cambios':'Crear usuario';
@@ -5276,7 +5298,7 @@ function abrirUsuario(id){
 }
 async function guardarUsuarioPanel(){
   const e=document.getElementById('usrErr');const fallo=m=>{e.textContent=m;e.classList.add('show');};
-  const datos={nombre:document.getElementById('usrNombre').value.trim(),rol:_usrRol,firma:document.getElementById('usrFirma').value.trim(),entrenar:!!(document.getElementById('usrEntrenar')||{}).checked};
+  const datos={nombre:document.getElementById('usrNombre').value.trim(),rol:_usrRol,firma:document.getElementById('usrFirma').value.trim(),entrenar:!!(document.getElementById('usrEntrenar')||{}).checked,accesos:Object.assign({},_usrAccesos)};
   if(!datos.nombre)return fallo('Falta el nombre.');
   const btn=document.getElementById('usrOk');btn.disabled=true;
   let r;
@@ -8013,6 +8035,28 @@ async function generarBorradorAyuda(){
   aplicarConversacionAyuda(r.json.conversacion);
   toast('Borrador generado','«'+(r.json.manual.nombre||'Manual')+'» quedó en la Biblioteca de conocimiento como borrador.'+(AYUDA.rol==='admin'?' Revisalo y aprobalo desde Verde › Biblioteca de conocimiento.':' Dirección lo va a revisar antes de usarlo para capacitar.'),'success');
 }
+
+
+/* ===================== 1.6.3: accesos por usuario ===================== */
+const MODULOS_PANEL=[['atencion','Atención','Chats por responder, conversaciones, chats respondidos y responder desde el panel.'],['ventas','Ventas','Leads y tareas.'],['reportes','Reportes semanales','Atención del equipo, lo más pedido y evaluación de la IA.'],['verde','Verde','Comportamiento del bot y biblioteca de conocimiento. Puede cambiar cómo responde Verde.']];
+const ATAJOS_ACCESOS=[['Solo formación',{atencion:false,ventas:false,reportes:false,verde:false}],['Asesor de ventas',{atencion:true,ventas:true,reportes:false,verde:false}],['Encargado',{atencion:true,ventas:true,reportes:true,verde:true}]];
+const VISTA_MODULO={chats:'atencion',conversaciones:'atencion',respondidos:'atencion',leads:'ventas',tareas:'ventas',reportes:'reportes',proceso:'sistema',verde:'verde',biblioteca:'verde',usuarios:'sistema',consumo:'sistema',accesos:'sistema',respaldos:'sistema',avisos:'sistema',ayuda:'ayuda'};
+function accesosDe(){
+  const u=SESION.usuario;
+  if(!u||u.rol==='admin')return {atencion:true,ventas:true,reportes:true,verde:true,sistema:true,ayuda:true};
+  const a=u.accesos||{atencion:true,ventas:true};
+  return {atencion:!!a.atencion,ventas:!!a.ventas,reportes:!!a.reportes,verde:!!a.verde,sistema:false,ayuda:true};
+}
+function tieneAcceso(m){return !!accesosDe()[m];}
+function vistaPermitida(v){const m=VISTA_MODULO[v];return m?tieneAcceso(m):tieneAcceso('sistema');}
+function primeraVista(){const A=accesosDe();return A.atencion?'chats':A.ventas?'leads':A.reportes?'reportes':A.verde?'verde':'ayuda';}
+function pintarAccesosUsr(){
+  const box=document.getElementById('usrAccesos');if(!box)return;
+  box.classList.toggle('oculto',_usrRol==='admin');
+  const sel=_usrAccesos||{};
+  box.innerHTML='<h5>Accesos del integrante</h5>'+MODULOS_PANEL.map(([k,t,d])=>'<label class="acc"><input type="checkbox" data-mod="'+k+'"'+(sel[k]?' checked':'')+' onchange="_usrAccesos[this.dataset.mod]=this.checked"><span><b>'+t+'</b>'+(k==='verde'?' <span class="aviso">⚠</span>':'')+'<small>'+d+'</small></span></label>').join('')+'<label class="acc fija"><input type="checkbox" checked disabled><span><b>Centro de ayuda</b><small>Siempre incluido.</small></span></label><div class="usr-atajos">Atajos:'+ATAJOS_ACCESOS.map(([n],i)=>'<button type="button" onclick="aplicarAtajoAccesos('+i+')">'+n+'</button>').join('')+'</div>';
+}
+function aplicarAtajoAccesos(i){_usrAccesos=Object.assign({},ATAJOS_ACCESOS[i][1]);pintarAccesosUsr();}
 
 </script>
 <script>

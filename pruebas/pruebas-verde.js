@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.6.2';
+const VERSION_ESPERADA = '1.6.3';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -487,7 +487,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   rr = await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Cómo devuelvo un chat a Verde?' }, galletaCarla);
   const pC = await json(rr);
   const sysC = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system);
-  verificar(rr.status === 200 && pC.fuentes.length && pC.fuentes.every(f => f.id !== 'portafolio') && /Asesor\. No dar instrucciones/.test(sysC) && !sysC.includes('Portafolio comercial de Meta'), 'al asesor el asistente le responde sin las guías de administración, aunque la IA las cite');
+  verificar(rr.status === 200 && pC.fuentes.length && pC.fuentes.every(f => f.id !== 'portafolio') && /un integrante del equipo con estos accesos en el panel: Atención \(chats, conversaciones\); Ventas \(leads, tareas\); Centro de ayuda/.test(sysC) && !sysC.includes('Portafolio comercial de Meta'), 'al asesor el asistente le responde sin las guías de administración, aunque la IA las cite');
   rr = await realFetch(BASE + '/privacidad');
   verificar(rr.status === 200 && /Privacidad del canal de WhatsApp/.test(await rr.text()), 'con el ingreso propio activo, la página de privacidad sigue siendo pública');
   rr = await api('/api/consumo-ia', 'GET', null, galletaJefe);
@@ -2152,6 +2152,41 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   // Permiso por usuario
   const u81 = usuariosMod.crear({ nombre: 'Lucas Entrena', usuario: 'lucas81', rol: 'asesor', firma: '- Lucas -' }).usuario;
   verificar(usuariosMod.listar().find(x => x.id === u81.id).entrenar === false && usuariosMod.actualizar(u81.id, { entrenar: true }).entrenar === true && usuariosMod.listar().find(x => x.rol === 'admin').entrenar === true, 'el permiso se guarda por usuario y los administradores siempre lo tienen');
+
+  mostrar('83) Accesos por usuario (1.6.3)');
+  process.env.VERDE_LOGIN = 'activo';
+  const gJ = (await ingresar2('jefe', 'ClaveNueva2026')).galleta;
+  const uf = (await json(await api('/api/usuarios', 'POST', { nombre: 'Flor Formación', usuario: 'flor83', rol: 'asesor', firma: '- Flor -', accesos: { atencion: false, ventas: false, reportes: false, verde: false }, entrenar: true }, gJ))).usuario;
+  verificar(uf && uf.tipoNombre === 'Integrante del equipo' && uf.accesos.atencion === false && uf.accesos.ventas === false && uf.accesos.ayuda === true && uf.accesosResumen === 'Solo Centro de ayuda' && uf.entrenar === true, 'se crea un integrante con acceso solo al Centro de ayuda');
+  const lu = (await json(await api('/api/usuarios', 'GET', null, gJ))).usuarios;
+  const carla83 = lu.find(x => x.usuario === 'carla'), jefe83 = lu.find(x => x.rol === 'admin');
+  verificar(carla83.accesos.atencion === true && carla83.accesos.ventas === true && carla83.accesos.reportes === false && carla83.accesosResumen === 'Atención, Ventas y Centro de ayuda' && jefe83.accesos.sistema === true && jefe83.accesosResumen === 'Todo el panel', 'los asesores anteriores quedan con Atención y Ventas; el administrador con todo');
+  const claveFlor = (await json(await api('/api/usuarios/' + uf.id + '/restablecer', 'POST', null, gJ))).claveTemporal;
+  const ingFlor = await ingresar2('flor83', claveFlor);
+  await api('/api/clave', 'POST', { actual: claveFlor, nueva: 'FlorSegura2026' }, ingFlor.galleta);
+  const gF = ingFlor.galleta;
+  const estados = {};
+  for (const [ruta, metodo] of [['/api/chats/pendientes', 'GET'], ['/api/conversaciones', 'GET'], ['/api/leads', 'GET'], ['/api/tareas', 'GET'], ['/api/reportes', 'GET'], ['/api/manuales', 'GET'], ['/api/state', 'GET'], ['/api/usuarios', 'GET'], ['/api/ayuda', 'GET'], ['/api/ayuda/conversaciones', 'GET']]) estados[ruta] = (await api(ruta, metodo, null, gF)).status;
+  verificar(estados['/api/chats/pendientes'] === 403 && estados['/api/conversaciones'] === 403 && estados['/api/leads'] === 403 && estados['/api/tareas'] === 403 && estados['/api/reportes'] === 403 && estados['/api/manuales'] === 403 && estados['/api/state'] === 403 && estados['/api/usuarios'] === 403 && estados['/api/ayuda'] === 200 && estados['/api/ayuda/conversaciones'] === 200, 'el servidor le niega chats, leads, tareas, reportes, biblioteca, configuración y usuarios; solo le permite el Centro de ayuda');
+  const ayF = await json(await api('/api/ayuda', 'GET', null, gF));
+  verificar(ayF.accesos.atencion === false && ayF.articulos.map(a => a.id).join(',') === 'asistente,entrenamiento,ingreso-dos-pasos,apariencia,manual-completo' && ayF.entrenamiento.permitido === true, 've solo los temas del Centro de ayuda y puede entrenar');
+  const mcF = ayF.articulos.find(a => a.id === 'manual-completo');
+  verificar(mcF.bloques.some(b => b.tipo === 'h' && /Centro de ayuda/.test(b.texto)) && !mcF.bloques.some(b => b.tipo === 'h' && /Leads|Chats por responder|Usuarios/.test(b.texto)), 'su manual del panel solo describe el Centro de ayuda y el ingreso');
+  llamadasIA.length = 0;
+  await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Cómo ingreso un equipo?' }, gF);
+  const sysF = llamadasIA[llamadasIA.length - 1].body.system[0].text;
+  verificar(/con estos accesos en el panel: Centro de ayuda\./.test(sysF) && !/## Ventas › Leads/.test(sysF) && /## Centro de ayuda/.test(sysF), 'el Instructor sabe que solo tiene el Centro de ayuda y recibe el manual del panel recortado');
+  const e83 = await api('/api/entrenamiento/empezar', 'POST', { area: 'Caja: apertura, arqueo y cierre' }, gF);
+  verificar(e83.status === 200, 'puede empezar una entrevista');
+  // Le damos Ventas y Reportes
+  await json(await api('/api/usuarios/' + uf.id, 'PUT', { accesos: { ventas: true, reportes: true } }, gJ));
+  verificar((await api('/api/leads', 'GET', null, gF)).status === 200 && (await api('/api/reportes', 'GET', null, gF)).status === 200 && (await api('/api/chats/pendientes', 'GET', null, gF)).status === 403 && (await api('/api/manuales', 'GET', null, gF)).status === 403, 'al marcar Ventas y Reportes, accede a leads y reportes y sigue sin chats ni biblioteca');
+  const ayF2 = await json(await api('/api/ayuda', 'GET', null, gF));
+  verificar(ayF2.articulos.some(a => a.id === 'leads') && ayF2.articulos.some(a => a.id === 'reportes') && !ayF2.articulos.some(a => a.id === 'chats-por-responder') && !ayF2.articulos.some(a => a.id === 'usuarios'), 'los temas del manual siguen a los accesos');
+  await json(await api('/api/usuarios/' + uf.id, 'PUT', { accesos: { verde: true } }, gJ));
+  verificar((await api('/api/manuales', 'GET', null, gF)).status === 200 && (await api('/api/state', 'GET', null, gF)).status === 200 && (await api('/api/usuarios', 'GET', null, gF)).status === 403 && (await api('/api/respaldos', 'GET', null, gF)).status === 403, 'con Verde accede a la biblioteca y al comportamiento del bot, pero nunca a Sistema');
+  verificar((await api('/api/usuarios/' + uf.id, 'PUT', { rol: 'admin' }, gJ)).status === 200 && (await api('/api/usuarios', 'GET', null, gF)).status === 200, 'como administrador tiene todo');
+  process.env.VERDE_LOGIN = '';
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }

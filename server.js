@@ -45,7 +45,7 @@ const encuestas = require('./encuestas.js');   // 1.5.9: encuesta de calificaci�
 const manuales = require('./manuales.js');     // 1.6.0: biblioteca de conocimiento
 const manualCompleto = require('./manual-completo.js');
 
-const VERSION = '1.6.2';
+const VERSION = '1.6.3';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -132,6 +132,18 @@ app.use('/api', (req, res, next) => {
   next();
 });
 // Exige sesión (y rol) solo cuando el ingreso con usuario propio está activo.
+// 1.6.3: acceso por módulo: el administrador tiene todo; un integrante, lo marcado en Usuarios. 'ayuda' es para todos.
+function accesosDe(req) { return req.usuario ? usuarios.accesosDe(req.usuario) : usuarios.accesosDe({ rol: 'admin' }); }
+function permiso(modulos) {
+  return (req, res, next) => {
+    if (!loginActivo()) return next();
+    if (!req.usuario) return res.status(401).json({ error: 'La sesión no está iniciada o venció. Ingresar de nuevo.', sesion: false });
+    if (req.usuario.debeCambiar) return res.status(403).json({ error: 'Antes de seguir hay que cambiar la contraseña temporal.', debeCambiar: true });
+    const a = accesosDe(req);
+    if (!modulos.some(m => a[m])) return res.status(403).json({ error: 'Este usuario no tiene acceso a esta sección.' });
+    next();
+  };
+}
 function requiere(roles) {
   return (req, res, next) => {
     if (!loginActivo()) return next();
@@ -219,7 +231,7 @@ app.post('/api/usuarios', requiere(['admin']), (req, res) => {
 app.put('/api/usuarios/:id', requiere(['admin']), (req, res) => {
   try {
     const b = req.body || {};
-    res.json({ ok: true, usuario: usuarios.actualizar(req.params.id, { nombre: b.nombre, rol: b.rol, firma: b.firma, activo: b.activo, entrenar: typeof b.entrenar === 'boolean' ? b.entrenar : undefined }) });   // 1.6.1
+    res.json({ ok: true, usuario: usuarios.actualizar(req.params.id, { nombre: b.nombre, rol: b.rol, firma: b.firma, activo: b.activo, entrenar: typeof b.entrenar === 'boolean' ? b.entrenar : undefined, accesos: b.accesos }) });   // 1.6.1 · 1.6.3
   } catch (e) { responderError(res, e); }
 });
 app.post('/api/usuarios/:id/restablecer', requiere(['admin']), (req, res) => {
@@ -269,7 +281,7 @@ app.get('/api/respaldos/:archivo', requiere(['admin']), (req, res) => {
 });
 
 /* ---------- IA disponibles para elegir en el panel ---------- */
-app.get('/api/modelos', requiere(['admin']), (req, res) => res.json({ modelos: bot.listarModelos() }));
+app.get('/api/modelos', permiso(['verde']), (req, res) => res.json({ modelos: bot.listarModelos() }));
 
 /* ---------- Consumo de la IA: costo estimado por período (solo administradores) ---------- */
 app.get('/api/consumo-ia', requiere(['admin']), (req, res) => {
@@ -286,7 +298,7 @@ app.get('/api/consumo-ia', requiere(['admin']), (req, res) => {
 });
 
 /* ---------- API de configuración (Paso 1) ---------- */
-app.get('/api/state', requiere(['admin']), (req, res) => {
+app.get('/api/state', permiso(['verde']), (req, res) => {
   try {
     if (!fs.existsSync(STATE_FILE)) return res.json({ state: null });
     const raw = fs.readFileSync(STATE_FILE, 'utf8');
@@ -297,7 +309,7 @@ app.get('/api/state', requiere(['admin']), (req, res) => {
   }
 });
 
-app.put('/api/state', requiere(['admin']), (req, res) => {
+app.put('/api/state', permiso(['verde']), (req, res) => {
   try {
     const state = req.body && req.body.state;
     if (typeof state === 'undefined') return res.status(400).json({ error: 'Falta el campo "state".' });
@@ -324,7 +336,7 @@ app.get('/api/health', (req, res) => {
 });
 
 /* ---------- Probar el bot desde el dashboard (sin WhatsApp) ---------- */
-app.post('/api/simulate', requiere(['admin']), async (req, res) => {
+app.post('/api/simulate', permiso(['verde']), async (req, res) => {
   try {
     const message = (req.body && req.body.message || '').toString();
     const from = (req.body && req.body.from || 'simulador').toString();
@@ -346,7 +358,7 @@ app.post('/api/simulate', requiere(['admin']), async (req, res) => {
 });
 
 /* ---------- Reiniciar la charla del simulador (borra su memoria) ---------- */
-app.post('/api/simulate/reset', requiere(['admin']), (req, res) => {
+app.post('/api/simulate/reset', permiso(['verde']), (req, res) => {
   try {
     const from = (req.body && req.body.from || 'simulador').toString();
     bot.resetConversation('sim:' + from);
@@ -919,7 +931,7 @@ async function procesarAviso360(body) {
 /* ============================================================
    CHATS POR RESPONDER Y CHATS RESPONDIDOS (para el panel)
    ============================================================ */
-app.get('/api/chats/pendientes', requiere(['admin', 'asesor']), (req, res) => {
+app.get('/api/chats/pendientes', permiso(['atencion']), (req, res) => {
   const apagados = conversaciones.apagados();
   const pausas = bot.pausasVigentes(), ahora = Date.now(), encendido = bot.getVerde().encendido !== false;
   // verdeActivo (1.4.3): Verde sigue conversando en ese chat (no está apagado ni en pausa).
@@ -929,15 +941,15 @@ app.get('/api/chats/pendientes', requiere(['admin', 'asesor']), (req, res) => {
     .sort((a, b) => b.prioridad - a.prioridad || a.creadoEn - b.creadoEn);
   res.json({ total: lista.length, lista });
 });
-app.get('/api/chats/respondidos', requiere(['admin', 'asesor']), (req, res) => {
+app.get('/api/chats/respondidos', permiso(['atencion']), (req, res) => {
   res.json(atencion.respondidos({ buscar: req.query.buscar, periodo: req.query.periodo, filtro: req.query.filtro }));
 });
-app.get('/api/chats/:id', requiere(['admin', 'asesor']), (req, res) => {
+app.get('/api/chats/:id', permiso(['atencion']), (req, res) => {
   const d = atencion.detalle(req.params.id);
   if (!d) return res.status(404).json({ error: 'El chat no existe.' });
   res.json(d);
 });
-app.post('/api/chats/:id/atendido', requiere(['admin', 'asesor']), (req, res) => {
+app.post('/api/chats/:id/atendido', permiso(['atencion']), (req, res) => {
   try {
     const b = req.body || {};
     const u = req.usuario;
@@ -962,14 +974,14 @@ function datosCumplimiento() {
 }
 app.get('/api/cumplimiento', requiere(['admin']), (req, res) => res.json(datosCumplimiento()));
 // Reglas fijas del sistema: editables por un administrador, con registro de quién las cambió (1.3.8).
-app.put('/api/reglas-fijas', requiere(['admin']), (req, res) => {
+app.put('/api/reglas-fijas', permiso(['verde']), (req, res) => {
   try {
     cumplimiento.guardarReglas(req.body || {}, quienEs(req));
     console.log('Panel: ' + quienEs(req) + ' modificó las reglas fijas del sistema');
     res.json(Object.assign({ ok: true }, datosCumplimiento()));
   } catch (e) { responderError(res, e); }
 });
-app.post('/api/reglas-fijas/restaurar', requiere(['admin']), (req, res) => {
+app.post('/api/reglas-fijas/restaurar', permiso(['verde']), (req, res) => {
   try {
     cumplimiento.restaurarReglas(quienEs(req));
     console.log('Panel: ' + quienEs(req) + ' restauró las reglas fijas recomendadas');
@@ -1002,10 +1014,10 @@ function configAyuda() {
 }
 const preguntasAyuda = new Map();   // límite de preguntas por usuario y por hora (protege el costo)
 function limiteAyuda() { return Number(process.env.VERDE_AYUDA_LIMITE_HORA) > 0 ? Number(process.env.VERDE_AYUDA_LIMITE_HORA) : 30; }
-app.get('/api/ayuda', requiere(['admin', 'asesor']), (req, res) => {
-  res.json({ rol: rolDe(req), revisionMeta: ayuda.REVISION_META, articulos: ayuda.articulosPara(rolDe(req)), instructor: { manuales: manuales.listasInstructor().disponibles.map(m => m.nombre) }, entrenamiento: { permitido: puedeEntrenar(req), areas: manuales.areas().map(a => a.nombre) } });   // 1.6.0 · 1.6.1
+app.get('/api/ayuda', permiso(['ayuda']), (req, res) => {
+  res.json({ rol: rolDe(req), accesos: accesosDe(req), revisionMeta: ayuda.REVISION_META, articulos: ayuda.articulosPara(rolDe(req), accesosDe(req)), instructor: { manuales: manuales.listasInstructor().disponibles.map(m => m.nombre) }, entrenamiento: { permitido: puedeEntrenar(req), areas: manuales.areas().map(a => a.nombre) } });   // 1.6.0 · 1.6.1
 });
-app.post('/api/ayuda/preguntar', requiere(['admin', 'asesor']), async (req, res) => {
+app.post('/api/ayuda/preguntar', permiso(['ayuda']), async (req, res) => {
   try {
     const rol = rolDe(req);
     const pregunta = String((req.body && req.body.pregunta) || '').replace(/\s+/g, ' ').trim();
@@ -1034,11 +1046,11 @@ app.post('/api/ayuda/preguntar', requiere(['admin', 'asesor']), async (req, res)
     const conversacion = claveChat ? ayuda.textoConversacion(detalleConversacion(claveChat)) : '';
     const v = bot.getVerde();
     const asis = bot.configAsistente(v);
-    const sistema = ayuda.instruccionesEnBloques(rol, configAyuda(), { empresa: bot.resumenEmpresa(v, recursos.listar()), conversacion, nombreEmpresa: v.empresa });
+    const sistema = ayuda.instruccionesEnBloques(rol, configAyuda(), { empresa: bot.resumenEmpresa(v, recursos.listar()), conversacion, nombreEmpresa: v.empresa, accesos: accesosDe(req) });
     let crudo;
     try { crudo = await bot.callClaude(sistema, mensajes, v, asis.modelo, 'ayuda', { esfuerzo: asis.esfuerzo }); }
     catch (e) { console.error('Centro de ayuda: la IA no respondió:', e.message); return res.status(502).json({ error: 'El asistente no está disponible en este momento. Intentar de nuevo en unos minutos.', conversacionId: conv.id }); }
-    const r = ayuda.interpretar(crudo, rol);
+    const r = ayuda.interpretar(crudo, rol, accesosDe(req));
     conv = hilos.agregar(clave, conv.id, { rol: 'asistente', texto: r.respuesta, fuentes: (r.fuentes || []).map(f => f.id), textos: r.textos, manual: r.manual, seccion: r.seccion });
     res.json(Object.assign(r, { conversacionId: conv.id, titulo: conv.titulo }));
   } catch (e) { responderError(res, e); }
@@ -1047,7 +1059,7 @@ app.post('/api/ayuda/preguntar', requiere(['admin', 'asesor']), async (req, res)
 function puedeEntrenar(req) { return rolDe(req) === 'admin' || !!(req.usuario && req.usuario.entrenar); }
 function claveAyuda(req) { return req.usuario ? req.usuario.id : 'general'; }
 function limpiarTextoIA(crudo) { return String(crudo == null ? '' : crudo).replace(/^\s*```[a-z]*\s*/i, '').replace(/\s*```\s*$/, '').replace(/^"(.*)"$/s, '$1').trim().slice(0, 4000); }
-app.post('/api/entrenamiento/empezar', requiere(['admin', 'asesor']), (req, res) => {
+app.post('/api/entrenamiento/empezar', permiso(['ayuda']), (req, res) => {
   if (!puedeEntrenar(req)) return res.status(403).json({ error: 'Esta persona no tiene habilitado el modo Entrenamiento. Lo habilita un administrador en Usuarios.' });
   const area = String((req.body || {}).area || '').replace(/\s+/g, ' ').trim().slice(0, 80);
   if (!area || !manuales.areas().some(a => a.nombre === area)) return res.status(400).json({ error: 'Elegir el área que se documenta en esta sesión.' });
@@ -1055,9 +1067,9 @@ app.post('/api/entrenamiento/empezar', requiere(['admin', 'asesor']), (req, res)
   let conv = hilos.nueva(clave, { tipo: 'entrenamiento', area });
   conv = hilos.agregar(clave, conv.id, { rol: 'asistente', texto: ayuda.primeraPreguntaEntrevista(area) });
   console.log('Panel: ' + quienEs(req) + ' empezó una entrevista del área «' + area + '»');
-  res.json({ conversacion: conversacionPublica(conv, rolDe(req)) });
+  res.json({ conversacion: conversacionPublica(conv, rolDe(req), accesosDe(req)) });
 });
-app.post('/api/entrenamiento/responder', requiere(['admin', 'asesor']), async (req, res) => {
+app.post('/api/entrenamiento/responder', permiso(['ayuda']), async (req, res) => {
   try {
     if (!puedeEntrenar(req)) return res.status(403).json({ error: 'Esta persona no tiene habilitado el modo Entrenamiento.' });
     const clave = claveAyuda(req);
@@ -1075,11 +1087,11 @@ app.post('/api/entrenamiento/responder', requiere(['admin', 'asesor']), async (r
     catch (e) { console.error('Entrevistador: la IA no respondió:', e.message); return res.status(502).json({ error: 'La IA no está disponible en este momento. La respuesta quedó guardada; intentar de nuevo en unos minutos.' }); }
     const pregunta = limpiarTextoIA(crudo) || '¿Podría ampliar un poco más su última respuesta?';
     conv = hilos.agregar(clave, conv.id, { rol: 'asistente', texto: pregunta });
-    res.json({ conversacion: conversacionPublica(conv, rolDe(req)) });
+    res.json({ conversacion: conversacionPublica(conv, rolDe(req), accesosDe(req)) });
   } catch (e) { responderError(res, e); }
 });
 const MIN_RESPUESTAS_BORRADOR = 6;
-app.post('/api/entrenamiento/generar', requiere(['admin', 'asesor']), async (req, res) => {
+app.post('/api/entrenamiento/generar', permiso(['ayuda']), async (req, res) => {
   try {
     if (!puedeEntrenar(req)) return res.status(403).json({ error: 'Esta persona no tiene habilitado el modo Entrenamiento.' });
     const clave = claveAyuda(req);
@@ -1116,12 +1128,12 @@ app.post('/api/entrenamiento/generar', requiere(['admin', 'asesor']), async (req
     conv = hilos.marcarBorrador(clave, conv.id, manual.id);
     conv = hilos.agregar(clave, conv.id, { rol: 'asistente', sistema: true, texto: (manual.actualizaDe ? 'Actualización generada: «' + manual.nombre + '». Quedó en la Biblioteca de conocimiento como borrador; al aprobarla, reemplaza el manual vigente y la versión anterior queda guardada.' : 'Borrador generado: «' + manual.nombre + '». Quedó en la Biblioteca de conocimiento como borrador; Dirección lo va a revisar antes de usarlo para capacitar.') + ' Si continúa la entrevista, «Generar de nuevo» lo actualiza.' });
     console.log('Panel: ' + quienEs(req) + ' generó el borrador «' + manual.nombre + '» desde una entrevista');
-    res.json({ manual, conversacion: conversacionPublica(conv, rolDe(req)) });
+    res.json({ manual, conversacion: conversacionPublica(conv, rolDe(req), accesosDe(req)) });
   } catch (e) { responderError(res, e); }
 });
 /* ---------- 1.6.0: biblioteca de conocimiento ---------- */
-app.get('/api/manuales', requiere(['admin']), (req, res) => res.json(manuales.listar()));
-app.post('/api/manuales', requiere(['admin']), async (req, res) => {
+app.get('/api/manuales', permiso(['verde']), (req, res) => res.json(manuales.listar()));
+app.post('/api/manuales', permiso(['verde']), async (req, res) => {
   try {
     const b = req.body || {};
     const m = await manuales.crear({ nombre: b.nombre, area: b.area, descripcion: b.descripcion, texto: b.texto, archivo: b.archivo, por: quienActua(req) });
@@ -1129,51 +1141,51 @@ app.post('/api/manuales', requiere(['admin']), async (req, res) => {
     res.json({ manual: m, base: manuales.resumenBase() });
   } catch (e) { responderError(res, e); }
 });
-app.get('/api/manuales/sistema/:id', requiere(['admin']), (req, res) => {
+app.get('/api/manuales/sistema/:id', permiso(['verde']), (req, res) => {
   const v = bot.getVerde(), rol = rolDe(req);
   const s = manuales.SISTEMA.find(x => x.id === req.params.id);
   if (!s) return res.status(404).json({ error: 'Ese manual no existe.' });
   let texto = '';
-  if (s.id === 'sistema-panel') texto = manualCompleto.textoPara(rol);
+  if (s.id === 'sistema-panel') texto = manualCompleto.textoPara(rol, accesosDe(req));
   else if (s.id === 'sistema-verde') texto = bot.resumenEmpresa(v, recursos.listar());
   else texto = ayuda.articulosPara(rol).filter(a => a.grupo === 'meta').map(a => '## ' + a.titulo + '\n' + a.bloques.map(bl => bl.tipo === 'l' ? bl.items.map(x => '- ' + x).join('\n') : bl.texto).join('\n')).join('\n\n');
   res.json({ manual: Object.assign({}, s, { sistema: true, estado: 'aprobado', activo: true, texto, caracteres: texto.length, paginas: manuales.paginas(texto.length) }) });
 });
-app.get('/api/manuales/:id', requiere(['admin']), (req, res) => {
+app.get('/api/manuales/:id', permiso(['verde']), (req, res) => {
   const m = manuales.obtener(req.params.id);
   if (!m) return res.status(404).json({ error: 'Ese manual no existe.' });
   res.json({ manual: m });
 });
-app.get('/api/manuales/:id/original', requiere(['admin']), (req, res) => {
+app.get('/api/manuales/:id/original', permiso(['verde']), (req, res) => {
   const o = manuales.rutaOriginal(req.params.id);
   if (!o) return res.status(404).json({ error: 'Este manual no tiene archivo original.' });
   res.download(o.ruta, o.nombre);
 });
-app.put('/api/manuales/:id', requiere(['admin']), async (req, res) => {
+app.put('/api/manuales/:id', permiso(['verde']), async (req, res) => {
   try {
     const m = await manuales.actualizar(req.params.id, Object.assign({}, req.body || {}, { por: quienActua(req) }));
     if (!m) return res.status(404).json({ error: 'Ese manual no existe.' });
     res.json({ manual: m, base: manuales.resumenBase() });
   } catch (e) { responderError(res, e); }
 });
-app.post('/api/manuales/:id/aprobar', requiere(['admin']), (req, res) => {
+app.post('/api/manuales/:id/aprobar', permiso(['verde']), (req, res) => {
   const m = manuales.aprobar(req.params.id, quienActua(req));
   if (!m) return res.status(404).json({ error: 'Ese manual no existe.' });
   console.log('Panel: ' + quienEs(req) + ' aprobó el manual «' + m.nombre + '»');
   res.json({ manual: m, base: manuales.resumenBase() });
 });
-app.post('/api/manuales/:id/activo', requiere(['admin']), (req, res) => {
+app.post('/api/manuales/:id/activo', permiso(['verde']), (req, res) => {
   try {
     const m = manuales.activar(req.params.id, !!(req.body || {}).activo);
     if (!m) return res.status(404).json({ error: 'Ese manual no existe.' });
     res.json({ manual: m, base: manuales.resumenBase() });
   } catch (e) { responderError(res, e); }
 });
-app.delete('/api/manuales/:id', requiere(['admin']), (req, res) => {
+app.delete('/api/manuales/:id', permiso(['verde']), (req, res) => {
   if (!manuales.eliminar(req.params.id)) return res.status(404).json({ error: 'Ese manual no existe.' });
   res.json({ ok: true, base: manuales.resumenBase() });
 });
-app.put('/api/manuales-areas', requiere(['admin']), (req, res) => {
+app.put('/api/manuales-areas', permiso(['verde']), (req, res) => {
   try { res.json({ areas: manuales.guardarAreas((req.body || {}).areas) }); } catch (e) { responderError(res, e); }
 });
 /* ---------- 1.5.9: encuesta de calificación y respuesta sugerida ---------- */
@@ -1202,7 +1214,7 @@ async function encuestaAutomatica(clave, req, motivo) {
     if (!r.ok) console.log('Encuesta no enviada (' + clave + '): ' + r.motivo);
   } catch (e) { console.error('Encuesta automática:', e.message); }
 }
-app.post('/api/chats/:clave/encuesta', requiere(['admin', 'asesor']), async (req, res) => {
+app.post('/api/chats/:clave/encuesta', permiso(['atencion']), async (req, res) => {
   const c = conversaciones.cruda(req.params.clave);
   if (!c) return res.status(404).json({ error: 'No existe esa conversación.' });
   const r = await enviarEncuesta(c, { vendedor: quienActua(req), por: quienActua(req), motivo: 'manual', forzar: true });
@@ -1211,7 +1223,7 @@ app.post('/api/chats/:clave/encuesta', requiere(['admin', 'asesor']), async (req
 });
 // Respuesta sugerida: la IA arma el primer mensaje del asesor con la estructura de 6 partes, en español neutro de usted.
 const sugerencias = new Map();
-app.post('/api/chats/:clave/sugerir', requiere(['admin', 'asesor']), async (req, res) => {
+app.post('/api/chats/:clave/sugerir', permiso(['atencion']), async (req, res) => {
   try {
     const c = conversaciones.cruda(req.params.clave);
     if (!c) return res.status(404).json({ error: 'No existe esa conversación.' });
@@ -1256,8 +1268,8 @@ function depsReportes() {
   const derivaciones = pend.concat(resp).map(x => ({ clave: x.clave, creadoEn: x.creadoEn }));
   return { chats: conversaciones.recientes(60), leads: leads.crudos(), calcular: leads.calcular, tareaDe: leads.tareaDe, proceso: leads.leerProceso(), ctx: contexto(), derivadas: derivaciones.map(x => x.clave), derivaciones, encuestas: encuestas.todas() };
 }
-app.get('/api/reportes', requiere(['admin']), (req, res) => res.json({ lista: reportes.listar(), semanaActual: reportes.semana('actual'), semanaAnterior: reportes.semana('anterior') }));
-app.post('/api/reportes/generar', requiere(['admin']), async (req, res) => {
+app.get('/api/reportes', permiso(['reportes']), (req, res) => res.json({ lista: reportes.listar(), semanaActual: reportes.semana('actual'), semanaAnterior: reportes.semana('anterior') }));
+app.post('/api/reportes/generar', permiso(['reportes']), async (req, res) => {
   try {
     const cual = String((req.body || {}).semana || 'anterior') === 'actual' ? 'actual' : 'anterior';
     const r = await reportes.generar(cual, depsReportes(), bot, quienActua(req));
@@ -1265,12 +1277,12 @@ app.post('/api/reportes/generar', requiere(['admin']), async (req, res) => {
     res.json({ reporte: r });
   } catch (e) { responderError(res, e); }
 });
-app.get('/api/reportes/:id', requiere(['admin']), (req, res) => {
+app.get('/api/reportes/:id', permiso(['reportes']), (req, res) => {
   const r = reportes.obtener(String(req.params.id));
   if (!r) return res.status(404).json({ error: 'Ese reporte no existe.' });
   res.json({ reporte: r });
 });
-app.post('/api/reportes/:id/evaluar', requiere(['admin']), async (req, res) => {
+app.post('/api/reportes/:id/evaluar', permiso(['reportes']), async (req, res) => {
   try {
     const r = await reportes.reevaluar(String(req.params.id), depsReportes(), bot);
     if (!r) return res.status(404).json({ error: 'Ese reporte no existe.' });
@@ -1291,18 +1303,18 @@ async function avisarReporte(r) {
   }
 }
 /* ---------- 1.5.3: conversaciones guardadas del Centro de ayuda ---------- */
-function conversacionPublica(c, rol) {
-  return { id: c.id, titulo: c.titulo, creadoEn: c.creadoEn, actualizadoEn: c.actualizadoEn, tipo: c.tipo || 'instructor', area: c.area || '', borradorId: c.borradorId || null, respuestas: (c.mensajes || []).filter(m => m.rol === 'usuario').length, mensajes: (c.mensajes || []).map(m => Object.assign({ en: m.en, rol: m.rol, texto: m.texto }, m.sistema ? { sistema: true } : {}, m.imagen ? { imagen: { archivo: m.imagen.archivo, nombre: m.imagen.nombre } } : {}, m.textos ? { textos: m.textos } : {}, m.manual ? { manual: m.manual, seccion: m.seccion || '' } : {}, m.fuentes ? { fuentes: m.fuentes.map(id => ayuda.articulo(id, rol)).filter(Boolean).map(a => ({ id: a.id, titulo: a.titulo, grupo: a.grupo })) } : {})) };
+function conversacionPublica(c, rol, accesos) {
+  return { id: c.id, titulo: c.titulo, creadoEn: c.creadoEn, actualizadoEn: c.actualizadoEn, tipo: c.tipo || 'instructor', area: c.area || '', borradorId: c.borradorId || null, respuestas: (c.mensajes || []).filter(m => m.rol === 'usuario').length, mensajes: (c.mensajes || []).map(m => Object.assign({ en: m.en, rol: m.rol, texto: m.texto }, m.sistema ? { sistema: true } : {}, m.imagen ? { imagen: { archivo: m.imagen.archivo, nombre: m.imagen.nombre } } : {}, m.textos ? { textos: m.textos } : {}, m.manual ? { manual: m.manual, seccion: m.seccion || '' } : {}, m.fuentes ? { fuentes: m.fuentes.map(id => (ayuda.articulo(id, rol, accesos) || {}).articulo).filter(Boolean).map(a => ({ id: a.id, titulo: a.titulo, grupo: a.grupo })) } : {})) };   // 1.6.3: corregido (antes mapeaba el envoltorio y las fuentes guardadas salían vacías)
 }
-app.get('/api/ayuda/conversaciones', requiere(['admin', 'asesor']), (req, res) => res.json(hilos.listar(req.usuario ? req.usuario.id : 'general')));
-app.post('/api/ayuda/conversaciones', requiere(['admin', 'asesor']), (req, res) => res.json({ conversacion: conversacionPublica(hilos.nueva(req.usuario ? req.usuario.id : 'general'), rolDe(req)) }));
-app.get('/api/ayuda/conversacion-actual', requiere(['admin', 'asesor']), (req, res) => res.json({ conversacion: conversacionPublica(hilos.actual(req.usuario ? req.usuario.id : 'general'), rolDe(req)) }));
-app.get('/api/ayuda/conversaciones/:id', requiere(['admin', 'asesor']), (req, res) => {
+app.get('/api/ayuda/conversaciones', permiso(['ayuda']), (req, res) => res.json(hilos.listar(req.usuario ? req.usuario.id : 'general')));
+app.post('/api/ayuda/conversaciones', permiso(['ayuda']), (req, res) => res.json({ conversacion: conversacionPublica(hilos.nueva(req.usuario ? req.usuario.id : 'general'), rolDe(req), accesosDe(req)) }));
+app.get('/api/ayuda/conversacion-actual', permiso(['ayuda']), (req, res) => res.json({ conversacion: conversacionPublica(hilos.actual(req.usuario ? req.usuario.id : 'general'), rolDe(req), accesosDe(req)) }));
+app.get('/api/ayuda/conversaciones/:id', permiso(['ayuda']), (req, res) => {
   const c = hilos.abrir(req.usuario ? req.usuario.id : 'general', req.params.id);
   if (!c) return res.status(404).json({ error: 'Esa conversación no existe.' });
-  res.json({ conversacion: conversacionPublica(c, rolDe(req)) });
+  res.json({ conversacion: conversacionPublica(c, rolDe(req), accesosDe(req)) });
 });
-app.get('/api/ayuda/imagen/:archivo', requiere(['admin', 'asesor']), (req, res) => {
+app.get('/api/ayuda/imagen/:archivo', permiso(['ayuda']), (req, res) => {
   const ruta = hilos.rutaImagen(req.usuario ? req.usuario.id : 'general', req.params.archivo);
   if (!ruta) return res.status(404).json({ error: 'La imagen no existe.' });
   res.sendFile(ruta);
@@ -1310,7 +1322,7 @@ app.get('/api/ayuda/imagen/:archivo', requiere(['admin', 'asesor']), (req, res) 
 /* ---------- 1.4.10: corregir y aclarar el texto del asesor con la IA ---------- */
 const correcciones = new Map();      // usuario → momentos de sus últimas correcciones
 const LIMITE_CORRECCIONES = 30;      // por hora y por usuario
-app.post('/api/corregir', requiere(['admin', 'asesor']), async (req, res) => {
+app.post('/api/corregir', permiso(['atencion']), async (req, res) => {
   try {
     const texto = String((req.body && req.body.texto) || '').replace(/\r\n/g, '\n').trim();
     const tono = String((req.body && req.body.tono) || 'rioplatense');
@@ -1350,7 +1362,7 @@ app.get('/privacidad', (req, res) => {
 function contexto() { return { pendientes: atencion.clavesPendientes(), revision: atencion.clavesRevision(), pausas: bot.pausasVigentes() }; }
 
 /* ---------- 1.5.0: leads ---------- */
-app.get('/api/leads', requiere(['admin', 'asesor']), (req, res) => {
+app.get('/api/leads', permiso(['ventas']), (req, res) => {
   const q = req.query || {};
   res.json(leads.listar(conversaciones.recientes(30), contexto(), { etapa: String(q.etapa || ''), tipo: String(q.tipo || ''), vendedor: String(q.vendedor || ''), q: String(q.q || '') }));
 });
@@ -1360,14 +1372,14 @@ app.get('/api/proceso', requiere(['admin']), (req, res) => res.json(Object.assig
 app.put('/api/proceso', requiere(['admin']), (req, res) => {
   try { res.json(leads.guardarProceso(req.body || {})); } catch (e) { res.status(400).json({ error: e.message }); }
 });
-app.get('/api/leads/vendedores', requiere(['admin', 'asesor']), (req, res) => res.json({ vendedores: usuarios.listar().filter(u => u.activo).map(u => u.nombre).sort() }));
-app.get('/api/tareas', requiere(['admin', 'asesor']), (req, res) => {
+app.get('/api/leads/vendedores', permiso(['ventas', 'verde']), (req, res) => res.json({ vendedores: usuarios.listar().filter(u => u.activo).map(u => u.nombre).sort() }));
+app.get('/api/tareas', permiso(['ventas']), (req, res) => {
   // Un asesor ve solo sus tareas; un administrador ve todas y puede filtrar por vendedor.
   const soloPropias = !!(req.usuario && req.usuario.rol === 'asesor');
   const vendedor = soloPropias ? req.usuario.nombre : String((req.query || {}).vendedor || '');
   res.json(Object.assign(leads.tareas(conversaciones.recientes(30), contexto(), { vendedor }), { vendedor, soloPropias }));
 });
-app.put('/api/leads/:clave/vendedor', requiere(['admin', 'asesor']), (req, res) => {
+app.put('/api/leads/:clave/vendedor', permiso(['ventas']), (req, res) => {
   const c = conversaciones.cruda(req.params.clave);
   if (!c) return res.status(404).json({ error: 'No existe esa conversación.' });
   const nombre = String((req.body || {}).nombre || '').trim();
@@ -1375,7 +1387,7 @@ app.put('/api/leads/:clave/vendedor', requiere(['admin', 'asesor']), (req, res) 
   leads.asignar(c, nombre);
   res.json(leads.detalle(c, contexto()));
 });
-app.post('/api/leads/:clave/cerrar', requiere(['admin', 'asesor']), (req, res) => {
+app.post('/api/leads/:clave/cerrar', permiso(['ventas']), (req, res) => {
   const c = conversaciones.cruda(req.params.clave);
   if (!c) return res.status(404).json({ error: 'No existe esa conversación.' });
   try {
@@ -1386,14 +1398,14 @@ app.post('/api/leads/:clave/cerrar', requiere(['admin', 'asesor']), (req, res) =
     res.json(leads.detalle(c, contexto()));
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
-app.post('/api/leads/:clave/reabrir', requiere(['admin', 'asesor']), (req, res) => {
+app.post('/api/leads/:clave/reabrir', permiso(['ventas']), (req, res) => {
   const c = conversaciones.cruda(req.params.clave);
   if (!c) return res.status(404).json({ error: 'No existe esa conversación.' });
   leads.reabrir(c);
   conversaciones.anotarSistema(c.clave, 'Lead reabierto por ' + quienActua(req) + '.');
   res.json(leads.detalle(c, contexto()));
 });
-app.post('/api/leads/:clave/sugerencia', requiere(['admin', 'asesor']), (req, res) => {
+app.post('/api/leads/:clave/sugerencia', permiso(['ventas']), (req, res) => {
   const c = conversaciones.cruda(req.params.clave);
   if (!c) return res.status(404).json({ error: 'No existe esa conversación.' });
   try {
@@ -1403,7 +1415,7 @@ app.post('/api/leads/:clave/sugerencia', requiere(['admin', 'asesor']), (req, re
     res.json(leads.detalle(c, contexto()));
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
-app.post('/api/leads/:clave/tarea-hecha', requiere(['admin', 'asesor']), (req, res) => {
+app.post('/api/leads/:clave/tarea-hecha', permiso(['ventas']), (req, res) => {
   const c = conversaciones.cruda(req.params.clave);
   if (!c) return res.status(404).json({ error: 'No existe esa conversación.' });
   try {
@@ -1433,12 +1445,12 @@ async function avisarTarea(c, lead) {
     if (!ok && cfg.plantilla) await enviarPlantilla({ to: num }, cfg.plantilla, cfg.idioma, [cliente, mot]);
   }
 }
-app.get('/api/leads/:clave', requiere(['admin', 'asesor']), (req, res) => {
+app.get('/api/leads/:clave', permiso(['ventas']), (req, res) => {
   const c = conversaciones.cruda(req.params.clave);
   if (!c) return res.status(404).json({ error: 'No existe esa conversación.' });
   res.json(Object.assign(leads.detalle(c, contexto()), { encuesta: encuestas.ultima(c.clave) }));   // 1.5.9
 });
-app.put('/api/leads/:clave', requiere(['admin', 'asesor']), (req, res) => {
+app.put('/api/leads/:clave', permiso(['ventas']), (req, res) => {
   const c = conversaciones.cruda(req.params.clave);
   if (!c) return res.status(404).json({ error: 'No existe esa conversación.' });
   leads.corregir(c, req.body || {});
@@ -1479,7 +1491,7 @@ function conDatosDelPanel(d, req) {
   return d;
 }
 /* ---------- Archivos recibidos (1.4.0): se descargan de WhatsApp solo cuando alguien toca «Descargar» ---------- */
-app.post('/api/archivos/:id/descargar', requiere(['admin', 'asesor']), async (req, res) => {
+app.post('/api/archivos/:id/descargar', permiso(['atencion']), async (req, res) => {
   try {
     const id = String(req.params.id || '');
     const clave = String((req.body && req.body.clave) || '');
@@ -1492,7 +1504,7 @@ app.post('/api/archivos/:id/descargar', requiere(['admin', 'asesor']), async (re
     res.json({ ok: r && r.estado === 'guardado', archivo: r });
   } catch (e) { responderError(res, e); }
 });
-app.get('/api/archivos/:id', requiere(['admin', 'asesor']), (req, res) => {
+app.get('/api/archivos/:id', permiso(['atencion']), (req, res) => {
   const f = archivos.paraServir(req.params.id);
   if (!f) return res.status(404).json({ error: 'El archivo no está guardado en el panel.' });
   const enPanel = f.enPanel && req.query.guardar !== '1';
@@ -1505,17 +1517,17 @@ app.get('/api/archivos/:id', requiere(['admin', 'asesor']), (req, res) => {
   fs.createReadStream(f.ruta).on('error', () => res.end()).pipe(res);
 });
 
-app.get('/api/conversaciones', requiere(['admin', 'asesor']), (req, res) => {
+app.get('/api/conversaciones', permiso(['atencion']), (req, res) => {
   res.json(conversaciones.lista({ buscar: req.query.buscar, estado: req.query.estado }, contexto()));
 });
-app.get('/api/conversaciones/:clave', requiere(['admin', 'asesor']), (req, res) => {
+app.get('/api/conversaciones/:clave', permiso(['atencion']), (req, res) => {
   try {
     const d = detalleConversacion(claveDeRuta(req));
     if (!d) return res.status(404).json({ error: 'La conversación no existe.' });
     res.json(conDatosDelPanel(d, req));
   } catch (e) { responderError(res, e); }
 });
-app.post('/api/conversaciones/:clave/apagar', requiere(['admin', 'asesor']), (req, res) => {
+app.post('/api/conversaciones/:clave/apagar', permiso(['atencion']), (req, res) => {
   try {
     const clave = claveDeRuta(req);
     if (!detalleConversacion(clave)) return res.status(404).json({ error: 'La conversación no existe.' });
@@ -1524,7 +1536,7 @@ app.post('/api/conversaciones/:clave/apagar', requiere(['admin', 'asesor']), (re
     res.json({ ok: true, conversacion: conDatosDelPanel(detalleConversacion(clave), req) });
   } catch (e) { responderError(res, e); }
 });
-app.post('/api/conversaciones/:clave/encender', requiere(['admin', 'asesor']), (req, res) => {
+app.post('/api/conversaciones/:clave/encender', permiso(['atencion']), (req, res) => {
   try {
     const clave = claveDeRuta(req);
     conversaciones.encender(clave, req.usuario);
@@ -1566,7 +1578,7 @@ async function responderConsultaPendiente(clave) {
   return { respondio: true, derivo: !!r.derivar, motivo: '' };
 }
 // «Devolver a Verde»: termina la pausa de 12 horas y, si el cliente dejó una consulta sin responder, Verde la responde enseguida.
-app.post('/api/conversaciones/:clave/reanudar', requiere(['admin', 'asesor']), async (req, res) => {
+app.post('/api/conversaciones/:clave/reanudar', permiso(['atencion']), async (req, res) => {
   try {
     const clave = claveDeRuta(req);
     if (!detalleConversacion(clave)) return res.status(404).json({ error: 'La conversación no existe.' });
@@ -1582,7 +1594,7 @@ app.post('/api/conversaciones/:clave/reanudar', requiere(['admin', 'asesor']), a
   } catch (e) { responderError(res, e); }
 });
 // Respuesta de una persona del equipo desde el panel (solo texto, con su firma).
-app.post('/api/conversaciones/:clave/responder', requiere(['admin', 'asesor']), async (req, res) => {
+app.post('/api/conversaciones/:clave/responder', permiso(['atencion']), async (req, res) => {
   try {
     const clave = claveDeRuta(req);
     const d = detalleConversacion(clave);
@@ -1636,8 +1648,8 @@ function servirArchivo(res, f, guardar) {
 
 /* ---------- 1.4.8: biblioteca de recursos (la editan los administradores; el equipo la usa al adjuntar) ---------- */
 function idRecurso(req) { const id = String(req.params.id || ''); if (!recursos.idValido(id)) throw Object.assign(new Error('El recurso no existe.'), { publico: true, codigo: 404 }); return id; }
-app.get('/api/recursos', requiere(['admin', 'asesor']), (req, res) => res.json({ lista: recursos.listar(), envio: estadoEnvio() }));
-app.post('/api/recursos', requiere(['admin']), leerBinario, (req, res) => {
+app.get('/api/recursos', permiso(['atencion', 'verde']), (req, res) => res.json({ lista: recursos.listar(), envio: estadoEnvio() }));
+app.post('/api/recursos', permiso(['atencion', 'verde']), leerBinario, (req, res) => {
   try {
     const d = datosDeCabecera(req, 'x-recurso');
     const r = recursos.crear(d, req.body, d.archivo, quienEs(req));
@@ -1645,14 +1657,14 @@ app.post('/api/recursos', requiere(['admin']), leerBinario, (req, res) => {
     res.json({ ok: true, recurso: r, lista: recursos.listar() });
   } catch (e) { responderError(res, e); }
 });
-app.put('/api/recursos/:id', requiere(['admin']), (req, res) => {
+app.put('/api/recursos/:id', permiso(['verde']), (req, res) => {
   try {
     const r = recursos.editar(idRecurso(req), req.body || {}, null, null, quienEs(req));
     console.log('Panel: ' + quienEs(req) + ' modificó el recurso «' + r.nombre + '»');
     res.json({ ok: true, recurso: r, lista: recursos.listar() });
   } catch (e) { responderError(res, e); }
 });
-app.post('/api/recursos/:id/archivo', requiere(['admin']), leerBinario, (req, res) => {
+app.post('/api/recursos/:id/archivo', permiso(['atencion', 'verde']), leerBinario, (req, res) => {
   try {
     const d = datosDeCabecera(req, 'x-recurso');
     const r = recursos.editar(idRecurso(req), d, req.body, d.archivo, quienEs(req));
@@ -1660,14 +1672,14 @@ app.post('/api/recursos/:id/archivo', requiere(['admin']), leerBinario, (req, re
     res.json({ ok: true, recurso: r, lista: recursos.listar() });
   } catch (e) { responderError(res, e); }
 });
-app.delete('/api/recursos/:id', requiere(['admin']), (req, res) => {
+app.delete('/api/recursos/:id', permiso(['verde']), (req, res) => {
   try {
     const r = recursos.quitar(idRecurso(req));
     console.log('Panel: ' + quienEs(req) + ' quitó «' + r.nombre + '» de la biblioteca de recursos');
     res.json({ ok: true, lista: recursos.listar() });
   } catch (e) { responderError(res, e); }
 });
-app.get('/api/recursos/:id/archivo', requiere(['admin', 'asesor']), (req, res) => {
+app.get('/api/recursos/:id/archivo', permiso(['atencion', 'verde']), (req, res) => {
   try {
     const f = recursos.paraServir(idRecurso(req));
     if (!f) return res.status(404).json({ error: 'El archivo del recurso no está disponible.' });
@@ -1706,14 +1718,14 @@ async function enviarArchivoDelPanel(req, res, clave, archivo) {
   console.log('Panel: ' + quienEs(req) + ' envió el archivo «' + archivo.nombre + '» a ' + clave + (archivo.origen === 'biblioteca' ? ' (desde la biblioteca)' : '') + (cerrada && cerrada.estado === 'respondido' ? ' · el chat pasa a «Chats respondidos»' : ''));
   res.json({ ok: true, conversacion: conDatosDelPanel(detalleConversacion(clave), req) });
 }
-app.post('/api/conversaciones/:clave/archivo', requiere(['admin', 'asesor']), leerBinario, async (req, res) => {
+app.post('/api/conversaciones/:clave/archivo', permiso(['atencion']), leerBinario, async (req, res) => {
   try {
     const d = datosDeCabecera(req, 'x-archivo');
     const f = recursos.validarArchivo(req.body, d.nombre);
     await enviarArchivoDelPanel(req, res, claveDeRuta(req), { buf: req.body, mime: f.mime, nombre: f.nombre, texto: d.texto, origen: 'computadora' });
   } catch (e) { responderError(res, e); }
 });
-app.post('/api/conversaciones/:clave/recurso', requiere(['admin', 'asesor']), async (req, res) => {
+app.post('/api/conversaciones/:clave/recurso', permiso(['atencion']), async (req, res) => {
   try {
     const id = String((req.body && req.body.recursoId) || '');
     const f = recursos.idValido(id) ? recursos.paraEnviar(id) : null;

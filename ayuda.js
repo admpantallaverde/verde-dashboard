@@ -12,7 +12,7 @@ const REVISION_META = '2026-10-24';   // fecha de la última revisión de las re
 const ARTICULOS = [
   // ===================== MANUAL DEL PANEL =====================
   {
-    id: 'leads', grupo: 'manual', soloAdmin: false, titulo: 'Leads',
+    id: 'leads', modulo: 'ventas', grupo: 'manual', soloAdmin: false, titulo: 'Leads',
     resumen: 'Cada conversación clasificada por la IA: tipo, producto, etapa, prioridad y traba, ordenadas para atender primero lo que más importa.',
     bloques: [
       { tipo: 'p', texto: 'En «Ventas › Leads» están todas las conversaciones de los últimos 30 días, ordenadas por prioridad. La IA clasifica cada una cuando pasan 10 minutos sin mensajes nuevos: tipo (reparación, compra, garantía, consulta general u otro), producto o servicio, intención de compra, un resumen, el próximo paso sugerido y la traba, con la frase textual del cliente.' },
@@ -27,7 +27,7 @@ const ARTICULOS = [
     ]
   },
   {
-    id: 'tareas', grupo: 'manual', soloAdmin: false, titulo: 'Tareas',
+    id: 'tareas', modulo: 'ventas', grupo: 'manual', soloAdmin: false, titulo: 'Tareas',
     resumen: 'Qué tiene que hacer cada vendedor y cuándo, según la etapa de cada lead.',
     bloques: [
       { tipo: 'p', texto: 'En «Ventas › Tareas» están las tareas pendientes, agrupadas en vencidas, para hoy y próximas. Cada etapa del proceso de ventas tiene una próxima acción y un plazo (por ejemplo, un presupuesto enviado se sigue a las 24 horas); la tarea nace sola cuando el lead entra en la etapa. El asesor ve sus tareas; el administrador ve todas y puede filtrar por vendedor. El número en el menú es la cantidad de tareas vencidas.' },
@@ -37,7 +37,7 @@ const ARTICULOS = [
     ]
   },
   {
-    id: 'biblioteca', grupo: 'manual', soloAdmin: true, titulo: 'Biblioteca de conocimiento',
+    id: 'biblioteca', modulo: 'verde', grupo: 'manual', soloAdmin: true, titulo: 'Biblioteca de conocimiento',
     resumen: 'Los manuales por área que usa el Instructor del Centro de ayuda: cargar, aprobar y activar.',
     bloques: [
       { tipo: 'p', texto: 'En «Verde › Biblioteca de conocimiento» están los manuales que el Instructor del Centro de ayuda usa como única fuente de verdad: los del sistema (manual completo del panel, configuración de Verde y guías de Meta, siempre activos) y los propios de cada área. «Nuevo manual» pide nombre, área, descripción de una línea y el contenido: un PDF, un .txt o .md, o el texto pegado; de un PDF se extrae el texto y se muestra para revisarlo. Nace en estado «borrador».' },
@@ -46,7 +46,7 @@ const ARTICULOS = [
     ]
   },
   {
-    id: 'reportes', grupo: 'manual', soloAdmin: true, titulo: 'Reportes semanales',
+    id: 'reportes', modulo: 'reportes', grupo: 'manual', soloAdmin: true, titulo: 'Reportes semanales',
     resumen: 'Cada lunes: atención por vendedor, lo más pedido, por qué no compran, resultados y evaluación de la IA.',
     bloques: [
       { tipo: 'p', texto: 'En «Ventas › Reportes» está el reporte de cada semana (lunes a domingo). Se arma solo los lunes a las 07:00 con la semana anterior; «Generar ahora» arma el de la semana en curso y «Volver a armar» rehace uno. A las 07:05 llega un aviso por WhatsApp a los números cargados en «Avisos a celulares del equipo › Reporte semanal» (fuera de las 24 horas hace falta la plantilla «reporte_semanal» aprobada por Meta).' },
@@ -56,7 +56,7 @@ const ARTICULOS = [
     ]
   },
   {
-    id: 'proceso-de-ventas', grupo: 'manual', soloAdmin: true, titulo: 'Proceso de ventas',
+    id: 'proceso-de-ventas', modulo: 'sistema', grupo: 'manual', soloAdmin: true, titulo: 'Proceso de ventas',
     resumen: 'Configurar la próxima acción, el plazo y el aviso de cada etapa.',
     bloques: [
       { tipo: 'p', texto: 'En «Ventas › Proceso de ventas» se define, para cada etapa con tarea (Derivado, En atención, Presupuesto enviado, Esperando al cliente y Sin respuesta), qué tiene que hacer el vendedor, en cuántas horas y si se avisa al celular del equipo cuando la tarea vence. Los avisos usan el mismo sistema que los de «Chats por responder». Las etapas Nuevo, Con Verde y Cerrado no tienen tarea.' },
@@ -65,7 +65,7 @@ const ARTICULOS = [
     ]
   },
   {
-    id: 'chats-por-responder', grupo: 'manual', soloAdmin: false, titulo: 'Chats por responder',
+    id: 'chats-por-responder', modulo: 'atencion', grupo: 'manual', soloAdmin: false, titulo: 'Chats por responder',
     resumen: 'Clientes que esperan a una persona del equipo: cómo responderlos y cómo marcarlos como atendidos.',
     bloques: [
       { tipo: 'p', texto: 'Cuando Verde deriva un chat a una persona del equipo (por ejemplo, porque el cliente pide un precio exacto), el chat aparece en «Chats por responder» y se avisa al equipo. Verde sigue conversando con el cliente, sin dar precios, hasta que una persona del equipo responda; ahí hace su pausa de 12 horas.' },
@@ -81,7 +81,7 @@ const ARTICULOS = [
     ]
   },
   {
-    id: 'conversaciones', grupo: 'manual', soloAdmin: false, titulo: 'Conversaciones y «Devolver a Verde»',
+    id: 'conversaciones', modulo: 'atencion', grupo: 'manual', soloAdmin: false, titulo: 'Conversaciones y «Devolver a Verde»',
     resumen: 'Todos los chats, el interruptor de Verde por chat, la pausa de 12 horas, cómo devolverle un chat a Verde y los archivos del cliente.',
     bloques: [
       { tipo: 'p', texto: '«Conversaciones» muestra todos los chats que atiende Verde. Se pueden buscar por nombre, número o mensaje, y filtrar por estado: Verde atendiendo, atiende una persona, Verde apagado o por responder.' },
@@ -103,7 +103,7 @@ const ARTICULOS = [
     ]
   },
   {
-    id: 'chats-respondidos', grupo: 'manual', soloAdmin: false, titulo: 'Chats respondidos',
+    id: 'chats-respondidos', modulo: 'atencion', grupo: 'manual', soloAdmin: false, titulo: 'Chats respondidos',
     resumen: 'Historial de los chats derivados y cómo se atendió cada uno.',
     bloques: [
       { tipo: 'p', texto: '«Chats respondidos» guarda el historial de los chats que Verde derivó y cómo se atendieron: respondidos por WhatsApp, marcados a mano o que volvieron a escribir. Se puede buscar y filtrar por período.' },
@@ -112,7 +112,7 @@ const ARTICULOS = [
     ]
   },
   {
-    id: 'avisos', grupo: 'manual', soloAdmin: true, titulo: 'Avisos a celulares del equipo',
+    id: 'avisos', modulo: 'sistema', grupo: 'manual', soloAdmin: true, titulo: 'Avisos a celulares del equipo',
     resumen: 'Qué celulares reciben aviso cuando entra un chat por responder, y por qué a veces se necesita una plantilla.',
     bloques: [
       { tipo: 'p', texto: 'En «Chats por responder» › campana se cargan hasta 10 números que reciben un aviso por WhatsApp cada vez que entra un chat por responder. El aviso lleva el nombre del cliente y el motivo, nunca el contenido de su mensaje.' },
@@ -126,7 +126,7 @@ const ARTICULOS = [
     ]
   },
   {
-    id: 'comportamiento', grupo: 'manual', soloAdmin: true, titulo: 'Comportamiento del bot',
+    id: 'comportamiento', modulo: 'verde', grupo: 'manual', soloAdmin: true, titulo: 'Comportamiento del bot',
     resumen: 'Cómo se configura lo que dice y hace Verde, las reglas fijas y la página de privacidad.',
     bloques: [
       { tipo: 'p', texto: 'En «Agentes IA › Comportamiento del bot» se configura a Verde sin tocar código: identidad (A), personalidad y tono (B), ventajas (C), pasos de venta (D), objeciones (E), reglas de oro (F), frases clave (G), que incluye las indicaciones para cuando el cliente envía un archivo, parámetros técnicos, como el modelo de inteligencia artificial y el tiempo de espera antes de responder (H), reclamos y garantía (I): las condiciones que Verde puede informar, los datos que debe juntar y las sugerencias por síntoma, fichas de consulta (J): los datos que Verde junta en las consultas de reparación y de compra, y la biblioteca de recursos (K): los archivos que Verde puede ofrecer y enviar, y que el equipo puede elegir al adjuntar. Cada sección se guarda con su botón «Guardar».' },
@@ -139,7 +139,7 @@ const ARTICULOS = [
     ]
   },
   {
-    id: 'consumo', grupo: 'manual', soloAdmin: true, titulo: 'Consumo de IA',
+    id: 'consumo', modulo: 'sistema', grupo: 'manual', soloAdmin: true, titulo: 'Consumo de IA',
     resumen: 'Cuánto se gasta en inteligencia artificial y cómo se calcula.',
     bloques: [
       { tipo: 'p', texto: 'En «Sistema › Consumo de IA» se ve el costo estimado de las consultas a la inteligencia artificial: total del período, cantidad de consultas (WhatsApp, pruebas en el panel y Centro de ayuda), costo promedio y detalle por día. Se puede elegir el mes en curso, un mes anterior o un rango de fechas.' },
@@ -147,13 +147,13 @@ const ARTICULOS = [
     ]
   },
   {
-    id: 'usuarios', grupo: 'manual', soloAdmin: true, titulo: 'Usuarios y contraseñas',
-    resumen: 'Roles, alta de usuarios, contraseñas temporales y firma.',
+    id: 'usuarios', modulo: 'sistema', grupo: 'manual', soloAdmin: true, titulo: 'Usuarios y contraseñas',
+    resumen: 'Tipos, accesos por usuario, alta de usuarios, contraseñas temporales y firma.',
     bloques: [
-      { tipo: 'p', texto: 'Hay dos roles. Administrador: acceso a todo el panel. Asesor: atiende los chats y consulta el historial, pero no cambia la configuración ni los usuarios.' },
+      { tipo: 'p', texto: 'Hay dos tipos. Administrador: todo el panel, incluida la gestión de usuarios. Integrante del equipo: solo lo que se le marca en «Accesos» (Atención, Ventas, Reportes semanales y Verde) más el Centro de ayuda, que siempre está incluido. Sistema es solo para administradores. Los atajos «Solo formación», «Asesor de ventas» y «Encargado» marcan combinaciones habituales; después se ajusta casilla por casilla. El menú, la pantalla de inicio, el manual del panel y el Instructor se adaptan a esos accesos, y el servidor rechaza lo que no esté marcado. Quien era «Asesor» antes de la 1.6.3 quedó con Atención y Ventas.' },
       { tipo: 'h', texto: 'Alta de un usuario (lo hace un administrador)' },
       { tipo: 'pasos', items: [
-        { titulo: 'Crear el usuario', texto: 'En «Sistema › Usuarios», tocar «Nuevo usuario» y completar nombre, usuario, rol y firma (por ejemplo, «— Ana»).' },
+        { titulo: 'Crear el usuario', texto: 'En «Sistema › Usuarios», tocar «Nuevo usuario» y completar nombre, usuario, tipo, accesos (o un atajo), firma (por ejemplo, «— Ana») y, si corresponde, «Puede entrenar al cerebro».' },
         { titulo: 'Entregar la contraseña temporal', texto: 'El panel la muestra una sola vez. Entregarla en privado, nunca en un grupo.' },
         { titulo: 'Primer ingreso', texto: 'La persona ingresa con la contraseña temporal, configura la verificación en 2 pasos con una app autenticadora y después el panel le pide cambiar la contraseña por una propia, de al menos 8 caracteres.' }
       ] },
@@ -162,7 +162,7 @@ const ARTICULOS = [
     ]
   },
   {
-    id: 'registro-accesos', grupo: 'manual', soloAdmin: true, titulo: 'Registro de accesos',
+    id: 'registro-accesos', modulo: 'sistema', grupo: 'manual', soloAdmin: true, titulo: 'Registro de accesos',
     resumen: 'Quién entró al panel, desde dónde, los intentos fallidos y las descargas de respaldos.',
     bloques: [
       { tipo: 'p', texto: 'En «Sistema › Registro de accesos» se ven los ingresos correctos, las contraseñas y los códigos incorrectos, los bloqueos por intentos, los cierres de sesión, los cambios en la verificación en 2 pasos y las descargas de respaldos. Cada evento muestra la fecha y hora, el usuario, la dirección IP y el dispositivo (navegador y sistema).' },
@@ -171,7 +171,7 @@ const ARTICULOS = [
     ]
   },
   {
-    id: 'respaldos', grupo: 'manual', soloAdmin: true, titulo: 'Respaldos',
+    id: 'respaldos', modulo: 'sistema', grupo: 'manual', soloAdmin: true, titulo: 'Respaldos',
     resumen: 'El respaldo diario de los datos, cómo descargarlo y cómo se restaura.',
     bloques: [
       { tipo: 'p', texto: 'Todas las noches a las 03:30 Verde guarda un respaldo de sus datos: configuración, conversaciones, usuarios, consumo, archivos guardados y biblioteca. Si a esa hora el servidor estaba apagado, lo hace apenas vuelve a funcionar. Se conservan los últimos 14, cifrados porque contienen datos de clientes.' },
@@ -185,7 +185,7 @@ const ARTICULOS = [
     ]
   },
   {
-    id: 'garantia', grupo: 'manual', soloAdmin: false, titulo: 'Reclamos de garantía',
+    id: 'garantia', modulo: 'atencion', grupo: 'manual', soloAdmin: false, titulo: 'Reclamos de garantía',
     resumen: 'Qué hace Verde cuando un cliente reclama por algo que compró o reparó, y qué le llega al asesor.',
     bloques: [
       { tipo: 'p', texto: 'Cuando un cliente plantea una falla de algo que compró o reparó en la tienda, Verde sigue el protocolo de garantía: junta los datos necesarios (boleta, qué se vendió o reparó, qué falla y desde cuándo, si reinició el equipo, fotos o videos) y da sugerencias según el síntoma, como el reinicio forzado. Nunca afirma que la garantía corresponde: explica que se evalúa con la información reunida y que un asesor confirma cómo seguir.' },
@@ -196,7 +196,7 @@ const ARTICULOS = [
     ]
   },
   {
-    id: 'consultas', grupo: 'manual', soloAdmin: false, titulo: 'Fichas de consulta',
+    id: 'consultas', modulo: 'atencion', grupo: 'manual', soloAdmin: false, titulo: 'Fichas de consulta',
     resumen: 'Qué datos junta Verde en las consultas de reparación y de compra, y qué le llega al asesor.',
     bloques: [
       { tipo: 'p', texto: 'Cuando Verde deriva un chat a una persona del equipo por una consulta de reparación o de compra (por ejemplo, porque el cliente pidió un precio), arma la ficha de la consulta con los datos que ya tiene y la va completando mientras sigue conversando. Pregunta de a uno o dos datos por mensaje, no insiste si el cliente no sabe o no quiere responder y nunca da precios.' },
@@ -206,7 +206,7 @@ const ARTICULOS = [
     ]
   },
   {
-    id: 'archivos-enviados', grupo: 'manual', soloAdmin: false, titulo: 'Enviar archivos',
+    id: 'archivos-enviados', modulo: 'atencion', grupo: 'manual', soloAdmin: false, titulo: 'Enviar archivos',
     resumen: 'Cómo enviar un PDF o una imagen desde un chat, y cuándo los envía Verde.',
     bloques: [
       { tipo: 'p', texto: 'En la caja de mensaje de cada chat, el botón del clip permite adjuntar un archivo «Desde la computadora» o «Desde la biblioteca». Se pueden enviar PDF de hasta 25 MB e imágenes JPG o PNG de hasta 5 MB. El archivo queda listo encima de la caja de mensaje: se puede sumar un texto, que sale con la firma, o quitarlo antes de enviar.' },
@@ -217,7 +217,7 @@ const ARTICULOS = [
     ]
   },
   {
-    id: 'corregir', grupo: 'manual', soloAdmin: false, titulo: 'Corregir el texto con la IA',
+    id: 'corregir', modulo: 'atencion', grupo: 'manual', soloAdmin: false, titulo: 'Corregir el texto con la IA',
     resumen: 'El botón de IA de la caja de mensaje corrige la ortografía y escribe el texto más claro, en el tono que se elija.',
     bloques: [
       { tipo: 'p', texto: 'En la caja de mensaje de cada chat, el botón con el ícono de IA (o el atajo Shift + la tecla a la izquierda del 1, en la computadora) abre un menú con tres tonos: rioplatense, neutro y formal. Al elegir uno, la IA corrige la ortografía y reescribe el texto para que el cliente lo entienda mejor, manteniendo todas las ideas de quien lo escribió. El texto corregido reemplaza al original en la caja, con el botón «Deshacer» para recuperarlo. Nada se envía solo: se puede editar antes de enviar.' },
@@ -225,7 +225,7 @@ const ARTICULOS = [
     ]
   },
   {
-    id: 'asistente', grupo: 'manual', soloAdmin: false, titulo: 'Asistente del equipo',
+    id: 'asistente', modulo: 'ayuda', grupo: 'manual', soloAdmin: false, titulo: 'Asistente del equipo',
     resumen: 'El asistente del Centro de ayuda apoya al equipo con los clientes: qué responder, cómo cerrar una venta, cómo tratar un reclamo, y escribe textos listos para enviar.',
     bloques: [
       { tipo: 'p', texto: 'En «Centro de ayuda › Asistente» se le puede preguntar qué responderle a un cliente, cómo cerrar una venta, cómo salir bien de una conversación difícil, cómo armar un presupuesto o cómo explicar la garantía. Conoce la configuración de Verde (identidad, pasos de venta, objeciones, reglas de oro, condiciones de garantía y biblioteca de recursos) y este manual. Solo responde sobre el trabajo de la empresa y sus clientes; ante otros temas, lo dice y no contesta.' },
@@ -234,7 +234,7 @@ const ARTICULOS = [
     ]
   },
   {
-    id: 'entrenamiento', grupo: 'manual', soloAdmin: false, titulo: 'Modo Entrenamiento',
+    id: 'entrenamiento', modulo: 'ayuda', grupo: 'manual', soloAdmin: false, titulo: 'Modo Entrenamiento',
     resumen: 'La IA entrevista al responsable de un área y genera el borrador del manual para la biblioteca.',
     bloques: [
       { tipo: 'p', texto: 'Quien tiene habilitado el modo Entrenamiento (los administradores siempre; a los demás los habilita un administrador en Usuarios › Editar) ve en el Centro de ayuda el selector «Instructor | Entrenamiento». En Entrenamiento, con una conversación vacía, se elige el área que se documenta y se toca «Empezar la entrevista»: el Entrevistador IA pregunta nombre, puesto y área, y sigue con una sola pregunta por vez, de lo general a lo específico; cada 5 a 8 preguntas resume lo capturado y pide confirmación. Lo que la persona no sabe queda como «Pendiente de definir por Dirección».' },
@@ -242,7 +242,7 @@ const ARTICULOS = [
     ]
   },
   {
-    id: 'ingreso-dos-pasos', grupo: 'manual', soloAdmin: false, titulo: 'Verificación en 2 pasos para entrar al panel',
+    id: 'ingreso-dos-pasos', modulo: 'ayuda', grupo: 'manual', soloAdmin: false, titulo: 'Verificación en 2 pasos para entrar al panel',
     resumen: 'Cómo configurar la app autenticadora, entrar con el código y qué hacer si se pierde el celular.',
     bloques: [
       { tipo: 'p', texto: 'Para entrar al panel, además de la contraseña, hace falta el código de 6 dígitos que muestra una app autenticadora en el celular (Google Authenticator o Microsoft Authenticator). El código cambia cada 30 segundos. Es obligatoria para todos los usuarios.' },
@@ -259,7 +259,7 @@ const ARTICULOS = [
     ]
   },
   {
-    id: 'apariencia', grupo: 'manual', soloAdmin: false, titulo: 'Modo claro, oscuro y menú',
+    id: 'apariencia', modulo: 'ayuda', grupo: 'manual', soloAdmin: false, titulo: 'Modo claro, oscuro y menú',
     resumen: 'Cómo cambiar entre modo claro y oscuro, achicar el menú y cerrar la sesión.',
     bloques: [
       { tipo: 'p', texto: 'Abajo a la izquierda, en la tarjeta «Conexión», junto a «Ver estado de conexión», está el interruptor de modo, con un sol (modo claro) o una luna (modo oscuro). Con el menú achicado, queda como un ícono de sol o luna al pie del menú. La primera vez, el panel usa el modo configurado en la computadora o el celular; después recuerda la elección en cada equipo.' },
@@ -346,12 +346,20 @@ const ARTICULOS = [
   }
 ];
 
-function visible(a, rol) { return !a.soloAdmin || rol === 'admin'; }
-function articulosPara(rol) { return ARTICULOS.filter(a => visible(a, rol)).concat([articuloManualCompleto(rol)]); }
-function articulo(id, rol) {
+// 1.6.3: los temas se filtran por los accesos del usuario (rol 'admin' ve todo; «accesos» viene de usuarios.accesosDe)
+function visible(a, rol, accesos) {
+  if (rol === 'admin') return true;
+  if (a.grupo === 'meta') return !a.soloAdmin;
+  const mod = a.modulo || (a.soloAdmin ? 'sistema' : 'ayuda');
+  if (mod === 'ayuda') return true;
+  if (!accesos) return !a.soloAdmin && ['atencion', 'ventas'].includes(mod);   // sin accesos informados: lo que veía un asesor
+  return !!accesos[mod];
+}
+function articulosPara(rol, accesos) { return ARTICULOS.filter(a => visible(a, rol, accesos)).concat([articuloManualCompleto(rol, accesos)]); }
+function articulo(id, rol, accesos) {
   const a = ARTICULOS.find(x => x.id === id);
   if (!a) return { error: 'El tema no existe.', codigo: 404 };
-  if (!visible(a, rol)) return { error: 'Este tema es solo para administradores.', codigo: 403 };
+  if (!visible(a, rol, accesos)) return { error: 'Este tema no corresponde a los accesos de este usuario.', codigo: 403 };
   return { articulo: a };
 }
 
@@ -376,6 +384,12 @@ function textoConversacion(d) {
   return cab + '\n' + ms.map(m => (m.tipo === 'equipo' && m.autor ? 'Equipo (' + m.autor + ')' : quien[m.tipo]) + ': ' + (m.archivo ? '[envió un archivo] ' : '') + String(m.texto || '').replace(/\s+/g, ' ').trim().slice(0, 600)).join('\n');
 }
 // 1.4.11: el asistente del equipo. «extra»: { empresa: resumen configurado, conversacion: texto adjunto, nombreEmpresa }.
+// 1.6.3: describe los accesos de un integrante para el Instructor
+function describirAccesos(a) {
+  const n = { atencion: 'Atención (chats, conversaciones)', ventas: 'Ventas (leads, tareas)', reportes: 'Reportes semanales', verde: 'Verde (comportamiento del bot, biblioteca de conocimiento)' };
+  const l = Object.keys(n).filter(k => a && a[k]).map(k => n[k]);
+  return (l.length ? l.join('; ') + '; ' : '') + 'Centro de ayuda';
+}
 // 1.6.0: el Instructor. Fuente de verdad: los manuales de la biblioteca (aprobados y activos) más los manuales del
 // sistema (manual completo del panel, configuración de Verde y guías de Meta). Devuelve el texto completo; la marca
 // [[VARIABLE]] separa el bloque fijo (con caché) del variable.
@@ -384,7 +398,7 @@ function instrucciones(rol, config, extra) {
   const esAdmin = rol === 'admin';
   const ex = extra || {};
   const empresa = String(ex.nombreEmpresa || '').trim() || 'Pantalla Verde';
-  const arts = articulosPara(rol);
+  const arts = articulosPara(rol, ex.accesos);
   const basePanel = arts.filter(a => a.grupo === 'manual' && a.id !== 'manual-completo').map(a => '### [' + a.id + '] ' + a.titulo + '\n' + textoArticulo(a)).join('\n\n');
   const baseMeta = arts.filter(a => a.grupo === 'meta').map(a => '### [' + a.id + '] ' + a.titulo + '\n' + textoArticulo(a)).join('\n\n');
   const conf = Object.entries(config || {}).map(([k, v]) => '- ' + k + ': ' + v).join('\n');
@@ -419,7 +433,7 @@ function instrucciones(rol, config, extra) {
     '3. Cuando haya VARIAS cosas que explicar (varios botones o partes en una imagen, varias preguntas, varias opciones), responder con una lista numerada: un elemento por punto, que empieza con su nombre en negrita y dos puntos (por ejemplo «1. **Interruptor «Verde en pausa»:** …», «2. **Botón de ayuda:** …»); nunca explicar varias cosas de corrido en un mismo párrafo. Para una sola duda simple, responder en 2 a 6 oraciones. Nunca inventar un botón o una pantalla que no esté en el manual del panel.',
     '4. Cuando pidan un texto para un cliente, entregarlo listo para enviar en «textos» (hasta 3 variantes): completo, sin corchetes de relleno salvo que falte un dato imprescindible, en español neutro tratando al cliente de usted, cordial y respetuoso. En esos textos nunca confirmar ni rechazar una garantía, ni prometer precios o plazos que no estén en la conversación o en los manuales.',
     '5. Si hay una CONVERSACIÓN ADJUNTA, basarse en ella: qué dijo el cliente, qué ya respondió Verde o el equipo y qué falta resolver. Si la persona adjunta una IMAGEN (por ejemplo, una captura del panel), describir qué muestra, decir qué es cada cosa y cómo se usa, con el manual del panel; si no es del panel ni del trabajo de la empresa, decirlo.',
-    '6. Rol de la persona que pregunta: ' + (esAdmin ? 'Administrador.' : 'Asesor. No dar instrucciones de pantallas de administración (configuración de Verde, avisos, usuarios, consumo, biblioteca, Meta); si pregunta por ellas, indicar que esas tareas las realiza un administrador.'),
+    '6. Quién pregunta: ' + (esAdmin ? 'un Administrador (tiene todo el panel).' : 'un integrante del equipo con estos accesos en el panel: ' + describirAccesos(ex.accesos) + '. Enseñarle procedimientos y estándares de los manuales sin restricción; en cambio, no dar instrucciones de pantallas del panel que no tiene (las que no figuran en su manual del panel): indicar que esa parte la realiza quien tiene ese acceso o un administrador.'),
     '',
     'MANUALES DISPONIBLES',
     disponibles,
@@ -428,7 +442,7 @@ function instrucciones(rol, config, extra) {
     sinManual,
     '',
     '=== MANUAL DEL SISTEMA: MANUAL COMPLETO DEL PANEL (pantalla por pantalla; citar «manual-completo» o el id del tema) ===',
-    manualCompleto.textoPara(rol),
+    manualCompleto.textoPara(rol, ex.accesos),
     '',
     basePanel,
     '',
@@ -521,7 +535,7 @@ function instruccionesBorrador(area, extra) {
 }
 
 // Interpreta la respuesta de la IA: objeto JSON con «respuesta» y «fuentes». Solo acepta fuentes visibles para el rol.
-function interpretar(texto, rol) {
+function interpretar(texto, rol, accesos) {
   const limpio = String(texto || '').replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
   let respuesta = limpio, fuentes = [], textos = [], manual = '', seccion = '';
   try {
@@ -530,7 +544,7 @@ function interpretar(texto, rol) {
   } catch (e) { /* sin JSON: se usa el texto tal cual */ }
   const vistos = new Set();
   const validas = fuentes.map(String).filter(id => !vistos.has(id) && vistos.add(id))
-    .map(id => ARTICULOS.find(a => a.id === id)).filter(a => a && visible(a, rol)).slice(0, 3)
+    .map(id => ARTICULOS.find(a => a.id === id)).filter(a => a && visible(a, rol, accesos)).slice(0, 3)
     .map(a => ({ id: a.id, titulo: a.titulo, grupo: a.grupo }));
   respuesta = respuesta.trim().slice(0, 4000);   // 1.6.0: se conservan las negritas (**…**), que el panel dibuja; antes se borraban
   textos = textos.filter(t => typeof t === 'string').map(t => t.replace(/\*\*/g, '').trim().slice(0, 1500)).filter(Boolean).slice(0, 3);   // 1.4.11
@@ -539,7 +553,7 @@ function interpretar(texto, rol) {
 
 // 1.5.3: el manual completo (pantalla por pantalla) como tema de «Manual y guías», según el rol.
 const manualCompleto = require('./manual-completo.js');
-function articuloManualCompleto(rol) {
-  return { id: 'manual-completo', grupo: 'manual', soloAdmin: false, titulo: 'Manual completo del panel', resumen: 'Pantalla por pantalla: qué hay, qué hace cada botón y qué ve cada rol.', bloques: manualCompleto.bloquesPara(rol) };
+function articuloManualCompleto(rol, accesos) {
+  return { id: 'manual-completo', modulo: 'ayuda', grupo: 'manual', soloAdmin: false, titulo: 'Manual completo del panel', resumen: 'Pantalla por pantalla: qué hay, qué hace cada botón y qué ve cada rol.', bloques: manualCompleto.bloquesPara(rol, accesos) };
 }
 module.exports = { instruccionesEntrevistador, instruccionesBorrador, primeraPreguntaEntrevista, ARTICULOS, REVISION_META, articulosPara, articulo, instrucciones, instruccionesEnBloques, interpretar, textoConversacion, articuloManualCompleto };
