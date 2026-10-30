@@ -84,6 +84,8 @@ function agregar(usuario, id, mensaje) {
   if (mensaje.imagen) m.imagen = mensaje.imagen;
   if (Array.isArray(mensaje.fuentes) && mensaje.fuentes.length) m.fuentes = mensaje.fuentes.slice(0, 6);
   if (Array.isArray(mensaje.textos) && mensaje.textos.length) m.textos = mensaje.textos.slice(0, 3);
+  if (mensaje.manual) m.manual = String(mensaje.manual).slice(0, 100);   // 1.6.0
+  if (mensaje.seccion) m.seccion = String(mensaje.seccion).slice(0, 120);
   c.mensajes.push(m);
   while (c.mensajes.length > MAX_MENSAJES) { const viejo = c.mensajes.shift(); if (viejo.imagen) borrarImagenes({ mensajes: [viejo] }); }
   if (!c.titulo && m.rol === 'usuario') c.titulo = t(m.texto, 60) || (m.imagen ? 'Imagen adjunta' : 'Conversación');

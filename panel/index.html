@@ -1845,6 +1845,39 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 .proc-enc span small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
 @media(max-width:600px){.conv-composer textarea{min-width:0}}
 
+/* ===================== 1.6.0: biblioteca de conocimiento e Instructor ===================== */
+.ay-instructor{display:block;font-size:12px;color:var(--muted);margin-top:2px;font-weight:500}
+.ay-manual{display:inline-flex;align-items:center;gap:6px;margin-bottom:6px;padding:4px 10px;border-radius:30px;background:rgba(201,242,77,.14);border:1px solid var(--accent-borde);font-size:12px;font-weight:600;color:var(--text)}
+.ay-manual svg{width:13px;height:13px}
+.ay-txt .ay-aprender{display:block;margin-top:8px;padding:9px 12px;border-left:3px solid var(--accent);background:var(--surface-2);border-radius:0 10px 10px 0;font-size:13px;line-height:1.5}
+.ay-txt .ay-aprender b{font-weight:700}
+.bb-resumen{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.bb-base.grande{color:var(--amber)}
+.bb-tabla td{vertical-align:top}
+.bb-nom b{display:block}
+.bb-nom > span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.bb-sis{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:30px;font-size:10.5px;font-weight:700;letter-spacing:.3px;background:var(--surface-2);border:1px solid var(--border);color:var(--muted);vertical-align:2px}
+.bb-acc{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.bb-acc .btn{padding:5px 10px;min-height:0;font-size:12.5px}
+.bb-fijo{font-size:12px;color:var(--muted)}
+.bb-form{display:flex;flex-direction:column;gap:12px}
+.bb-form .field{margin:0}
+.bb-radio{display:flex;gap:10px;flex-wrap:wrap}
+.bb-radio label{display:flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid var(--border);border-radius:10px;cursor:pointer;font-size:13px}
+.bb-radio input{accent-color:var(--accent);margin:0}
+.bb-texto{width:100%;min-height:220px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12.5px;line-height:1.45}
+.bb-info{font-size:12px;color:var(--muted)}
+.bb-ver{display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px}
+.bb-indice{display:flex;flex-direction:column;gap:4px;font-size:12.5px;max-height:60vh;overflow:auto}
+.bb-indice button{text-align:left;border:none;background:none;font:inherit;color:var(--blue);cursor:pointer;padding:3px 0}
+.bb-contenido{white-space:pre-wrap;font-size:13px;line-height:1.55;max-height:60vh;overflow:auto;padding-right:8px}
+.bb-contenido h4{margin:12px 0 4px;font-size:13.5px}
+.ba-fila{display:grid;grid-template-columns:minmax(0,1fr) 180px auto;gap:8px;align-items:center;margin-bottom:8px}
+.ba-fila input,.ba-fila select{width:100%}
+.ba-conmanual{font-size:11.5px;color:var(--muted);white-space:nowrap}
+.modal.ancho{max-width:960px;width:calc(100vw - 40px)}
+@media(max-width:760px){.bb-ver{grid-template-columns:1fr}.bb-indice{max-height:120px}.ba-fila{grid-template-columns:1fr}}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -1884,7 +1917,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
     <div id="navAdmin"><div class="nav-grupo" data-grupo="verde"><button type="button" class="nav-label nav-toggle" aria-expanded="true" onclick="alternarGrupo(this)">Verde<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button><div class="nav-cuerpo"><button class="tree-leaf" id="leaf-verde" onclick="go('verde')">
           <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10a7 7 0 0 1-14 0M12 17v4M8 21h8"/></svg>
           Comportamiento del bot
-        </button></div></div><div class="oculto" id="navDemo" aria-hidden="true"><button class="tree-parent" id="parentBtn" onclick="toggleParent()" aria-expanded="false" aria-controls="parentChildren">
+        </button><button class="tree-leaf" id="leaf-biblioteca" onclick="go('biblioteca')"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Biblioteca de conocimiento</button></div></div><div class="oculto" id="navDemo" aria-hidden="true"><button class="tree-parent" id="parentBtn" onclick="toggleParent()" aria-expanded="false" aria-controls="parentChildren">
       <span class="dot"></span> Agentes IA
       <svg class="chev" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
     </button>
@@ -2564,6 +2597,13 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
       <div class="panel"><div class="ld-tabla-caja" style="overflow-x:auto"><table class="ld-tabla" style="min-width:880px"><thead><tr><th>Prioridad</th><th>Cliente</th><th>Tipo · producto</th><th>Etapa</th><th>Espera</th><th>Vendedor</th><th>Traba</th></tr></thead><tbody id="ldTabla"></tbody></table></div><div class="ld-tarjetas" id="ldTarjetas"></div></div>
       <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Cada conversación se clasifica 10 minutos después del último mensaje: tipo, producto, intención, resumen, próximo paso y traba con la frase textual del cliente. La etapa y la prioridad salen de reglas fijas. Al abrir un chat, la franja «Lead» muestra la clasificación y permite corregirla.</span></div>
     </div>
+    <!-- ===== VIEW: BIBLIOTECA DE CONOCIMIENTO (1.6.0) ===== -->
+    <div class="view" id="view-biblioteca">
+      <div class="bb-resumen" id="bbResumen"></div>
+      <div class="rsp-barra" style="gap:8px"><button type="button" class="btn btn-ghost" onclick="abrirAreas()">Áreas y responsables</button><button type="button" class="btn btn-primary" onclick="nuevoManual()">+ Nuevo manual</button></div>
+      <div class="panel"><div style="overflow-x:auto"><table class="bb-tabla" style="min-width:900px"><thead><tr><th>Manual</th><th>Área</th><th>Estado</th><th>Activo</th><th>Actualizado</th><th style="text-align:right">Acciones</th></tr></thead><tbody id="bbTabla"></tbody></table></div><div class="empty oculto" id="bbVacio"><p>Todavía no hay manuales propios. Subí el primero con «Nuevo manual»; en la próxima parte también se van a poder crear entrevistando al responsable de cada área.</p></div></div>
+      <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>El Instructor del Centro de ayuda responde solo con los manuales aprobados y activos, más los del sistema. Un manual nace como borrador; «Aprobar» lo activa. Las áreas sin manual aprobado se listan solas para el Instructor, que remite a su responsable en lugar de inventar.</span></div>
+    </div>
     <!-- ===== VIEW: REPORTES (1.5.7) ===== -->
     <div class="view" id="view-reportes">
       <div class="rp-layout"><div><div class="rp-acciones" id="rpAcciones"></div><div class="rp-lista" id="rpLista"></div></div><div class="panel" style="padding:18px"><div id="rpContenido"></div></div></div>
@@ -2622,7 +2662,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
     <div class="view" id="view-ayuda">
       <div class="ay-grid" id="ayGrid">
         <section class="panel ay-asistente" aria-labelledby="ayTitAsistente">
-          <div class="panel-head ay-cab"><div><h3 id="ayTitAsistente"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> Asistente IA</h3></div><div class="ay-cab-acc"><div class="ay-adjunto oculto" id="ayAdjunto"></div><button class="btn btn-ghost ay-volver oculto" type="button" id="ayVolverChat" onclick="volverAlChatAyuda()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Volver al chat</button><div class="ay-conv-wrap" id="ayConvWrap"><button class="btn btn-ghost" type="button" id="ayConvBtn" onclick="alternarListaAyuda()" aria-haspopup="true"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Conversaciones</button><div class="ay-conv-lista" id="ayConvLista" role="menu" aria-label="Conversaciones anteriores"></div></div><button class="btn btn-ghost" type="button" id="ayLimpiar" onclick="limpiarAyuda()">Nueva conversación</button></div></div>
+          <div class="panel-head ay-cab"><div><h3 id="ayTitAsistente"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> Asistente IA</h3><span class="ay-instructor" id="ayInstructor"></span></div><div class="ay-cab-acc"><div class="ay-adjunto oculto" id="ayAdjunto"></div><button class="btn btn-ghost ay-volver oculto" type="button" id="ayVolverChat" onclick="volverAlChatAyuda()"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Volver al chat</button><div class="ay-conv-wrap" id="ayConvWrap"><button class="btn btn-ghost" type="button" id="ayConvBtn" onclick="alternarListaAyuda()" aria-haspopup="true"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Conversaciones</button><div class="ay-conv-lista" id="ayConvLista" role="menu" aria-label="Conversaciones anteriores"></div></div><button class="btn btn-ghost" type="button" id="ayLimpiar" onclick="limpiarAyuda()">Nueva conversación</button></div></div>
           <div class="ay-atajos" id="ayAtajos"></div>
           <div class="ay-chat" id="ayChat" aria-live="polite"></div>
           <div class="ay-pie">
@@ -2802,6 +2842,15 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 </div>
 
 
+<!-- ===== MODAL: NUEVO / EDITAR MANUAL (1.6.0) ===== -->
+<div class="overlay" id="bbOverlay"><div class="modal ancho"><div class="modal-head"><div><h3 id="bbTitulo">Nuevo manual</h3><p class="faint">Nace como borrador; se aprueba desde la lista.</p></div><button class="x-btn" type="button" aria-label="Cerrar" onclick="close_('bbOverlay')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="modal-body"><form class="bb-form" id="formManual" onsubmit="event.preventDefault();guardarManual()"><div class="ld-form-fila"><div class="field"><label for="bbNombre">Nombre</label><input type="text" id="bbNombre" maxlength="80" placeholder="Protocolo de Ventas y Atención al Cliente"></div><div class="field"><label for="bbArea">Área</label><select id="bbArea"></select></div></div><div class="field"><label for="bbDescripcion">Descripción (una línea)</label><input type="text" id="bbDescripcion" maxlength="140" placeholder="Ingreso de equipos en 13 pasos, entrega, formas de pago y reglas de oro"></div><div class="field"><label>Contenido</label><div class="bb-radio"><label><input type="radio" name="bbModo" value="archivo" checked onchange="cambioModoManual()">Subir archivo: PDF, .txt o .md</label><label><input type="radio" name="bbModo" value="texto" onchange="cambioModoManual()">Pegar el texto</label></div></div><div id="bbSubir"><input type="file" id="bbArchivo" class="oculto" accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown" onchange="archivoManualElegido(this)"><button type="button" class="btn btn-ghost" onclick="document.getElementById('bbArchivo').click()">Elegir archivo…</button> <span class="bb-info" id="bbArchivoNombre"></span></div><div id="bbPegar" class="oculto"><textarea id="bbTexto" class="bb-texto" placeholder="Pegar acá el texto del manual"></textarea><div class="bb-info" id="bbInfo"></div></div><div class="modal-foot"><button class="btn btn-ghost" type="button" onclick="close_('bbOverlay')">Cancelar</button><button class="btn btn-primary" type="submit" id="bbGuardar">Guardar</button></div></form></div></div></div>
+<!-- ===== MODAL: VER MANUAL (1.6.0) ===== -->
+<div class="overlay" id="bvOverlay"><div class="modal ancho"><div class="modal-head"><div><h3 id="bvTitulo"></h3><p class="faint" id="bvMeta"></p></div><button class="x-btn" type="button" aria-label="Cerrar" onclick="close_('bvOverlay')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="modal-body"><div class="bb-ver"><div class="bb-indice" id="bvIndice"></div><div class="bb-contenido" id="bvContenido"></div></div><div class="modal-foot"><a class="btn btn-ghost oculto" id="bvOriginal" href="#" target="_blank" rel="noopener">Descargar original</a><button class="btn btn-primary" type="button" onclick="close_('bvOverlay')">Cerrar</button></div></div></div></div>
+<!-- ===== MODAL: ÁREAS Y RESPONSABLES (1.6.0) ===== -->
+<div class="overlay" id="baOverlay"><div class="modal ancho"><div class="modal-head"><div><h3>Áreas y responsables</h3><p class="faint">Las áreas sin manual aprobado se listan solas para el Instructor, que remite a su responsable.</p></div><button class="x-btn" type="button" aria-label="Cerrar" onclick="close_('baOverlay')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="modal-body"><div id="baFilas"></div><button type="button" class="btn btn-ghost" onclick="agregarArea()">+ Agregar área</button><div class="modal-foot"><button class="btn btn-ghost" type="button" onclick="close_('baOverlay')">Cancelar</button><button class="btn btn-primary" type="button" onclick="guardarAreas()">Guardar</button></div></div></div></div>
 <!-- ===== MODAL: TAREA HECHA (1.5.2) ===== -->
 <div class="overlay" id="thOverlay"><div class="modal"><div class="modal-head"><div><h3>Tarea hecha</h3><p class="faint">Una nota corta y cuándo volver a ver este lead.</p></div><button class="x-btn" type="button" aria-label="Cerrar" onclick="close_('thOverlay')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
   <div class="modal-body"><form class="ld-form" id="formTareaHecha" onsubmit="event.preventDefault();guardarTareaHecha()"><div class="field"><label for="thNota">Nota (opcional)</label><input type="text" id="thNota" maxlength="160" placeholder="Por ejemplo: llamé, no atendió"></div><div class="field"><label>Volver a verlo</label><div class="ver-en" id="thVerEn"></div></div>
@@ -3326,6 +3375,7 @@ function _doGo(view){
     usuarios:['Usuarios','Personas que pueden entrar al panel. Cada acción queda registrada con su usuario.','<b>Sistema</b> › Usuarios'],
     consumo:['Consumo de IA','Costo estimado de las consultas a la IA de Verde. Solo lo ven los administradores.','<b>Sistema</b> › Consumo de IA'],
     leads:['Leads','Conversaciones de los últimos 30 días clasificadas por la IA y ordenadas por prioridad: primero lo que más importa atender.','<b>Ventas</b> › Leads'],
+    biblioteca:['Biblioteca de conocimiento','Los manuales por área que usa el Instructor del Centro de ayuda. Solo lo ven los administradores.','<b>Verde</b> › Biblioteca de conocimiento'],
     reportes:['Reportes semanales','Atención del equipo, lo más pedido, por qué no compran, resultados y evaluación de la IA, semana por semana. Solo lo ven los administradores.','<b>Ventas</b> › Reportes'],
     tareas:['Tareas','Qué tiene que hacer cada vendedor y cuándo: vencidas, para hoy y próximas, según la etapa de cada lead.','<b>Ventas</b> › Tareas'],
     proceso:['Proceso de ventas','Próxima acción, plazo y aviso de cada etapa. Solo lo ven los administradores.','<b>Ventas</b> › Proceso de ventas'],
@@ -3352,6 +3402,7 @@ function _doGo(view){
   if(view==='leads')cargarLeads();
   if(view==='tareas')cargarTareas();
   if(view==='reportes')cargarReportes();
+  if(view==='biblioteca')cargarConocimiento();
   if(view==='proceso')cargarProceso();
   if(view==='accesos')cargarAccesos();
   if(view==='respaldos')cargarRespaldos();
@@ -6104,6 +6155,7 @@ async function cargarAyuda(){
     const r=await api('/api/ayuda');
     if(!r.ok){document.getElementById('ayManual').innerHTML='<li class="faint" style="padding:10px 8px">No se pudo cargar el manual. Volver a intentar en unos minutos.</li>';return;}
     AYUDA.articulos=r.json.articulos||[];AYUDA.rol=r.json.rol||'admin';AYUDA.revision=r.json.revisionMeta||'';
+    const ins=document.getElementById('ayInstructor'),lm=(r.json.instructor&&r.json.instructor.manuales)||[];if(ins){ins.textContent='Instructor · responde desde '+lm.length+(lm.length===1?' manual':' manuales');ins.title=lm.join(' · ');}
   }
   if(!AYUDA.conv)await cargarConversacionAyuda();   // 1.5.3
   const hayMeta=AYUDA.articulos.some(a=>a.grupo==='meta');
@@ -6176,7 +6228,7 @@ function pintarChatAyuda(){
     if(x.pendiente)return h+'<div class="ay-pensando" role="status">Buscando la respuesta…</div>';
     if(x.error)return h+'<div class="ay-resp error"><span class="ay-txt">'+escH(x.error)+'</span></div>';
     const f=(x.fuentes||[]).length?'<div class="ay-fuentes"><span>Fuente:</span>'+x.fuentes.map(s=>'<button type="button" class="ay-fuente" onclick="abrirArticulo(\''+escH(s.id)+'\')">'+escH((s.grupo==='meta'?'Guías de Meta':'Manual')+' › '+s.titulo)+'</button>').join('')+'</div>':'';
-    return h+'<div class="ay-resp"><span class="ay-quien">Asistente IA'+botonEscucharAyuda(hi)+botonVelocidadVoz()+'</span><span class="ay-txt">'+formatoAyuda(x.respuesta)+'</span>'+htmlTextosAyuda(x,hi)+'</div>';
+    return h+'<div class="ay-resp"><span class="ay-quien">Asistente IA'+botonEscucharAyuda(hi)+botonVelocidadVoz()+'</span><span class="ay-txt">'+manualHtml(x)+formatoAyuda(x.respuesta)+'</span>'+htmlTextosAyuda(x,hi)+'</div>';
   }).join('');
   box.scrollTop=box.scrollHeight;
 }
@@ -6194,7 +6246,7 @@ async function preguntarAyuda(texto){
   pintarChatAyuda();
   const r=await api('/api/ayuda/preguntar',{method:'POST',body:{pregunta:q,conversacionId:AYUDA.conv?AYUDA.conv.id:'',imagen:img||undefined,clave:AYUDA.chat?AYUDA.chat.clave:''}});
   item.pendiente=false;AYUDA.cargando=false;btn.disabled=false;
-  if(r.ok){item.respuesta=r.json.respuesta;item.fuentes=r.json.fuentes||[];item.textos=r.json.textos||[];if(r.json.conversacionId)AYUDA.conv={id:r.json.conversacionId,titulo:r.json.titulo||''};}
+  if(r.ok){item.respuesta=r.json.respuesta;item.fuentes=r.json.fuentes||[];item.textos=r.json.textos||[];item.manual=r.json.manual||'';item.seccion=r.json.seccion||'';if(r.json.conversacionId)AYUDA.conv={id:r.json.conversacionId,titulo:r.json.titulo||''};}
   else item.error=r.json.error||'No se pudo obtener la respuesta. Intentar de nuevo.';
   pintarChatAyuda();ta.focus();
 }
@@ -7443,7 +7495,7 @@ function aplicarConversacionAyuda(c){
   const hilo=[];
   for(const m of (c.mensajes||[])){
     if(m.rol==='usuario')hilo.push({pregunta:m.texto,imagen:m.imagen||null});
-    else{let it=hilo[hilo.length-1];if(!it||it.respuesta!==undefined){it={pregunta:'',sinPregunta:true};hilo.push(it);}it.respuesta=m.texto;it.fuentes=m.fuentes||[];it.textos=m.textos||[];}
+    else{let it=hilo[hilo.length-1];if(!it||it.respuesta!==undefined){it={pregunta:'',sinPregunta:true};hilo.push(it);}it.respuesta=m.texto;it.fuentes=m.fuentes||[];it.textos=m.textos||[];it.manual=m.manual||'';it.seccion=m.seccion||'';}
   }
   AYUDA.hilo=hilo;
   pintarChatAyuda();
@@ -7525,6 +7577,7 @@ function formatoAyuda(texto){
     }
     cerrarLista();
     if(/^resultado esperado\s*:/i.test(t)){cerrarParrafo();html+='<span class="ay-resultado">'+negrita(t)+'</span>';return;}
+    if(/^para aprender\s*:/i.test(t)){cerrarParrafo();html+='<span class="ay-aprender"><b>Para aprender:</b>'+negrita(t.replace(/^para aprender\s*:/i,''))+'</span>';return;}
     if(i===0&&lineas.length>1&&/^paso a paso\b|:\s*$/i.test(t)&&t.length<90){html+='<span class="ay-titulo">'+negrita(t.replace(/:\s*$/,''))+'</span>';return;}
     parrafo.push(t);
   });
@@ -7723,6 +7776,131 @@ function textoCalificacionLead(x){
   const e=x&&x.encuesta;if(!e)return '';
   if(e.calificacion)return '<span class="ld-calif '+(e.puntaje===3?'muy':e.puntaje===1?'mala':'')+'">Calificación del cliente: '+escH(e.calificacion)+'</span>';
   return '<span class="faint">Encuesta enviada '+escH(horaCorta(e.en))+', sin respuesta todavía</span>';
+}
+
+
+/* ===================== 1.6.0: biblioteca de conocimiento e Instructor ===================== */
+var BB={datos:null,editando:null,archivo:null,ver:null};
+const ICO_MANUAL='<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>';
+function manualHtml(x){return x&&x.manual?'<span class="ay-manual">'+ICO_MANUAL+escH(x.manual)+(x.seccion?' › '+escH(x.seccion):'')+'</span>':'';}
+async function cargarConocimiento(){
+  const tb=document.getElementById('bbTabla');if(!tb)return;
+  const r=await api('/api/manuales');
+  if(!r.ok){toast('No se pudo cargar la biblioteca',r.json.error||'','error');return;}
+  BB.datos=r.json;pintarConocimiento();
+}
+function pintarConocimiento(){
+  const d=BB.datos;if(!d)return;
+  const b=d.base||{};
+  document.getElementById('bbResumen').innerHTML='<span class="ld-chip">'+ICO_MANUAL+' Manuales activos <b>'+((b.activos||0)+3)+'</b></span><span class="ld-chip bb-base '+(b.estado==='grande'?'grande':'')+'">Tamaño de la base <b>'+(b.paginas||0)+' páginas'+(b.estado==='grande'?' · grande':'')+'</b></span>'+(b.estado==='grande'?'<span class="faint">La base es grande: las respuestas van a tardar más y costar más. Conviene desactivar lo que no se use.</span>':'');
+  const fila=x=>'<tr data-id="'+escH(x.id)+'"><td><div class="bb-nom"><b>'+escH(x.nombre)+(x.sistema?'<span class="bb-sis">sistema</span>':'')+'</b>'+(x.descripcion?'<span>'+escH(x.descripcion)+'</span>':'')+'</div></td><td>'+escH(x.area)+'</td><td><span class="pill '+(x.estado==='aprobado'?'ok':'warn')+'"><span class="d"></span>'+(x.estado==='aprobado'?'Aprobado':'Borrador')+'</span></td><td>'+(x.sistema?'<span class="bb-fijo">siempre</span>':x.estado==='aprobado'?'<button type="button" class="sw sw-mini'+(x.activo?' on':'')+'" role="switch" aria-checked="'+(x.activo?'true':'false')+'" aria-label="Activo" data-id="'+escH(x.id)+'" onclick="activarManual(this)"><span class="sw-dot"></span></button>':'<span class="bb-fijo">—</span>')+'</td><td>'+(x.sistema?'<span class="bb-fijo">—</span>':escH(horaCorta(x.actualizadoEn))+'<br><span class="faint">'+escH(x.por||'')+' · '+x.paginas+(x.paginas===1?' página':' páginas')+'</span>')+'</td><td><div class="bb-acc"><button type="button" class="btn btn-ghost" onclick="verManual(\''+escH(x.id)+'\','+(x.sistema?'true':'false')+')">Ver</button>'+(x.sistema?'':'<button type="button" class="btn btn-ghost" onclick="editarManual(\''+escH(x.id)+'\')">Editar</button>'+(x.estado==='borrador'?'<button type="button" class="btn btn-primary" onclick="aprobarManual(\''+escH(x.id)+'\')">Aprobar</button>':'')+'<button type="button" class="btn btn-ghost" onclick="eliminarManual(\''+escH(x.id)+'\')">Eliminar</button>')+'</div></td></tr>';
+  document.getElementById('bbTabla').innerHTML=(d.sistema||[]).map(fila).join('')+(d.manuales||[]).map(fila).join('');
+  document.getElementById('bbVacio').classList.toggle('oculto',!!(d.manuales||[]).length);
+}
+async function activarManual(btn){
+  const id=btn.dataset.id,activo=btn.getAttribute('aria-checked')!=='true';
+  const r=await api('/api/manuales/'+encodeURIComponent(id)+'/activo',{method:'POST',body:{activo}});
+  if(!r.ok){toast('No se pudo cambiar',r.json.error||'','error');return;}
+  toast(activo?'Manual activado':'Manual desactivado',activo?'El Instructor ya lo usa.':'El Instructor deja de usarlo; sigue guardado.','success');
+  cargarConocimiento();
+}
+function aprobarManual(id){
+  const m=(BB.datos.manuales||[]).find(x=>x.id===id);if(!m)return;
+  askConfirm({title:'Aprobar el manual',message:'«'+m.nombre+'» pasa a aprobado y se activa: el Instructor lo va a usar como fuente de verdad desde ahora.',okLabel:'Aprobar',icon:'info'},async()=>{
+    const r=await api('/api/manuales/'+encodeURIComponent(id)+'/aprobar',{method:'POST'});
+    if(!r.ok){toast('No se pudo aprobar',r.json.error||'','error');return;}
+    toast('Manual aprobado','Ya está activo para el Instructor.','success');cargarConocimiento();
+  });
+}
+function eliminarManual(id){
+  const m=(BB.datos.manuales||[]).find(x=>x.id===id);if(!m)return;
+  askConfirm({title:'Eliminar el manual',message:'Se elimina «'+m.nombre+'» con su texto y su archivo original. No se puede deshacer.',okLabel:'Eliminar',icon:'warn'},async()=>{
+    const r=await api('/api/manuales/'+encodeURIComponent(id),{method:'DELETE'});
+    if(!r.ok){toast('No se pudo eliminar',r.json.error||'','error');return;}
+    toast('Manual eliminado','','success');cargarConocimiento();
+  });
+}
+function opcionesAreas(sel){return (BB.datos.areas||[]).map(a=>'<option value="'+escH(a.nombre)+'"'+(a.nombre===sel?' selected':'')+'>'+escH(a.nombre)+'</option>').join('')+(sel&&!(BB.datos.areas||[]).some(a=>a.nombre===sel)?'<option value="'+escH(sel)+'" selected>'+escH(sel)+'</option>':'');}
+function nuevoManual(){
+  BB.editando=null;BB.archivo=null;
+  document.getElementById('bbTitulo').textContent='Nuevo manual';
+  document.getElementById('bbNombre').value='';document.getElementById('bbDescripcion').value='';
+  document.getElementById('bbArea').innerHTML=opcionesAreas('');
+  document.querySelector('input[name="bbModo"][value="archivo"]').checked=true;cambioModoManual();
+  document.getElementById('bbTexto').value='';document.getElementById('bbInfo').textContent='';document.getElementById('bbArchivoNombre').textContent='';
+  show('bbOverlay');
+}
+async function editarManual(id){
+  const r=await api('/api/manuales/'+encodeURIComponent(id));
+  if(!r.ok){toast('No se pudo abrir',r.json.error||'','error');return;}
+  const m=r.json.manual;BB.editando=m;BB.archivo=null;
+  document.getElementById('bbTitulo').textContent='Editar manual';
+  document.getElementById('bbNombre').value=m.nombre;document.getElementById('bbDescripcion').value=m.descripcion||'';
+  document.getElementById('bbArea').innerHTML=opcionesAreas(m.area);
+  document.querySelector('input[name="bbModo"][value="texto"]').checked=true;cambioModoManual();
+  document.getElementById('bbTexto').value=m.texto||'';document.getElementById('bbInfo').textContent=(m.texto||'').length+' caracteres · '+m.paginas+(m.paginas===1?' página':' páginas')+(m.nombreOriginal?' · original: '+m.nombreOriginal:'');document.getElementById('bbArchivoNombre').textContent='';
+  show('bbOverlay');
+}
+function cambioModoManual(){const modo=(document.querySelector('input[name="bbModo"]:checked')||{}).value||'archivo';document.getElementById('bbSubir').classList.toggle('oculto',modo!=='archivo');document.getElementById('bbPegar').classList.toggle('oculto',modo!=='texto');}
+function archivoManualElegido(input){
+  const f=input&&input.files&&input.files[0];if(!f)return;
+  const ext=(f.name.match(/\.([a-z0-9]+)$/i)||[])[1];
+  if(!/^(pdf|txt|md)$/i.test(ext||'')){toast('Solo PDF, .txt o .md','','error');input.value='';return;}
+  if(f.size>25*1024*1024){toast('El archivo pesa más de 25 MB','','error');input.value='';return;}
+  const lector=new FileReader();
+  lector.onload=()=>{BB.archivo={nombre:f.name,tipo:f.type||(ext==='pdf'?'application/pdf':ext==='md'?'text/markdown':'text/plain'),datos:String(lector.result||'')};document.getElementById('bbArchivoNombre').textContent=f.name+' · '+(f.size/1024).toFixed(0)+' KB · el texto se extrae al guardar';};
+  lector.onerror=()=>toast('No se pudo leer el archivo','','error');
+  lector.readAsDataURL(f);input.value='';
+}
+async function guardarManual(){
+  const modo=(document.querySelector('input[name="bbModo"]:checked')||{}).value||'archivo';
+  const cuerpo={nombre:document.getElementById('bbNombre').value.trim(),area:document.getElementById('bbArea').value,descripcion:document.getElementById('bbDescripcion').value.trim()};
+  if(modo==='archivo'){if(BB.archivo)cuerpo.archivo=BB.archivo;else if(!BB.editando){toast('Falta el archivo','Elegir un PDF, .txt o .md, o pegar el texto.','error');return;}}
+  else cuerpo.texto=document.getElementById('bbTexto').value;
+  const btn=document.getElementById('bbGuardar');btn.disabled=true;btn.textContent=cuerpo.archivo?'Leyendo el archivo…':'Guardando…';
+  const r=BB.editando?await api('/api/manuales/'+encodeURIComponent(BB.editando.id),{method:'PUT',body:cuerpo}):await api('/api/manuales',{method:'POST',body:cuerpo});
+  btn.disabled=false;btn.textContent='Guardar';
+  if(!r.ok){toast('No se pudo guardar',r.json.error||'','error');return;}
+  close_('bbOverlay');
+  toast(BB.editando?'Manual actualizado':'Manual cargado como borrador',BB.editando?'':'Revisalo con «Ver» y aprobalo cuando esté bien.','success');
+  cargarConocimiento();
+}
+function indiceDe(texto){
+  const lineas=String(texto||'').split('\n'),out=[];
+  lineas.forEach((l,i)=>{const t=l.trim();if(!t||t.length>90)return;if(/^#{1,3}\s+/.test(t)||/^\d+(\.\d+)*[.)]?\s+\S/.test(t)&&t.length<70||(/^[A-ZÁÉÍÓÚÑ0-9][A-ZÁÉÍÓÚÑ0-9 ,:;()\-]{4,}$/.test(t)))out.push({linea:i,titulo:t.replace(/^#{1,3}\s+/,'')});});
+  return out.slice(0,80);
+}
+async function verManual(id,sistema){
+  const r=await api(sistema?'/api/manuales/sistema/'+encodeURIComponent(id):'/api/manuales/'+encodeURIComponent(id));
+  if(!r.ok){toast('No se pudo abrir',r.json.error||'','error');return;}
+  const m=r.json.manual;BB.ver=m;
+  document.getElementById('bvTitulo').textContent=m.nombre;
+  document.getElementById('bvMeta').textContent=m.area+' · '+(m.sistema?'manual del sistema':(m.estado==='aprobado'?'aprobado':'borrador')+' · '+(m.paginas||1)+(m.paginas===1?' página':' páginas')+(m.por?' · cargado por '+m.por:''));
+  const lineas=String(m.texto||'').split('\n');
+  const idx=indiceDe(m.texto);
+  document.getElementById('bvIndice').innerHTML=idx.length?idx.map(x=>'<button type="button" data-l="'+x.linea+'" onclick="irALineaManual(this.dataset.l)">'+escH(x.titulo)+'</button>').join(''):'<span class="faint">Sin títulos detectados.</span>';
+  document.getElementById('bvContenido').innerHTML=lineas.map((l,i)=>'<span id="bvL'+i+'">'+escH(l)+'</span>').join('\n');
+  const o=document.getElementById('bvOriginal');o.classList.toggle('oculto',!(m.archivoOriginal));o.href=m.archivoOriginal?'/api/manuales/'+encodeURIComponent(m.id)+'/original':'#';
+  show('bvOverlay');
+}
+function irALineaManual(l){const el=document.getElementById('bvL'+l);if(el&&typeof el.scrollIntoView==='function')el.scrollIntoView({block:'start'});}
+/* Áreas y responsables */
+var BA={usuarios:null};
+async function abrirAreas(){
+  if(!BA.usuarios){const r=await api('/api/leads/vendedores');BA.usuarios=r.ok?(r.json.vendedores||[]):[];}
+  document.getElementById('baFilas').innerHTML=(BB.datos.areas||[]).map(a=>filaArea(a)).join('');
+  show('baOverlay');
+}
+function filaArea(a){
+  const opciones='<option value="">— Dirección —</option>'+BA.usuarios.map(u=>'<option value="'+escH(u)+'"'+(u===(a&&a.responsable)?' selected':'')+'>'+escH(u)+'</option>').join('')+(a&&a.responsable&&!BA.usuarios.includes(a.responsable)?'<option value="'+escH(a.responsable)+'" selected>'+escH(a.responsable)+'</option>':'');
+  return '<div class="ba-fila"><input type="text" maxlength="80" value="'+escH((a&&a.nombre)||'')+'" placeholder="Nombre del área" aria-label="Área"><select aria-label="Responsable">'+opciones+'</select><span class="ba-conmanual">'+(a&&a.conManual?'con manual':'sin manual')+' <button type="button" class="dp-link dp-link-gris" onclick="this.closest(\'.ba-fila\').remove()">Quitar</button></span></div>';
+}
+function agregarArea(){document.getElementById('baFilas').insertAdjacentHTML('beforeend',filaArea(null));}
+async function guardarAreas(){
+  const areas=[...document.querySelectorAll('#baFilas .ba-fila')].map(f=>({nombre:f.querySelector('input').value.trim(),responsable:f.querySelector('select').value})).filter(a=>a.nombre);
+  const r=await api('/api/manuales-areas',{method:'PUT',body:{areas}});
+  if(!r.ok){toast('No se pudieron guardar las áreas',r.json.error||'','error');return;}
+  close_('baOverlay');toast('Áreas guardadas','El Instructor ya usa la lista nueva.','success');cargarConocimiento();
 }
 
 </script>

@@ -37,6 +37,15 @@ const ARTICULOS = [
     ]
   },
   {
+    id: 'biblioteca', grupo: 'manual', soloAdmin: true, titulo: 'Biblioteca de conocimiento',
+    resumen: 'Los manuales por área que usa el Instructor del Centro de ayuda: cargar, aprobar y activar.',
+    bloques: [
+      { tipo: 'p', texto: 'En «Verde › Biblioteca de conocimiento» están los manuales que el Instructor del Centro de ayuda usa como única fuente de verdad: los del sistema (manual completo del panel, configuración de Verde y guías de Meta, siempre activos) y los propios de cada área. «Nuevo manual» pide nombre, área, descripción de una línea y el contenido: un PDF, un .txt o .md, o el texto pegado; de un PDF se extrae el texto y se muestra para revisarlo. Nace en estado «borrador».' },
+      { tipo: 'p', texto: '«Aprobar» lo pasa a aprobado y lo activa; el interruptor «Activo» permite sacarlo del Instructor sin borrarlo. «Ver» muestra el texto con su índice y permite descargar el original; «Editar» corrige nombre, área, descripción o texto. «Áreas y responsables» define las áreas previstas y quién responde por cada una: las áreas sin manual aprobado aparecen solas en la lista del Instructor, que entonces responde «consulte con [responsable]» en lugar de inventar.' },
+      { tipo: 'p', texto: 'El tamaño de la base (manuales activos, en páginas) se muestra arriba: hasta 150 páginas está bien; más, las respuestas tardan y cuestan más.' }
+    ]
+  },
+  {
     id: 'reportes', grupo: 'manual', soloAdmin: true, titulo: 'Reportes semanales',
     resumen: 'Cada lunes: atención por vendedor, lo más pedido, por qué no compran, resultados y evaluación de la IA.',
     bloques: [
@@ -359,36 +368,72 @@ function textoConversacion(d) {
   return cab + '\n' + ms.map(m => (m.tipo === 'equipo' && m.autor ? 'Equipo (' + m.autor + ')' : quien[m.tipo]) + ': ' + (m.archivo ? '[envió un archivo] ' : '') + String(m.texto || '').replace(/\s+/g, ' ').trim().slice(0, 600)).join('\n');
 }
 // 1.4.11: el asistente del equipo. «extra»: { empresa: resumen configurado, conversacion: texto adjunto, nombreEmpresa }.
+// 1.6.0: el Instructor. Fuente de verdad: los manuales de la biblioteca (aprobados y activos) más los manuales del
+// sistema (manual completo del panel, configuración de Verde y guías de Meta). Devuelve el texto completo; la marca
+// [[VARIABLE]] separa el bloque fijo (con caché) del variable.
+const manuales = require('./manuales.js');
 function instrucciones(rol, config, extra) {
   const esAdmin = rol === 'admin';
   const ex = extra || {};
   const empresa = String(ex.nombreEmpresa || '').trim() || 'Pantalla Verde';
-  const base = articulosPara(rol).map(a => '### [' + a.id + '] ' + a.titulo + '\n' + textoArticulo(a)).join('\n\n');
+  const arts = articulosPara(rol);
+  const basePanel = arts.filter(a => a.grupo === 'manual' && a.id !== 'manual-completo').map(a => '### [' + a.id + '] ' + a.titulo + '\n' + textoArticulo(a)).join('\n\n');
+  const baseMeta = arts.filter(a => a.grupo === 'meta').map(a => '### [' + a.id + '] ' + a.titulo + '\n' + textoArticulo(a)).join('\n\n');
   const conf = Object.entries(config || {}).map(([k, v]) => '- ' + k + ': ' + v).join('\n');
+  const listas = manuales.listasInstructor();
+  const propios = manuales.activos();
+  const disponibles = listas.disponibles.map(m => '- ' + m.nombre + ' (' + m.area + ')' + (m.descripcion ? ': ' + m.descripcion : '')).join('\n');
+  const sinManual = listas.sinManual.length ? listas.sinManual.map(a => '- ' + a.nombre + ' (consultar con ' + a.responsable + ')').join('\n') : '- (ninguna: todas las áreas previstas tienen manual)';
   return [
-    'ASISTENTE DEL EQUIPO DE ' + empresa.toUpperCase() + ' (panel de Verde)',
-    'Función: ser el apoyo de las personas del equipo que atienden a los clientes por WhatsApp: qué responder, cómo cerrar una venta, cómo salir bien de un cliente difícil o conflictivo, cómo armar un presupuesto atractivo, cómo explicar la garantía, y también cómo usar el panel y las reglas de WhatsApp y Meta.',
+    'ASISTENTE DEL EQUIPO DE ' + empresa.toUpperCase() + ' · CENTRO DE AYUDA OPERATIVO E INSTRUCTOR INTERNO',
+    'Eres el Centro de Ayuda Operativo e instructor interno de ' + empresa + ', empresa de reparación y venta de tecnología en Montevideo, Uruguay. Tu función es ayudar al personal a resolver consultas operativas del día a día, capacitarlo en cada respuesta y enseñar a las personas nuevas cómo se trabaja en cada área: tanto los procedimientos como los estándares de atención y conducta definidos en los manuales.',
     '',
-    'Reglas obligatorias:',
-    '1. Responder solo sobre el trabajo de ' + empresa + ' y sus clientes: ventas, reparaciones, productos, atención, el panel, Verde, WhatsApp y Meta. Ante cualquier otro tema (salud, política, vida personal, tareas ajenas al trabajo, etc.), responder exactamente: «Eso ya no es algo con lo que pueda ayudarte: solo doy apoyo con el trabajo de ' + empresa + ' y sus clientes.» y nada más.',
-    '2. Usar la INFORMACIÓN DE LA EMPRESA, la CONFIGURACIÓN ACTUAL y la BASE DE CONOCIMIENTO. No inventar precios, plazos, promesas, políticas ni funciones del panel: si falta un dato, pedírselo a la persona o indicar que lo decide un administrador.',
-    '3. Cuando pidan un texto para un cliente, entregarlo listo para enviar en «textos» (hasta 3 variantes): completo, sin corchetes de relleno salvo que falte un dato imprescindible, en español rioplatense con voseo, cordial y respetuoso, salvo que pidan otro tono. En esos textos nunca confirmar ni rechazar una garantía, ni prometer precios o plazos que no estén en la conversación o en la información de la empresa.',
-    '4. Si hay una CONVERSACIÓN ADJUNTA, basarse en ella: qué dijo el cliente, qué ya respondió Verde o el equipo y qué falta resolver. Si la persona adjunta una IMAGEN (por ejemplo, una captura del panel), describir qué muestra, decir qué es cada cosa y cómo se usa, con el MANUAL COMPLETO; si no es del panel ni del trabajo de la empresa, decirlo.',
-    '5. En «respuesta», hablarle a la persona del equipo de forma cercana (español rioplatense), concreta y clara. Cuando explique CÓMO HACER algo en el panel o un procedimiento, usar este formato: una primera línea con el título (por ejemplo «Paso a paso: marcar una tarea como hecha»), después pasos numerados «1.», «2.»… de UNA acción cada uno, con los nombres de pantallas, botones y campos en negrita con dobles asteriscos (**Tareas**, **Hecho**), y una última línea «Resultado esperado: …». Hasta 10 pasos. Cuando haya VARIAS cosas que explicar (varios botones o partes en una imagen, varias preguntas, varias opciones), responder con una lista numerada: un elemento por punto, que empieza con su nombre en negrita y dos puntos (por ejemplo «1. **Interruptor «Verde en pausa»:** …», «2. **Botón de ayuda:** …»); nunca explicar varias cosas de corrido en un mismo párrafo. Para una sola duda simple, responder en 2 a 6 oraciones. Nunca inventar un botón o una pantalla que no esté en el MANUAL COMPLETO.',
-    '6. Rol de la persona que pregunta: ' + (esAdmin ? 'Administrador.' : 'Asesor. No dar instrucciones de pantallas de administración (configuración de Verde, avisos, usuarios, consumo, Meta); si pregunta por ellas, indicar que esas tareas las realiza un administrador.'),
-    '7. Responder SOLO con un objeto JSON válido, sin texto antes ni después: {"respuesta": "texto para la persona del equipo", "fuentes": ["id-del-tema"], "textos": ["texto listo para enviar al cliente"]}. En «fuentes» van los id (entre corchetes en la base) de los temas del manual usados, como máximo 3 (lista vacía si no se usó ninguno). «textos» va vacío cuando no corresponde un texto para el cliente.',
+    'FUENTE DE VERDAD',
+    '- Tu única fuente de verdad son los manuales listados en «Manuales disponibles», cuyo contenido completo está más abajo. Responde solamente con información que esté en ellos.',
+    '- Indica siempre de qué manual y sección proviene cada respuesta (campos «manual» y «seccion» del JSON, y también en el texto cuando ayude), y comparte textualmente los enlaces o rutas que figuren en el manual (nunca inventes enlaces).',
+    '- Si la consulta corresponde a un área sin manual cargado, responde: «Esa área todavía no tiene manual cargado. Por ahora, consulte directamente con [responsable o Dirección]», usando el responsable de la lista «Áreas previstas sin manual todavía». No improvises el procedimiento.',
+    '- Si la información de un manual parece contradecir otra instrucción escrita, señala la contradicción y recomienda confirmarla con Dirección antes de actuar.',
     '',
-    'INFORMACIÓN DE LA EMPRESA (configurada por el administrador en el panel):',
-    String(ex.empresa || '').trim() || '(sin configurar)',
+    'ESTRUCTURA DE RESPUESTA (DOBLE ENFOQUE)',
+    '1. RESPUESTA DE MANUAL: la solución directa, paso a paso, con los enlaces o rutas del sistema que indique el manual.',
+    '2. PARA APRENDER (2 a 4 líneas al final, en un párrafo que empiece exactamente con «Para aprender:»): el porqué del procedimiento, para capacitar al personal nuevo. Omite este bloque si la consulta es urgente o si el usuario pide solo la respuesta rápida.',
     '',
-    'CONFIGURACIÓN ACTUAL DEL PANEL (en el momento de la pregunta):',
-    conf,
+    'REGLAS FIJAS (APLICAN SIEMPRE, CON O SIN MANUAL)',
+    '- Los precios salen únicamente del sistema de gestión. Nunca des un precio de memoria ni lo estimes.',
+    '- Nada se promete por fuera del protocolo: descuentos, plazos o condiciones especiales los autoriza solo Dirección.',
+    '- Toda comunicación relevante con un cliente debe quedar registrada en el sistema.',
+    '- Solo respondes temas de ' + empresa + '. Ante cualquier otro tema (salud, política, vida personal, tareas ajenas al trabajo, etc.), responder exactamente: «Eso ya no es algo con lo que pueda ayudarte: solo doy apoyo con el trabajo de ' + empresa + ' y sus clientes.» y nada más.',
+    '- Responde en español neutro, claro y profesional, sin voseo.',
     '',
-    'MANUAL COMPLETO DEL PANEL (pantalla por pantalla, para explicar cualquier botón o detalle; citar la fuente «manual-completo»):',
+    'FORMATO EN EL PANEL (obligatorio)',
+    '1. Responder SOLO con un objeto JSON válido, sin texto antes ni después: {"respuesta": "texto para la persona del equipo", "manual": "nombre del manual usado (vacío si ninguno)", "seccion": "sección o título dentro del manual (vacío si no aplica)", "fuentes": ["id-del-tema"], "textos": ["texto listo para enviar al cliente"]}. En «fuentes» van los id (entre corchetes en los manuales del sistema) de los temas usados, como máximo 3 (lista vacía si no se usó ninguno). «textos» va vacío cuando no corresponde un texto para el cliente.',
+    '2. Cuando explique CÓMO HACER algo en el panel o un procedimiento, usar este formato en «respuesta»: una primera línea con el título (por ejemplo «Paso a paso: marcar una tarea como hecha»), después pasos numerados «1.», «2.»… de UNA acción cada uno, con los nombres de pantallas, botones y campos en negrita con dobles asteriscos (**Tareas**, **Hecho**), y una línea «Resultado esperado: …». Hasta 10 pasos. Después, si corresponde, el párrafo «Para aprender: …».',
+    '3. Cuando haya VARIAS cosas que explicar (varios botones o partes en una imagen, varias preguntas, varias opciones), responder con una lista numerada: un elemento por punto, que empieza con su nombre en negrita y dos puntos (por ejemplo «1. **Interruptor «Verde en pausa»:** …», «2. **Botón de ayuda:** …»); nunca explicar varias cosas de corrido en un mismo párrafo. Para una sola duda simple, responder en 2 a 6 oraciones. Nunca inventar un botón o una pantalla que no esté en el manual del panel.',
+    '4. Cuando pidan un texto para un cliente, entregarlo listo para enviar en «textos» (hasta 3 variantes): completo, sin corchetes de relleno salvo que falte un dato imprescindible, en español neutro tratando al cliente de usted, cordial y respetuoso. En esos textos nunca confirmar ni rechazar una garantía, ni prometer precios o plazos que no estén en la conversación o en los manuales.',
+    '5. Si hay una CONVERSACIÓN ADJUNTA, basarse en ella: qué dijo el cliente, qué ya respondió Verde o el equipo y qué falta resolver. Si la persona adjunta una IMAGEN (por ejemplo, una captura del panel), describir qué muestra, decir qué es cada cosa y cómo se usa, con el manual del panel; si no es del panel ni del trabajo de la empresa, decirlo.',
+    '6. Rol de la persona que pregunta: ' + (esAdmin ? 'Administrador.' : 'Asesor. No dar instrucciones de pantallas de administración (configuración de Verde, avisos, usuarios, consumo, biblioteca, Meta); si pregunta por ellas, indicar que esas tareas las realiza un administrador.'),
+    '',
+    'MANUALES DISPONIBLES',
+    disponibles,
+    '',
+    'ÁREAS PREVISTAS SIN MANUAL TODAVÍA',
+    sinManual,
+    '',
+    '=== MANUAL DEL SISTEMA: MANUAL COMPLETO DEL PANEL (pantalla por pantalla; citar «manual-completo» o el id del tema) ===',
     manualCompleto.textoPara(rol),
     '',
-    'BASE DE CONOCIMIENTO (reglas de Meta revisadas el ' + REVISION_META.split('-').reverse().join('/') + '):',
-    base,
+    basePanel,
+    '',
+    '=== MANUAL DEL SISTEMA: CONFIGURACIÓN DE VERDE (identidad, ventajas, pasos de venta, objeciones, reglas de oro, garantía, biblioteca de recursos) ===',
+    String(ex.empresa || '').trim() || '(sin configurar)',
+    '',
+    '=== MANUAL DEL SISTEMA: GUÍAS DE META (reglas de WhatsApp revisadas el ' + REVISION_META.split('-').reverse().join('/') + ') ===',
+    baseMeta,
+    propios.map(m => '\n=== MANUAL: ' + m.nombre.toUpperCase() + ' (área: ' + m.area + (m.descripcion ? ' · ' + m.descripcion : '') + ') ===\n' + m.texto).join('\n'),
+    '',
+    '[[VARIABLE]]',
+    'CONFIGURACIÓN ACTUAL DEL PANEL (en el momento de la pregunta):',
+    conf,
     '',
     'OTRAS PANTALLAS: «Fuentes de datos», «Rastreador Web», «Multimedia» y «Recursos enviables» están en revisión; algunas de sus funciones todavía son de demostración.',
     String(ex.conversacion || '').trim() ? '\nCONVERSACIÓN ADJUNTA (últimos mensajes del chat abierto, del más viejo al más nuevo):\n' + String(ex.conversacion).trim() : ''
@@ -399,33 +444,28 @@ function instrucciones(rol, config, extra) {
 // caché de Anthropic y se cobra una fracción al reutilizarse; el variable (empresa, configuración, conversación) va aparte.
 function instruccionesEnBloques(rol, config, extra) {
   const todo = instrucciones(rol, config, extra);
-  const corte = todo.indexOf('\nINFORMACIÓN DE LA EMPRESA (configurada por el administrador en el panel):');
-  const fijoFin = todo.indexOf('\nOTRAS PANTALLAS:');
-  if (corte < 0 || fijoFin < 0) return todo;
-  const reglas = todo.slice(0, corte);
-  const variable = todo.slice(corte, todo.indexOf('\nMANUAL COMPLETO DEL PANEL'));
-  const conocimiento = todo.slice(todo.indexOf('\nMANUAL COMPLETO DEL PANEL'), fijoFin);
-  const cola = todo.slice(fijoFin);
+  const corte = todo.indexOf('\n[[VARIABLE]]\n');
+  if (corte < 0) return todo;
   return [
-    { type: 'text', text: reglas + '\n' + conocimiento, cache_control: { type: 'ephemeral' } },
-    { type: 'text', text: variable + cola }
+    { type: 'text', text: todo.slice(0, corte), cache_control: { type: 'ephemeral' } },
+    { type: 'text', text: todo.slice(corte + '\n[[VARIABLE]]\n'.length) }
   ];
 }
 // Interpreta la respuesta de la IA: objeto JSON con «respuesta» y «fuentes». Solo acepta fuentes visibles para el rol.
 function interpretar(texto, rol) {
   const limpio = String(texto || '').replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
-  let respuesta = limpio, fuentes = [], textos = [];
+  let respuesta = limpio, fuentes = [], textos = [], manual = '', seccion = '';
   try {
     const j = JSON.parse(limpio.slice(limpio.indexOf('{'), limpio.lastIndexOf('}') + 1));
-    if (j && typeof j.respuesta === 'string') { respuesta = j.respuesta; fuentes = Array.isArray(j.fuentes) ? j.fuentes : []; textos = Array.isArray(j.textos) ? j.textos : []; }
+    if (j && typeof j.respuesta === 'string') { respuesta = j.respuesta; fuentes = Array.isArray(j.fuentes) ? j.fuentes : []; textos = Array.isArray(j.textos) ? j.textos : []; manual = String(j.manual || '').replace(/\s+/g, ' ').trim().slice(0, 100); seccion = String(j.seccion || '').replace(/\s+/g, ' ').trim().slice(0, 120); }   // 1.6.0: manual y sección citados
   } catch (e) { /* sin JSON: se usa el texto tal cual */ }
   const vistos = new Set();
   const validas = fuentes.map(String).filter(id => !vistos.has(id) && vistos.add(id))
     .map(id => ARTICULOS.find(a => a.id === id)).filter(a => a && visible(a, rol)).slice(0, 3)
     .map(a => ({ id: a.id, titulo: a.titulo, grupo: a.grupo }));
-  respuesta = respuesta.replace(/\*\*/g, '').trim().slice(0, 2500);
+  respuesta = respuesta.trim().slice(0, 4000);   // 1.6.0: se conservan las negritas (**…**), que el panel dibuja; antes se borraban
   textos = textos.filter(t => typeof t === 'string').map(t => t.replace(/\*\*/g, '').trim().slice(0, 1500)).filter(Boolean).slice(0, 3);   // 1.4.11
-  return { respuesta: respuesta || 'No se pudo obtener una respuesta. Intentar de nuevo.', fuentes: validas, textos };
+  return { respuesta: respuesta || 'No se pudo obtener una respuesta. Intentar de nuevo.', fuentes: validas, textos, manual, seccion };
 }
 
 // 1.5.3: el manual completo (pantalla por pantalla) como tema de «Manual y guías», según el rol.

@@ -42,8 +42,10 @@ const leads = require('./leads.js');           // 1.5.0: leads clasificados por 
 const hilos = require('./ayuda-hilos.js');     // 1.5.3: conversaciones guardadas del Centro de ayuda
 const reportes = require('./reportes.js');     // 1.5.7: reportes semanales
 const encuestas = require('./encuestas.js');   // 1.5.9: encuesta de calificación
+const manuales = require('./manuales.js');     // 1.6.0: biblioteca de conocimiento
+const manualCompleto = require('./manual-completo.js');
 
-const VERSION = '1.5.9';
+const VERSION = '1.6.0';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -1001,7 +1003,7 @@ function configAyuda() {
 const preguntasAyuda = new Map();   // límite de preguntas por usuario y por hora (protege el costo)
 function limiteAyuda() { return Number(process.env.VERDE_AYUDA_LIMITE_HORA) > 0 ? Number(process.env.VERDE_AYUDA_LIMITE_HORA) : 30; }
 app.get('/api/ayuda', requiere(['admin', 'asesor']), (req, res) => {
-  res.json({ rol: rolDe(req), revisionMeta: ayuda.REVISION_META, articulos: ayuda.articulosPara(rolDe(req)) });
+  res.json({ rol: rolDe(req), revisionMeta: ayuda.REVISION_META, articulos: ayuda.articulosPara(rolDe(req)), instructor: { manuales: manuales.listasInstructor().disponibles.map(m => m.nombre) } });   // 1.6.0
 });
 app.post('/api/ayuda/preguntar', requiere(['admin', 'asesor']), async (req, res) => {
   try {
@@ -1036,9 +1038,66 @@ app.post('/api/ayuda/preguntar', requiere(['admin', 'asesor']), async (req, res)
     try { crudo = await bot.callClaude(sistema, mensajes, v, asis.modelo, 'ayuda', { esfuerzo: asis.esfuerzo }); }
     catch (e) { console.error('Centro de ayuda: la IA no respondió:', e.message); return res.status(502).json({ error: 'El asistente no está disponible en este momento. Intentar de nuevo en unos minutos.', conversacionId: conv.id }); }
     const r = ayuda.interpretar(crudo, rol);
-    conv = hilos.agregar(clave, conv.id, { rol: 'asistente', texto: r.respuesta, fuentes: (r.fuentes || []).map(f => f.id), textos: r.textos });
+    conv = hilos.agregar(clave, conv.id, { rol: 'asistente', texto: r.respuesta, fuentes: (r.fuentes || []).map(f => f.id), textos: r.textos, manual: r.manual, seccion: r.seccion });
     res.json(Object.assign(r, { conversacionId: conv.id, titulo: conv.titulo }));
   } catch (e) { responderError(res, e); }
+});
+/* ---------- 1.6.0: biblioteca de conocimiento ---------- */
+app.get('/api/manuales', requiere(['admin']), (req, res) => res.json(manuales.listar()));
+app.post('/api/manuales', requiere(['admin']), async (req, res) => {
+  try {
+    const b = req.body || {};
+    const m = await manuales.crear({ nombre: b.nombre, area: b.area, descripcion: b.descripcion, texto: b.texto, archivo: b.archivo, por: quienActua(req) });
+    console.log('Panel: ' + quienEs(req) + ' cargó el manual «' + m.nombre + '»');
+    res.json({ manual: m, base: manuales.resumenBase() });
+  } catch (e) { responderError(res, e); }
+});
+app.get('/api/manuales/sistema/:id', requiere(['admin']), (req, res) => {
+  const v = bot.getVerde(), rol = rolDe(req);
+  const s = manuales.SISTEMA.find(x => x.id === req.params.id);
+  if (!s) return res.status(404).json({ error: 'Ese manual no existe.' });
+  let texto = '';
+  if (s.id === 'sistema-panel') texto = manualCompleto.textoPara(rol);
+  else if (s.id === 'sistema-verde') texto = bot.resumenEmpresa(v, recursos.listar());
+  else texto = ayuda.articulosPara(rol).filter(a => a.grupo === 'meta').map(a => '## ' + a.titulo + '\n' + a.bloques.map(bl => bl.tipo === 'l' ? bl.items.map(x => '- ' + x).join('\n') : bl.texto).join('\n')).join('\n\n');
+  res.json({ manual: Object.assign({}, s, { sistema: true, estado: 'aprobado', activo: true, texto, caracteres: texto.length, paginas: manuales.paginas(texto.length) }) });
+});
+app.get('/api/manuales/:id', requiere(['admin']), (req, res) => {
+  const m = manuales.obtener(req.params.id);
+  if (!m) return res.status(404).json({ error: 'Ese manual no existe.' });
+  res.json({ manual: m });
+});
+app.get('/api/manuales/:id/original', requiere(['admin']), (req, res) => {
+  const o = manuales.rutaOriginal(req.params.id);
+  if (!o) return res.status(404).json({ error: 'Este manual no tiene archivo original.' });
+  res.download(o.ruta, o.nombre);
+});
+app.put('/api/manuales/:id', requiere(['admin']), async (req, res) => {
+  try {
+    const m = await manuales.actualizar(req.params.id, Object.assign({}, req.body || {}, { por: quienActua(req) }));
+    if (!m) return res.status(404).json({ error: 'Ese manual no existe.' });
+    res.json({ manual: m, base: manuales.resumenBase() });
+  } catch (e) { responderError(res, e); }
+});
+app.post('/api/manuales/:id/aprobar', requiere(['admin']), (req, res) => {
+  const m = manuales.aprobar(req.params.id, quienActua(req));
+  if (!m) return res.status(404).json({ error: 'Ese manual no existe.' });
+  console.log('Panel: ' + quienEs(req) + ' aprobó el manual «' + m.nombre + '»');
+  res.json({ manual: m, base: manuales.resumenBase() });
+});
+app.post('/api/manuales/:id/activo', requiere(['admin']), (req, res) => {
+  try {
+    const m = manuales.activar(req.params.id, !!(req.body || {}).activo);
+    if (!m) return res.status(404).json({ error: 'Ese manual no existe.' });
+    res.json({ manual: m, base: manuales.resumenBase() });
+  } catch (e) { responderError(res, e); }
+});
+app.delete('/api/manuales/:id', requiere(['admin']), (req, res) => {
+  if (!manuales.eliminar(req.params.id)) return res.status(404).json({ error: 'Ese manual no existe.' });
+  res.json({ ok: true, base: manuales.resumenBase() });
+});
+app.put('/api/manuales-areas', requiere(['admin']), (req, res) => {
+  try { res.json({ areas: manuales.guardarAreas((req.body || {}).areas) }); } catch (e) { responderError(res, e); }
 });
 /* ---------- 1.5.9: encuesta de calificación y respuesta sugerida ---------- */
 // Manda la encuesta al cliente del chat. Devuelve { ok, motivo }.
@@ -1156,7 +1215,7 @@ async function avisarReporte(r) {
 }
 /* ---------- 1.5.3: conversaciones guardadas del Centro de ayuda ---------- */
 function conversacionPublica(c, rol) {
-  return { id: c.id, titulo: c.titulo, creadoEn: c.creadoEn, actualizadoEn: c.actualizadoEn, mensajes: (c.mensajes || []).map(m => Object.assign({ en: m.en, rol: m.rol, texto: m.texto }, m.imagen ? { imagen: { archivo: m.imagen.archivo, nombre: m.imagen.nombre } } : {}, m.textos ? { textos: m.textos } : {}, m.fuentes ? { fuentes: m.fuentes.map(id => ayuda.articulo(id, rol)).filter(Boolean).map(a => ({ id: a.id, titulo: a.titulo, grupo: a.grupo })) } : {})) };
+  return { id: c.id, titulo: c.titulo, creadoEn: c.creadoEn, actualizadoEn: c.actualizadoEn, mensajes: (c.mensajes || []).map(m => Object.assign({ en: m.en, rol: m.rol, texto: m.texto }, m.imagen ? { imagen: { archivo: m.imagen.archivo, nombre: m.imagen.nombre } } : {}, m.textos ? { textos: m.textos } : {}, m.manual ? { manual: m.manual, seccion: m.seccion || '' } : {}, m.fuentes ? { fuentes: m.fuentes.map(id => ayuda.articulo(id, rol)).filter(Boolean).map(a => ({ id: a.id, titulo: a.titulo, grupo: a.grupo })) } : {})) };
 }
 app.get('/api/ayuda/conversaciones', requiere(['admin', 'asesor']), (req, res) => res.json(hilos.listar(req.usuario ? req.usuario.id : 'general')));
 app.post('/api/ayuda/conversaciones', requiere(['admin', 'asesor']), (req, res) => res.json({ conversacion: conversacionPublica(hilos.nueva(req.usuario ? req.usuario.id : 'general'), rolDe(req)) }));
