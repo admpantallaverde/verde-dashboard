@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.5.3';
+const VERSION_ESPERADA = '1.5.4';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -1879,6 +1879,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   let rr77 = await json(await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Cómo marco una tarea como hecha?', conversacionId: nueva77.conversacion.id }));
   const msgs77 = llamadasIA[llamadasIA.length - 1].body.messages, sys77 = llamadasIA[llamadasIA.length - 1].body.system;
   verificar(rr77.conversacionId === nueva77.conversacion.id && rr77.titulo === '¿Cómo marco una tarea como hecha?' && msgs77.length === 1, 'en la conversación nueva la IA recibe solo esa pregunta');
+  verificar(/Paso a paso: marcar una tarea como hecha/.test(sys77[0].text) && /Resultado esperado/.test(sys77[0].text) && /Ctrl \+ V/.test(sys77[0].text), 'el asistente tiene la consigna de responder con pasos numerados, negritas y resultado esperado, y el manual menciona pegar y «Escuchar» (1.5.4)');
   verificar(Array.isArray(sys77) && sys77.length === 2 && sys77[0].cache_control && sys77[0].cache_control.type === 'ephemeral' && /MANUAL COMPLETO DEL PANEL/.test(sys77[0].text) && /Ventas › Tareas/.test(sys77[0].text) && /INFORMACIÓN DE LA EMPRESA \(configurada/.test(sys77[1].text) && !/MANUAL COMPLETO DEL PANEL/.test(sys77[1].text), 'las instrucciones van en dos bloques: el fijo con el manual completo en caché, el variable con la empresa');
   const lista77 = await json(await api('/api/ayuda/conversaciones'));
   verificar(lista77.actual === nueva77.conversacion.id && lista77.conversaciones.length >= 2 && lista77.conversaciones[0].id === nueva77.conversacion.id && lista77.conversaciones[0].mensajes === 2, 'la lista muestra las conversaciones, la más reciente primero, con su cantidad de mensajes');

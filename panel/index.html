@@ -1732,6 +1732,19 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 .ay-img{display:block;max-width:260px;max-height:220px;margin-top:6px;border-radius:10px;border:1px solid var(--border);cursor:zoom-in}
 @media(max-width:600px){.ay-conv-lista{left:0;right:auto;max-width:calc(100vw - 32px)}.ay-img{max-width:100%}}
 
+/* ===================== 1.5.4: respuestas con pasos, pegar imágenes y «Escuchar» ===================== */
+.ay-txt p{margin:0 0 8px}
+.ay-txt p:last-child{margin-bottom:0}
+.ay-txt ol,.ay-txt ul{margin:4px 0 8px;padding-left:22px;display:flex;flex-direction:column;gap:5px}
+.ay-txt li{line-height:1.45}
+.ay-txt b{font-weight:700}
+.ay-txt .ay-titulo{display:block;font-weight:700;margin-bottom:6px}
+.ay-txt .ay-resultado{display:block;margin-top:6px;padding:8px 10px;border-radius:8px;background:rgba(201,242,77,.14);font-size:13px}
+.ay-escuchar{display:inline-flex;align-self:flex-start;align-items:center;gap:6px;margin-top:8px;padding:5px 10px;border-radius:30px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.ay-escuchar:hover{color:var(--text)}
+.ay-escuchar.activo{color:var(--accent-text,var(--text));border-color:var(--accent-borde);background:rgba(201,242,77,.14)}
+.ay-escuchar svg{width:14px;height:14px}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -2516,7 +2529,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
           <div class="ay-chat" id="ayChat" aria-live="polite"></div>
           <div class="ay-pie">
             <div class="ay-adj-chip oculto" id="ayAdjChip"></div>
-            <div class="ay-input"><input type="file" id="ayArchivo" accept="image/jpeg,image/png" class="oculto" tabindex="-1" aria-hidden="true" onchange="imagenAyudaElegida(this)"><button type="button" class="ay-clip" id="ayAdjuntar" onclick="document.getElementById('ayArchivo').click()" aria-label="Adjuntar una imagen" title="Adjuntar una imagen (JPG o PNG, hasta 5 MB)"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></button><textarea id="ayPregunta" rows="1" maxlength="500" placeholder="Escribir la consulta: un cliente, una venta, un presupuesto, el panel o las reglas de WhatsApp…" aria-label="Pregunta para el asistente" onkeydown="teclaAyuda(event)" oninput="ajustarAlto(this)"></textarea><button class="ay-enviar" type="button" id="ayEnviar" onclick="preguntarAyuda()" aria-label="Enviar la pregunta"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button></div>
+            <div class="ay-input"><input type="file" id="ayArchivo" accept="image/jpeg,image/png" class="oculto" tabindex="-1" aria-hidden="true" onchange="imagenAyudaElegida(this)"><button type="button" class="ay-clip" id="ayAdjuntar" onclick="document.getElementById('ayArchivo').click()" aria-label="Adjuntar una imagen" title="Adjuntar una imagen (JPG o PNG, hasta 5 MB)"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></button><textarea id="ayPregunta" rows="1" maxlength="500" onpaste="pegarEnAyuda(event)" placeholder="Escribir la consulta: un cliente, una venta, un presupuesto, el panel o las reglas de WhatsApp…" aria-label="Pregunta para el asistente" onkeydown="teclaAyuda(event)" oninput="ajustarAlto(this)"></textarea><button class="ay-enviar" type="button" id="ayEnviar" onclick="preguntarAyuda()" aria-label="Enviar la pregunta"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button></div>
             <span class="faint" id="ayNota">Conoce la configuración de Verde, el manual del panel y las reglas de Meta. No inventa precios ni promesas; si no sabe algo, lo indica.</span>
           </div>
         </section>
@@ -6058,7 +6071,7 @@ function pintarChatAyuda(){
     if(x.pendiente)return h+'<div class="ay-pensando" role="status">Buscando la respuesta…</div>';
     if(x.error)return h+'<div class="ay-resp error"><span class="ay-txt">'+escH(x.error)+'</span></div>';
     const f=(x.fuentes||[]).length?'<div class="ay-fuentes"><span>Fuente:</span>'+x.fuentes.map(s=>'<button type="button" class="ay-fuente" onclick="abrirArticulo(\''+escH(s.id)+'\')">'+escH((s.grupo==='meta'?'Guías de Meta':'Manual')+' › '+s.titulo)+'</button>').join('')+'</div>':'';
-    return h+'<div class="ay-resp"><span class="ay-quien">Asistente</span><span class="ay-txt">'+escH(x.respuesta)+'</span>'+htmlTextosAyuda(x,hi)+f+'</div>';
+    return h+'<div class="ay-resp"><span class="ay-quien">Asistente</span><span class="ay-txt">'+formatoAyuda(x.respuesta)+'</span>'+htmlTextosAyuda(x,hi)+f+botonEscucharAyuda(hi)+'</div>';
   }).join('');
   box.scrollTop=box.scrollHeight;
 }
@@ -7384,6 +7397,66 @@ function imgAyudaHtml(x){
   if(x.imagenLocal)return '<img class="ay-img" src="'+x.imagenLocal+'" alt="Imagen adjunta">';
   if(x.imagen&&x.imagen.archivo)return '<a href="/api/ayuda/imagen/'+encodeURIComponent(x.imagen.archivo)+'" target="_blank" rel="noopener"><img class="ay-img" src="/api/ayuda/imagen/'+encodeURIComponent(x.imagen.archivo)+'" alt="'+escH(x.imagen.nombre||'Imagen adjunta')+'"></a>';
   return '';
+}
+
+
+/* ===================== 1.5.4: respuestas con pasos, pegar imágenes y «Escuchar» ===================== */
+// Texto del asistente → HTML: **negrita**, listas «1.» y «-», título en la primera línea y «Resultado esperado».
+function formatoAyuda(texto){
+  const lineas=String(texto||'').replace(/\r/g,'').split('\n');
+  const negrita=s=>escH(s).replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');
+  let html='',lista=null,parrafo=[];
+  const cerrarParrafo=()=>{if(parrafo.length){html+='<p>'+parrafo.map(negrita).join('<br>')+'</p>';parrafo=[];}};
+  const cerrarLista=()=>{if(lista){html+='</'+lista+'>';lista=null;}};
+  lineas.forEach((l,i)=>{
+    const t=l.trim();
+    if(!t){cerrarParrafo();cerrarLista();return;}
+    const mo=t.match(/^(\d+)[.)]\s+(.*)$/),mu=t.match(/^[-•]\s+(.*)$/);
+    if(mo||mu){
+      cerrarParrafo();const tipo=mo?'ol':'ul';
+      if(lista!==tipo){cerrarLista();html+='<'+tipo+'>';lista=tipo;}
+      html+='<li>'+negrita(mo?mo[2]:mu[1])+'</li>';return;
+    }
+    cerrarLista();
+    if(/^resultado esperado\s*:/i.test(t)){cerrarParrafo();html+='<span class="ay-resultado">'+negrita(t)+'</span>';return;}
+    if(i===0&&lineas.length>1&&/^paso a paso\b|:\s*$/i.test(t)&&t.length<90){html+='<span class="ay-titulo">'+negrita(t.replace(/:\s*$/,''))+'</span>';return;}
+    parrafo.push(t);
+  });
+  cerrarParrafo();cerrarLista();
+  return html;
+}
+// Pegar una captura con Ctrl + V en la caja de la pregunta
+function pegarEnAyuda(e){
+  const items=(e.clipboardData&&e.clipboardData.items)?[...e.clipboardData.items]:[];
+  const it=items.find(x=>x.kind==='file'&&/^image\//.test(x.type));
+  if(!it)return;
+  const f=it.getAsFile();
+  if(!f)return;
+  e.preventDefault();
+  imagenAyudaElegida({files:[f],value:''});
+}
+// «Escuchar»: lee la respuesta con la voz del navegador (sin costo)
+var VOZ={hablando:null};
+function hayVoz(){return typeof window!=='undefined'&&!!window.speechSynthesis&&typeof window.SpeechSynthesisUtterance==='function';}
+function textoParaVoz(t){return String(t||'').replace(/\*\*/g,'').replace(/^\s*\d+[.)]\s+/gm,'').replace(/^\s*[-•]\s+/gm,'').replace(/«|»/g,'').replace(/\s+/g,' ').trim();}
+function vozEspanol(){
+  const voces=window.speechSynthesis.getVoices()||[];
+  const orden=['es-UY','es-AR','es-MX','es-US','es-ES','es'];
+  for(const l of orden){const v=voces.find(x=>String(x.lang||'').toLowerCase().startsWith(l.toLowerCase()));if(v)return v;}
+  return null;
+}
+function botonEscucharAyuda(hi){return hayVoz()?'<button type="button" class="ay-escuchar" data-hi="'+hi+'" onclick="escucharAyuda(this)"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg><span>Escuchar</span></button>':'';}
+function detenerVozAyuda(){if(!hayVoz())return;window.speechSynthesis.cancel();if(VOZ.hablando){VOZ.hablando.classList.remove('activo');VOZ.hablando.querySelector('span').textContent='Escuchar';VOZ.hablando=null;}}
+function escucharAyuda(btn){
+  if(!hayVoz())return;
+  if(VOZ.hablando===btn){detenerVozAyuda();return;}
+  detenerVozAyuda();
+  const x=AYUDA.hilo[Number(btn.dataset.hi)];if(!x||!x.respuesta)return;
+  const u=new SpeechSynthesisUtterance(textoParaVoz(x.respuesta));
+  const v=vozEspanol();if(v)u.voice=v;u.lang=(v&&v.lang)||'es-UY';u.rate=1;
+  u.onend=u.onerror=()=>{if(VOZ.hablando===btn)detenerVozAyuda();};
+  VOZ.hablando=btn;btn.classList.add('activo');btn.querySelector('span').textContent='Detener';
+  window.speechSynthesis.speak(u);
 }
 
 </script>
