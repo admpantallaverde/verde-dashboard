@@ -1778,6 +1778,62 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 .ay-asistente{height:calc(100vh - 132px)}
 .conv-franja .franja-botones{display:flex;gap:6px;flex-wrap:wrap}
 
+/* ===================== 1.5.7: reportes semanales, apertura en un mensaje y velocidad de la voz ===================== */
+.rp-layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:16px;align-items:start}
+.rp-lista{display:flex;flex-direction:column;gap:6px}
+.rp-sem{display:flex;flex-direction:column;gap:2px;text-align:left;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface);font:inherit;color:var(--text);cursor:pointer}
+.rp-sem:hover{background:var(--surface-2)}
+.rp-sem.sel{border-color:var(--accent-borde);background:rgba(201,242,77,.14)}
+.rp-sem b{font-size:13px}
+.rp-sem span{font-size:11.5px;color:var(--muted)}
+.rp-acciones{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.rp-acciones .btn{justify-content:center}
+.rp-cab{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.rp-cab h2{margin:0;font-size:20px}
+.rp-cab p{margin:4px 0 0;font-size:12.5px;color:var(--muted)}
+.rp-sec{margin-bottom:16px}
+.rp-sec h3{display:flex;align-items:center;gap:8px;font-size:14.5px;margin:0 0 10px}
+.rp-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--accent-ink,#111b21);font-size:12px;font-weight:700}
+.rp-vend{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.rp-card{border:1px solid var(--border);border-radius:12px;padding:12px 14px;background:var(--surface);display:flex;flex-direction:column;gap:7px}
+.rp-card h4{margin:0;font-size:14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.rp-fila{display:flex;justify-content:space-between;gap:10px;font-size:13px;line-height:1.4}
+.rp-fila span:first-child{color:var(--muted)}
+.rp-fila b{font-variant-numeric:tabular-nums}
+.rp-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.rp-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:30px;border:1px solid var(--border);background:var(--surface-2);font-size:12px;font-weight:600;color:var(--text);cursor:pointer;text-align:left}
+.rp-chip:hover{border-color:var(--accent-borde)}
+.rp-chip.rojo{color:var(--red);border-color:rgba(247,114,114,.4)}
+.rp-chip i{font-weight:500;color:var(--muted);font-style:normal}
+.rp-dos{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.rp-barra{display:grid;grid-template-columns:minmax(0,1fr) 44px;align-items:center;gap:10px;font-size:13px;margin-bottom:6px}
+.rp-barra .rp-b{height:8px;border-radius:4px;background:var(--surface-2);overflow:hidden}
+.rp-barra .rp-b i{display:block;height:100%;background:var(--accent)}
+.rp-barra b{text-align:right;font-variant-numeric:tabular-nums}
+.rp-traba{margin-bottom:10px}
+.rp-traba h5{margin:0 0 6px;font-size:13px;display:flex;justify-content:space-between}
+.rp-frase{display:block;width:100%;text-align:left;padding:7px 10px;margin-bottom:5px;border:1px solid var(--border);border-radius:10px;background:var(--surface);font:inherit;font-size:13px;color:var(--text);cursor:pointer;line-height:1.4}
+.rp-frase:hover{border-color:var(--accent-borde)}
+.rp-frase i{font-style:italic}
+.rp-frase span{color:var(--muted);font-size:12px;margin-left:6px}
+.rp-stats{display:flex;flex-wrap:wrap;gap:8px}
+.rp-stat{padding:8px 12px;border-radius:10px;background:var(--surface-2);font-size:13px}
+.rp-stat b{font-size:16px;margin-right:4px}
+.rp-ev{border:1px solid var(--border);border-radius:12px;padding:12px 14px;background:var(--surface);margin-bottom:10px}
+.rp-ev h4{margin:0 0 6px;font-size:14px;display:flex;align-items:center;gap:10px}
+.rp-estrellas{color:var(--amber);letter-spacing:1px;font-size:14px}
+.rp-ev p{margin:0 0 6px;font-size:13px;line-height:1.45}
+.rp-ev p b{font-weight:600}
+.rp-ej{display:block;width:100%;text-align:left;padding:8px 10px;margin-bottom:6px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);font:inherit;font-size:12.5px;color:var(--text);cursor:pointer;line-height:1.45}
+.rp-ej:hover{border-color:var(--accent-borde)}
+.rp-ej i{display:block;font-style:italic;margin-bottom:2px}
+.rp-ej span{color:var(--muted)}
+.rp-lista-txt{margin:0;padding-left:20px;font-size:13px;line-height:1.5;display:flex;flex-direction:column;gap:4px}
+.rp-vacio{padding:24px 16px;text-align:center;color:var(--muted);font-size:13.5px}
+.burbuja.resaltado{outline:3px solid var(--amber);outline-offset:2px;transition:outline-color .6s}
+.ay-vel{font-variant-numeric:tabular-nums;min-width:40px;justify-content:center}
+@media(max-width:900px){.rp-layout{grid-template-columns:1fr}.rp-lista{flex-direction:row;flex-wrap:wrap}.rp-sem{flex:1 1 150px}}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -1807,7 +1863,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
     <div class="nav-grupo" data-grupo="ventas"><button type="button" class="nav-label nav-toggle" aria-expanded="true" onclick="alternarGrupo(this)">Ventas<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button><div class="nav-cuerpo"><div class="side-top">
       <button class="side-link" id="leaf-leads" onclick="go('leads')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg>Leads</button>
       <button class="side-link" id="leaf-tareas" onclick="go('tareas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Tareas<span class="side-count rojo" id="cntTareas">0</span></button>
-      <div id="navVentasAdmin"><button class="side-link" id="leaf-proceso" onclick="go('proceso')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h6"/></svg>Proceso de ventas</button></div>
+      <div id="navVentasAdmin"><button class="side-link" id="leaf-reportes" onclick="go('reportes')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-6"/></svg>Reportes</button><button class="side-link" id="leaf-proceso" onclick="go('proceso')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h6"/></svg>Proceso de ventas</button></div>
     </div></div></div>
     <div class="nav-grupo" data-grupo="atencion"><button type="button" class="nav-label nav-toggle" aria-expanded="true" onclick="alternarGrupo(this)">Atención<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button><div class="nav-cuerpo"><div class="side-top">
       <button class="side-link" id="leaf-chats" onclick="go('chats')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>Chats por responder<span class="side-count" id="cntPend">0</span></button>
@@ -2406,6 +2462,8 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
             <div class="field"><label>Números que reciben avisos</label>
               <div class="tagbox" id="avChips" style="cursor:default"></div>
             </div>
+            <div class="field"><label for="avRepNumeros">Reporte semanal: enviar a (números con código de país, separados por coma)</label><input type="text" id="avRepNumeros" placeholder="+598 9X XXX XXX, +598 9X XXX XXX"></div>
+            <div class="field"><label for="avRepPlantilla">Plantilla de Meta del reporte semanal (para avisar fuera de las 24 horas)</label><input type="text" id="avRepPlantilla" placeholder="reporte_semanal" autocapitalize="off" spellcheck="false"></div>
             <div class="field"><label for="avNuevo">Agregar un número</label>
               <div style="display:flex;gap:8px;flex-wrap:wrap"><input type="tel" inputmode="tel" id="avNuevo" placeholder="+598 9X XXX XXX" style="flex:1 1 200px" onkeydown="if(event.key==='Enter')agregarNumeroAviso()"><button class="btn btn-ghost" type="button" onclick="agregarNumeroAviso()">Agregar</button></div>
             </div>
@@ -2493,6 +2551,11 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
       <div class="ld-conteo" id="ldConteo"></div>
       <div class="panel"><div class="ld-tabla-caja" style="overflow-x:auto"><table class="ld-tabla" style="min-width:880px"><thead><tr><th>Prioridad</th><th>Cliente</th><th>Tipo · producto</th><th>Etapa</th><th>Espera</th><th>Vendedor</th><th>Traba</th></tr></thead><tbody id="ldTabla"></tbody></table></div><div class="ld-tarjetas" id="ldTarjetas"></div></div>
       <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Cada conversación se clasifica 10 minutos después del último mensaje: tipo, producto, intención, resumen, próximo paso y traba con la frase textual del cliente. La etapa y la prioridad salen de reglas fijas. Al abrir un chat, la franja «Lead» muestra la clasificación y permite corregirla.</span></div>
+    </div>
+    <!-- ===== VIEW: REPORTES (1.5.7) ===== -->
+    <div class="view" id="view-reportes">
+      <div class="rp-layout"><div><div class="rp-acciones" id="rpAcciones"></div><div class="rp-lista" id="rpLista"></div></div><div class="panel" style="padding:18px"><div id="rpContenido"></div></div></div>
+      <div class="note" style="margin-top:14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>El reporte se arma solo cada lunes a las 07:00 con la semana anterior, y a las 07:05 avisa por WhatsApp a los números configurados en «Avisos a celulares del equipo › Reporte semanal». Cada frase, cada chat lento y cada ejemplo de la evaluación se toca y abre la conversación parada en ese mensaje.</span></div>
     </div>
     <!-- ===== VIEW: TAREAS (1.5.2) ===== -->
     <div class="view" id="view-tareas">
@@ -3250,6 +3313,7 @@ function _doGo(view){
     usuarios:['Usuarios','Personas que pueden entrar al panel. Cada acción queda registrada con su usuario.','<b>Sistema</b> › Usuarios'],
     consumo:['Consumo de IA','Costo estimado de las consultas a la IA de Verde. Solo lo ven los administradores.','<b>Sistema</b> › Consumo de IA'],
     leads:['Leads','Conversaciones de los últimos 30 días clasificadas por la IA y ordenadas por prioridad: primero lo que más importa atender.','<b>Ventas</b> › Leads'],
+    reportes:['Reportes semanales','Atención del equipo, lo más pedido, por qué no compran, resultados y evaluación de la IA, semana por semana. Solo lo ven los administradores.','<b>Ventas</b> › Reportes'],
     tareas:['Tareas','Qué tiene que hacer cada vendedor y cuándo: vencidas, para hoy y próximas, según la etapa de cada lead.','<b>Ventas</b> › Tareas'],
     proceso:['Proceso de ventas','Próxima acción, plazo y aviso de cada etapa. Solo lo ven los administradores.','<b>Ventas</b> › Proceso de ventas'],
     accesos:['Registro de accesos','Ingresos, intentos fallidos, cierres de sesión y descargas de respaldos, con la dirección y el dispositivo. Se conservan 90 días. Solo lo ven los administradores.','<b>Sistema</b> › Registro de accesos'],
@@ -3274,6 +3338,7 @@ function _doGo(view){
   if(view==='consumo')cargarConsumo();
   if(view==='leads')cargarLeads();
   if(view==='tareas')cargarTareas();
+  if(view==='reportes')cargarReportes();
   if(view==='proceso')cargarProceso();
   if(view==='accesos')cargarAccesos();
   if(view==='respaldos')cargarRespaldos();
@@ -5041,6 +5106,8 @@ function pintarAvisos(){
     ?AVISOS.numeros.map((n,i)=>'<span class="chip-tag">+'+escH(n)+'<button type="button" aria-label="Quitar este número" onclick="quitarNumeroAviso('+i+')">'+SVG131.x+'</button></span>').join('')
     :'<span class="faint">Todavía no hay números cargados.</span>';
   document.getElementById('avPlantilla').value=AVISOS.plantilla||'';
+  const rn=document.getElementById('avRepNumeros');if(rn)rn.value=(AVISOS.reporteNumeros||[]).map(n=>'+'+n).join(', ');
+  const rp=document.getElementById('avRepPlantilla');if(rp)rp.value=AVISOS.reportePlantilla||'';
   const idi=document.getElementById('avIdioma');
   if(idi)idi.value=[...idi.options].some(o=>o.value===AVISOS.idioma)?AVISOS.idioma:'es';
   document.getElementById('avSinPlantilla').classList.toggle('oculto',!!AVISOS.plantilla);
@@ -5058,7 +5125,9 @@ function quitarNumeroAviso(i){AVISOS.numeros.splice(i,1);pintarAvisos();}
 async function guardarAvisosPanel(){
   const plantilla=document.getElementById('avPlantilla').value.trim();
   const idioma=(document.getElementById('avIdioma')||{}).value||'es';
-  const r=await api('/api/avisos',{method:'PUT',body:{numeros:AVISOS.numeros,plantilla,idioma}});
+  const reporteNumeros=((document.getElementById('avRepNumeros')||{}).value||'').split(',').map(x=>x.trim()).filter(Boolean);
+  const reportePlantilla=((document.getElementById('avRepPlantilla')||{}).value||'').trim();
+  const r=await api('/api/avisos',{method:'PUT',body:{numeros:AVISOS.numeros,plantilla,idioma,reporteNumeros,reportePlantilla}});
   if(!r.ok){toast('No se guardó',r.json.error||'Revisar los datos.','error');return;}
   AVISOS=Object.assign({numeros:[],plantilla:'',idioma:'es',estados:[]},r.json.avisos);pintarAvisos();
   toast('Avisos guardados',AVISOS.numeros.length===1?'1 número recibe avisos.':AVISOS.numeros.length+' números reciben avisos.','success');
@@ -5707,10 +5776,10 @@ function renderMensajes(ms){
     const hora='<span class="hora">'+escH(horaSola(m.en))+'</span>';
     if(m.tipo==='sistema')return sep+'<div class="linea-sis">'+escH(horaSola(m.en))+' · '+escH(m.texto)+'</div>';
     const adj=parsearAdjunto(m.texto);
-    if(m.tipo==='cliente')return sep+'<div class="burbuja cli'+(m.archivo?' con-archivo':'')+'">'+(m.archivo?htmlArchivo(m.archivo):adj?htmlAdjuntoBurbuja(adj,true):'<span class="txt">'+formatoWa(m.texto)+'</span>')+hora+'</div>';
-    if(m.tipo==='verde')return sep+'<div class="burbuja ver'+(m.archivo?' con-archivo':'')+'"><span class="quien">Verde'+(m.archivo&&m.archivo.biblioteca?' · desde la biblioteca':'')+'</span>'+(m.archivo?htmlArchivo(m.archivo):'')+(m.texto?'<span class="txt">'+formatoWa(m.texto)+'</span>':'')+hora+'</div>';
+    if(m.tipo==='cliente')return sep+'<div data-en="'+(m.en||'')+'" class="burbuja cli'+(m.archivo?' con-archivo':'')+'">'+(m.archivo?htmlArchivo(m.archivo):adj?htmlAdjuntoBurbuja(adj,true):'<span class="txt">'+formatoWa(m.texto)+'</span>')+hora+'</div>';
+    if(m.tipo==='verde')return sep+'<div data-en="'+(m.en||'')+'" class="burbuja ver'+(m.archivo?' con-archivo':'')+'"><span class="quien">Verde'+(m.archivo&&m.archivo.biblioteca?' · desde la biblioteca':'')+'</span>'+(m.archivo?htmlArchivo(m.archivo):'')+(m.texto?'<span class="txt">'+formatoWa(m.texto)+'</span>':'')+hora+'</div>';
     const quien=(m.autor?m.autor+' (equipo)':'Equipo')+(m.origen==='panel'?' · desde el panel':(m.firma?'':' · sin firma'))+(m.archivo&&m.archivo.biblioteca?' · archivo de la biblioteca':'');
-    return sep+'<div class="burbuja equ'+(m.archivo?' con-archivo':'')+'"><span class="quien">'+escH(quien)+'</span>'+(m.archivo?htmlArchivo(m.archivo)+(m.texto?'<span class="txt">'+formatoWa(m.texto)+'</span>':''):(adj?htmlAdjuntoBurbuja(adj,false):'<span class="txt">'+formatoWa(m.texto)+'</span>'))+hora+'</div>';
+    return sep+'<div data-en="'+(m.en||'')+'" class="burbuja equ'+(m.archivo?' con-archivo':'')+'"><span class="quien">'+escH(quien)+'</span>'+(m.archivo?htmlArchivo(m.archivo)+(m.texto?'<span class="txt">'+formatoWa(m.texto)+'</span>':''):(adj?htmlAdjuntoBurbuja(adj,false):'<span class="txt">'+formatoWa(m.texto)+'</span>'))+hora+'</div>';
   }).join('');
 }
 function pintarSwitch(c){
@@ -5904,8 +5973,8 @@ function pintarConsumo(c){
   const mesDato=c.desde.slice(0,7);
   document.getElementById('consCostoSub').textContent=c.tipo==='mes'?(etiquetaMes(mesDato,false)+(mesDato===actual?', hasta hoy':'')):textoPeriodo(c.desde,c.hasta);
   document.getElementById('consConsultas').textContent=_consEnt.format(c.total.consultas);
-  const w=((c.porOrigen||{}).whatsapp||{}).consultas||0,pr=((c.porOrigen||{}).pruebas||{}).consultas||0,ay=((c.porOrigen||{}).ayuda||{}).consultas||0,co=((c.porOrigen||{}).correccion||{}).consultas||0,cl=((c.porOrigen||{}).clasificacion||{}).consultas||0;
-  document.getElementById('consOrigen').textContent='WhatsApp: '+_consEnt.format(w)+' · Pruebas en el panel: '+_consEnt.format(pr)+' · Ayuda: '+_consEnt.format(ay)+' · Corrección: '+_consEnt.format(co)+' · Clasificación: '+_consEnt.format(cl);
+  const w=((c.porOrigen||{}).whatsapp||{}).consultas||0,pr=((c.porOrigen||{}).pruebas||{}).consultas||0,ay=((c.porOrigen||{}).ayuda||{}).consultas||0,co=((c.porOrigen||{}).correccion||{}).consultas||0,cl=((c.porOrigen||{}).clasificacion||{}).consultas||0,rpo=((c.porOrigen||{}).reporte||{}).consultas||0;
+  document.getElementById('consOrigen').textContent='WhatsApp: '+_consEnt.format(w)+' · Pruebas en el panel: '+_consEnt.format(pr)+' · Ayuda: '+_consEnt.format(ay)+' · Corrección: '+_consEnt.format(co)+' · Clasificación: '+_consEnt.format(cl)+' · Reporte: '+_consEnt.format(rpo);
   document.getElementById('consPromedio').textContent=c.total.consultas?'US$ '+_cons4.format(c.promedio):'—';
   const m=c.modeloActual||{};
   const mv=document.getElementById('consModelo');
@@ -6094,7 +6163,7 @@ function pintarChatAyuda(){
     if(x.pendiente)return h+'<div class="ay-pensando" role="status">Buscando la respuesta…</div>';
     if(x.error)return h+'<div class="ay-resp error"><span class="ay-txt">'+escH(x.error)+'</span></div>';
     const f=(x.fuentes||[]).length?'<div class="ay-fuentes"><span>Fuente:</span>'+x.fuentes.map(s=>'<button type="button" class="ay-fuente" onclick="abrirArticulo(\''+escH(s.id)+'\')">'+escH((s.grupo==='meta'?'Guías de Meta':'Manual')+' › '+s.titulo)+'</button>').join('')+'</div>':'';
-    return h+'<div class="ay-resp"><span class="ay-quien">Asistente IA'+botonEscucharAyuda(hi)+'</span><span class="ay-txt">'+formatoAyuda(x.respuesta)+'</span>'+htmlTextosAyuda(x,hi)+'</div>';
+    return h+'<div class="ay-resp"><span class="ay-quien">Asistente IA'+botonEscucharAyuda(hi)+botonVelocidadVoz()+'</span><span class="ay-txt">'+formatoAyuda(x.respuesta)+'</span>'+htmlTextosAyuda(x,hi)+'</div>';
   }).join('');
   box.scrollTop=box.scrollHeight;
 }
@@ -7480,7 +7549,7 @@ function escucharAyuda(btn){
   detenerVozAyuda();
   const x=AYUDA.hilo[Number(btn.dataset.hi)];if(!x||!x.respuesta)return;
   const u=new SpeechSynthesisUtterance(textoParaVoz(x.respuesta));
-  const v=vozEspanol();if(v)u.voice=v;u.lang=(v&&v.lang)||'es-UY';u.rate=1;
+  const v=vozEspanol();if(v)u.voice=v;u.lang=(v&&v.lang)||'es-UY';u.rate=velocidadVoz();   // 1.5.7
   u.onend=u.onerror=()=>{if(VOZ.hablando===btn)detenerVozAyuda();};
   VOZ.hablando=btn;btn.classList.add('activo');btn.querySelector('span').textContent='Detener';
   window.speechSynthesis.speak(u);
@@ -7508,6 +7577,105 @@ function abrirGrupoDe(view){
 }
 document.addEventListener('DOMContentLoaded',aplicarGruposMenu);
 if(document.readyState!=='loading')aplicarGruposMenu();
+
+
+/* ===================== 1.5.7: reportes semanales ===================== */
+var RP={lista:[],actual:null,sel:null,cargando:false};
+const VOZ_VELOCIDADES=[0.8,1,1.2,1.5];
+function velocidadVoz(){const v=parseFloat(localStorage.getItem('verde_voz_vel')||'1');return VOZ_VELOCIDADES.includes(v)?v:1;}
+function textoVelocidad(v){return String(v).replace('.',',')+'×';}
+function cambiarVelocidadVoz(btn){
+  const i=VOZ_VELOCIDADES.indexOf(velocidadVoz()),v=VOZ_VELOCIDADES[(i+1)%VOZ_VELOCIDADES.length];
+  try{localStorage.setItem('verde_voz_vel',String(v));}catch(e){}
+  document.querySelectorAll('.ay-vel').forEach(b=>{b.textContent=textoVelocidad(v);});
+  toast('Velocidad de la voz: '+textoVelocidad(v),'','info');
+}
+function botonVelocidadVoz(){return hayVoz()?'<button type="button" class="ay-escuchar ay-vel" title="Velocidad de la voz" aria-label="Velocidad de la voz" onclick="cambiarVelocidadVoz(this)">'+textoVelocidad(velocidadVoz())+'</button>':'';}
+/* Abrir una conversación parada en un mensaje */
+async function abrirConversacionEn(clave,en){
+  if(!clave)return;
+  await abrirConversacion(clave);
+  if(!en)return;
+  for(let i=0;i<25;i++){
+    const el=document.querySelector('#convMensajes [data-en="'+en+'"]');
+    if(el){if(typeof el.scrollIntoView==='function')el.scrollIntoView({block:'center'});el.classList.add('resaltado');setTimeout(()=>el.classList.remove('resaltado'),3500);return;}
+    await new Promise(r=>setTimeout(r,200));
+  }
+  toast('Mensaje no visible','La conversación se abrió, pero ese mensaje ya no está entre los guardados.','info');
+}
+/* Reportes */
+async function cargarReportes(){
+  const r=await api('/api/reportes');
+  if(!r.ok){toast('No se pudieron cargar los reportes',r.json.error||'','error');return;}
+  RP.lista=r.json.lista||[];RP.semActual=r.json.semanaActual;RP.semAnterior=r.json.semanaAnterior;
+  pintarListaReportes();
+  if(!RP.sel&&RP.lista.length)abrirReporte(RP.lista[0].id);
+  else if(!RP.lista.length){RP.actual=null;pintarReporte();}
+}
+function pintarListaReportes(){
+  const box=document.getElementById('rpLista');if(!box)return;
+  const hayAnterior=RP.lista.some(x=>x.id===(RP.semAnterior||{}).id);
+  document.getElementById('rpAcciones').innerHTML='<button type="button" class="btn btn-primary" id="rpGenerarActual" onclick="generarReporte(\'actual\')">Generar ahora (semana en curso)</button>'+(hayAnterior?'':'<button type="button" class="btn btn-ghost" id="rpGenerarAnterior" onclick="generarReporte(\'anterior\')">Generar la semana anterior</button>');
+  box.innerHTML=RP.lista.length?RP.lista.map(x=>'<button type="button" class="rp-sem'+(x.id===RP.sel?' sel':'')+'" data-id="'+escH(x.id)+'" onclick="abrirReporte(this.dataset.id)"><b>'+escH(x.titulo)+'</b><span>'+(x.completa?'Semana completa':'En curso')+' · '+escH(horaCorta(x.generadoEn))+(x.conEvaluacion?'':' · sin evaluación')+'</span></button>').join(''):'<div class="faint" style="padding:8px 4px">Todavía no hay reportes. El primero se arma el lunes a las 07:00, o ahora con los botones de arriba.</div>';
+}
+async function abrirReporte(id){
+  const r=await api('/api/reportes/'+encodeURIComponent(id));
+  if(!r.ok){toast('No se pudo abrir el reporte',r.json.error||'','error');return;}
+  RP.sel=id;RP.actual=r.json.reporte;pintarListaReportes();pintarReporte();
+}
+async function generarReporte(cual){
+  if(RP.cargando)return;
+  RP.cargando=true;
+  const btn=document.getElementById(cual==='actual'?'rpGenerarActual':'rpGenerarAnterior');if(btn){btn.disabled=true;btn.textContent='Armando el reporte…';}
+  toast('Armando el reporte','La evaluación de la IA puede tardar un minuto.','info');
+  const r=await api('/api/reportes/generar',{method:'POST',body:{semana:cual}});
+  RP.cargando=false;
+  if(!r.ok){toast('No se pudo armar el reporte',r.json.error||'','error');pintarListaReportes();return;}
+  RP.sel=r.json.reporte.id;RP.actual=r.json.reporte;
+  await cargarReportes();pintarReporte();
+  toast('Reporte listo',r.json.reporte.evaluacionError?'La evaluación de la IA falló: '+r.json.reporte.evaluacionError:'Con la evaluación de la IA.',r.json.reporte.evaluacionError?'error':'success');
+}
+async function reevaluarReporte(){
+  if(!RP.actual||RP.cargando)return;
+  RP.cargando=true;toast('Repitiendo la evaluación','Puede tardar un minuto.','info');
+  const r=await api('/api/reportes/'+encodeURIComponent(RP.actual.id)+'/evaluar',{method:'POST'});
+  RP.cargando=false;
+  if(!r.ok){toast('No se pudo evaluar',r.json.error||'','error');return;}
+  RP.actual=r.json.reporte;pintarReporte();cargarReportes();
+}
+function chipChat(x,clase){return '<button type="button" class="rp-chip'+(clase?' '+clase:'')+'" data-clave="'+escH(x.clave)+'" data-en="'+(x.en||'')+'" onclick="abrirConversacionEn(this.dataset.clave,Number(this.dataset.en))">'+escH(x.cliente||x.clave)+(x.demoraTexto?'<i>· '+escH(x.demoraTexto)+'</i>':x.espera?'<i>· espera '+escH(x.espera)+'</i>':'')+'</button>';}
+function estrellas(n){return n?'<span class="rp-estrellas" aria-label="'+n+' de 5">'+'★'.repeat(n)+'☆'.repeat(5-n)+'</span>':'';}
+function pintarReporte(){
+  const box=document.getElementById('rpContenido');if(!box)return;
+  const r=RP.actual;
+  if(!r){box.innerHTML='<div class="rp-vacio">Elegir un reporte de la lista, o generar uno.</div>';return;}
+  const d=r.datos||{},a=d.atencion||[],res=d.resultados||{},tot=d.totales||{};
+  let h='<div class="rp-cab"><div><h2>'+escH(r.titulo)+'</h2><p>'+(r.completa?'Semana completa':'Semana en curso')+' · armado '+escH(horaCorta(r.generadoEn))+' por '+escH(r.por)+' · '+tot.conversaciones+' conversaciones · '+tot.mensajesCliente+' mensajes de clientes</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-ghost" onclick="generarReporte(\''+(r.completa?'anterior':'actual')+'\')">Volver a armar</button></div></div>';
+  h+='<div class="rp-sec"><h3><span class="rp-num">1</span>Atención del equipo</h3>';
+  h+=a.length?'<div class="rp-vend">'+a.map(v=>'<div class="rp-card"><h4>'+escH(v.nombre)+'<span class="faint" style="font-weight:500">'+v.chats+(v.chats===1?' chat':' chats')+'</span></h4>'
+    +'<div class="rp-fila"><span>Primera respuesta (mediana / máxima)</span><b>'+escH(v.mediana)+' / '+escH(v.maxima)+'</b></div>'
+    +'<div class="rp-fila"><span>Respuestas de más de 2 horas</span><b'+(v.lentas.length?' class="acc-rojo"':'')+'>'+v.lentas.length+'</b></div>'+(v.lentas.length?'<div class="rp-chips">'+v.lentas.map(x=>chipChat(x,'rojo')).join('')+'</div>':'')
+    +'<div class="rp-fila"><span>Clientes que quedaron colgados</span><b'+(v.colgados.length?' class="acc-rojo"':'')+'>'+v.colgados.length+'</b></div>'+(v.colgados.length?'<div class="rp-chips">'+v.colgados.map(x=>chipChat(x,'rojo')).join('')+'</div>':'')
+    +'<div class="rp-fila"><span>Tareas hechas / vencidas</span><b>'+v.tareasHechas+' / '+v.tareasVencidas+'</b></div></div>').join('')+'</div>':'<div class="rp-vacio">Nadie del equipo respondió chats esta semana.</div>';
+  h+='</div><div class="rp-dos"><div class="rp-sec"><h3><span class="rp-num">2</span>Lo más pedido</h3>';
+  const max=Math.max(1,...(d.pedidos||[]).map(x=>x.veces));
+  h+=(d.pedidos||[]).length?(d.pedidos||[]).map(x=>'<div class="rp-barra"><div><div>'+escH(x.nombre)+(x.tipo?' <span class="faint">· '+escH(x.tipo)+'</span>':'')+'</div><div class="rp-b"><i style="width:'+Math.round(x.veces/max*100)+'%"></i></div></div><b>'+x.veces+'</b></div>').join(''):'<div class="rp-vacio">Sin productos clasificados esta semana.</div>';
+  h+='</div><div class="rp-sec"><h3><span class="rp-num">3</span>Por qué no compran</h3>';
+  h+=(d.trabas||[]).length?(d.trabas||[]).map(tr=>'<div class="rp-traba"><h5>'+escH(tr.nombre)+'<span>'+tr.veces+'</span></h5>'+tr.frases.map(f=>'<button type="button" class="rp-frase" data-clave="'+escH(f.clave)+'" data-en="'+(f.en||'')+'" onclick="abrirConversacionEn(this.dataset.clave,Number(this.dataset.en))"><i>«'+escH(f.frase)+'»</i><span>'+escH(f.cliente)+'</span></button>').join('')+'</div>').join(''):'<div class="rp-vacio">Sin trabas registradas esta semana.</div>';
+  h+='</div></div><div class="rp-sec"><h3><span class="rp-num">4</span>Resultados</h3><div class="rp-stats"><div class="rp-stat"><b>'+(res.nuevos||0)+'</b>leads nuevos</div><div class="rp-stat"><b>'+(res.ganados||0)+'</b>ganados</div><div class="rp-stat"><b>'+(res.perdidos||0)+'</b>perdidos'+((res.motivosPerdida||[]).length?' <span class="faint">('+res.motivosPerdida.map(m=>escH(m.motivo.toLowerCase())+' '+m.veces).join(', ')+')</span>':'')+'</div><div class="rp-stat"><b>'+(res.abiertos||0)+'</b>sin cerrar</div></div></div>';
+  h+='<div class="rp-sec"><h3><span class="rp-num">5</span>Evaluación de la atención (IA)</h3>';
+  const ev=r.evaluacion;
+  if(!ev){h+='<div class="rp-vacio">'+(r.evaluacionError?'La evaluación de la IA falló: '+escH(r.evaluacionError):'Sin evaluación.')+'<br><button type="button" class="btn btn-ghost" style="margin-top:10px" onclick="reevaluarReporte()">Repetir la evaluación</button></div>';}
+  else if(ev.sinConversaciones){h+='<div class="rp-vacio">No hubo conversaciones atendidas por el equipo esta semana, así que no hay nada que evaluar.</div>';}
+  else{
+    h+=(ev.vendedores||[]).map(v=>'<div class="rp-ev"><h4>'+escH(v.nombre)+estrellas(v.puntaje)+'</h4>'+(v.fortalezas?'<p><b>Bien:</b> '+escH(v.fortalezas)+'</p>':'')+(v.mejorar?'<p><b>Mejorar:</b> '+escH(v.mejorar)+'</p>':'')+(v.ejemplos||[]).map(e=>'<button type="button" class="rp-ej" data-clave="'+escH(e.clave)+'" data-en="'+(e.en||'')+'" onclick="abrirConversacionEn(this.dataset.clave,Number(this.dataset.en))"><i>«'+escH(e.cita)+'»</i>'+escH(e.comentario)+'<span> · '+escH(e.cliente)+'</span></button>').join('')+'</div>').join('');
+    if((ev.temas||[]).length)h+='<p style="margin:10px 0 4px;font-size:13px"><b>Temas de la semana</b></p><ul class="rp-lista-txt">'+ev.temas.map(x=>'<li>'+escH(x)+'</li>').join('')+'</ul>';
+    if((ev.recomendaciones||[]).length)h+='<p style="margin:10px 0 4px;font-size:13px"><b>Para la reunión del equipo</b></p><ol class="rp-lista-txt">'+ev.recomendaciones.map(x=>'<li>'+escH(x)+'</li>').join('')+'</ol>';
+    h+='<p class="faint" style="margin-top:10px">Evaluadas '+r.chatsEvaluados+' conversaciones. <button type="button" class="dp-link" onclick="reevaluarReporte()">Repetir la evaluación</button></p>';
+  }
+  h+='</div>';
+  box.innerHTML=h;
+}
 
 </script>
 <script>

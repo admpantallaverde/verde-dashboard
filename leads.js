@@ -417,6 +417,7 @@ function tareasVencidasSinAviso(chats, ctx) {
   return lista;
 }
 function marcarAvisoTarea(c, vence) { const d = cargar(), l = leadDe(d, c); l.avisoTarea = vence; guardar(d); }
+function crudos() { return cargar().leads; }   // 1.5.7: para los reportes semanales
 // Prioridad de una conversación (para ordenar «Chats por responder»). Sin clasificar devuelve 1.
 function prioridadDe(c, ctx) {
   if (!c) return 1;
@@ -442,4 +443,4 @@ function corregir(c, cambios) {
 }
 
 module.exports = { TIPOS, INTENCIONES, TRABAS, ETAPAS, MOTIVOS_CIERRE, RESULTADOS, ETAPAS_CON_TAREA, ESPERA_MS, instrucciones, limpiarJson, normalizar, recortar, fechaCorta, calcular, esperaTexto, clasificar, pendientesDeClasificar, revisar, programar, listar, detalle, prioridadDe, corregir,
-  leerProceso, guardarProceso, tareaDe, asignar, cerrar, reabrir, responderSugerencia, marcarHecha, textoHecha, textoCierre, tareas, tareasVencidasSinAviso, marcarAvisoTarea, _usarReloj };
+  leerProceso, guardarProceso, tareaDe, asignar, cerrar, reabrir, responderSugerencia, marcarHecha, textoHecha, textoCierre, tareas, tareasVencidasSinAviso, marcarAvisoTarea, crudos, _usarReloj };

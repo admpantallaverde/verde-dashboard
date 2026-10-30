@@ -40,8 +40,9 @@ const accesos = require('./accesos.js');       // 1.4.15: registro de accesos
 const respaldos = require('./respaldos.js');   // 1.4.15: respaldo diario cifrado
 const leads = require('./leads.js');           // 1.5.0: leads clasificados por prioridad
 const hilos = require('./ayuda-hilos.js');     // 1.5.3: conversaciones guardadas del Centro de ayuda
+const reportes = require('./reportes.js');     // 1.5.7: reportes semanales
 
-const VERSION = '1.5.6';
+const VERSION = '1.5.7';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -506,9 +507,10 @@ const AVISOS_FILE = path.join(DATA_DIR, 'avisos.json');
 function leerAvisos() {
   try {
     const d = JSON.parse(fs.readFileSync(AVISOS_FILE, 'utf8'));
-    return { numeros: Array.isArray(d.numeros) ? d.numeros.map(soloDigitos).filter(Boolean) : [], plantilla: d.plantilla || '', idioma: d.idioma || 'es' };
+    return { numeros: Array.isArray(d.numeros) ? d.numeros.map(soloDigitos).filter(Boolean) : [], plantilla: d.plantilla || '', idioma: d.idioma || 'es',
+      reporteNumeros: Array.isArray(d.reporteNumeros) ? d.reporteNumeros.map(soloDigitos).filter(Boolean) : [], reportePlantilla: d.reportePlantilla || '' };   // 1.5.7
   } catch (e) {
-    return { numeros: [], plantilla: '', idioma: 'es' };
+    return { numeros: [], plantilla: '', idioma: 'es', reporteNumeros: [], reportePlantilla: '' };
   }
 }
 function guardarAvisos(datos) {
@@ -524,7 +526,18 @@ function guardarAvisos(datos) {
   if (plantilla && !/^[a-z0-9_]{1,512}$/.test(plantilla)) { const e = new Error('El nombre de la plantilla solo admite minúsculas, números y guion bajo.'); e.publico = true; throw e; }
   const idioma = String(datos.idioma || 'es').trim();
   if (!/^[a-z]{2}(_[A-Z]{2})?$/.test(idioma)) { const e = new Error('El idioma de la plantilla no es válido (por ejemplo: es).'); e.publico = true; throw e; }
-  const cfg = { numeros, plantilla, idioma };
+  // 1.5.7: números que reciben el reporte semanal y su plantilla
+  const reporteNumeros = [];
+  for (const n of (Array.isArray(datos.reporteNumeros) ? datos.reporteNumeros : [])) {
+    const d = soloDigitos(n);
+    if (!d) continue;
+    if (d.length < 8 || d.length > 15) { const e = new Error('El número «' + n + '» del reporte no es válido: debe incluir el código de país.'); e.publico = true; throw e; }
+    if (!reporteNumeros.includes(d)) reporteNumeros.push(d);
+  }
+  if (reporteNumeros.length > 10) { const e = new Error('Se pueden cargar hasta 10 números para el reporte.'); e.publico = true; throw e; }
+  const reportePlantilla = String(datos.reportePlantilla || '').trim();
+  if (reportePlantilla && !/^[a-z0-9_]{1,512}$/.test(reportePlantilla)) { const e = new Error('El nombre de la plantilla del reporte solo admite minúsculas, números y guion bajo.'); e.publico = true; throw e; }
+  const cfg = { numeros, plantilla, idioma, reporteNumeros, reportePlantilla };
   const tmp = AVISOS_FILE + '.tmp';
   fs.writeFileSync(tmp, JSON.stringify(cfg, null, 2), 'utf8');
   fs.renameSync(tmp, AVISOS_FILE);
@@ -1009,6 +1022,45 @@ app.post('/api/ayuda/preguntar', requiere(['admin', 'asesor']), async (req, res)
     res.json(Object.assign(r, { conversacionId: conv.id, titulo: conv.titulo }));
   } catch (e) { responderError(res, e); }
 });
+/* ---------- 1.5.7: reportes semanales ---------- */
+function depsReportes() {
+  const derivadas = [...atencion.clavesPendientes()].concat(((atencion.respondidos({ periodo: '90' }) || {}).lista || []).map(x => x.clave));
+  return { chats: conversaciones.recientes(60), leads: leads.crudos(), calcular: leads.calcular, tareaDe: leads.tareaDe, proceso: leads.leerProceso(), ctx: contexto(), derivadas };
+}
+app.get('/api/reportes', requiere(['admin']), (req, res) => res.json({ lista: reportes.listar(), semanaActual: reportes.semana('actual'), semanaAnterior: reportes.semana('anterior') }));
+app.post('/api/reportes/generar', requiere(['admin']), async (req, res) => {
+  try {
+    const cual = String((req.body || {}).semana || 'anterior') === 'actual' ? 'actual' : 'anterior';
+    const r = await reportes.generar(cual, depsReportes(), bot, quienActua(req));
+    console.log('Panel: ' + quienEs(req) + ' generó el reporte ' + r.id);
+    res.json({ reporte: r });
+  } catch (e) { responderError(res, e); }
+});
+app.get('/api/reportes/:id', requiere(['admin']), (req, res) => {
+  const r = reportes.obtener(String(req.params.id));
+  if (!r) return res.status(404).json({ error: 'Ese reporte no existe.' });
+  res.json({ reporte: r });
+});
+app.post('/api/reportes/:id/evaluar', requiere(['admin']), async (req, res) => {
+  try {
+    const r = await reportes.reevaluar(String(req.params.id), depsReportes(), bot);
+    if (!r) return res.status(404).json({ error: 'Ese reporte no existe.' });
+    res.json({ reporte: r });
+  } catch (e) { responderError(res, e); }
+});
+// Aviso de los lunes a los números configurados para el reporte.
+async function avisarReporte(r) {
+  const cfg = leerAvisos();
+  if (!cfg.reporteNumeros.length || !d360Configurado()) return;
+  const resumen = reportes.resumenCorto(r);
+  const texto = 'Pantalla Verde: el reporte semanal (' + r.titulo.toLowerCase() + ') está listo: ' + resumen + '. Verlo en el panel: Ventas › Reportes.';
+  const ventanas = leerVentanas();
+  for (const num of cfg.reporteNumeros) {
+    let ok = false;
+    if (ventanaAbierta(ventanas, num)) ok = await enviarWhatsApp({ to: num }, texto);
+    if (!ok && cfg.reportePlantilla) await enviarPlantilla({ to: num }, cfg.reportePlantilla, cfg.idioma, [limpiarParametro(r.titulo), limpiarParametro(resumen)]);
+  }
+}
 /* ---------- 1.5.3: conversaciones guardadas del Centro de ayuda ---------- */
 function conversacionPublica(c, rol) {
   return { id: c.id, titulo: c.titulo, creadoEn: c.creadoEn, actualizadoEn: c.actualizadoEn, mensajes: (c.mensajes || []).map(m => Object.assign({ en: m.en, rol: m.rol, texto: m.texto }, m.imagen ? { imagen: { archivo: m.imagen.archivo, nombre: m.imagen.nombre } } : {}, m.textos ? { textos: m.textos } : {}, m.fuentes ? { fuentes: m.fuentes.map(id => ayuda.articulo(id, rol)).filter(Boolean).map(a => ({ id: a.id, titulo: a.titulo, grupo: a.grupo })) } : {})) };
@@ -1487,6 +1539,7 @@ app.post('/webhook/360/:clave', (req, res) => {
 
 respaldos.programar();   // 1.4.15: respaldo automático todas las noches a las 03:30
 leads.programar(() => conversaciones.recientes(30), bot, contexto, avisarTarea);   // 1.5.0: clasifica las conversaciones quietas hace 10 minutos · 1.5.2: avisa las tareas vencidas
+reportes.programar(depsReportes, bot, avisarReporte);   // 1.5.7: los lunes a las 07:00 arma el reporte semanal y a las 07:05 avisa
 
 app.listen(PORT, HOST, () => {
   console.log('====================================================');

@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.5.6';
+const VERSION_ESPERADA = '1.5.7';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -44,6 +44,12 @@ global.fetch = async (url, opts = {}) => {
     const ultimo = (JSON.parse(opts.body).messages || []).slice(-1)[0] || {};
     const ult = String(ultimo.content || '');
     const respuestaIA = t => new Response(JSON.stringify({ content: [{ type: 'text', text: t }], stop_reason: 'end_turn', usage: { input_tokens: 1000, output_tokens: 100 } }), { status: 200 });
+    if (JSON.stringify(JSON.parse(opts.body).system || '').includes('EVALUADOR DE ATENCIÓN AL CLIENTE')) {   // 1.5.7: reporte semanal
+      const u = String(((JSON.parse(opts.body).messages || [])[0] || {}).content || '');
+      const claves = [...u.matchAll(/=== Conversación (wa:\d+) /g)].map(m => m[1]);
+      const j = { vendedores: [{ nombre: 'Carla', puntaje: 4, fortalezas: 'Responde rápido y con buen tono.', mejorar: 'Preguntar la falla antes de dar precio.', ejemplos: [{ clave: claves[0] || 'wa:0', cita: 'Sale 1500', comentario: 'Dio el precio sin preguntar qué le pasaba al equipo.' }, { clave: 'wa:inventada', cita: 'nada', comentario: 'x' }] }], temas: ['Muchas consultas por cargadores'], recomendaciones: ['Preguntar siempre la falla', 'Confirmar la fecha de visita', 'Cerrar los leads sin respuesta'] };
+      return respuestaIA('```json\n' + JSON.stringify(j) + '\n```');
+    }
     if (JSON.stringify(JSON.parse(opts.body).system || '').includes('CLASIFICADOR DE CONVERSACIONES')) {   // 1.5.0: leads
       const u = String(((JSON.parse(opts.body).messages || [])[0] || {}).content || '');
       const j = /garantía/i.test(u) ? { tipo: 'garantia', producto: 'Pantalla iPhone 11', intencion: 'media', presupuesto: false, traba: { categoria: 'ninguna', frase: '' }, resumen: 'Reclama por una pantalla cambiada.', proximoPaso: 'Revisar la orden de trabajo.', cierre: 'ninguno', cierreMotivo: '' }
@@ -936,7 +942,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
 
   mostrar('55) Centro de ayuda: manual y guías según el rol');
   const ay55 = await json(await api('/api/ayuda', 'GET'));
-  verificar(ay55.rol === 'admin' && ay55.articulos.filter(a => a.grupo === 'manual').length === 20 && ay55.articulos.filter(a => a.grupo === 'meta').length === 6 && ay55.revisionMeta === '2026-10-24', 'el administrador ve los 16 temas del manual y las 6 guías de Meta');
+  verificar(ay55.rol === 'admin' && ay55.articulos.filter(a => a.grupo === 'manual').length === 21 && ay55.articulos.filter(a => a.grupo === 'meta').length === 6 && ay55.revisionMeta === '2026-10-24', 'el administrador ve los 16 temas del manual y las 6 guías de Meta');
   verificar(ay55.articulos.every(a => a.titulo && a.resumen && a.bloques && a.bloques.length), 'cada tema tiene título, resumen y contenido');
 
   mostrar('56) Asistente de ayuda');
@@ -1913,6 +1919,61 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   await json(await api('/api/leads/' + lc77.clave + '/cerrar', 'POST', { resultado: 'perdido', motivo: 'precio' }));
   const at77 = atenMod.ultimaPorClave(lc77.clave);
   verificar(!atenMod.tienePendiente(lc77.clave) && at77 && at77.estado === 'atendido' && at77.cierre.motivo === 'lead_cerrado' && at77.cierre.motivoTexto === 'Lead cerrado' && /Perdido · Precio/.test(at77.cierre.detalle), 'al cerrar el lead, el chat queda atendido con el motivo «Lead cerrado»');
+
+  mostrar('78) Reportes semanales (1.5.7)');
+  const repMod = require('./reportes.js');
+  const lunes78 = Date.UTC(2030, 0, 14, 3, 0);   // lunes 14/01/2030 00:00 de Montevideo
+  verificar(repMod.lunesDe(lunes78 + 3 * 86400000 + 5 * 3600000) === lunes78 && repMod.semana('anterior', lunes78 + 9 * 3600000).desde === lunes78 - 7 * 86400000 && repMod.semana('actual', lunes78 + 9 * 3600000).id === '2030-01-14' && repMod.semana('anterior', lunes78 + 9 * 3600000).titulo === 'Semana del 07/01 al 13/01', 'calcula las semanas de lunes a domingo en hora de Montevideo');
+  verificar(repMod.duracion(45 * 60000) === '45 min' && repMod.duracion(3 * 3600000 + 10 * 60000) === '3 h 10 min' && repMod.duracion(2 * 86400000) === '2 días', 'muestra las demoras en minutos, horas o días');
+  const H78 = 3600000, s78 = repMod.semana('actual', lunes78 + 2 * 86400000);
+  const base78 = lunes78 + 1 * 86400000 + 10 * H78;   // martes 10:00
+  const chats78 = [
+    { clave: 'wa:78001', nombre: 'Lenta', numero: '78001', ultimoEn: base78 + 4 * H78, ultimoClienteEn: base78, mensajes: [{ tipo: 'cliente', texto: 'cuánto sale la pantalla', en: base78 }, { tipo: 'verde', texto: 'Te paso con un asesor', en: base78 + 60000 }, { tipo: 'equipo', autor: 'Carla', texto: 'Sale 1500', en: base78 + 3 * H78 }, { tipo: 'cliente', texto: 'uh está caro', en: base78 + 4 * H78 }] },
+    { clave: 'wa:78002', nombre: 'Rápida', numero: '78002', ultimoEn: base78 + 20 * 60000, ultimoClienteEn: base78 + 20 * 60000, mensajes: [{ tipo: 'cliente', texto: 'hola, tienen fundas?', en: base78 }, { tipo: 'equipo', autor: 'Carla', texto: 'Sí, tenemos', en: base78 + 15 * 60000 }, { tipo: 'cliente', texto: 'dale, paso mañana', en: base78 + 20 * 60000 }] },
+    { clave: 'wa:78003', nombre: 'Colgado', numero: '78003', ultimoEn: base78 + 2 * H78, ultimoClienteEn: base78 + 2 * H78, mensajes: [{ tipo: 'cliente', texto: 'hola', en: base78 - H78 }, { tipo: 'equipo', autor: 'Manuel', texto: 'Hola, te atiendo', en: base78 - 30 * 60000 }, { tipo: 'cliente', texto: 'sigo esperando el precio', en: base78 + 2 * H78 }] },
+    { clave: 'wa:78004', nombre: 'Vieja', numero: '78004', ultimoEn: lunes78 - 2 * 86400000, ultimoClienteEn: lunes78 - 2 * 86400000, mensajes: [{ tipo: 'cliente', texto: 'hola', en: lunes78 - 2 * 86400000 }] }
+  ];
+  const leads78 = {
+    'wa:78001': { tipo: 'reparacion', producto: 'Pantalla Samsung A54', intencion: 'media', traba: { categoria: 'precio', frase: 'uh está caro' }, cierre: { resultado: 'perdido', motivo: 'precio', en: base78 + 5 * H78 } },
+    'wa:78002': { tipo: 'compra', producto: 'Funda iPhone 13', intencion: 'alta', traba: { categoria: 'ninguna', frase: '' }, cierre: { resultado: 'ganado', motivo: '', en: base78 + 6 * H78 }, seguimiento: { hechaEn: base78 + 3 * H78, por: 'Carla', etapa: 'x', desde: 0 } },
+    'wa:78003': { tipo: 'reparacion', producto: 'Pantalla Samsung A54', intencion: 'media', traba: { categoria: 'ninguna', frase: '' } }
+  };
+  const deps78 = { chats: chats78, leads: leads78, calcular: leadsMod.calcular, tareaDe: leadsMod.tareaDe, proceso: leadsMod.leerProceso(), ctx: { pendientes: new Set(), revision: new Set(), pausas: {} }, derivadas: ['wa:78001'] };
+  const d78 = repMod.armarDatos(s78, deps78, base78 + 8 * H78);
+  const carla = d78.atencion.find(x => x.nombre === 'Carla'), manuel = d78.atencion.find(x => x.nombre === 'Manuel');
+  verificar(carla && carla.chats === 2 && carla.respuestas === 2 && carla.medianaMs === Math.round((3 * H78 + 15 * 60000) / 2) && carla.maxima === '3 h' && carla.lentas.length === 1 && carla.lentas[0].clave === 'wa:78001' && carla.lentas[0].en === base78 + 3 * H78 && carla.tareasHechas === 1, 'por vendedor: chats, primera respuesta (mediana y máxima), respuestas de más de 2 horas con su mensaje y tareas hechas');
+  verificar(manuel && manuel.colgados.length === 1 && manuel.colgados[0].clave === 'wa:78003' && /h/.test(manuel.colgados[0].espera), 'detecta al cliente colgado y lo atribuye a quien lo atendía');
+  verificar(d78.pedidos[0].nombre === 'Pantalla Samsung A54' && d78.pedidos[0].veces === 2 && d78.tipos[0].tipo === 'reparacion', 'lo más pedido sale de la clasificación');
+  verificar(d78.trabas.length === 1 && d78.trabas[0].categoria === 'precio' && d78.trabas[0].frases[0].frase === 'uh está caro' && d78.trabas[0].frases[0].en === base78 + 4 * H78, 'las trabas traen la frase textual con el mensaje donde la dijo');
+  verificar(d78.resultados.nuevos === 3 && d78.resultados.ganados === 1 && d78.resultados.perdidos === 1 && d78.resultados.motivosPerdida[0].motivo === 'Precio' && d78.resultados.abiertos === 1 && d78.totales.conversaciones === 3, 'resultados: nuevos, ganados, perdidos con motivo, abiertos; la conversación vieja no cuenta');
+  const ev78 = await repMod.evaluar(s78, deps78, bot74);
+  verificar(ev78.chats === 3 && ev78.evaluacion.vendedores[0].nombre === 'Carla' && ev78.evaluacion.vendedores[0].puntaje === 4 && ev78.evaluacion.vendedores[0].ejemplos.length === 1 && ev78.evaluacion.vendedores[0].ejemplos[0].clave === 'wa:78001' && ev78.evaluacion.vendedores[0].ejemplos[0].en === base78 + 3 * H78 && ev78.evaluacion.recomendaciones.length === 3, 'la IA evalúa a cada vendedor; los ejemplos con conversación inventada se descartan y los válidos apuntan al mensaje citado');
+  const sysEv = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system), msgEv = String(llamadasIA[llamadasIA.length - 1].body.messages[0].content);
+  verificar(/EVALUADOR DE ATENCIÓN/.test(sysEv) && msgEv.indexOf('wa:78001') < msgEv.indexOf('wa:78002') && /Equipo \(Carla\): Sale 1500/.test(msgEv), 'le manda primero las conversaciones derivadas, con quién habló');
+  const cons78 = await json(await api('/api/consumo-ia'));
+  verificar(((cons78.porOrigen || {}).reporte || {}).consultas >= 1, 'la evaluación se registra en Consumo de IA como «Reporte»');
+  // Generar desde el panel (con los datos reales del entorno de prueba)
+  const gen78 = await json(await api('/api/reportes/generar', 'POST', { semana: 'actual' }));
+  verificar(gen78.reporte && gen78.reporte.id === repMod.semana('actual').id && gen78.reporte.datos && gen78.reporte.por === 'Acceso general' && typeof gen78.reporte.chatsEvaluados === 'number', '«Generar ahora» arma el reporte de la semana en curso');
+  const lst78 = await json(await api('/api/reportes'));
+  verificar(lst78.lista.length >= 1 && lst78.lista[0].id === gen78.reporte.id && lst78.semanaActual.id === gen78.reporte.id, 'la lista de reportes trae el nuevo primero');
+  verificar((await json(await api('/api/reportes/' + gen78.reporte.id))).reporte.id === gen78.reporte.id && (await api('/api/reportes/noexiste')).status === 404, 'se puede abrir un reporte; uno inexistente devuelve 404');
+  const re78 = await json(await api('/api/reportes/' + gen78.reporte.id + '/evaluar', 'POST'));
+  verificar(re78.reporte && re78.reporte.evaluacionError === '', 'se puede repetir la evaluación');
+  // Lunes 07:06: arma el de la semana anterior y avisa una sola vez
+  repMod._usarReloj(() => lunes78 + 7 * H78 + 6 * 60000);
+  let avisos78 = [];
+  const r78 = await repMod.revisar(() => deps78, bot74, async r => { avisos78.push(r.id); });
+  verificar(r78 && r78.id === '2030-01-07' && r78.por === 'Automático' && avisos78.length === 1 && repMod.obtener('2030-01-07').avisadoEn > 0, 'el lunes a las 07:06 arma el reporte de la semana anterior y avisa');
+  await repMod.revisar(() => deps78, bot74, async r => { avisos78.push(r.id); });
+  verificar(avisos78.length === 1, 'no vuelve a avisar el mismo reporte');
+  repMod._usarReloj(() => lunes78 + 2 * 86400000 + 9 * H78);
+  verificar((await repMod.revisar(() => deps78, bot74, async () => {})) === null, 'otro día de la semana no hace nada');
+  repMod._usarReloj(null);
+  verificar(/3 conversaciones, 1 ganados, 1 perdidos, 1 respuestas de más de 2 h y 1 clientes colgados/.test(repMod.resumenCorto({ datos: d78 })), 'el aviso resume el reporte en una línea');
+  const av78 = await json(await api('/api/avisos', 'PUT', { numeros: [], plantilla: '', idioma: 'es', reporteNumeros: ['+598 95 892 665'], reportePlantilla: 'reporte_semanal' }));
+  verificar(av78.avisos && av78.avisos.reporteNumeros[0] === '59895892665' && av78.avisos.reportePlantilla === 'reporte_semanal', 'los números y la plantilla del reporte semanal se guardan en Avisos');
+  verificar((await api('/api/avisos', 'PUT', { numeros: [], reporteNumeros: ['12'] })).status === 400, 'un número inválido para el reporte se rechaza');
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }
