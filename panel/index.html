@@ -1675,6 +1675,44 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 @media(max-width:760px){.ld-tabla-caja{display:none}.ld-tarjetas{display:flex}.ld-form-fila{grid-template-columns:1fr}}
 @media(max-width:600px){.acc-fila .ld-buscar{flex:1 1 100%}}
 
+/* ===================== 1.5.2: tareas, proceso de ventas y cierre de leads ===================== */
+.side-count.rojo{background:var(--red);color:#fff}
+.tar-grupo{margin-bottom:16px}
+.tar-grupo h3{display:flex;align-items:center;gap:8px;font-size:14px;margin:0 0 8px;font-weight:700}
+.tar-n{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 7px;border-radius:30px;background:var(--surface-2);border:1px solid var(--border);font-size:12px;color:var(--muted)}
+.tar-grupo.vencidas .tar-n{background:rgba(247,114,114,.12);border-color:rgba(247,114,114,.4);color:var(--red)}
+.tar-lista{display:flex;flex-direction:column;gap:8px}
+.tar-vacio{padding:14px 16px;border:1px dashed var(--border);border-radius:12px;color:var(--muted);font-size:13px}
+.tar-item{display:grid;grid-template-columns:1fr auto;gap:6px 14px;align-items:center;padding:12px 16px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+.tar-item.vencida{border-color:rgba(247,114,114,.45)}
+.tar-c1{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13.5px}
+.tar-c1 b{white-space:nowrap}
+.tar-c2{grid-column:1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.tar-c2 b{color:var(--text)}
+.tar-vence{font-weight:600}
+.tar-item.vencida .tar-vence{color:var(--red)}
+.tar-acc{grid-row:1/3;grid-column:2;display:flex;gap:8px;align-items:center}
+.tar-acc .btn{white-space:nowrap}
+.ld-f3{display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--muted);padding-top:2px}
+.ld-f3 b{color:var(--text);font-weight:600}
+.ld-f3 .dp-link{padding:2px 0;font-size:12.5px}
+.ld-f3 .dp-link.rojo{color:var(--red)}
+.ld-sug{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px;padding:8px 12px;border-radius:10px;background:rgba(244,193,82,.14);border:1px solid rgba(244,193,82,.45);color:var(--text)}
+.ld-sug .btn{padding:4px 10px;min-height:0;font-size:12.5px}
+.ld-cerrado{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ld-cerrado .pill{text-transform:none}
+.ver-en{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ver-en label{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;cursor:pointer;font-size:13px}
+.ver-en input{accent-color:var(--accent);margin:0}
+.res-op{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.res-op label{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;cursor:pointer;font-size:13.5px;font-weight:600}
+.res-op input{accent-color:var(--accent);margin:0}
+.proc-tabla input[type=text]{min-width:260px}
+.proc-tabla input[type=number]{width:90px}
+.proc-tabla input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
+.proc-barra{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}
+@media(max-width:760px){.tar-item{grid-template-columns:1fr}.tar-acc{grid-row:auto;grid-column:1;justify-content:flex-end}.ver-en,.res-op{grid-template-columns:1fr}.proc-tabla input[type=text]{min-width:0;width:100%}}
+
 </style>
 
 <div id="boot" class="loading"><div class="spin"></div>Cargando panel…</div>
@@ -1703,6 +1741,8 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
     <div class="nav-label">Ventas</div>
     <div class="side-top">
       <button class="side-link" id="leaf-leads" onclick="go('leads')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg>Leads</button>
+      <button class="side-link" id="leaf-tareas" onclick="go('tareas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Tareas<span class="side-count rojo" id="cntTareas">0</span></button>
+      <div id="navVentasAdmin"><button class="side-link" id="leaf-proceso" onclick="go('proceso')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h6"/></svg>Proceso de ventas</button></div>
     </div>
     <div class="side-top">
       <button class="side-link" id="leaf-chats" onclick="go('chats')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>Chats por responder<span class="side-count" id="cntPend">0</span></button>
@@ -2391,7 +2431,7 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
     <!-- ===== VIEW: LEADS (1.5.0) ===== -->
     <div class="view" id="view-leads">
       <div class="panel acc-filtro"><div class="acc-fila">
-        <label class="cons-campo" for="ldEtapa">Etapa<select id="ldEtapa" onchange="cargarLeads()"><option value="">Todas las etapas</option><option value="nuevo">Nuevo</option><option value="con_verde">Con Verde</option><option value="derivado">Derivado</option><option value="en_atencion">En atención</option><option value="presupuesto_enviado">Presupuesto enviado</option><option value="esperando_cliente">Esperando al cliente</option><option value="sin_respuesta">Sin respuesta</option></select></label>
+        <label class="cons-campo" for="ldEtapa">Etapa<select id="ldEtapa" onchange="cargarLeads()"><option value="">Todas las etapas</option><option value="nuevo">Nuevo</option><option value="con_verde">Con Verde</option><option value="derivado">Derivado</option><option value="en_atencion">En atención</option><option value="presupuesto_enviado">Presupuesto enviado</option><option value="esperando_cliente">Esperando al cliente</option><option value="sin_respuesta">Sin respuesta</option><option value="cerrado">Cerrado</option></select></label>
         <label class="cons-campo" for="ldTipo">Tipo<select id="ldTipo" onchange="cargarLeads()"><option value="">Todos los tipos</option><option value="reparacion">Reparación</option><option value="compra">Compra</option><option value="garantia">Garantía</option><option value="consulta">Consulta general</option><option value="otro">Otro</option></select></label>
         <label class="cons-campo" for="ldVendedor">Vendedor<select id="ldVendedor" onchange="cargarLeads()"><option value="">Todos los vendedores</option></select></label>
         <label class="cons-campo ld-buscar" for="ldBuscar">Buscar<input type="search" id="ldBuscar" placeholder="Cliente, producto o número" autocomplete="off" oninput="buscarLeads()"></label>
@@ -2399,6 +2439,22 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
       <div class="ld-conteo" id="ldConteo"></div>
       <div class="panel"><div class="ld-tabla-caja" style="overflow-x:auto"><table class="ld-tabla" style="min-width:880px"><thead><tr><th>Prioridad</th><th>Cliente</th><th>Tipo · producto</th><th>Etapa</th><th>Espera</th><th>Vendedor</th><th>Traba</th></tr></thead><tbody id="ldTabla"></tbody></table></div><div class="ld-tarjetas" id="ldTarjetas"></div></div>
       <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Cada conversación se clasifica 10 minutos después del último mensaje: tipo, producto, intención, resumen, próximo paso y traba con la frase textual del cliente. La etapa y la prioridad salen de reglas fijas. Al abrir un chat, la franja «Lead» muestra la clasificación y permite corregirla.</span></div>
+    </div>
+    <!-- ===== VIEW: TAREAS (1.5.2) ===== -->
+    <div class="view" id="view-tareas">
+      <div class="panel acc-filtro" id="tarFiltro"><div class="acc-fila"><label class="cons-campo" for="tarVendedor">Vendedor<select id="tarVendedor" onchange="cargarTareas()"><option value="">Todos los vendedores</option></select></label></div></div>
+      <div class="tar-grupo vencidas"><h3>Vencidas <span class="tar-n" id="tarVencidasN">0</span></h3><div class="tar-lista" id="tarVencidasLista"></div></div>
+      <div class="tar-grupo"><h3>Para hoy <span class="tar-n" id="tarHoyN">0</span></h3><div class="tar-lista" id="tarHoyLista"></div></div>
+      <div class="tar-grupo"><h3>Próximas <span class="tar-n" id="tarProximasN">0</span></h3><div class="tar-lista" id="tarProximasLista"></div></div>
+      <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Cada etapa del proceso de ventas tiene una próxima acción y un plazo; la tarea nace sola cuando el lead entra en la etapa. «Hecho» pide una nota corta y cuándo volver a ver el lead. Las tareas no mandan mensajes a los clientes.</span></div>
+    </div>
+    <!-- ===== VIEW: PROCESO DE VENTAS (1.5.2) ===== -->
+    <div class="view" id="view-proceso">
+      <div class="panel"><div class="panel-head"><div><h3>Próxima acción y plazo por etapa</h3><p>Cuando un lead entra en una etapa, el vendedor tiene esa tarea con ese plazo. Con «Aviso al celular», al vencer se avisa al equipo como con los chats por responder.</p></div></div>
+        <div style="overflow-x:auto"><table class="proc-tabla" style="min-width:720px"><thead><tr><th>Etapa</th><th>Próxima acción</th><th>Plazo (horas)</th><th style="text-align:center">Aviso al celular</th></tr></thead><tbody id="procTabla"></tbody></table></div>
+        <div class="proc-barra"><button class="btn btn-primary" type="button" onclick="guardarProceso()">Guardar cambios</button></div>
+      </div>
+      <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Las etapas Nuevo, Con Verde y Cerrado no tienen tarea. Los cambios valen para las tareas desde ese momento.</span></div>
     </div>
     <!-- ===== VIEW: REGISTRO DE ACCESOS (1.4.15) ===== -->
     <div class="view" id="view-accesos">
@@ -2616,6 +2672,18 @@ mark.res{background:var(--wa-mark-bg);color:var(--wa-mark-tx)}
 </div>
 
 
+<!-- ===== MODAL: TAREA HECHA (1.5.2) ===== -->
+<div class="overlay" id="thOverlay"><div class="modal"><div class="modal-head"><div><h3>Tarea hecha</h3><p class="faint">Una nota corta y cuándo volver a ver este lead.</p></div><button class="x-btn" type="button" aria-label="Cerrar" onclick="close_('thOverlay')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="modal-body"><form class="ld-form" id="formTareaHecha" onsubmit="event.preventDefault();guardarTareaHecha()"><div class="field"><label for="thNota">Nota (opcional)</label><input type="text" id="thNota" maxlength="160" placeholder="Por ejemplo: llamé, no atendió"></div><div class="field"><label>Volver a verlo</label><div class="ver-en" id="thVerEn"></div></div>
+  <div class="modal-foot"><button class="btn btn-ghost" type="button" onclick="close_('thOverlay')">Cancelar</button><button class="btn btn-primary" type="submit">Guardar</button></div></form></div></div></div>
+<!-- ===== MODAL: ASIGNAR VENDEDOR (1.5.2) ===== -->
+<div class="overlay" id="asigOverlay"><div class="modal"><div class="modal-head"><div><h3>Asignar vendedor</h3><p class="faint" id="asigAuto"></p></div><button class="x-btn" type="button" aria-label="Cerrar" onclick="close_('asigOverlay')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="modal-body"><form class="ld-form" id="formAsignar" onsubmit="event.preventDefault();guardarAsignarLead()"><div class="field"><label for="asigVendedor">Vendedor</label><select id="asigVendedor"></select></div>
+  <div class="modal-foot"><button class="btn btn-ghost" type="button" onclick="close_('asigOverlay')">Cancelar</button><button class="btn btn-primary" type="submit">Guardar</button></div></form></div></div></div>
+<!-- ===== MODAL: CERRAR LEAD (1.5.2) ===== -->
+<div class="overlay" id="ciOverlay"><div class="modal"><div class="modal-head"><div><h3>Cerrar lead</h3><p class="faint">Queda anotado en el chat y el lead sale de la lista.</p></div><button class="x-btn" type="button" aria-label="Cerrar" onclick="close_('ciOverlay')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="modal-body"><form class="ld-form" id="formCerrar" onsubmit="event.preventDefault();guardarCerrarLead()"><div class="field"><label>Resultado</label><div class="res-op"><label><input type="radio" name="ciResultado" value="ganado" onchange="cambioResultadoCierre()">Ganado</label><label><input type="radio" name="ciResultado" value="perdido" onchange="cambioResultadoCierre()">Perdido</label></div></div><div class="field" id="ciMotivoCampo"><label for="ciMotivo">Motivo</label><select id="ciMotivo"></select></div><div class="field"><label for="ciNota">Nota (opcional)</label><input type="text" id="ciNota" maxlength="200" placeholder="Qué pasó"></div>
+  <div class="modal-foot"><button class="btn btn-ghost" type="button" onclick="close_('ciOverlay')">Cancelar</button><button class="btn btn-primary" type="submit">Cerrar lead</button></div></form></div></div></div>
 <!-- ===== MODAL: CORREGIR LEAD (1.5.0) ===== -->
 <div class="overlay" id="ldOverlay">
   <div class="modal">
@@ -3127,6 +3195,8 @@ function _doGo(view){
     usuarios:['Usuarios','Personas que pueden entrar al panel. Cada acción queda registrada con su usuario.','<b>Sistema</b> › Usuarios'],
     consumo:['Consumo de IA','Costo estimado de las consultas a la IA de Verde. Solo lo ven los administradores.','<b>Sistema</b> › Consumo de IA'],
     leads:['Leads','Conversaciones de los últimos 30 días clasificadas por la IA y ordenadas por prioridad: primero lo que más importa atender.','<b>Ventas</b> › Leads'],
+    tareas:['Tareas','Qué tiene que hacer cada vendedor y cuándo: vencidas, para hoy y próximas, según la etapa de cada lead.','<b>Ventas</b> › Tareas'],
+    proceso:['Proceso de ventas','Próxima acción, plazo y aviso de cada etapa. Solo lo ven los administradores.','<b>Ventas</b> › Proceso de ventas'],
     accesos:['Registro de accesos','Ingresos, intentos fallidos, cierres de sesión y descargas de respaldos, con la dirección y el dispositivo. Se conservan 90 días. Solo lo ven los administradores.','<b>Sistema</b> › Registro de accesos'],
     respaldos:['Respaldos','Copia diaria de los datos de Verde: configuración, conversaciones, usuarios, consumo, archivos guardados y biblioteca. Solo lo ven los administradores.','<b>Sistema</b> › Respaldos'],
     ayuda:['Centro de ayuda','Manual del panel, guías de Meta y un asistente para resolver dudas.','<b>Ayuda</b> › Centro de ayuda']
@@ -3147,6 +3217,8 @@ function _doGo(view){
   if(view==='usuarios')cargarUsuarios();
   if(view==='consumo')cargarConsumo();
   if(view==='leads')cargarLeads();
+  if(view==='tareas')cargarTareas();
+  if(view==='proceso')cargarProceso();
   if(view==='accesos')cargarAccesos();
   if(view==='respaldos')cargarRespaldos();
   if(view==='ayuda')cargarAyuda();
@@ -4761,6 +4833,7 @@ function aplicarRol(){
   const a=esAsesor();
   document.getElementById('navAdmin').classList.toggle('oculto',a);
   document.getElementById('navSistema').classList.toggle('oculto',a);
+  document.getElementById('navVentasAdmin').classList.toggle('oculto',a);
   document.getElementById('btnAvisos').classList.toggle('oculto',a);
 }
 
@@ -4811,6 +4884,7 @@ async function actualizarContador(pintar){
   const n=r.json.total||0;
   const c=document.getElementById('cntPend');c.textContent=n;c.classList.toggle('show',n>0);
   if(currentView==='chats'||pintar)renderChats();
+  actualizarTareasBadge(!!pintar);   // 1.5.2
 }
 /* renderChats(): ver el bloque 1.3.2 */
 
@@ -5610,6 +5684,11 @@ function pintarFranja(c){
     clase='azul';
     txt='Hay un archivo para revisar: Verde sigue conversando con el cliente. Al responder desde el panel, Verde hace su pausa de 12 horas.';
     corto='Archivo para revisar: Verde sigue conversando.';
+    if(c.pendienteId)boton='<button type="button" class="btn-mini franja-marcar" onclick="marcarDesdeConversacion()">'+IC134.check+'Marcar atendido</button>';
+  }else if(c.pendiente&&c.pausaHasta){
+    clase='roja';
+    txt='Por responder: una persona del equipo tiene que atender este chat. Verde está en pausa hasta '+minuscula1(horaCorta(c.pausaHasta))+' porque alguien del equipo ya respondió; no va a contestar hasta entonces o hasta que alguien atienda.';
+    corto='Por responder: Verde en pausa hasta '+minuscula1(horaCorta(c.pausaHasta))+'.';
     if(c.pendienteId)boton='<button type="button" class="btn-mini franja-marcar" onclick="marcarDesdeConversacion()">'+IC134.check+'Marcar atendido</button>';
   }else if(c.pendiente){
     clase='roja';
@@ -7009,7 +7088,7 @@ function pintarLeads(){
   selV.innerHTML='<option value="">Todos los vendedores</option>'+(j.vendedores||[]).map(v=>'<option value="'+escH(v)+'">'+escH(v)+'</option>').join('');
   selV.value=(j.vendedores||[]).includes(actual)?actual:'';
   const c=j.conteo||{};
-  document.getElementById('ldConteo').innerHTML='<span class="ld-chip"><span class="ld-dot alta"></span>Alta <b>'+(c.alta||0)+'</b></span><span class="ld-chip"><span class="ld-dot media"></span>Media <b>'+(c.media||0)+'</b></span><span class="ld-chip"><span class="ld-dot"></span>Normal <b>'+(c.normal||0)+'</b></span>'+(c.sinClasificar?'<span class="ld-chip sin">Sin clasificar todavía <b>'+c.sinClasificar+'</b></span>':'');
+  document.getElementById('ldConteo').innerHTML='<span class="ld-chip"><span class="ld-dot alta"></span>Alta <b>'+(c.alta||0)+'</b></span><span class="ld-chip"><span class="ld-dot media"></span>Media <b>'+(c.media||0)+'</b></span><span class="ld-chip"><span class="ld-dot"></span>Normal <b>'+(c.normal||0)+'</b></span>'+(c.sinClasificar?'<span class="ld-chip sin">Sin clasificar todavía <b>'+c.sinClasificar+'</b></span>':'')+(c.cerrados?'<span class="ld-chip sin">Cerrados <b>'+c.cerrados+'</b></span>':'');
   const tb=document.getElementById('ldTabla'),tj=document.getElementById('ldTarjetas'),lista=j.lista||[];
   if(!lista.length){
     const hayFiltro=document.getElementById('ldEtapa').value||document.getElementById('ldTipo').value||document.getElementById('ldVendedor').value||document.getElementById('ldBuscar').value.trim();
@@ -7039,6 +7118,7 @@ function pintarLeadEnChat(){
     caja.innerHTML='<div class="ld-f1">'+prioHtml(x)+'<span class="ld-sep">·</span><b>'+escH(x.tipoNombre)+(x.producto?' · '+escH(x.producto):'')+'</b><span class="ld-etapa '+escH(x.etapa)+'">'+escH(x.etapaNombre)+'</span>'+(x.intencionNombre?'<span class="faint">Intención '+escH(x.intencionNombre.toLowerCase())+'</span>':'')+'<button type="button" class="dp-link" onclick="abrirCorreccionLead()">Corregir</button></div>'
       +'<div class="ld-f2">'+(x.resumen?escH(x.resumen)+' ':'')+(x.proximoPaso?'<b>Próximo paso:</b> '+escH(x.proximoPaso)+' ':'')+(x.traba&&x.traba.frase?'<b>Traba ('+escH(x.trabaNombre.toLowerCase())+'):</b> <i>«'+escH(x.traba.frase)+'»</i>':'')+'</div>';
   }
+  caja.innerHTML+=lineaTareaLead(x);   // 1.5.2: vendedor, tarea, cierre y propuesta de la IA
   caja.classList.remove('oculto');
 }
 function abrirCorreccionLead(){
@@ -7061,6 +7141,157 @@ async function guardarCorreccionLead(){
   LEAD_CHAT.datos=r.json;LEAD_CHAT.en=Date.now();pintarLeadEnChat();
   toast('Clasificación corregida','Lo corregido queda fijo aunque la IA vuelva a clasificar.','success');
   if(LD.datos)cargarLeads();
+}
+
+
+/* ===================== 1.5.2: tareas, proceso de ventas y cierre de leads ===================== */
+var TAR={datos:null,ultimo:0};
+var LD_VEND=null;
+const VER_EN_OPCIONES=[['manana','Mañana a las 10:00'],['dos_dias','En 2 días'],['semana','En una semana'],['no','Sin seguimiento']];
+const MOTIVOS_CIERRE_PANEL=[['precio','Precio'],['demora','Demora'],['desconfianza','Desconfianza'],['distancia','Distancia'],['lo_piensa','Lo piensa'],['otro_lado','Compró en otro lado'],['otro','Otro']];
+async function actualizarTareasBadge(forzar){
+  if(!forzar&&Date.now()-TAR.ultimo<60000)return;
+  TAR.ultimo=Date.now();
+  const r=await api('/api/tareas');
+  if(!r.ok)return;
+  const n=r.json.totalVencidas||0,c=document.getElementById('cntTareas');
+  if(c){c.textContent=n;c.classList.toggle('show',n>0);}
+}
+async function cargarTareas(){
+  const caja=document.getElementById('tarVencidasLista');if(!caja)return;
+  const sel=document.getElementById('tarVendedor');
+  const r=await api('/api/tareas?vendedor='+encodeURIComponent(sel.value||''));
+  if(!r.ok){toast('No se pudieron cargar las tareas',r.json.error||'','error');return;}
+  TAR.datos=r.json;TAR.ultimo=Date.now();
+  const n=r.json.totalVencidas||0,c=document.getElementById('cntTareas');if(c){c.textContent=n;c.classList.toggle('show',n>0);}
+  pintarTareas();
+}
+function pintarTareas(){
+  const j=TAR.datos;if(!j)return;
+  document.getElementById('tarFiltro').classList.toggle('oculto',!!j.soloPropias);
+  const sel=document.getElementById('tarVendedor'),actual=sel.value;
+  sel.innerHTML='<option value="">Todos los vendedores</option>'+(j.vendedores||[]).map(v=>'<option value="'+escH(v)+'">'+escH(v)+'</option>').join('');
+  sel.value=(j.vendedores||[]).includes(actual)?actual:'';
+  const grupos=[['Vencidas','vencidas','No hay tareas vencidas.'],['Hoy','hoy','No hay tareas para hoy.'],['Proximas','proximas','No hay tareas próximas.']];
+  for(const [id,k,vacio] of grupos){
+    const lista=j[k]||[];
+    document.getElementById('tar'+id+'N').textContent=lista.length;
+    document.getElementById('tar'+id+'Lista').innerHTML=lista.length?lista.map(x=>'<div class="tar-item'+(k==='vencidas'?' vencida':'')+'" data-clave="'+escH(x.clave)+'"><div class="tar-c1">'+prioHtml(x)+'<b>'+escH(x.nombre||('+'+x.numero))+'</b><span class="ld-etapa '+escH(x.etapa)+'">'+escH(x.etapaNombre)+'</span>'+(x.tipoNombre&&x.clasificado?'<span class="faint">'+escH(x.tipoNombre)+(x.producto?' · '+escH(x.producto):'')+'</span>':'')+'</div><div class="tar-c2"><b>'+escH(x.tarea.accion)+'</b><span class="tar-vence">'+escH(x.tarea.venceTexto)+'</span><span>'+(x.vendedor?escH(x.vendedor):'Sin vendedor')+'</span></div><div class="tar-acc"><button type="button" class="btn btn-ghost" onclick="abrirLead(this.closest(\'.tar-item\').dataset.clave)">Abrir chat</button><button type="button" class="btn btn-primary" onclick="abrirTareaHecha(this.closest(\'.tar-item\').dataset.clave)">Hecho</button></div></div>').join(''):'<div class="tar-vacio">'+vacio+'</div>';
+  }
+}
+/* «Hecho» */
+var TAR_HECHA={clave:null};
+function abrirTareaHecha(clave){
+  if(!clave)return;
+  TAR_HECHA.clave=clave;
+  document.getElementById('thNota').value='';
+  document.getElementById('thVerEn').innerHTML=VER_EN_OPCIONES.map(([id,n],i)=>'<label><input type="radio" name="thVerEn" value="'+id+'"'+(i===0?' checked':'')+'>'+n+'</label>').join('');
+  show('thOverlay');
+  setTimeout(()=>{try{document.getElementById('thNota').focus();}catch(e){}},60);
+}
+async function guardarTareaHecha(){
+  const clave=TAR_HECHA.clave;if(!clave)return;
+  const verEn=(document.querySelector('input[name="thVerEn"]:checked')||{}).value||'no';
+  const r=await api('/api/leads/'+encodeURIComponent(clave)+'/tarea-hecha',{method:'POST',body:{nota:document.getElementById('thNota').value.trim(),verEn}});
+  if(!r.ok){toast('No se pudo marcar la tarea',r.json.error||'','error');return;}
+  close_('thOverlay');
+  toast('Tarea hecha',r.json.tarea?'Próximo seguimiento: '+r.json.tarea.venceTexto.replace(/^vence /,'')+'.':'Sin seguimiento.','success');
+  if(LEAD_CHAT.clave===clave){LEAD_CHAT.datos=r.json;LEAD_CHAT.en=Date.now();pintarLeadEnChat();if(CONV.clave===clave)refrescarConversacion();}
+  if(TAR.datos)cargarTareas();else actualizarTareasBadge(true);
+  if(LD.datos)cargarLeads();
+}
+/* Vendedor */
+async function abrirAsignarLead(){
+  const x=LEAD_CHAT.datos;if(!x)return;
+  if(!LD_VEND){const r=await api('/api/leads/vendedores');LD_VEND=r.ok?(r.json.vendedores||[]):[];}
+  const sel=document.getElementById('asigVendedor');
+  sel.innerHTML='<option value="">Sin asignar (queda quien respondió último)</option>'+LD_VEND.map(v=>'<option value="'+escH(v)+'">'+escH(v)+'</option>').join('');
+  sel.value=LD_VEND.includes(x.vendedorAsignado)?x.vendedorAsignado:'';
+  document.getElementById('asigAuto').textContent=x.vendedorAuto?'Respondió último: '+x.vendedorAuto+'.':'Todavía nadie del equipo respondió este chat.';
+  show('asigOverlay');
+}
+async function guardarAsignarLead(){
+  const x=LEAD_CHAT.datos;if(!x)return;
+  const r=await api('/api/leads/'+encodeURIComponent(x.clave)+'/vendedor',{method:'PUT',body:{nombre:document.getElementById('asigVendedor').value}});
+  if(!r.ok){toast('No se pudo asignar',r.json.error||'','error');return;}
+  close_('asigOverlay');
+  LEAD_CHAT.datos=r.json;LEAD_CHAT.en=Date.now();pintarLeadEnChat();
+  toast('Vendedor asignado',r.json.vendedor||'Sin vendedor','success');
+  if(LD.datos)cargarLeads();
+}
+/* Cierre */
+function abrirCerrarLead(){
+  const x=LEAD_CHAT.datos;if(!x)return;
+  document.getElementById('ciNota').value='';
+  document.querySelector('input[name="ciResultado"][value="ganado"]').checked=true;
+  document.getElementById('ciMotivo').innerHTML=MOTIVOS_CIERRE_PANEL.map(([id,n])=>'<option value="'+id+'">'+n+'</option>').join('');
+  cambioResultadoCierre();
+  show('ciOverlay');
+}
+function cambioResultadoCierre(){const perdido=(document.querySelector('input[name="ciResultado"]:checked')||{}).value==='perdido';document.getElementById('ciMotivoCampo').classList.toggle('oculto',!perdido);}
+async function guardarCerrarLead(){
+  const x=LEAD_CHAT.datos;if(!x)return;
+  const resultado=(document.querySelector('input[name="ciResultado"]:checked')||{}).value||'ganado';
+  const r=await api('/api/leads/'+encodeURIComponent(x.clave)+'/cerrar',{method:'POST',body:{resultado,motivo:document.getElementById('ciMotivo').value,nota:document.getElementById('ciNota').value.trim()}});
+  if(!r.ok){toast('No se pudo cerrar el lead',r.json.error||'','error');return;}
+  close_('ciOverlay');
+  LEAD_CHAT.datos=r.json;LEAD_CHAT.en=Date.now();pintarLeadEnChat();
+  if(CONV.clave===x.clave)refrescarConversacion();
+  toast('Lead cerrado',resultado==='ganado'?'Ganado.':'Perdido.','success');
+  if(LD.datos)cargarLeads();if(TAR.datos)cargarTareas();else actualizarTareasBadge(true);
+}
+async function reabrirLead(){
+  const x=LEAD_CHAT.datos;if(!x)return;
+  const r=await api('/api/leads/'+encodeURIComponent(x.clave)+'/reabrir',{method:'POST'});
+  if(!r.ok){toast('No se pudo reabrir',r.json.error||'','error');return;}
+  LEAD_CHAT.datos=r.json;LEAD_CHAT.en=Date.now();pintarLeadEnChat();
+  if(CONV.clave===x.clave)refrescarConversacion();
+  toast('Lead reabierto','Vuelve a la lista de leads.','success');
+  if(LD.datos)cargarLeads();
+}
+async function responderSugerenciaLead(aceptar){
+  const x=LEAD_CHAT.datos;if(!x)return;
+  const r=await api('/api/leads/'+encodeURIComponent(x.clave)+'/sugerencia',{method:'POST',body:{aceptar:!!aceptar}});
+  if(!r.ok){toast('No se pudo responder la propuesta',r.json.error||'','error');return;}
+  LEAD_CHAT.datos=r.json;LEAD_CHAT.en=Date.now();pintarLeadEnChat();
+  if(aceptar){if(CONV.clave===x.clave)refrescarConversacion();toast('Lead cerrado','Como propuso la IA.','success');}
+  else toast('Propuesta descartada','La IA no vuelve a proponerlo con estos mensajes.','info');
+  if(LD.datos)cargarLeads();
+}
+/* Tercera línea de la franja «Lead»: vendedor, tarea, cierre y propuesta */
+function lineaTareaLead(x){
+  if(x.etapa==='cerrado'){
+    const c=x.cierre||{};
+    return '<div class="ld-f3 ld-cerrado"><span class="pill '+(c.resultado==='ganado'?'ok':'off')+'"><span class="d"></span>Cerrado: '+escH(c.resultadoNombre||'')+(c.motivoNombre?' · '+escH(c.motivoNombre):'')+'</span><span>por '+escH(c.por||'')+' · '+escH(horaCorta(c.en))+(c.nota?' · '+escH(c.nota):'')+'</span><button type="button" class="dp-link" onclick="reabrirLead()">Reabrir</button></div>';
+  }
+  let h='<div class="ld-f3"><span>Vendedor: <b>'+(x.vendedor?escH(x.vendedor):'sin asignar')+'</b></span><button type="button" class="dp-link" onclick="abrirAsignarLead()">Asignar</button><span class="ld-sep">·</span>';
+  h+=x.tarea?'<span>Tarea: <b>'+escH(x.tarea.accion)+'</b> <span class="'+(x.tarea.estado==='vencida'?'acc-rojo':'')+'">'+escH(x.tarea.venceTexto)+'</span></span><button type="button" class="dp-link" data-clave="'+escH(x.clave)+'" onclick="abrirTareaHecha(this.dataset.clave)">Hecho</button>':'<span>Sin tarea pendiente</span>';
+  h+='<span class="ld-sep">·</span><button type="button" class="dp-link rojo" onclick="abrirCerrarLead()">Cerrar lead</button></div>';
+  if(x.sugerencia)h+='<div class="ld-sug"><span>La IA propone cerrar este lead como <b>'+escH((x.sugerencia.resultadoNombre||'').toLowerCase())+'</b>'+(x.sugerencia.motivoNombre?' ('+escH(x.sugerencia.motivoNombre.toLowerCase())+')':'')+'.</span><button type="button" class="btn btn-primary" onclick="responderSugerenciaLead(true)">Confirmar</button><button type="button" class="btn btn-ghost" onclick="responderSugerenciaLead(false)">No</button></div>';
+  return h;
+}
+/* Proceso de ventas (administradores) */
+var PROC={datos:null};
+async function cargarProceso(){
+  const tb=document.getElementById('procTabla');if(!tb)return;
+  const r=await api('/api/proceso');
+  if(!r.ok){toast('No se pudo cargar el proceso de ventas',r.json.error||'','error');return;}
+  PROC.datos=r.json;
+  const et=r.json.etapas||{},nombres=r.json.nombres||{};
+  tb.innerHTML=Object.keys(et).map(k=>'<tr data-etapa="'+k+'"><td><b>'+escH(nombres[k]||k)+'</b></td><td><input type="text" maxlength="80" value="'+escH(et[k].accion)+'" aria-label="Próxima acción en '+escH(nombres[k]||k)+'"></td><td><input type="number" min="1" max="720" value="'+et[k].plazoHoras+'" aria-label="Plazo en horas en '+escH(nombres[k]||k)+'"></td><td style="text-align:center"><input type="checkbox"'+(et[k].avisar?' checked':'')+' aria-label="Avisar al celular en '+escH(nombres[k]||k)+'"></td></tr>').join('');
+}
+async function guardarProceso(){
+  const filas=[...document.querySelectorAll('#procTabla tr')],etapas={};
+  for(const f of filas){
+    const [acc,pl,av]=f.querySelectorAll('input');
+    const horas=parseInt(pl.value,10);
+    if(!acc.value.trim()){toast('Falta la acción','Cada etapa necesita una próxima acción.','error');acc.focus();return;}
+    if(!(horas>=1&&horas<=720)){toast('Plazo inválido','El plazo va de 1 a 720 horas (30 días).','error');pl.focus();return;}
+    etapas[f.dataset.etapa]={accion:acc.value.trim(),plazoHoras:horas,avisar:av.checked};
+  }
+  const r=await api('/api/proceso',{method:'PUT',body:{etapas}});
+  if(!r.ok){toast('No se pudo guardar',r.json.error||'','error');return;}
+  PROC.datos=r.json;toast('Proceso guardado','Las tareas nuevas usan estos plazos.','success');
 }
 
 </script>

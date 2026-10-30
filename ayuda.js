@@ -21,7 +21,27 @@ const ARTICULOS = [
       { tipo: 'h', texto: 'Prioridad' },
       { tipo: 'p', texto: 'Alta: reclamos de garantía, compras con intención alta y derivados sin respuesta hace más de 2 horas. Media: intención alta o media, derivados recientes, presupuestos enviados y chats esperando al cliente. Normal: el resto. Dentro de cada nivel, el que más espera va primero. La etapa y la prioridad no las decide la IA: salen de reglas fijas.' },
       { tipo: 'h', texto: 'Corregir una clasificación' },
-      { tipo: 'p', texto: 'Al abrir un chat, arriba aparece la franja «Lead» con la clasificación. Si la IA se equivocó, «Corregir» permite cambiar el tipo, el producto, la intención y la traba; lo corregido queda fijo aunque la IA vuelva a clasificar. El modelo que clasifica se elige en «Comportamiento del bot», sección H, y su gasto se ve en «Consumo de IA» como «Clasificación».' }
+      { tipo: 'p', texto: 'Al abrir un chat, arriba aparece la franja «Lead» con la clasificación. Si la IA se equivocó, «Corregir» permite cambiar el tipo, el producto, la intención y la traba; lo corregido queda fijo aunque la IA vuelva a clasificar. El modelo que clasifica se elige en «Comportamiento del bot», sección H, y su gasto se ve en «Consumo de IA» como «Clasificación».' },
+      { tipo: 'h', texto: 'Vendedor y cierre del lead' },
+      { tipo: 'p', texto: 'El vendedor de un lead es quien respondió último; desde la franja «Lead», «Asignar» permite elegir a otro usuario del panel. «Cerrar lead» lo marca como ganado o perdido, con el motivo (precio, demora, desconfianza, distancia, lo piensa, compró en otro lado u otro) y una nota; queda anotado en el chat y el lead sale de la lista, salvo con el filtro «Cerrado». Cuando la IA detecta que el cliente compró o desistió, la franja muestra su propuesta con «Confirmar» y «No»: nada se cierra sin el vendedor.' }
+    ]
+  },
+  {
+    id: 'tareas', grupo: 'manual', soloAdmin: false, titulo: 'Tareas',
+    resumen: 'Qué tiene que hacer cada vendedor y cuándo, según la etapa de cada lead.',
+    bloques: [
+      { tipo: 'p', texto: 'En «Ventas › Tareas» están las tareas pendientes, agrupadas en vencidas, para hoy y próximas. Cada etapa del proceso de ventas tiene una próxima acción y un plazo (por ejemplo, un presupuesto enviado se sigue a las 24 horas); la tarea nace sola cuando el lead entra en la etapa. El asesor ve sus tareas; el administrador ve todas y puede filtrar por vendedor. El número en el menú es la cantidad de tareas vencidas.' },
+      { tipo: 'h', texto: 'Marcar una tarea como hecha' },
+      { tipo: 'p', texto: '«Hecho» pide una nota corta opcional (por ejemplo, «llamé, no atendió») y cuándo volver a ver el lead: mañana, en 2 días, en una semana o sin seguimiento. El seguimiento queda como nueva tarea a las 10:00 del día elegido, y la nota se anota en el chat como mensaje interno. Si el cliente vuelve a escribir, la tarea de la etapa nueva reemplaza al seguimiento.' },
+      { tipo: 'p', texto: 'Las tareas no mandan mensajes a los clientes: son recordatorios para el equipo. Para contactar a un cliente que no escribió en las últimas 24 horas, llamar por teléfono o escribirle desde el celular de la tienda.' }
+    ]
+  },
+  {
+    id: 'proceso-de-ventas', grupo: 'manual', soloAdmin: true, titulo: 'Proceso de ventas',
+    resumen: 'Configurar la próxima acción, el plazo y el aviso de cada etapa.',
+    bloques: [
+      { tipo: 'p', texto: 'En «Ventas › Proceso de ventas» se define, para cada etapa con tarea (Derivado, En atención, Presupuesto enviado, Esperando al cliente y Sin respuesta), qué tiene que hacer el vendedor, en cuántas horas y si se avisa al celular del equipo cuando la tarea vence. Los avisos usan el mismo sistema que los de «Chats por responder». Las etapas Nuevo, Con Verde y Cerrado no tienen tarea.' },
+      { tipo: 'p', texto: 'Los cambios valen para las tareas desde ese momento: una tarea ya vencida no se reabre por cambiar el plazo.' }
     ]
   },
   {

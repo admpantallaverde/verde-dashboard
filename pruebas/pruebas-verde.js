@@ -11,7 +11,7 @@ const { spawnSync } = require('child_process');
 
 const realFetch = global.fetch;
 const BASE = 'http://127.0.0.1:39871';
-const VERSION_ESPERADA = '1.5.1';
+const VERSION_ESPERADA = '1.5.2';
 
 // Los mensajes del servidor se guardan aparte para no ensuciar el resultado.
 const registro = [];
@@ -46,8 +46,9 @@ global.fetch = async (url, opts = {}) => {
     const respuestaIA = t => new Response(JSON.stringify({ content: [{ type: 'text', text: t }], stop_reason: 'end_turn', usage: { input_tokens: 1000, output_tokens: 100 } }), { status: 200 });
     if (JSON.stringify(JSON.parse(opts.body).system || '').includes('CLASIFICADOR DE CONVERSACIONES')) {   // 1.5.0: leads
       const u = String(((JSON.parse(opts.body).messages || [])[0] || {}).content || '');
-      const j = /garantía/i.test(u) ? { tipo: 'garantia', producto: 'Pantalla iPhone 11', intencion: 'media', presupuesto: false, traba: { categoria: 'ninguna', frase: '' }, resumen: 'Reclama por una pantalla cambiada.', proximoPaso: 'Revisar la orden de trabajo.' }
-        : { tipo: 'compra', producto: 'Cargador iPhone 15', intencion: 'alta', presupuesto: true, traba: { categoria: 'precio', frase: 'uh está caro' }, resumen: 'Quiere un cargador; le pareció caro.', proximoPaso: 'Ofrecer una alternativa más económica.' };
+      const j = /garantía/i.test(u) ? { tipo: 'garantia', producto: 'Pantalla iPhone 11', intencion: 'media', presupuesto: false, traba: { categoria: 'ninguna', frase: '' }, resumen: 'Reclama por una pantalla cambiada.', proximoPaso: 'Revisar la orden de trabajo.', cierre: 'ninguno', cierreMotivo: '' }
+        : /ya lo compré/i.test(u) ? { tipo: 'compra', producto: 'Funda iPhone 13', intencion: 'alta', presupuesto: true, traba: { categoria: 'ninguna', frase: '' }, resumen: 'Compró la funda.', proximoPaso: 'Nada.', cierre: 'ganado', cierreMotivo: '' }
+        : { tipo: 'compra', producto: 'Cargador iPhone 15', intencion: 'alta', presupuesto: true, traba: { categoria: 'precio', frase: 'uh está caro' }, resumen: 'Quiere un cargador; le pareció caro.', proximoPaso: 'Ofrecer una alternativa más económica.', cierre: 'ninguno', cierreMotivo: '' };
       return respuestaIA('```json\n' + JSON.stringify(j) + '\n```');
     }
     if (/corrector de mensajes/i.test(JSON.stringify(JSON.parse(opts.body).system || ''))) return respuestaIA('"Hola, buenas. ' + ult.replace(/pantaya/g, 'pantalla') + '"');   // 1.4.10: corrección de mensajes
@@ -470,7 +471,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(rr.status === 401, 'sin sesión no se puede ver ningún archivo');
   rr = await api('/api/ayuda', 'GET', null, galletaCarla);
   const ayC = await json(rr);
-  verificar(rr.status === 200 && ayC.rol === 'asesor' && !ayC.articulos.some(a => a.soloAdmin) && ayC.articulos.map(a => a.id).join(',') === 'leads,chats-por-responder,conversaciones,chats-respondidos,garantia,consultas,archivos-enviados,corregir,asistente,ingreso-dos-pasos,apariencia', 'un asesor ve solo los 11 temas para atender los chats y entrar al panel');
+  verificar(rr.status === 200 && ayC.rol === 'asesor' && !ayC.articulos.some(a => a.soloAdmin) && ayC.articulos.map(a => a.id).join(',') === 'leads,tareas,chats-por-responder,conversaciones,chats-respondidos,garantia,consultas,archivos-enviados,corregir,asistente,ingreso-dos-pasos,apariencia', 'un asesor ve solo los 12 temas para atender los chats y entrar al panel');
   rr = await api('/api/ayuda/preguntar', 'POST', { pregunta: '¿Cómo devuelvo un chat a Verde?' }, galletaCarla);
   const pC = await json(rr);
   const sysC = JSON.stringify(llamadasIA[llamadasIA.length - 1].body.system);
@@ -935,7 +936,7 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
 
   mostrar('55) Centro de ayuda: manual y guías según el rol');
   const ay55 = await json(await api('/api/ayuda', 'GET'));
-  verificar(ay55.rol === 'admin' && ay55.articulos.filter(a => a.grupo === 'manual').length === 17 && ay55.articulos.filter(a => a.grupo === 'meta').length === 6 && ay55.revisionMeta === '2026-10-24', 'el administrador ve los 16 temas del manual y las 6 guías de Meta');
+  verificar(ay55.rol === 'admin' && ay55.articulos.filter(a => a.grupo === 'manual').length === 19 && ay55.articulos.filter(a => a.grupo === 'meta').length === 6 && ay55.revisionMeta === '2026-10-24', 'el administrador ve los 16 temas del manual y las 6 guías de Meta');
   verificar(ay55.articulos.every(a => a.titulo && a.resumen && a.bloques && a.bloques.length), 'cada tema tiene título, resumen y contenido');
 
   mostrar('56) Asistente de ayuda');
@@ -1811,6 +1812,61 @@ const guardarEstado = s => fs.writeFileSync(path.join(__dirname, 'data', 'state.
   verificar(iG_74 >= 0 && iR_74 >= 0 && iG_74 < iR_74 && pen74.lista[iG_74].prioridad === 3 && pen74.lista[iR_74].prioridad === 2, '«Chats por responder» pone primero el reclamo de garantía aunque haya llegado después');
   const cons74 = await json(await api('/api/consumo-ia'));
   verificar(((cons74.porOrigen || {}).clasificacion || {}).consultas >= 2 && (cons74.precios || []).some(p => p.id === 'claude-haiku-5-5' && p.entrada === 0.1), 'el consumo registra las clasificaciones por separado y conoce el precio de Haiku 5.5');
+
+  mostrar('76) Proceso de ventas, tareas y cierre (1.5.2)');
+  verificar(leadsMod.recortar('Enviarle los términos y el precio del glass y preguntarle cuándo trae el equipo', 40) === 'Enviarle los términos y el precio del…' && leadsMod.recortar('corto', 40) === 'corto', 'el próximo paso se corta al final de una palabra, con puntos suspensivos');
+  const pr76 = await json(await api('/api/proceso'));
+  verificar(pr76.etapas.derivado.plazoHoras === 2 && pr76.etapas.esperando_cliente.plazoHoras === 48 && pr76.etapas.derivado.avisar === true && pr76.nombres.cerrado === 'Cerrado', 'el proceso trae las acciones y los plazos iniciales por etapa');
+  const pr76b = await json(await api('/api/proceso', 'PUT', { etapas: { presupuesto_enviado: { accion: 'Llamar para cerrar', plazoHoras: 1, avisar: true }, derivado: { plazoHoras: 9999 } } }));
+  verificar(pr76b.etapas.presupuesto_enviado.accion === 'Llamar para cerrar' && pr76b.etapas.presupuesto_enviado.plazoHoras === 1 && pr76b.etapas.presupuesto_enviado.avisar === true && pr76b.etapas.derivado.plazoHoras === 2, 'se guardan la acción, el plazo y el aviso; un plazo inválido se ignora');
+  const base76 = Date.now(), H76 = 3600000;
+  const tom = { clave: 'wa:59891000011', numero: '59891000011', nombre: 'Tomás' };
+  convMod._usarReloj(() => base76 - 3 * H76); convMod.registrar(Object.assign({ tipo: 'cliente', texto: 'cuánto sale el cargador' }, tom));
+  convMod._usarReloj(() => base76 - 2 * H76); convMod.registrar(Object.assign({ tipo: 'equipo', autor: 'Carla', texto: 'Sale 1500' }, tom));
+  convMod._usarReloj(null);
+  leadsMod._usarReloj(() => base76);
+  await leadsMod.clasificar(convMod.cruda(tom.clave), bot74);
+  let dt = await json(await api('/api/leads/' + tom.clave));
+  verificar(dt.etapa === 'presupuesto_enviado' && dt.tarea && dt.tarea.accion === 'Llamar para cerrar' && dt.tarea.estado === 'vencida' && /^venció hace 1 h/.test(dt.tarea.venceTexto) && dt.tarea.avisar === true && dt.vendedor === 'Carla', 'un presupuesto enviado hace 2 horas con plazo de 1 hora tiene su tarea vencida');
+  const ta76 = await json(await api('/api/tareas'));
+  verificar(ta76.vencidas.some(x => x.clave === tom.clave) && ta76.totalVencidas >= 1 && ta76.vendedores.includes('Carla') && !ta76.soloPropias, '«Tareas» agrupa las vencidas y trae los vendedores para filtrar');
+  verificar((await json(await api('/api/tareas?vendedor=Carla'))).vencidas.some(x => x.clave === tom.clave) && !(await json(await api('/api/tareas?vendedor=Nadie'))).vencidas.some(x => x.clave === tom.clave), 'el filtro por vendedor funciona');
+  const sinAviso = leadsMod.tareasVencidasSinAviso(convMod.recientes(30), { pendientes: new Set(), revision: new Set(), pausas: {} });
+  verificar(sinAviso.some(x => x.chat.clave === tom.clave), 'una tarea vencida con aviso activado queda para avisar al celular');
+  leadsMod.marcarAvisoTarea(convMod.cruda(tom.clave), dt.tarea.vence);
+  verificar(!leadsMod.tareasVencidasSinAviso(convMod.recientes(30), { pendientes: new Set(), revision: new Set(), pausas: {} }).some(x => x.chat.clave === tom.clave), 'y no se vuelve a avisar la misma tarea');
+  const uMod76 = require('./usuarios.js');
+  uMod76.crear({ nombre: 'Vendedor Prueba', usuario: 'vprueba76', rol: 'asesor', firma: '' });
+  verificar((await json(await api('/api/leads/vendedores'))).vendedores.includes('Vendedor Prueba'), 'la lista de vendedores sale de los usuarios activos del panel');
+  verificar((await api('/api/leads/' + tom.clave + '/vendedor', 'PUT', { nombre: 'Inventado' })).status === 400, 'no se puede asignar un vendedor que no es usuario');
+  dt = await json(await api('/api/leads/' + tom.clave + '/vendedor', 'PUT', { nombre: 'Vendedor Prueba' }));
+  verificar(dt.vendedor === 'Vendedor Prueba' && dt.vendedorAsignado === 'Vendedor Prueba' && dt.vendedorAuto === 'Carla' && (await json(await api('/api/tareas?vendedor=Vendedor%20Prueba'))).vencidas.some(x => x.clave === tom.clave), 'el vendedor asignado reemplaza al automático en los leads y en las tareas');
+  verificar((await api('/api/leads/' + tom.clave + '/tarea-hecha', 'POST', { nota: 'x', verEn: 'cuando sea' })).status === 400, '«Hecho» exige decir cuándo volver a verlo');
+  dt = await json(await api('/api/leads/' + tom.clave + '/tarea-hecha', 'POST', { nota: 'llamé, no atendió', verEn: 'manana' }));
+  verificar(dt.tarea && dt.tarea.accion === 'Seguimiento: llamé, no atendió' && dt.tarea.estado === 'proxima' && /^vence mañana 10:00$/.test(dt.tarea.venceTexto) && dt.tarea.avisar === false && convMod.cruda(tom.clave).mensajes.some(m => m.tipo === 'sistema' && /Tarea hecha por Acceso general: Llamar para cerrar\. Nota: llamé, no atendió\. Próximo seguimiento: mañana 10:00\./.test(m.texto)), '«Hecho» con nota crea el seguimiento para mañana a las 10:00 y lo anota en el chat');
+  dt = await json(await api('/api/leads/' + tom.clave + '/tarea-hecha', 'POST', { verEn: 'no' }));
+  verificar(dt.tarea === null && !(await json(await api('/api/tareas'))).proximas.some(x => x.clave === tom.clave), '«Sin seguimiento» deja el lead sin tarea');
+  verificar((await api('/api/leads/' + tom.clave + '/cerrar', 'POST', { resultado: 'rarísimo' })).status === 400, 'el cierre exige ganado o perdido');
+  dt = await json(await api('/api/leads/' + tom.clave + '/cerrar', 'POST', { resultado: 'perdido', motivo: 'otro_lado', nota: 'lo compró en el shopping' }));
+  verificar(dt.etapa === 'cerrado' && dt.cierre.resultadoNombre === 'Perdido' && dt.cierre.motivoNombre === 'Compró en otro lado' && dt.tarea === null && convMod.cruda(tom.clave).mensajes.some(m => m.tipo === 'sistema' && /Lead cerrado como perdido \(compró en otro lado\) por Acceso general\. Nota: lo compró en el shopping\./.test(m.texto)), 'cerrar como perdido guarda el motivo, quita la tarea y lo anota en el chat');
+  const ls76 = await json(await api('/api/leads'));
+  verificar(!ls76.lista.some(x => x.clave === tom.clave) && ls76.conteo.cerrados >= 1 && (await json(await api('/api/leads?etapa=cerrado'))).lista.some(x => x.clave === tom.clave), 'los cerrados salen de la lista y se ven con el filtro «Cerrado»');
+  dt = await json(await api('/api/leads/' + tom.clave + '/reabrir', 'POST'));
+  verificar(dt.etapa === 'presupuesto_enviado' && !dt.cierre, 'reabrir vuelve a la etapa que corresponde');
+  const comp = { clave: 'wa:59891000012', numero: '59891000012', nombre: 'Compradora' };
+  convMod._usarReloj(() => base76 - 30 * 60000); convMod.registrar(Object.assign({ tipo: 'cliente', texto: 'ya lo compré, gracias' }, comp)); convMod._usarReloj(null);
+  await leadsMod.clasificar(convMod.cruda(comp.clave), bot74);
+  dt = await json(await api('/api/leads/' + comp.clave));
+  verificar(dt.sugerencia && dt.sugerencia.resultado === 'ganado' && dt.etapa !== 'cerrado', 'cuando la IA detecta una compra, propone cerrar como ganado sin cerrar sola');
+  dt = await json(await api('/api/leads/' + comp.clave + '/sugerencia', 'POST', { aceptar: false }));
+  await leadsMod.clasificar(convMod.cruda(comp.clave), bot74);
+  verificar(dt.sugerencia === null && (await json(await api('/api/leads/' + comp.clave))).sugerencia === null, 'si el vendedor dice que no, la IA no insiste con los mismos mensajes');
+  convMod._usarReloj(() => base76 - 20 * 60000); convMod.registrar(Object.assign({ tipo: 'cliente', texto: 'ya lo compré, me encantó' }, comp)); convMod._usarReloj(null);
+  await leadsMod.clasificar(convMod.cruda(comp.clave), bot74);
+  dt = await json(await api('/api/leads/' + comp.clave + '/sugerencia', 'POST', { aceptar: true }));
+  verificar(dt.etapa === 'cerrado' && dt.cierre.resultado === 'ganado' && dt.cierre.porIA === true && dt.cierre.nota === 'Propuesto por la IA' && (await json(await api('/api/leads/' + comp.clave))).sugerencia === null, 'con un mensaje nuevo vuelve a proponer, y al confirmar se cierra como ganado');
+  verificar((await api('/api/leads/wa:noexiste/cerrar', 'POST', { resultado: 'ganado' })).status === 404, 'cerrar un lead inexistente devuelve 404');
+  leadsMod._usarReloj(null);
 
   if (mal && !DETALLE) lineasGuardadas.forEach(l => final(l));
   if (mal) { final('--- últimos mensajes del servidor ---'); registro.slice(-30).forEach(l => final(l)); }

@@ -40,7 +40,7 @@ const accesos = require('./accesos.js');       // 1.4.15: registro de accesos
 const respaldos = require('./respaldos.js');   // 1.4.15: respaldo diario cifrado
 const leads = require('./leads.js');           // 1.5.0: leads clasificados por prioridad
 
-const VERSION = '1.5.1';
+const VERSION = '1.5.2';
 const app = express();
 const PORT = process.env.PORT || 3003;
 // Solo atiende dentro del servidor: el acceso público pasa siempre por Nginx (con contraseña).
@@ -1049,6 +1049,75 @@ app.get('/api/leads', requiere(['admin', 'asesor']), (req, res) => {
   const q = req.query || {};
   res.json(leads.listar(conversaciones.recientes(30), contexto(), { etapa: String(q.etapa || ''), tipo: String(q.tipo || ''), vendedor: String(q.vendedor || ''), q: String(q.q || '') }));
 });
+/* ---------- 1.5.2: proceso de ventas, tareas, vendedor y cierre ---------- */
+function quienActua(req) { return req.usuario ? req.usuario.nombre : 'Acceso general'; }
+app.get('/api/proceso', requiere(['admin']), (req, res) => res.json(Object.assign(leads.leerProceso(), { nombres: leads.ETAPAS })));
+app.put('/api/proceso', requiere(['admin']), (req, res) => {
+  try { res.json(leads.guardarProceso(req.body || {})); } catch (e) { res.status(400).json({ error: e.message }); }
+});
+app.get('/api/leads/vendedores', requiere(['admin', 'asesor']), (req, res) => res.json({ vendedores: usuarios.listar().filter(u => u.activo).map(u => u.nombre).sort() }));
+app.get('/api/tareas', requiere(['admin', 'asesor']), (req, res) => {
+  // Un asesor ve solo sus tareas; un administrador ve todas y puede filtrar por vendedor.
+  const soloPropias = !!(req.usuario && req.usuario.rol === 'asesor');
+  const vendedor = soloPropias ? req.usuario.nombre : String((req.query || {}).vendedor || '');
+  res.json(Object.assign(leads.tareas(conversaciones.recientes(30), contexto(), { vendedor }), { vendedor, soloPropias }));
+});
+app.put('/api/leads/:clave/vendedor', requiere(['admin', 'asesor']), (req, res) => {
+  const c = conversaciones.cruda(req.params.clave);
+  if (!c) return res.status(404).json({ error: 'No existe esa conversación.' });
+  const nombre = String((req.body || {}).nombre || '').trim();
+  if (nombre && !usuarios.listar().some(u => u.activo && u.nombre === nombre)) return res.status(400).json({ error: 'Ese vendedor no es un usuario activo del panel.' });
+  leads.asignar(c, nombre);
+  res.json(leads.detalle(c, contexto()));
+});
+app.post('/api/leads/:clave/cerrar', requiere(['admin', 'asesor']), (req, res) => {
+  const c = conversaciones.cruda(req.params.clave);
+  if (!c) return res.status(404).json({ error: 'No existe esa conversación.' });
+  try {
+    const l = leads.cerrar(c, req.body || {}, quienActua(req));
+    conversaciones.anotarSistema(c.clave, leads.textoCierre(l));
+    res.json(leads.detalle(c, contexto()));
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+app.post('/api/leads/:clave/reabrir', requiere(['admin', 'asesor']), (req, res) => {
+  const c = conversaciones.cruda(req.params.clave);
+  if (!c) return res.status(404).json({ error: 'No existe esa conversación.' });
+  leads.reabrir(c);
+  conversaciones.anotarSistema(c.clave, 'Lead reabierto por ' + quienActua(req) + '.');
+  res.json(leads.detalle(c, contexto()));
+});
+app.post('/api/leads/:clave/sugerencia', requiere(['admin', 'asesor']), (req, res) => {
+  const c = conversaciones.cruda(req.params.clave);
+  if (!c) return res.status(404).json({ error: 'No existe esa conversación.' });
+  try {
+    const aceptar = !!(req.body || {}).aceptar;
+    const l = leads.responderSugerencia(c, aceptar, quienActua(req));
+    if (aceptar) conversaciones.anotarSistema(c.clave, leads.textoCierre(l));
+    res.json(leads.detalle(c, contexto()));
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+app.post('/api/leads/:clave/tarea-hecha', requiere(['admin', 'asesor']), (req, res) => {
+  const c = conversaciones.cruda(req.params.clave);
+  if (!c) return res.status(404).json({ error: 'No existe esa conversación.' });
+  try {
+    const l = leads.marcarHecha(c, req.body || {}, contexto(), quienActua(req));
+    conversaciones.anotarSistema(c.clave, leads.textoHecha(l));
+    res.json(leads.detalle(c, contexto()));
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+// Aviso al celular del equipo cuando vence una tarea (mismo sistema que los avisos de chats por responder).
+async function avisarTarea(c, lead) {
+  const cfg = leerAvisos();
+  if (!cfg.numeros.length || !d360Configurado()) return;
+  const cliente = ((c.nombre ? c.nombre + ' ' : '') + (c.numero ? '(+' + c.numero + ')' : '')).trim() || 'cliente';
+  const mot = limpiarParametro('Tarea vencida: ' + lead.tarea.accion + (lead.vendedor ? ' (vendedor: ' + lead.vendedor + ')' : ''));
+  const ventanas = leerVentanas();
+  for (const num of cfg.numeros) {
+    let ok = false;
+    if (ventanaAbierta(ventanas, num)) ok = await enviarWhatsApp({ to: num }, textoAviso(cliente, mot));
+    if (!ok && cfg.plantilla) await enviarPlantilla({ to: num }, cfg.plantilla, cfg.idioma, [cliente, mot]);
+  }
+}
 app.get('/api/leads/:clave', requiere(['admin', 'asesor']), (req, res) => {
   const c = conversaciones.cruda(req.params.clave);
   if (!c) return res.status(404).json({ error: 'No existe esa conversación.' });
@@ -1384,7 +1453,7 @@ app.post('/webhook/360/:clave', (req, res) => {
 });
 
 respaldos.programar();   // 1.4.15: respaldo automático todas las noches a las 03:30
-leads.programar(() => conversaciones.recientes(30), bot);   // 1.5.0: clasifica las conversaciones quietas hace 10 minutos
+leads.programar(() => conversaciones.recientes(30), bot, contexto, avisarTarea);   // 1.5.0: clasifica las conversaciones quietas hace 10 minutos · 1.5.2: avisa las tareas vencidas
 
 app.listen(PORT, HOST, () => {
   console.log('====================================================');
